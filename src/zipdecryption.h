@@ -35,10 +35,11 @@ struct zipdecryptionfileaccess;
 
 // Update the next two lines for your custom decryption:
 #define DEFAULT_DECRYPTER zipdecryption_None
-#include "zipdecryptionnone.h"
-// (in addition, add your file to src/Makefile.am to the
-// list of source code files to be build and then execute
-// sh autogen.sh)
+#include "zipdecryptionnone.h"  // change to "yourcustomdecryption.h"
+// In addition, add your "yourcustomdecryption.c" file to
+// src/Makefile.am to the list of source code files to be
+// built and then execute "sh autogen.sh" in the blitwizard
+// root directory.
 // Then, blitwizard should be able to understand your
 // own custom zip file encryption.
 
