@@ -189,14 +189,14 @@ static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, 
 
             // amplify channels when closer to edges:
             float panningamplifyfactor = abs(idata->pan);
-            float amplifyamount = 1.3;
+            float amplifyamount = 0.3;
             if (!idata->noamplify) {
                 if (idata->pan > 0) {
                     leftchannel = amplify(leftchannel,
-                    1 + panningamplifyfactor * (amplifyamount-1));
+                    0.7 + panningamplifyfactor * amplifyamount);
                 } else {
                     rightchannel = amplify(rightchannel,
-                    1 + panningamplifyfactor * (amplifyamount-1));
+                    0.7 + panningamplifyfactor * amplifyamount);
                 }
             }
 

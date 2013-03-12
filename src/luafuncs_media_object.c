@@ -249,7 +249,7 @@ int luafuncs_media_pannedSound_new(lua_State* l) {
 
 /// Play the sound represented by the panned sound object
 // @function play
-// @tparam number volume (optional) Volume at which the sound plays from 0 (quiet) to 1 (full volume). Defaults to 1
+// @tparam number volume (optional) Volume at which the sound plays from 0 (quiet), through 1 (full volume) to 1.5 (over-amplified). Defaults to 1, values >1 can cause distortion
 // @tparam number panning (optional) Stereo panning which alters the left/right placement of the sound from 1 (left) through 0 (center) to -1 (right). Default is 0
 // @tparam boolean loop (optional) If set to true, the sound will loop until explicitely stopped. If set to false or if not specified, it will play once
 // @tparam number fadein (optional) Fade in from silence to the specified volume in the given amount of seconds, instead of playing at full volume right from the start
@@ -276,6 +276,16 @@ int luafuncs_media_pannedSound_stop(lua_State* l) {
 
 int luafuncs_media_pannedSound_setPriority(lua_State* l) {
     return luafuncs_media_object_setPriority(l, MEDIA_TYPE_AUDIO_SIMPLE);
+}
+
+/// Adjust the volume or panning of a panned sound
+// (does nothing if the sound is not playing)
+// @function adjust
+// @tparam number volume New volume from 0 to 1.5 (values higher than 1 can cause distortions)
+// @tparam number panning (optional) New panning from 1 (left) to 0 (center) to -1 (right)
+
+int luafuncs_media_pannedSound_adjust(lua_State* l) {
+    return luafuncs_media_object_adjust(l, MEDIA_TYPE_AUDIO_SIMPLE);
 }
 
 /// Implements a positioned sound which can either follow a
