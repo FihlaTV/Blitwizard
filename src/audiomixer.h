@@ -21,6 +21,8 @@
 
 */
 
+#ifndef BLITWIZARD_AUDIOMIXER_H_
+#define BLITWIZARD_AUDIOMIXER_H_
 
 extern int s16mixmode; // 1: output s16 samples, 0: output float32 samples (default)
 void audiomixer_GetBuffer(void* buf, unsigned int len);
@@ -31,4 +33,5 @@ void audiomixer_AdjustSound(int id, float volume, float panning, int noamplify);
 int audiomixer_IsSoundPlaying(int id);
 int audiomixer_NoSoundsPlaying(void);
 
+#endif  // BLITWIZARD_AUDIOMIXER_H_
 

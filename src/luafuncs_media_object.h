@@ -21,8 +21,8 @@
 
 */
 
-#ifndef BLITWIZARD_LUAFUNCS_OBJECT_MEDIA_H_
-#define BLITWIZARD_LUAFUNCS_OBJECT_MEDIA_H_
+#ifndef BLITWIZARD_LUAFUNCS_MEDIA_OBJECT_H_
+#define BLITWIZARD_LUAFUNCS_MEDIA_OBJECT_H_
 
 #include "resources.h"
 #include "luaheader.h"
@@ -37,5 +37,5 @@ int luafuncs_media_pannedSound_new(lua_State* l);
 int luafuncs_media_positionedSound_new(lua_State* l);
 void checkAllMediaObjectsForCleanup(void);
 
-#endif  // BLITWIZARD_LUAFUNCS_OBJECT_MEDIA_H_
+#endif  // BLITWIZARD_LUAFUNCS_MEDIA_OBJECT_H_
 

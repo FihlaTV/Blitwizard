@@ -30,6 +30,7 @@
 #include "luafuncs_objectphysics.h"
 #include "luafuncs_physics.h"
 #include "luafuncs_net.h"
+#include "luafuncs_media_object.h"
 #include "luaerror.h"
 
 #include <stdlib.h>
@@ -226,24 +227,32 @@ static void luastate_CreateGraphicsTable(lua_State* l) {
     lua_settable(l, -3);
 }
 
-/*static void luastate_CreateSoundTable(lua_State* l) {
+static void luastate_CreateSimpleSoundTable(lua_State* l) {
     lua_newtable(l);
+    lua_pushstring(l, "new");
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_new);
+    lua_settable(l, -3);
     lua_pushstring(l, "play");
-    lua_pushcfunction(l, &luafuncs_play);
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_play);
     lua_settable(l, -3);
     lua_pushstring(l, "adjust");
-    lua_pushcfunction(l, &luafuncs_adjust);
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_adjust);
+    lua_settable(l, -3);
+    lua_pushstring(l, "setPriority");
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_setPriority);
     lua_settable(l, -3);
     lua_pushstring(l, "stop");
-    lua_pushcfunction(l, &luafuncs_stop);
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_stop);
     lua_settable(l, -3);
-    lua_pushstring(l, "playing");
-    lua_pushcfunction(l, &luafuncs_playing);
+}
+
+static void luastate_CreateAudioTable(lua_State* l) {
+    lua_newtable(l);
+
+    lua_pushstring(l, "simpleSound");
+    luastate_CreateSimpleSoundTable(l);
     lua_settable(l, -3);
-    lua_pushstring(l, "getBackendName");
-    lua_pushcfunction(l, &luafuncs_getBackendName);
-    lua_settable(l, -3);
-}*/
+}
 
 static void luastate_CreateTimeTable(lua_State* l) {
     lua_newtable(l);
@@ -426,9 +435,9 @@ static lua_State* luastate_New(void) {
     luastate_CreateNetTable(l);
     lua_settable(l, -3);
 
-    /*lua_pushstring(l, "sound");
-    luastate_CreateSoundTable(l);
-    lua_settable(l, -3);*/
+    lua_pushstring(l, "audio");
+    luastate_CreateAudioTable(l);
+    lua_settable(l, -3);
 
     lua_pushstring(l, "callback");
     lua_newtable(l);
@@ -573,11 +582,11 @@ int luastate_DoInitialFile(const char* file, int argcount, char** error) {
     return luastate_DoFile(scriptstate, argcount, file, error);
 }
 
-static void preparepush() {
+static void preparepush(void) {
     if (!scriptstate) {
         scriptstate = luastate_New();
         if (!scriptstate) {
-            return 0;
+            return;
         }
     }
     lua_checkstack(scriptstate, 1);

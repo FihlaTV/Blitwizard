@@ -180,12 +180,16 @@ void audiomixer_AdjustSound(int id, float volume, float panning, int noamplify) 
 int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, float panning, int noamplify, float fadeinseconds, int loop) {
     audio_LockAudioThread();
     int id = audiomixer_FreeSoundId();
-    int slot = audiomixer_GetFreeChannelSlot(priority);
-    if (slot < 0) {
+    // see if in theory, the sound could be played:
+    if (audiomixer_GetFreeChannelSlot(priority) < 0) {
         // all slots are full. do nothing and simply return an unused unplaying id
         audio_UnlockAudioThread();
         return id;
     }
+
+    // allow audio thread to do things again while we open the file
+    // and determine its format:
+    audio_UnlockAudioThread();
 
     // try ogg format:
     struct audiosource* decodesource = NULL;
@@ -218,7 +222,20 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     // if we got no decode source at this point, the audio file is unsupported:
     if (!decodesource) {
         // unsupported audio format
+        return -1;
+    }
+
+    // lock audio thread again so we can update the audio channel info:
+    audio_LockAudioThread();
+
+    // obtain free slot:
+    int slot = audiomixer_GetFreeChannelSlot(priority);
+    if (slot < 0) {
+        // no free slot :(
         audio_UnlockAudioThread();
+        if (decodesource) {
+            decodesource->close(decodesource);
+        }
         return -1;
     }
 
@@ -250,6 +267,7 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     // remember that loop audio source as final processed audio
     channels[slot].mixsource = channels[slot].loopsource;
 
+    // we're done, unlock audio thread:
     audio_UnlockAudioThread();
     return id;
 }

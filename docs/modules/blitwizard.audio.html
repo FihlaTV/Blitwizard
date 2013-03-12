@@ -120,6 +120,11 @@
 	<td class="summary">Set the sound priority of the panned sound,
  see explanation of <a href="../modules/blitwizard.audio.html#simpleSound:setPriority">blitwizard.audio.simpleSound:setPriority</a>.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#pannedSound:adjust">pannedSound:adjust&nbsp;(volume, panning)</a></td>
+	<td class="summary">Adjust the volume or panning of a panned sound
+ (does nothing if the sound is not playing)</td>
+	</tr>
 </table>
 <h2><a href="#Class_positionedSound">Class positionedSound</a></h2>
 <table class="function_list">
@@ -205,7 +210,7 @@
     <ul>
         <pre class="example"> <span class="comment">-- play sound file "blubber.ogg" at 80% volume and
 </span> <span class="comment">-- fade in for 5 seconds
-</span> mysound2 = @{blitwizard.audio.simpleSound:new}(<span class="string">"blubber.ogg"</span>)
+</span> mysound2 = blitwizard.audio.simpleSound:new(<span class="string">"blubber.ogg"</span>)
  mysound2:play(<span class="number">0.8</span>, <span class="number">8</span>)</pre>
     </ul>
 
@@ -330,7 +335,7 @@
     <ul>
       <li><span class="parameter">volume</span>
         <span class="types"><span class="type">number</span></span>
-       (optional) Volume at which the sound plays from 0 (quiet) to 1 (full volume). Defaults to 1</li>
+       (optional) Volume at which the sound plays from 0 (quiet), through 1 (full volume) to 1.5 (over-amplified). Defaults to 1, values >1 can cause distortion</li>
       <li><span class="parameter">panning</span>
         <span class="types"><span class="type">number</span></span>
        (optional) Stereo panning which alters the left/right placement of the sound from 1 (left) through 0 (center) to -1 (right). Default is 0</li>
@@ -345,6 +350,12 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"> <span class="comment">-- Play a sound at full volume, slightly panned to the left
+</span> mysound = blitwizard.audio.pannedSound(<span class="string">"song.ogg"</span>)
+ mysound:play(<span class="number">1</span>, <span class="number">0.3</span>)</pre>
+    </ul>
 
 </dd>
     <dt>
@@ -382,6 +393,29 @@
       <li><span class="parameter">priority</span>
         <span class="types"><span class="type">number</span></span>
        Priority from 0 (lowest) to 20 (highest), values will be rounded down to have no decimal places (0.5 becomes 0, 1.7 becomes 1, etc)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "pannedSound:adjust"></a>
+    <strong>pannedSound:adjust&nbsp;(volume, panning)</strong>
+    </dt>
+    <dd>
+    Adjust the volume or panning of a panned sound
+ (does nothing if the sound is not playing)
+
+    <h3>Parameters:</h3>
+    <ul>
+      <li><span class="parameter">volume</span>
+        <span class="types"><span class="type">number</span></span>
+       New volume from 0 to 1.5 (values higher than 1 can cause distortions)</li>
+      <li><span class="parameter">panning</span>
+        <span class="types"><span class="type">number</span></span>
+       (optional) New panning from 1 (left) to 0 (center) to -1 (right)</li>
     </ul>
 
 
