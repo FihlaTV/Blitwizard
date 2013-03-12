@@ -70,6 +70,12 @@ inline int _physics_ObjIs3D(struct physicsobject* object) {
 #endif
 }
 
+inline void _physics_SetObjIs3D(struct physicsobject* object, int is3d) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    object->is3d = is3d;
+#endif
+}
+
 inline int _physics_WorldIs3D(struct physicsworld* world) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     return world->is3d;
@@ -77,6 +83,12 @@ inline int _physics_WorldIs3D(struct physicsworld* world) {
     return 0;
 #elif defined(USE_PHYSICS3D)
     return 1;
+#endif
+}
+
+inline void _physics_SetWorldIs3D(struct physicsworld* world, int is3d) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    world->is3d = is3d;
 #endif
 }
 
@@ -212,20 +224,44 @@ void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifo
     }
 }
 
-struct physicsworld2d* physics2d_CreateWorld() {
-    struct physicsworld2d* world = (struct physicsworld2d*)malloc(sizeof(*world));
+struct physicsworld* physics_CreateWorld(int use3dphysics) {
+    struct physicsworld* world = (struct physicsworld*)malloc(sizeof(*world));
     if (!world) {
         return NULL;
     }
-    memset(world, 0, sizeof(*world));
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not use3dphysics) {
+#endif
+#ifdef USE_PHYSIC2D
+    struct physicsworld2d* world2d = (struct physicsworld2d*)malloc(sizeof(*world2d));
+    if (!world2d) {
+        return NULL;
+    }
+    memset(world2d, 0, sizeof(*world2d));
     b2Vec2 gravity(0.0f, 0.0f);
-    world->w = new b2World(gravity);
-    world->w->SetAllowSleeping(true);
-    world->gravityx = 0;
-    world->gravityy = 10;
-    world->listener = new mycontactlistener();
-    world->w->SetContactListener(world->listener);
+    world2d->w = new b2World(gravity);
+    world2d->w->SetAllowSleeping(true);
+    world2d->gravityx = 0;
+    world2d->gravityy = 10;
+    world2d->listener = new mycontactlistener();
+    world2d->w->SetContactListener(world2d->listener);
+    world->wor.ld2d = world2d;
+    _physics_SetWorldIs3D(world, 1);
     return world;
+#else
+    printerror("Error: Trying to create 2D physics world, but USE_PHYSICS2D is disabled.");
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    } else {
+#else
+    printerror("Error: Trying to create 3D physics world, but USE_PHYSICS3D is disabled.");
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
 }
 
 void physics_DestroyWorld(struct physicsworld* world) {
