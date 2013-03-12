@@ -178,7 +178,8 @@ int luafuncs_media_object_play(lua_State* l, int type) {
         break;
     case MEDIA_TYPE_AUDIO_POSITIONED:
         funcname = funcname_positioned;
-        return haveluaerror("positioned audio objects are not implemented yet");
+        return haveluaerror(l,
+        "positioned audio objects are not implemented yet");
         break;
     }
 
@@ -199,7 +200,7 @@ int luafuncs_media_object_play(lua_State* l, int type) {
     // extract volume parameter:
     if (lua_type(l, 2) != LUA_TNUMBER &&
     lua_type(l, 2) != LUA_TNIL) {
-        return haveluaerror(badargument1, 1, funcname,
+        return haveluaerror(l, badargument1, 1, funcname,
         "number", lua_strtype(l, 2));
     }
     if (lua_type(l, 2) == LUA_TNUMBER) {
@@ -208,7 +209,7 @@ int luafuncs_media_object_play(lua_State* l, int type) {
         if (volume > 1.5) {volume = 1.5;}
         if (volume > 1 &&
         type == MEDIA_TYPE_AUDIO_SIMPLE) {
-            volume = 1,
+            volume = 1;
         }
     }
 
@@ -216,7 +217,7 @@ int luafuncs_media_object_play(lua_State* l, int type) {
     if (type == MEDIA_TYPE_AUDIO_PANNED) {
         if (lua_type(l, 3) != LUA_TNUMBER &&
         lua_type(l, 3) != LUA_TNIL) {
-            return haveluaerror(badargument1, 2, funcname,
+            return haveluaerror(l, badargument1, 2, funcname,
             "number", lua_strtype(l, 3));
         }
         if (lua_type(l, 3) == LUA_TNUMBER) {
