@@ -46,13 +46,18 @@
 #include "luaheader.h"
 #include "luastate.h"
 #include "luaerror.h"
+#include "audiomixer.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 struct mediaobject* mediaObjects = NULL;
 
+static void mediaobject_UpdateIsPlaying(struct mediaobject* o);
 static int garbagecollect_mediaobjref(lua_State* l);
+struct mediaobject* tomediaobject(lua_State* l,
+int type, int index, int arg, const char* func);
+
 int luafuncs_media_object_new(lua_State* l, int type) {
     // check which function called us:
     char funcname_simple[] = "blitwizard.audio.simpleSound:new";
@@ -86,7 +91,7 @@ int luafuncs_media_object_new(lua_State* l, int type) {
 
     // check if the given resource exists:
     if (!resources_LocateResource(p, NULL)) {
-        return haveluaerror(l, "Sound file \"%s\" not found", p);
+        return haveluaerror(l, "sound file \"%s\" not found", p);
     }
 
     // generate new sound object:
@@ -97,13 +102,14 @@ int luafuncs_media_object_new(lua_State* l, int type) {
     iref->ref.mobj = malloc(sizeof(struct mediaobject));
     if (!iref->ref.mobj) {
         lua_pop(l, 1);
-        return haveluaerror(l, "Failed to allocate media object");
+        return haveluaerror(l, "failed to allocate media object");
     }
     luastate_SetGCCallback(l, -1, (int (*)(void*))&garbagecollect_mediaobjref);
     struct mediaobject* m = iref->ref.mobj;
     memset(m, 0, sizeof(*m));
     m->type = type;
     m->refcount++;
+    m->mediainfo.sound.soundid = -1;
 
     // set proper default priority:
     switch (type) {
@@ -118,6 +124,14 @@ int luafuncs_media_object_new(lua_State* l, int type) {
         break;
     }
 
+    // remember sound path:
+    m->mediainfo.sound.soundname = strdup(p);
+    if (!m->mediainfo.sound.soundname) {
+        // string alloc failed
+        lua_pop(l, 1);
+        return haveluaerror(l, "allocating sound path failed");
+    }
+
     // add to media object list:
     if (mediaObjects) {
         mediaObjects->prev = m;
@@ -128,6 +142,42 @@ int luafuncs_media_object_new(lua_State* l, int type) {
 }
 
 int luafuncs_media_object_play(lua_State* l, int type) {
+    // check which function called us:
+    char funcname_simple[] = "blitwizard.audio.simpleSound:play";
+    char funcname_panned[] = "blitwizard.audio.pannedSound:play";
+    char funcname_positioned[] = "blitwizard.audio.positionedSound:play";
+    char funcname_unknown[] = "???";
+    char* funcname = funcname_unknown;
+    switch (type) {
+    case MEDIA_TYPE_AUDIO_SIMPLE:
+        funcname = funcname_simple;
+        break;
+    case MEDIA_TYPE_AUDIO_PANNED:
+        funcname = funcname_panned;
+        break;
+    case MEDIA_TYPE_AUDIO_POSITIONED:
+        funcname = funcname_positioned;
+        break;
+    }
+
+    // obtain sound object:
+    struct mediaobject* m = tomediaobject(l,
+    type, 1, 0, funcname);
+
+    // update current playing state:
+    mediaobject_UpdateIsPlaying(m);
+    if (m->isPlaying) {return 0;}
+
+    float volume = 1;
+    int noamplify = 1;
+    float panning = 0;
+    float fadeinseconds = 0;
+    int loop = 0;
+
+    // play sound:
+    m->mediainfo.sound.soundid = audiomixer_PlaySoundFromDisk(
+    m->mediainfo.sound.soundname, m->mediainfo.sound.priority,
+    volume, panning, noamplify, fadeinseconds, loop);
     return 0;
 }
 
@@ -346,8 +396,17 @@ void deleteMediaObject(struct mediaobject* o) {
     free(o);
 }
 
-static void mediaobject_UpdateIsPlaying(struct mediaobject* o) {
-
+static void mediaobject_UpdateIsPlaying(struct mediaobject* m) {
+    if (m->type == MEDIA_TYPE_AUDIO_SIMPLE ||
+    m->type == MEDIA_TYPE_AUDIO_PANNED ||
+    m->type == MEDIA_TYPE_AUDIO_POSITIONED) {
+        // it is a sound object.
+        if (m->mediainfo.sound.soundid < 0) {
+            m->isPlaying = 0;
+        } else {
+            m->isPlaying = audiomixer_IsSoundPlaying(m->mediainfo.sound.soundid);
+        }
+    }
 }
 
 void checkAllMediaObjectsForCleanup() {
@@ -392,5 +451,28 @@ static int garbagecollect_mediaobjref(lua_State* l) {
         }
     }
     return 0;
+}
+
+struct mediaobject* tomediaobject(lua_State* l, int type, int index, int arg, const char* func) {
+    if (lua_type(l, index) != LUA_TUSERDATA) {
+        haveluaerror(l, badargument1, arg, func, "media object", lua_strtype(l, index));
+        return NULL;
+    }
+    if (lua_rawlen(l, index) != sizeof(struct luaidref)) {
+        haveluaerror(l, badargument2, arg, func, "not a valid media object");
+        return NULL;
+    }
+    struct luaidref* idref = lua_touserdata(l, index);
+    if (!idref || idref->magic != IDREF_MAGIC
+    || idref->type != IDREF_BLITWIZARDOBJECT) {
+        haveluaerror(l, badargument2, arg, func, "not a valid media object");
+        return NULL;
+    }
+    struct mediaobject* o = idref->ref.mobj;
+    if (o->type != type) {
+        haveluaerror(l, badargument2, arg, func, "media object is of wrong type");
+        return NULL;
+    }
+    return o;
 }
 
