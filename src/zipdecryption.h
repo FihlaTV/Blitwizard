@@ -41,7 +41,8 @@ struct zipdecryptionfileaccess;
 // built and then execute "sh autogen.sh" in the blitwizard
 // root directory.
 // Then, blitwizard should be able to understand your
-// own custom zip file encryption.
+// own custom zip file encryption (after rebuilding it
+// with another "make" of course).
 
 // a decryption instance:
 struct zipdecrypter;
