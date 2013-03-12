@@ -140,7 +140,17 @@ int luafuncs_media_object_new(lua_State* l, int type) {
     lua_getglobal(l, "blitwizard");
     lua_pushstring(l, "audio");
     lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio
-    lua_pushstring(l, "simpleSound");
+    switch (type) {
+    case MEDIA_TYPE_AUDIO_SIMPLE:
+        lua_pushstring(l, "simpleSound");
+        break;
+    case MEDIA_TYPE_AUDIO_PANNED:
+        lua_pushstring(l, "pannedSound");
+        break;
+    case MEDIA_TYPE_AUDIO_POSITIONED:
+        lua_pushstring(l, "positionedSound");
+        break;
+    }
     lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio, simpleSound
     lua_insert(l, -3);  // on stack now: metatable, simpleSound, blitwizard, audio
     lua_pop(l, 2);  // on stack now: metatable, simpleSound
@@ -237,10 +247,23 @@ int luafuncs_media_object_play(lua_State* l, int type) {
     if (lua_type(l, 3+paramoffset) != LUA_TBOOLEAN &&
     lua_type(l, 3+paramoffset) != LUA_TNIL) {
         return haveluaerror(l, badargument1, 2+paramoffset,
-        funcname, "number", lua_strtype(l, 3+paramoffset));
+        funcname, "boolean", lua_strtype(l, 3+paramoffset));
     }
     if (lua_type(l, 3+paramoffset) == LUA_TBOOLEAN) {
         loop = lua_toboolean(l, 3+paramoffset);
+    }
+
+    // extract fadein parameter:
+    if (lua_type(l, 4+paramoffset) != LUA_TNUMBER &&
+    lua_type(l, 4+paramoffset) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 3+paramoffset,
+        funcname, "number", lua_strtype(l, 4+paramoffset));
+    }
+    if (lua_type(l, 4+paramoffset) == LUA_TNUMBER) {
+        fadeinseconds = lua_tonumber(l, 4+paramoffset);
+        if (fadeinseconds < 0) {
+            fadeinseconds = 0;
+        }
     }
 
     // play sound:
