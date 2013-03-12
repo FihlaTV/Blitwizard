@@ -178,6 +178,7 @@ int luafuncs_media_object_play(lua_State* l, int type) {
         break;
     case MEDIA_TYPE_AUDIO_POSITIONED:
         funcname = funcname_positioned;
+        return haveluaerror("positioned audio objects are not implemented yet");
         break;
     }
 
@@ -194,6 +195,36 @@ int luafuncs_media_object_play(lua_State* l, int type) {
     float panning = 0;
     float fadeinseconds = 0;
     int loop = 0;
+
+    // extract volume parameter:
+    if (lua_type(l, 2) != LUA_TNUMBER &&
+    lua_type(l, 2) != LUA_TNIL) {
+        return haveluaerror(badargument1, 1, funcname,
+        "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 2) == LUA_TNUMBER) {
+        volume = lua_tonumber(l, 2);
+        if (volume < 0) {volume = 0;}
+        if (volume > 1.5) {volume = 1.5;}
+        if (volume > 1 &&
+        type == MEDIA_TYPE_AUDIO_SIMPLE) {
+            volume = 1,
+        }
+    }
+
+    // extract panning parameter:
+    if (type == MEDIA_TYPE_AUDIO_PANNED) {
+        if (lua_type(l, 3) != LUA_TNUMBER &&
+        lua_type(l, 3) != LUA_TNIL) {
+            return haveluaerror(badargument1, 2, funcname,
+            "number", lua_strtype(l, 3));
+        }
+        if (lua_type(l, 3) == LUA_TNUMBER) {
+            panning = lua_tonumber(l, 3);
+            if (panning < -1) {panning = -1;}
+            if (panning > 1) {panning = 1;}
+        }
+    }
 
     // play sound:
     m->mediainfo.sound.soundid = audiomixer_PlaySoundFromDisk(
