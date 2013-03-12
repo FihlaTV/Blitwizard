@@ -21,9 +21,15 @@
 
 */
 
-#ifdef USE_PHYSICS2D
+#if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
 
+// FIXME DEBUG ONLY:
+#include <logging.h>
+
+#ifdef USE_PHYSICS2D
 #include <Box2D.h>
+#endif
+
 #include <stdint.h>
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -34,7 +40,73 @@
 #include "physics.h"
 #include "mathhelpers.h"
 
+
+
+#define BW_E_NO3DYET "Error: 3D is not yet implemented."
+
+
 extern "C" {
+
+// Purely internal structs
+#ifdef USE_PHYSICS2D
+struct physicsobject2d;
+struct physicsworld2d;
+#endif
+#ifdef USE_PHYSICS3D
+struct physicsobject3d;
+struct physicsworld3d;
+#endif
+
+
+inline int _physics_ObjIs3D(struct physicsobject* object) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    return object->is3d;
+#elif defined(USE_PHYSICS2D)
+    return 0;
+#elif defined(USE_PHYSICS3D)
+    return 1;
+#endif
+}
+
+inline int _physics_WorldIs3D(struct physicsworld* world) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    return world->is3d;
+#elif defined(USE_PHYSICS2D)
+    return 0;
+#elif defined(USE_PHYSICS3D)
+    return 1;
+#endif
+}
+
+
+struct physicsobject {
+    union dimension_specific_object {
+#ifdef USE_PHYSICS2D
+        struct physicsobject2d* ect2d;
+#endif
+#ifdef USE_PHYSICS3D
+        struct physicsobject3d* ect3d;
+#endif
+    } obj;
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    int is3d;
+#endif
+};
+
+struct physicsworld {
+    union dimension_specific_world {
+#ifdef USE_PHYSICS2D
+        struct physicsworld2d* ld2d;
+#endif
+#ifdef USE_PHYSICS3D
+        struct physicsworld3d* ld3d;
+#endif
+    } wor;
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    int is3d;
+#endif
+};
+
 
 class mycontactlistener;
 static int insidecollisioncallback = 0;
@@ -154,10 +226,25 @@ struct physicsworld2d* physics2d_CreateWorld() {
     return world;
 }
 
-void physics2d_DestroyWorld(struct physicsworld2d* world) {
-    delete world->listener;
-    delete world->w;
+void physics_DestroyWorld(struct physicsworld* world) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not world->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    delete world->wor.ld2d->listener;
+    delete world->wor.ld2d->w;
+    free(world->wor.ld2d);
     free(world);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    } else {
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
 }
 
 int physics2d_GetStepSize(struct physicsworld2d* world) {
@@ -477,23 +564,40 @@ static void physics2d_DestroyObjectDo(struct physicsobject2d* obj) {
     free(obj);
 }
 
-void physics2d_DestroyObject(struct physicsobject2d* obj) {
-    if (!obj || obj->deleted == 1) {
+void physics_DestroyObject(struct physicsobject* obj) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not obj->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    if (!obj->obj.ect2d || obj->obj.ect2d->deleted == 1) {
         return;
     }
     if (!insidecollisioncallback) {
-        physics2d_DestroyObjectDo(obj);
+        physics2d_DestroyObjectDo(obj->obj.ect2d);
     }else{
-        obj->deleted = 1;
+        obj->obj.ect2d->deleted = 1;
         struct deletedphysicsobject2d* dobject = (struct deletedphysicsobject2d*)malloc(sizeof(*dobject));
         if (!dobject) {
             return;
         }
         memset(dobject, 0, sizeof(*dobject));
-        dobject->obj = obj;
+        dobject->obj = obj->obj.ect2d;
         dobject->next = deletedlist;
         deletedlist = dobject;
     }
+    
+    // ?
+    free(obj);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    } else {
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
 }
 
 void physics2d_Warp(struct physicsobject2d* obj, double x, double y, double angle) {
