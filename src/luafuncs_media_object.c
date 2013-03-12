@@ -134,6 +134,21 @@ int luafuncs_media_object_new(lua_State* l, int type) {
         return haveluaerror(l, "allocating sound path failed");
     }
 
+    // set meta table __index field to class table
+    lua_checkstack(l, 8);  // ensure some stack space
+    lua_getmetatable(l, -1);  // on stack now: metatable
+    lua_getglobal(l, "blitwizard");
+    lua_pushstring(l, "audio");
+    lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio
+    lua_pushstring(l, "simpleSound");
+    lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio, simpleSound
+    lua_insert(l, -3);  // on stack now: metatable, simpleSound, blitwizard, audio
+    lua_pop(l, 2);  // on stack now: metatable, simpleSound
+    lua_pushstring(l, "__index");  // on stack now: metatable, simpleSound, "__index"
+    lua_insert(l, -2);  // on stack now: metatable, "__index", simpleSound
+    lua_settable(l, -3);  // on stack now: metatable
+    lua_pop(l, 1);  // done!
+
     // add to media object list:
     if (mediaObjects) {
         mediaObjects->prev = m;
@@ -163,6 +178,8 @@ int luafuncs_media_object_play(lua_State* l, int type) {
         break;
     case MEDIA_TYPE_AUDIO_POSITIONED:
         funcname = funcname_positioned;
+        return haveluaerror(l,
+        "positioned audio objects are not implemented yet");
         break;
     }
 
@@ -179,6 +196,52 @@ int luafuncs_media_object_play(lua_State* l, int type) {
     float panning = 0;
     float fadeinseconds = 0;
     int loop = 0;
+
+    // extract volume parameter:
+    if (lua_type(l, 2) != LUA_TNUMBER &&
+    lua_type(l, 2) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 1, funcname,
+        "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 2) == LUA_TNUMBER) {
+        volume = lua_tonumber(l, 2);
+        if (volume < 0) {volume = 0;}
+        if (volume > 1.5) {volume = 1.5;}
+        if (volume > 1 &&
+        type == MEDIA_TYPE_AUDIO_SIMPLE) {
+            volume = 1;
+        }
+    }
+
+    // extract panning parameter:
+    if (type == MEDIA_TYPE_AUDIO_PANNED) {
+        if (lua_type(l, 3) != LUA_TNUMBER &&
+        lua_type(l, 3) != LUA_TNIL) {
+            return haveluaerror(l, badargument1, 2, funcname,
+            "number", lua_strtype(l, 3));
+        }
+        if (lua_type(l, 3) == LUA_TNUMBER) {
+            panning = lua_tonumber(l, 3);
+            if (panning < -1) {panning = -1;}
+            if (panning > 1) {panning = 1;}
+        }
+    }
+
+    // further parameters are offset by 1 for panned:
+    int paramoffset = 0;
+    if (type == MEDIA_TYPE_AUDIO_PANNED) {
+        paramoffset = 1;
+    }
+
+    // extract loop parameter:
+    if (lua_type(l, 3+paramoffset) != LUA_TBOOLEAN &&
+    lua_type(l, 3+paramoffset) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 2+paramoffset,
+        funcname, "number", lua_strtype(l, 3+paramoffset));
+    }
+    if (lua_type(l, 3+paramoffset) == LUA_TBOOLEAN) {
+        loop = lua_toboolean(l, 3+paramoffset);
+    }
 
     // play sound:
     m->mediainfo.sound.soundid = audiomixer_PlaySoundFromDisk(
@@ -468,12 +531,12 @@ struct mediaobject* tomediaobject(lua_State* l, int type, int index, int arg, co
         return NULL;
     }
     if (lua_rawlen(l, index) != sizeof(struct luaidref)) {
-        haveluaerror(l, badargument2, arg, func, "not a valid media object");
+        haveluaerror(l, badargument2, arg, func, "not a valid media object (not luaidref)");
         return NULL;
     }
     struct luaidref* idref = lua_touserdata(l, index);
     if (!idref || idref->magic != IDREF_MAGIC
-    || idref->type != IDREF_BLITWIZARDOBJECT) {
+    || idref->type != IDREF_MEDIA) {
         haveluaerror(l, badargument2, arg, func, "not a valid media object");
         return NULL;
     }

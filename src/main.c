@@ -777,8 +777,8 @@ int main(int argc, char** argv) {
 #endif
 
     // call init
-    if (!luastate_CallFunctionInMainstate("blitwiz.on_init", 0, 1, 1, &error, NULL)) {
-        printerror("Error: An error occured when calling blitwiz.on_init: %s",error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.on_init", 0, 1, 1, &error, NULL)) {
+        printerror("Error: An error occured when calling blitwizard.on_init: %s",error);
         if (error != outofmem) {
             free(error);
         }
@@ -871,18 +871,8 @@ int main(int argc, char** argv) {
         int iterations = 0;
         while ((logictimestamp < time || physicstimestamp < time) && iterations < MAXLOGICITERATIONS) {
             if (logictimestamp < time && logictimestamp <= physicstimestamp) {
-                int onstepdoesntexist = 0;
-                if (!luastate_CallFunctionInMainstate("blitwiz.on_step", 0, 1, 1, &error, &onstepdoesntexist)) {
-                    printerror("Error: An error occured when calling blitwiz.on_step: %s", error);
-                    if (error) {free(error);}
-                    fatalscripterror();
-                    main_Quit(1);
-                    blitwizonstepworked = 0;
-                }else{
-                    if (onstepdoesntexist) {
-                        blitwizonstepworked = 0;
-                    }
-                }
+                // call logic functions of all objects:
+                
                 logictimestamp += TIMESTEP;
             }
 #ifdef USE_PHYSICS2D
