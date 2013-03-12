@@ -46,6 +46,7 @@
 #include "luaheader.h"
 #include "luastate.h"
 #include "luaerror.h"
+#include "audio.h"
 #include "audiomixer.h"
 
 #include <stdlib.h>
@@ -59,6 +60,7 @@ struct mediaobject* tomediaobject(lua_State* l,
 int type, int index, int arg, const char* func);
 
 int luafuncs_media_object_new(lua_State* l, int type) {
+#ifdef USE_AUDIO
     // check which function called us:
     char funcname_simple[] = "blitwizard.audio.simpleSound:new";
     char funcname_panned[] = "blitwizard.audio.pannedSound:new";
@@ -139,9 +141,13 @@ int luafuncs_media_object_new(lua_State* l, int type) {
     m->next = mediaObjects;
     mediaObjects = m;
     return 1;
+#else
+    return haveluaerror(l, compiled_without_audio);
+#endif
 }
 
 int luafuncs_media_object_play(lua_State* l, int type) {
+#ifdef USE_AUDIO
     // check which function called us:
     char funcname_simple[] = "blitwizard.audio.simpleSound:play";
     char funcname_panned[] = "blitwizard.audio.pannedSound:play";
@@ -179,6 +185,9 @@ int luafuncs_media_object_play(lua_State* l, int type) {
     m->mediainfo.sound.soundname, m->mediainfo.sound.priority,
     volume, panning, noamplify, fadeinseconds, loop);
     return 0;
+#else
+    return haveluaerror(l, compiled_without_audio);
+#endif
 }
 
 int luafuncs_media_object_stop(lua_State* l, int type) {

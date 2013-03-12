@@ -21,6 +21,9 @@
 
 */
 
+#ifndef BLITWIZARD_AUDIO_H_
+#define BLITWIZARD_AUDIO_H_
+
 #ifdef USE_AUDIO
 
 const char* audio_GetCurrentBackendName(void);
@@ -66,4 +69,6 @@ void audio_Quit(void);
 #define compiled_without_audio "No audio available - this binary was compiled with audio (including null device) disabled"
 
 #endif  // USE_AUDIO
+
+#endif  // BLITWIZARD_AUDIO_H_
 
