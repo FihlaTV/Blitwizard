@@ -23,8 +23,9 @@
 
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
 
-// FIXME DEBUG ONLY:
+#ifndef NDEBUG
 #include <logging.h>
+#endif
 
 #ifdef USE_PHYSICS2D
 #include <Box2D.h>
@@ -41,8 +42,9 @@
 #include "mathhelpers.h"
 
 
-
+#ifndef NDEBUG
 #define BW_E_NO3DYET "Error: 3D is not yet implemented."
+#endif
 
 
 extern "C" {
