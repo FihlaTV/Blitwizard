@@ -336,7 +336,11 @@ void audiosourcefadepanvol_SetPanVol(struct audiosource* source, float vol, floa
 }
 
 void audiosourcefadepanvol_StartFade(struct audiosource* source, float seconds, float targetvol, int terminate) {
+    // start a fade to a specified volume
+    // terminate: stop sound when fade is done
     struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+
+    // if seconds <= 0, terminate current fade:
     if (seconds <= 0) {
         idata->fadevaluestart = 0;
         idata->fadevalueend = 0;
@@ -344,6 +348,7 @@ void audiosourcefadepanvol_StartFade(struct audiosource* source, float seconds, 
         idata->fadesampleend = 0;
         return;
     }
+    // check target volume bounds:
     if (targetvol < 0) {
         targetvol = 0;
     }
@@ -354,6 +359,7 @@ void audiosourcefadepanvol_StartFade(struct audiosource* source, float seconds, 
         targetvol = 1;
     }
 
+    // set fade info:
     idata->terminateafterfade = terminate;
     idata->fadevaluestart = idata->vol;
     idata->fadevalueend = targetvol;

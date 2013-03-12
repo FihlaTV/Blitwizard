@@ -249,6 +249,10 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     // set the options for the fade/pan/vol modifier
     audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning, noamplify);
     if (fadeinseconds > 0) {
+        // reset volume to 0 for fadein:
+        audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, 0, panning, noamplify);
+
+        // instruct fadein:
         audiosourcefadepanvol_StartFade(channels[slot].fadepanvolsource, fadeinseconds, volume, 0);
     }
 
