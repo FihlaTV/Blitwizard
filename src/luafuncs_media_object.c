@@ -227,6 +227,22 @@ int luafuncs_media_object_play(lua_State* l, int type) {
         }
     }
 
+    // further parameters are offset by 1 for panned:
+    int paramoffset = 0;
+    if (type == MEDIA_TYPE_AUDIO_PANNED) {
+        paramoffset = 1;
+    }
+
+    // extract loop parameter:
+    if (lua_type(l, 3+paramoffset) != LUA_TBOOLEAN &&
+    lua_type(l, 3+paramoffset) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 2+paramoffset,
+        funcname, "number", lua_strtype(l, 3+paramoffset));
+    }
+    if (lua_type(l, 3+paramoffset) == LUA_TBOOLEAN) {
+        loop = lua_toboolean(l, 3+paramoffset);
+    }
+
     // play sound:
     m->mediainfo.sound.soundid = audiomixer_PlaySoundFromDisk(
     m->mediainfo.sound.soundname, m->mediainfo.sound.priority,
