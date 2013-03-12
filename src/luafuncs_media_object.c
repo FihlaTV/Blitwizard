@@ -134,6 +134,21 @@ int luafuncs_media_object_new(lua_State* l, int type) {
         return haveluaerror(l, "allocating sound path failed");
     }
 
+    // set meta table __index field to class table
+    lua_checkstack(l, 8);  // ensure some stack space
+    lua_getmetatable(l, -1);  // on stack now: metatable
+    lua_getglobal(l, "blitwizard");
+    lua_pushstring(l, "audio");
+    lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio
+    lua_pushstring(l, "simpleSound");
+    lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio, simpleSound
+    lua_insert(l, -3);  // on stack now: metatable, simpleSound, blitwizard, audio
+    lua_pop(l, 2);  // on stack now: metatable, simpleSound
+    lua_pushstring(l, "__index");  // on stack now: metatable, simpleSound, "__index"
+    lua_insert(l, -2);  // on stack now: metatable, "__index", simpleSound
+    lua_settable(l, -3);  // on stack now: metatable
+    lua_pop(l, 1);  // done!
+
     // add to media object list:
     if (mediaObjects) {
         mediaObjects->prev = m;
@@ -468,12 +483,12 @@ struct mediaobject* tomediaobject(lua_State* l, int type, int index, int arg, co
         return NULL;
     }
     if (lua_rawlen(l, index) != sizeof(struct luaidref)) {
-        haveluaerror(l, badargument2, arg, func, "not a valid media object");
+        haveluaerror(l, badargument2, arg, func, "not a valid media object (not luaidref)");
         return NULL;
     }
     struct luaidref* idref = lua_touserdata(l, index);
     if (!idref || idref->magic != IDREF_MAGIC
-    || idref->type != IDREF_BLITWIZARDOBJECT) {
+    || idref->type != IDREF_MEDIA) {
         haveluaerror(l, badargument2, arg, func, "not a valid media object");
         return NULL;
     }

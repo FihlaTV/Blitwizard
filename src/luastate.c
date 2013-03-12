@@ -264,14 +264,15 @@ static void luastate_CreateTimeTable(lua_State* l) {
     lua_settable(l, -3);
 }
 
-static int openlib_blitwiz(lua_State* l) {
+static int openlib_blitwizard(lua_State* l) {
+    // add an empty "blitwizard" lib namespace
     static const struct luaL_Reg blitwizlib[] = { {NULL, NULL} };
     luaL_newlib(l, blitwizlib);
     return 1;
 }
 
 static int luastate_AddBlitwizFuncs(lua_State* l) {
-    luaL_requiref(l, "blitwiz", openlib_blitwiz, 1);
+    luaL_requiref(l, "blitwizard", openlib_blitwizard, 1);
     lua_pop(l, 1);
     return 0;
 }
@@ -419,7 +420,7 @@ static lua_State* luastate_New(void) {
     lua_setglobal(l, "print");
 
     // obtain the blitwiz lib
-    lua_getglobal(l, "blitwiz");
+    lua_getglobal(l, "blitwizard");
 
     // blitwiz.setStep:
     lua_pushstring(l, "setStep");
@@ -624,6 +625,22 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
         int recursed = 0;
         while (r < strlen(function)) {
             if (function[r] == '.') {
+                if (tablerecursion > 0) {
+                    // check if what we got on the stack as a base table
+                    // is actually a table
+                    if (lua_type(scriptstate, -1) != LUA_TTABLE) {
+                        // not a table.
+                        lua_pop(scriptstate, 1);  // error func
+                        lua_pop(scriptstate, args);
+
+                        // remove recursive table
+                        lua_pop(scriptstate, 1);
+
+                        *error = strdup("part of recursive call path is not a table");
+                        return 0;
+                    }
+                }
+
                 recursed = 1;
                 // extract the component
                 char* fp = malloc(r+1);
@@ -632,10 +649,11 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
                     // clean up stack again:
                     lua_pop(scriptstate, 1); // error func
                     lua_pop(scriptstate, args);
-                    if (recursivetables > 0) {
+                    if (recursivetables > 0 && tablerecursion > 0) {
                         // clean up recursive table left on stack
                         lua_pop(scriptstate, 1);
                     }
+                    *error = strdup("failed to allocate memory for component string");
                     return 0;
                 }
                 memcpy(fp, function, r);
@@ -672,10 +690,25 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
     // lookup function normally if there was no recursion lookup:
     if (tablerecursion <= 0) {
         lua_getglobal(scriptstate, function);
-    }else{
+    } else {
+        // check if what we got on the stack as a base table
+        // is actually a table
+        if (lua_type(scriptstate, -1) != LUA_TTABLE) {
+            // not a table.
+            lua_pop(scriptstate, 1);  // error func
+            lua_pop(scriptstate, args);
+
+            // remove recursive table
+            lua_pop(scriptstate, 1);
+
+            *error = strdup("part of recursive call path is not a table");
+            return 0;
+        }
+
         // get the function from our recursive lookup
         lua_pushstring(scriptstate, function);
         lua_gettable(scriptstate, -2);
+
         // wipe out the table we got it from
         lua_insert(scriptstate,-2);
         lua_pop(scriptstate, 1);
@@ -695,6 +728,16 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
             *functiondidnotexist = 1;
         }
         return 1;
+    }
+
+    if (lua_type(scriptstate, -1) != LUA_TFUNCTION) {
+        lua_pop(scriptstate, 1); // error func
+        if (recursivetables > 0) {
+            // clean up recursive origin table left on stack
+            lua_pop(scriptstate, 1);
+        }
+        *error = strdup("tried to call something which is not a function");
+        return 0;
     }
 
     // function needs to be first, then arguments. -> correct order
