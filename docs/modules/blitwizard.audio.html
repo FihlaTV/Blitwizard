@@ -210,7 +210,7 @@
     <ul>
         <pre class="example"> <span class="comment">-- play sound file "blubber.ogg" at 80% volume and
 </span> <span class="comment">-- fade in for 5 seconds
-</span> mysound2 = @{blitwizard.audio.simpleSound:new}(<span class="string">"blubber.ogg"</span>)
+</span> mysound2 = blitwizard.audio.simpleSound:new(<span class="string">"blubber.ogg"</span>)
  mysound2:play(<span class="number">0.8</span>, <span class="number">8</span>)</pre>
     </ul>
 
@@ -350,6 +350,12 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"> <span class="comment">-- Play a sound at full volume, slightly panned to the left
+</span> mysound = blitwizard.audio.pannedSound(<span class="string">"song.ogg"</span>)
+ mysound:play(<span class="number">1</span>, <span class="number">0.3</span>)</pre>
+    </ul>
 
 </dd>
     <dt>

@@ -179,7 +179,7 @@ int luafuncs_media_simpleSound_new(lua_State* l) {
 // @tparam number fadein (optional) Fade in from silence to the specified volume in the given amount of seconds, instead of playing at full volume right from the start
 // @usage -- play sound file "blubber.ogg" at 80% volume and
 // -- fade in for 5 seconds
-// mysound2 = @{blitwizard.audio.simpleSound:new}("blubber.ogg")
+// mysound2 = blitwizard.audio.simpleSound:new("blubber.ogg")
 // mysound2:play(0.8, 8)
 
 int luafuncs_media_simpleSound_play(lua_State* l) {
@@ -253,6 +253,9 @@ int luafuncs_media_pannedSound_new(lua_State* l) {
 // @tparam number panning (optional) Stereo panning which alters the left/right placement of the sound from 1 (left) through 0 (center) to -1 (right). Default is 0
 // @tparam boolean loop (optional) If set to true, the sound will loop until explicitely stopped. If set to false or if not specified, it will play once
 // @tparam number fadein (optional) Fade in from silence to the specified volume in the given amount of seconds, instead of playing at full volume right from the start
+// @usage -- Play a sound at full volume, slightly panned to the left
+// mysound = blitwizard.audio.pannedSound("song.ogg")
+// mysound:play(1, 0.3)
 
 int luafuncs_media_pannedSound_play(lua_State* l) {
     return luafuncs_media_object_play(l, MEDIA_TYPE_AUDIO_PANNED);
