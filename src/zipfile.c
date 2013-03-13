@@ -449,7 +449,7 @@ int zipfile_PathExists(struct zipfile* zf, const char* path) {
 
     // try to open the file:
     PHYSFS_Stat s;
-    if (PHYSFS_stat(path, &s)) {
+    if (PHYSFS_stat(p, &s)) {
         pathexists = 1;
     }
 
@@ -475,7 +475,7 @@ int zipfile_IsDirectory(struct zipfile* zf, const char* path) {
 
     // try to open the file:
     PHYSFS_Stat s;
-    if (PHYSFS_stat(path, &s)) {
+    if (PHYSFS_stat(p, &s)) {
         if (s.filetype == PHYSFS_FILETYPE_DIRECTORY) {
             isdirectory = 1;
         }
@@ -502,7 +502,7 @@ int64_t zipfile_FileGetLength(struct zipfile* zf, const char* path) {
 
     // try to open the file:
     PHYSFS_Stat s;
-    if (PHYSFS_stat(path, &s)) {
+    if (PHYSFS_stat(p, &s)) {
         size = s.filesize;
     }
 
