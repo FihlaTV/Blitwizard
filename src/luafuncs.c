@@ -85,10 +85,12 @@ int luafuncs_getTemplateDirectory(lua_State* l) {
 }
 
 int luafuncs_loadfile(lua_State* l) {
+    // obtain load file argument:
     const char* p = lua_tostring(l,1);
     if (!p) {
         return haveluaerror(l, badargument1, 1, "loadfile", "string", lua_strtype(l, 1));
     }
+
 #if defined(ANDROID) || defined(__ANDROID__)
     // special Android file loading
     struct luachunkreaderinfo* info = malloc(sizeof(*info));
@@ -120,6 +122,8 @@ int luafuncs_loadfile(lua_State* l) {
     }
     return 1;
 #else
+    // check our resources infrastructure for the file:
+
     // regular file loading done by Lua
     int r = luaL_loadfile(l, p);
     if (r != 0) {
