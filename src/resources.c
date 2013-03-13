@@ -391,7 +391,6 @@ struct resourcelocation* location) {
         // check resource archives:
         struct resourcearchive* a = resourcearchives;
         while (a) {
-            printf("a: %p, a->z: %p\n", a, a->z);
             // check if path maps to a file in this archive:
             if (zipfile_PathExists(a->z, archivepath)) {
                 if (zipfile_IsDirectory(a->z, archivepath)) {
@@ -399,7 +398,17 @@ struct resourcelocation* location) {
                     a = a->next;
                     continue;
                 }
+
                 // it is a file! hooray!
+
+                if (!location) {
+                    // the callee apparently doesn't care about
+                    // location details.
+                    free(archivepath);
+                    return 1;
+                }
+
+                // store location details:
                 location->type = LOCATION_TYPE_ZIP;
                 int i = strlen(archivepath);
                 if (i >= MAX_RESOURCE_PATH) {
@@ -420,20 +429,29 @@ struct resourcelocation* location) {
 #endif
     // check the hard disk as last location:
     if (file_DoesFileExist(path) && !file_IsDirectory(path)) {
+        // file exists on disk!
         if (location) {
             location->type = LOCATION_TYPE_DISK;
+
+            // get an absolute path to the resource:
             char* apath = file_GetAbsolutePathFromRelativePath(path);
             if (!apath) {
                 return 0;
             }
+
+            // copy path to location info struct:
             int i = strlen(apath);
             if (i >= MAX_RESOURCE_PATH) {
                 i = MAX_RESOURCE_PATH-1;
             }
             memcpy(location->location.disklocation.filepath, apath, i);
             location->location.disklocation.filepath[i] = 0;
+
+            // turn path to native style (since it's a disk path)
             file_MakeSlashesNative(
             location->location.disklocation.filepath);
+
+            // free temp path string
             free(apath);
         }
         return 1;

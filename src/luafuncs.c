@@ -97,16 +97,13 @@ const char* luazipreader(lua_State* l, void* data, size_t* size) {
         zfr = zipfile_FileOpen(s->location.ziplocation.archive,
         s->location.ziplocation.filepath);
         if (!zfr) {
-            printf("Cannot open reader.\n");
             return NULL;
         }
     }
 
-    printf("READER\n");
     // read more data:
     int r = zipfile_FileRead(zfr, zfrbuf, sizeof(zfrbuf));
     zfrbuf[sizeof(zfrbuf)] = 0;
-    printf("I READ: %s\n", zfrbuf);
     if (r == 0) {
         zipfile_FileClose(zfr);
         zfr = NULL;

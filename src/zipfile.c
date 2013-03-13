@@ -259,6 +259,11 @@ void* userdata, struct zipdecryptionfileaccess* zdf) {
         return 0;
     }
 
+    // copy offset info:
+    zf2->posinfile = zf->posinfile;
+    zf2->offsetinfile = zf->offsetinfile;
+    zf2->sizeinfile = zf->sizeinfile; 
+
     // return new zipdecryptionfileaccess info:
     memset(zdf, 0, sizeof(*zdf));
     zdf->read = &zipfile_ReadUndecrypted;
@@ -268,7 +273,7 @@ void* userdata, struct zipdecryptionfileaccess* zdf) {
     zdf->tell = &zipfile_TellUndecrypted;
     zdf->close = &zipfile_DestroyUndecrypted;
     zdf->duplicate = &zipfile_DuplicateUndecrypted;
-    zdf->userdata = zf2; 
+    zdf->userdata = zf2;
     return 1;
 }
 
@@ -287,7 +292,6 @@ static void zipfile_RandomMountPoint(char* buffer) {
     }
     buffer[MOUNT_POINT_LEN-1] = '/';
     buffer[MOUNT_POINT_LEN] = 0;
-    printf("generated mountpoint: %s\n", buffer);
 }
 
 PHYSFS_sint64 zipfile_WritePhysFS(struct PHYSFS_Io* io,
@@ -414,8 +418,6 @@ size_t sizeinfile, int encrypted) {
         free(zf);
         return 0;
     }
-    printf("Returning it, mount point is: %s\n", zf->mountpoint);
-    printf("returned ptr: %p\n", zf);
     return zf;
 }
 
@@ -454,7 +456,6 @@ int zipfile_PathExists(struct zipfile* zf, const char* path) {
     PHYSFS_Stat s;
     if (PHYSFS_stat(p, &s)) {
         pathexists = 1;
-        printf("path exists: %s\n", p);
     }
 
     // free sanitized path:
@@ -481,12 +482,7 @@ int zipfile_IsDirectory(struct zipfile* zf, const char* path) {
     PHYSFS_Stat s;
     if (PHYSFS_stat(p, &s)) {
         if (s.filetype == PHYSFS_FILETYPE_DIRECTORY) {
-            printf("dir: %s\n", p);
             isdirectory = 1;
-        } else if (s.filetype == PHYSFS_FILETYPE_REGULAR) {
-            printf("regular\n");
-        } else {
-            printf("weird\n");
         }
     }    
 
@@ -527,18 +523,14 @@ struct zipfilereader {
 
 struct zipfilereader* zipfile_FileOpen(struct zipfile* f, const char* path) {
     if (!f || !path) {
-        printf("some is NULL\n");
         return NULL;
     }
-    printf("mount point: '%s'\n", f->mountpoint);
-    printf("ptr: %p\n", f);
 
     // get proper file path:
     char* p = getfilepath(f, path);
     if (!p) {
         return 0;
     }
-    printf("path is: >%s<\n", p);
 
     // allocate struct
     struct zipfilereader* zfr = malloc(sizeof(*zfr));
@@ -548,10 +540,8 @@ struct zipfilereader* zipfile_FileOpen(struct zipfile* f, const char* path) {
     }
 
     // open file:
-    printf("%s\n", p);
     zfr->f = PHYSFS_openRead(p);
     if (!zfr->f) {
-        printf("openRead failed! %s, %s\n", PHYSFS_getLastError(), p);
         free(zfr);
         free(p);
         return NULL;
