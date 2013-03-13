@@ -89,7 +89,7 @@ int luafuncs_getTemplateDirectory(lua_State* l) {
 // this lua reader reads from a zip resourcelocation:
 static struct zipfilereader* zfr = NULL;
 static char zfrbuf[256];
-const char* luazipreader(lua_State* l, void* data, size_t size) {
+const char* luazipreader(lua_State* l, void* data, size_t* size) {
     struct resourcelocation* s = data;
     
     // get a zip file reader if we don't have any:
@@ -97,17 +97,22 @@ const char* luazipreader(lua_State* l, void* data, size_t size) {
         zfr = zipfile_FileOpen(s->location.ziplocation.archive,
         s->location.ziplocation.filepath);
         if (!zfr) {
+            printf("Cannot open reader.\n");
             return NULL;
         }
     }
 
+    printf("READER\n");
     // read more data:
     int r = zipfile_FileRead(zfr, zfrbuf, sizeof(zfrbuf));
+    zfrbuf[sizeof(zfrbuf)] = 0;
+    printf("I READ: %s\n", zfrbuf);
     if (r == 0) {
         zipfile_FileClose(zfr);
         zfr = NULL;
         return NULL;
     }
+    *size = r;
     return zfrbuf;
 }
 

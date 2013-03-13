@@ -391,6 +391,7 @@ struct resourcelocation* location) {
         // check resource archives:
         struct resourcearchive* a = resourcearchives;
         while (a) {
+            printf("a: %p, a->z: %p\n", a, a->z);
             // check if path maps to a file in this archive:
             if (zipfile_PathExists(a->z, archivepath)) {
                 if (zipfile_IsDirectory(a->z, archivepath)) {
@@ -404,7 +405,7 @@ struct resourcelocation* location) {
                 if (i >= MAX_RESOURCE_PATH) {
                     i = MAX_RESOURCE_PATH-1;
                 }
-                location->location.ziplocation.archive = a;
+                location->location.ziplocation.archive = a->z;
                 memcpy(location->location.ziplocation.filepath,
                 archivepath, i);
                 location->location.ziplocation.filepath[i] = 0;
