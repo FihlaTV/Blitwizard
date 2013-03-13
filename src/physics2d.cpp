@@ -302,6 +302,9 @@ static void physics2d_DestroyObjectDo(struct physicsobject2d* obj);
 
 void physics_Step(struct physicsworld* world) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (world->is3d) {
+#endif
+#ifdef USE_PHYSICS2D
     struct physicsworld* world2d = world->wor.ld2d;
     // Do a collision step
     insidecollisioncallback = 1; // remember we are inside a step
@@ -349,6 +352,13 @@ void physics_Step(struct physicsworld* world) {
         // free removed object
         free(pobj);
     }
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
 }
 
 class mycallback : public b2RayCastCallback {
