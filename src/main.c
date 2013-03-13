@@ -336,6 +336,7 @@ int attemptTemplateLoad(const char* path) {
 
     // if file doesn't exist, report failure:
     if (!file_DoesFileExist(p)) {
+        free(p);
         return 0;
     }
 
@@ -357,9 +358,11 @@ int attemptTemplateLoad(const char* path) {
             free(error);
         }
         fatalscripterror();
+        free(p);
         main_Quit(1);
         return 0;
     }
+    free(p);
     return 1;
 }
 
@@ -412,6 +415,9 @@ int main(int argc, char** argv) {
             // process template path option parameter:
             if (nextoptionistemplatepath) {
                 nextoptionistemplatepath = 0;
+                if (option_templatepath) {
+                    free(option_templatepath);
+                }
                 option_templatepath = strdup(argv[i]);
                 if (!option_templatepath) {
                     printerror("Error: failed to strdup() template path argument");
@@ -711,14 +717,6 @@ int main(int argc, char** argv) {
     // android having the templates in embedded resources (where cwd'ing to
     // isn't supported), while for the desktop it is a regular folder.
 #if !defined(ANDROID)
-    // remember current directory:
-    char* currentworkingdir = file_GetCwd();
-    if (!currentworkingdir) {
-        printerror("Error: failed to change current working directory");
-        main_Quit(1);
-        return 1;
-    }
-
     int checksystemwidetemplate = 1;
     // see if there is a template directory & file:
     if (file_DoesFileExist(option_templatepath)
@@ -750,6 +748,10 @@ int main(int argc, char** argv) {
     }
 #endif
 
+    // free template dir now that we've loaded things:
+    free(option_templatepath);
+
+
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Executing lua start script...");
 #endif
@@ -775,7 +777,7 @@ int main(int argc, char** argv) {
         if (error == NULL) {
             error = outofmem;
         }
-        printerror("Error: An error occured when running \"%s\": %s", script, error);
+        printerror("Error: an error occured when running \"%s\": %s", script, error);
         if (error != outofmem) {
             free(error);
         }

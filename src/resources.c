@@ -65,6 +65,7 @@ size_t offsetinfile, size_t sizeinfile, int encrypted) {
     }
     rl->next = resourcearchives;
     resourcearchives = rl;
+    return 1;
 #endif
     return 0;
 }
@@ -381,31 +382,40 @@ int resources_LocateResource(const char* path,
 struct resourcelocation* location) {
 #ifdef USE_PHYSFS
     if (file_IsPathRelative(path)) {
+        char* archivepath = strdup(path);
+        if (!archivepath) {
+            return 0;
+        }
+        file_MakeSlashesCrossplatform(archivepath);
+
         // check resource archives:
         struct resourcearchive* a = resourcearchives;
         while (a) {
+            printf("a: %p, a->z: %p\n", a, a->z);
             // check if path maps to a file in this archive:
-            if (zipfile_PathExists(a->z, path)) {
-                if (zipfile_IsDirectory(a->z, path)) {
+            if (zipfile_PathExists(a->z, archivepath)) {
+                if (zipfile_IsDirectory(a->z, archivepath)) {
                     // we want a file, not a directory.
                     a = a->next;
                     continue;
                 }
                 // it is a file! hooray!
                 location->type = LOCATION_TYPE_ZIP;
-                int i = strlen(path);
+                int i = strlen(archivepath);
                 if (i >= MAX_RESOURCE_PATH) {
                     i = MAX_RESOURCE_PATH-1;
                 }
-                memcpy(location->location.ziplocation.filepath, path, i);
+                location->location.ziplocation.archive = a->z;
+                memcpy(location->location.ziplocation.filepath,
+                archivepath, i);
                 location->location.ziplocation.filepath[i] = 0;
-                file_MakeSlashesNative(
-                location->location.ziplocation.filepath);
+                free(archivepath);
                 return 1;
             }
             // if path doesn't exist, continue our search:
             a = a->next;
         }
+        free(archivepath);
     }
 #endif
     // check the hard disk as last location:
