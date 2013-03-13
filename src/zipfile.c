@@ -63,7 +63,7 @@ __attribute__((constructor)) void initialisezip(void) {
     PHYSFS_init("./ourrandomnonexistingbinaryname");
 }
 
-static PHYSFS_sint64 zipfile_Read(struct PHYSFS_Io *io, void *buf,
+static PHYSFS_sint64 zipfile_ReadPhysFS(struct PHYSFS_Io *io, void *buf,
 PHYSFS_uint64 len) {
     // get our zip file info:
     struct zipfile* zf = (struct zipfile*)(io->opaque);
@@ -105,7 +105,7 @@ size_t bytes) {
     return r;
 }
 
-static PHYSFS_sint64 zipfile_Tell(struct PHYSFS_Io *io) {
+static PHYSFS_sint64 zipfile_TellPhysFS(struct PHYSFS_Io *io) {
     // get our zip file info:
     struct zipfile* zf = (struct zipfile*)io->opaque;
 
@@ -121,7 +121,7 @@ static size_t zipfile_TellUndecrypted(void* userdata) {
     return zf->posinfile;
 }
 
-static PHYSFS_sint64 zipfile_Length(struct PHYSFS_Io *io) {
+static PHYSFS_sint64 zipfile_LengthPhysFS(struct PHYSFS_Io *io) {
     // get our zip file info:
     struct zipfile* zf = (struct zipfile*)io->opaque;
 
@@ -136,7 +136,7 @@ static size_t zipfile_LengthUndecrypted(void* userdata) {
     return zf->sizeinfile;
 }
 
-static int zipfile_Seek(struct PHYSFS_Io *io,
+static int zipfile_SeekPhysFS(struct PHYSFS_Io *io,
 PHYSFS_uint64 offset) {
     // get our zip file info:
     struct zipfile* zf = (struct zipfile*)io->opaque;
@@ -166,7 +166,7 @@ static int zipfile_SeekUndecrypted(void* userdata, size_t offset) {
     return 0;
 }
 
-static void zipfile_Destroy(struct PHYSFS_Io *io) {
+static void zipfile_DestroyPhysFS(struct PHYSFS_Io *io) {
     // close decrypter, destroy our structs:
     struct zipfile* zf = (struct zipfile*)(io->opaque);
     zf->zipdecrypter->close(zf->zipdecrypter);
@@ -197,7 +197,7 @@ static void zipfile_DestroyUndecrypted(void* userdata) {
     free(zf);
 }
 
-struct PHYSFS_Io* zipfile_Duplicate(struct PHYSFS_Io* io) {
+struct PHYSFS_Io* zipfile_DuplicatePhysFS(struct PHYSFS_Io* io) {
     // duplicate zipfile struct:
     struct zipfile* zf = (struct zipfile*)(io->opaque);
     struct zipfile* newzip = malloc(sizeof(*newzip));
@@ -217,6 +217,11 @@ struct PHYSFS_Io* zipfile_Duplicate(struct PHYSFS_Io* io) {
 
     // duplicate zip decrypter:
     newzip->zipdecrypter = newzip->zipdecrypter->duplicate(newzip->zipdecrypter);
+    if (!newzip->zipdecrypter) {
+        free(newzip->physio);
+        free(newzip);
+        return NULL;
+    }
     return newzip->physio;
 }
 
@@ -337,12 +342,12 @@ size_t sizeinfile, int encrypted) {
     zf->physio->opaque = zf;  // make sure we can find our zip info again
 
     // initialise our custom file access functions:
-    zf->physio->read = &zipfile_Read;
-    zf->physio->length = &zipfile_Length;
-    zf->physio->tell = &zipfile_Tell;
-    zf->physio->seek = &zipfile_Seek;
-    zf->physio->duplicate = &zipfile_Duplicate;
-    zf->physio->destroy = &zipfile_Destroy;
+    zf->physio->read = &zipfile_ReadPhysFS;
+    zf->physio->length = &zipfile_LengthPhysFS;
+    zf->physio->tell = &zipfile_TellPhysFS;
+    zf->physio->seek = &zipfile_SeekPhysFS;
+    zf->physio->duplicate = &zipfile_DuplicatePhysFS;
+    zf->physio->destroy = &zipfile_DestroyPhysFS;
 
     // initialise our decryption:
     struct zipdecryptionfileaccess zdf;
@@ -379,42 +384,186 @@ size_t sizeinfile, int encrypted) {
     return zf;
 }
 
-void zipfile_Close(struct zipfile* zf) {
+void zipfile_ClosePhysFS(struct zipfile* zf) {
     PHYSFS_unmount(zf->mountpoint);
 }
 
-int zipfile_PathExists(struct zipfile* zf, const char* path) {
-    if (!zf || !path) {return 0;}
+static char* getfilepath(struct zipfile* f, const char* path) {
+    // create path with prepended mount point:
+    char* p = malloc(strlen(f->mountpoint)+strlen(path)+1);
+    if (!p) {
+        return NULL;
+    }
+    memcpy(p, f->mountpoint, strlen(f->mountpoint));
+    memcpy(p+strlen(f->mountpoint), path, strlen(path));
+    p[strlen(f->mountpoint)+strlen(path)] = 0;
+    file_MakeSlashesCrossplatform(p);
+    return p;
+}
 
-    // sanitize path:
-    char* p = strdup(path);
-    if (!p) {return 0;}
-    file_MakeSlashesNative(p);
+int zipfile_PathExists(struct zipfile* zf, const char* path) {
+    if (!zf || !path) {
+        return 0;
+    }
+
+    // get proper file path:
+    char* p = getfilepath(zf, path);
+    if (!p) {
+        return 0;
+    }
 
     // check if path exists in archive:
-    int exists = 0;
+    int pathexists = 0;
+
+    // try to open the file:
+    PHYSFS_Stat s;
+    if (PHYSFS_stat(path, &s)) {
+        pathexists = 1;
+    }
 
     // free sanitized path:
     free(p);
 
-    return exists;
+    return pathexists;
 }
 
 int zipfile_IsDirectory(struct zipfile* zf, const char* path) {
-    if (!zf || !path) {return 0;}
+    if (!zf || !path) {
+        return 0;
+    }
 
-    // sanitize path:
-    char* p = strdup(path);
-    if (!p) {return 0;}
-    file_MakeSlashesNative(p);
+    // get proper file path:
+    char* p = getfilepath(zf, path);
+    if (!p) {
+        return 0;
+    }
 
     // check if path is directory in archive:
     int isdirectory = 0;
-    
+
+    // try to open the file:
+    PHYSFS_Stat s;
+    if (PHYSFS_stat(path, &s)) {
+        if (s.filetype == PHYSFS_FILETYPE_DIRECTORY) {
+            isdirectory = 1;
+        }
+    }    
+
     // free sanitized path:
     free(p);
 
     return isdirectory;
+}
+
+int64_t zipfile_FileGetLength(struct zipfile* zf, const char* path) {
+    if (!zf || !path) {
+        return -1;
+    }
+
+    // get proper file path:
+    char* p = getfilepath(zf, path);
+    if (!p) {
+        return -1;
+    }
+
+    int64_t size = -1;
+
+    // try to open the file:
+    PHYSFS_Stat s;
+    if (PHYSFS_stat(path, &s)) {
+        size = s.filesize;
+    }
+
+    // free sanitized path:
+    free(p);
+
+    return size;
+}
+
+struct zipfilereader {
+    PHYSFS_File* f;
+};
+
+struct zipfilereader* zipfile_FileOpen(struct zipfile* f, const char* path) {
+    if (!f || !path) {
+        return NULL;
+    }
+
+    // get proper file path:
+    char* p = getfilepath(f, path);
+    if (!p) {
+        return 0;
+    }
+
+    // allocate struct
+    struct zipfilereader* zfr = malloc(sizeof(*zfr));
+    if (!zfr) {
+        free(p);
+        return NULL;
+    }
+
+    // open file:
+    zfr->f = PHYSFS_openRead(p);
+    if (!zfr->f) {
+        free(zfr);
+        free(p);
+        return NULL;
+    }
+
+    // free sanitized path:
+    free(p);
+
+    return zfr;
+}
+
+int zipfile_FileSeek(struct zipfilereader* f, size_t pos) {
+    if (!f) {
+        return 0;
+    }
+
+    return (PHYSFS_seek(f->f, pos) != 0);
+}
+
+size_t zipfile_FileTell(struct zipfilereader* f) {
+    if (!f) {
+        return 0;
+    }
+
+    return (size_t)PHYSFS_tell(f->f);
+}
+
+void zipfile_FileClose(struct zipfilereader* f) {
+    if (!f) {
+        return;
+    }
+
+    // Close file:
+    PHYSFS_close(f->f);
+    // not for icculus: this is not a well-written program :-)
+
+    // free struct:
+    free(f);
+}
+
+size_t zipfile_FileRead(struct zipfilereader* f, char* buffer,
+size_t bytes) {
+    if (!f) {
+        return 0;
+    }
+
+    int r = PHYSFS_readBytes(f->f, buffer, bytes);
+    if (r <= 0) {
+        r = 0;
+    }
+    return r;
+}
+
+int zipfile_FileEof(struct zipfilereader* f) {
+    if (!f) {
+        return 0;
+    }
+
+    return PHYSFS_eof(f->f);
 }
 
 #endif  // USE_PHYSFS
