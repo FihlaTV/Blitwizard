@@ -232,7 +232,7 @@ struct physicsworld* physics_CreateWorld(int use3dphysics) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not use3dphysics) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifndef USE_PHYSIC2D
     struct physicsworld2d* world2d = (struct physicsworld2d*)malloc(sizeof(*world2d));
     if (!world2d) {
         return NULL;
@@ -250,14 +250,17 @@ struct physicsworld* physics_CreateWorld(int use3dphysics) {
     return world;
 #else
     printerror("Error: Trying to create 2D physics world, but USE_PHYSICS2D is disabled.");
+    return NULL;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
-    } else {
+    }else{
 #else
     printerror("Error: Trying to create 3D physics world, but USE_PHYSICS3D is disabled.");
+    return NULL;
 #endif
 #ifdef USE_PHYSICS3D
     printerror(BW_E_NO3DYET);
+    return NULL;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     }
@@ -275,7 +278,7 @@ void physics_DestroyWorld(struct physicsworld* world) {
     free(world);
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
-    } else {
+    }else{
 #endif
 #ifdef USE_PHYSICS3D
     printerror(BW_E_NO3DYET);
@@ -628,7 +631,7 @@ void physics_DestroyObject(struct physicsobject* obj) {
     free(obj);
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
-    } else {
+    }else{
 #endif
 #ifdef USE_PHYSICS3D
     printerror(BW_E_NO3DYET);
