@@ -232,7 +232,7 @@ struct physicsworld* physics_CreateWorld(int use3dphysics) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not use3dphysics) {
 #endif
-#ifndef USE_PHYSIC2D
+#ifdef USE_PHYSIC2D
     struct physicsworld2d* world2d = (struct physicsworld2d*)malloc(sizeof(*world2d));
     if (!world2d) {
         return NULL;
@@ -254,12 +254,12 @@ struct physicsworld* physics_CreateWorld(int use3dphysics) {
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     }else{
-#else
-    printerror("Error: Trying to create 3D physics world, but USE_PHYSICS3D is disabled.");
-    return NULL;
 #endif
 #ifdef USE_PHYSICS3D
     printerror(BW_E_NO3DYET);
+    return NULL;
+#else
+    printerror("Error: Trying to create 3D physics world, but USE_PHYSICS3D is disabled.");
     return NULL;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
