@@ -120,6 +120,8 @@ struct physicsworld {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     int is3d;
 #endif
+    void* callbackuserdata;
+    int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
 };
 
 
@@ -130,8 +132,8 @@ struct physicsworld2d {
     mycontactlistener* listener;
     b2World* w;
     double gravityx,gravityy;
-    void* callbackuserdata;
-    int (*callback)(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force);
+    void* callbackuserdata; // FIXME: remove once appropriate
+    int (*callback)(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force); // FIXME: remove once appropriate
 };
 
 struct physicsobject2d {
@@ -141,7 +143,7 @@ struct physicsobject2d {
     int gravityset;
     double gravityx,gravityy;
     void* userdata;
-    struct physicsworld2d* pworld;
+    struct physicsworld2d* pworld; // FIXME: remove once appropriate
     int deleted; // 1: deleted inside collision callback, 0: everything normal
 };
 
@@ -154,14 +156,13 @@ struct deletedphysicsobject2d* deletedlist = NULL;
 
 struct bodyuserdata {
     void* userdata;
-    struct physicsobject2d* pobj;
+    struct physicsobject* pobj;
 };
 
 #ifdef USE_PHYSICS2D
 void physics_Set2dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
-    struct physicsworld2d* world2d = world->wor.ld2d;
-    world2d->callback = callback;
-    world2d->callbackuserdata = userdata;
+    world->callback = callback;
+    world->callbackuserdata = userdata;
 }
 #ifdef USE_PHYSICS2D
 
@@ -171,10 +172,28 @@ void physics_Set3dCollisionCallback(struct physicsworld* world, int (*callback)(
 }
 #endif
 
-void* physics2d_GetObjectUserdata(struct physicsobject2d* object) {
-    return ((struct bodyuserdata*)object->body->GetUserData())->userdata;
+void* physics_GetObjectUserdata(struct physicsobject* object) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not object->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    return ((struct bodyuserdata*)object->obj.ect2d->body->GetUserData())->userdata;
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }else{
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+    return NULL;
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
 }
 
+
+#ifdef USE_PHYSICS2D
+// 2D only due to being derived from b2 class
 class mycontactlistener : public b2ContactListener {
 public:
     mycontactlistener();
@@ -186,11 +205,11 @@ private:
 mycontactlistener::mycontactlistener() {return;}
 mycontactlistener::~mycontactlistener() {return;}
 
-/* FIXME: This whole thing assumes 2d objects and worlds */
+
 void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifold) {
-    struct physicsobject2d* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()->GetBody()->GetUserData())->pobj;
-    struct physicsobject2d* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()->GetBody()->GetUserData())->pobj;
-    if (obj1->deleted || obj2->deleted) {
+    struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()->GetBody()->GetUserData())->pobj;
+    struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()->GetBody()->GetUserData())->pobj;
+    if (obj1->obj.ect2d->deleted || obj2->obj.ect2d->deleted) {
         // one of the objects should be deleted already, ignore collision
         contact->SetEnabled(false);
         return;
@@ -221,7 +240,7 @@ void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifo
     float impact = contact->GetManifold()->points[0].normalImpulse; //oldManifold->points[0].normalImpulse; //impulse->normalImpulses[0];
 
     // find our current world
-    struct physicsworld2d* w = obj1->pworld;
+    struct physicsworld* w = obj1->pworld;
 
     // return the information through the callback
     if (w->callback) {
@@ -234,6 +253,8 @@ void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifo
         }
     }
 }
+#endif
+
 
 struct physicsworld* physics_CreateWorld(int use3dphysics) {
     struct physicsworld* world = (struct physicsworld*)malloc(sizeof(*world));
