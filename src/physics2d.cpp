@@ -105,6 +105,7 @@ struct physicsobject {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     int is3d;
 #endif
+    struct physicsworld* pworld;
 };
 
 struct physicsworld {
@@ -156,10 +157,19 @@ struct bodyuserdata {
     struct physicsobject2d* pobj;
 };
 
-void physics2d_SetCollisionCallback(struct physicsworld2d* world, int (*callback)(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
-    world->callback = callback;
-    world->callbackuserdata = userdata;
+#ifdef USE_PHYSICS2D
+void physics_Set2dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
+    struct physicsworld2d* world2d = world->wor.ld2d;
+    world2d->callback = callback;
+    world2d->callbackuserdata = userdata;
 }
+#ifdef USE_PHYSICS2D
+
+#ifdef USE_PHYSICS3D
+void physics_Set3dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double z, double normalx, double normaly, double normalz, double force), void* userdata) {
+    printerror(BW_E_NO3DYET);
+}
+#endif
 
 void* physics2d_GetObjectUserdata(struct physicsobject2d* object) {
     return ((struct bodyuserdata*)object->body->GetUserData())->userdata;
@@ -176,6 +186,7 @@ private:
 mycontactlistener::mycontactlistener() {return;}
 mycontactlistener::~mycontactlistener() {return;}
 
+/* FIXME: This whole thing assumes 2d objects and worlds */
 void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifold) {
     struct physicsobject2d* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()->GetBody()->GetUserData())->pobj;
     struct physicsobject2d* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()->GetBody()->GetUserData())->pobj;
