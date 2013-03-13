@@ -50,6 +50,8 @@ void file_StripComponentFromPath(char* path);
 
 void file_MakeSlashesNative(char* path);
 
+void file_MakeSlashesCrossplatform(char* path);
+
 char* file_GetUserFileDir(void);
 
 char* file_GetTempPath(const char* name);

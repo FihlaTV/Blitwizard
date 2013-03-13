@@ -33,6 +33,8 @@
 
 #ifdef USE_PHYSFS
 
+#include <stdint.h>
+
 // open a zip archive file:
 struct zipfile;
 struct zipfile* zipfile_Open(const char* file, size_t offsetinfile,
@@ -63,18 +65,24 @@ void zipfile_FinishIteration(struct zipfileiter* iter);
 
 // check if a given path leads to a folder or a file:
 int zipfile_PathExists(struct zipfile* f, const char* path);
+// returns 1 if path exists, otherwise 0
 
 // check if a given valid path is a directory or a file:
 int zipfile_IsDirectory(struct zipfile* f, const char* path);
+// returns 1 if directory, 0 if file or not existant
 
 // do things with files inside the archive:
 // get length of a file in bytes:
-int zipfile_FileGetLength(struct zipfile* f, const char* path);
+int64_t zipfile_FileGetLength(struct zipfile* f, const char* path);
+// returns >= 0 on success (size in bytes), or -1 on error
+
 // read from a file:
 struct zipfilereader;
 struct zipfilereader* zipfile_FileOpen(struct zipfile* f, const char* path);
 size_t zipfile_FileRead(struct zipfilereader* reader, char* buffer,
 size_t bytes);  // returns amount of bytes read, or 0 on end of file/error
+int zipfile_Seek(struct zipfilereader* f, size_t pos);  // seeks, returns 1/success or 0/error
+size_t zipfile_Tell(struct zipfilereader* f);  // tell current position in file
 void zipfile_FileClose(struct zipfilereader* reader);
 
 // Close the archive again (do not use if you still got open zipfilereader handles!):

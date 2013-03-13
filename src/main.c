@@ -51,6 +51,7 @@ int windowisfocussed = 0;
 int appinbackground = 0; // app is in background (mobile/Android)
 static int sdlinitialised = 0; // sdl was initialised and needs to be quit
 extern int drawingallowed; // stored in luafuncs.c, checks if we come from an on_draw() event or not
+char* templatepath = NULL; // global template directory path as determined at runtime
 
 #include "luastate.h"
 #include "file.h"
@@ -312,10 +313,42 @@ static void putinbackground(int background) {
     }
 }
 
-void attemptTemplateLoad(const char* path) {
+int attemptTemplateLoad(const char* path) {
+#ifdef WINDOWS
+    // check for invalid absolute unix paths:
+    if (path[0] == '/' || path[0] == '\\') {
+        return 0;
+    }
+#endif
+
+    // path to init.lua:
+    char* p = malloc(strlen(path) + 1 + strlen("init.lua") + 1);
+    if (!p) {
+        printerror("Error: failed to allocate string when attempting to run templates init.lua");
+        main_Quit(1);
+        return 0;
+    }
+    memcpy(p, path, strlen(path));
+    p[strlen(path)] = '/';
+    memcpy(p+strlen(path)+1, "init.lua", strlen("init.lua"));
+    p[strlen(path)+1+strlen("init.lua")] = 0;
+    file_MakeSlashesNative(p);
+
+    // if file doesn't exist, report failure:
+    if (!file_DoesFileExist(p)) {
+        return 0;
+    }
+
+    // update global template path:
+    if (templatepath) {
+        free(templatepath);
+    }
+    templatepath = strdup(path);
+
+    // run file:
     char outofmem[] = "Out of memory";
     char* error;
-    if (!luastate_DoInitialFile(path, 0, &error)) {
+    if (!luastate_DoInitialFile(p, 0, &error)) {
         if (error == NULL) {
             error = outofmem;
         }
@@ -325,8 +358,9 @@ void attemptTemplateLoad(const char* path) {
         }
         fatalscripterror();
         main_Quit(1);
-        return;
+        return 0;
     }
+    return 1;
 }
 
 
@@ -353,7 +387,6 @@ int main(int argc, char** argv) {
     int scriptargfound = 0;
     int option_changedir = 0;
     char* option_templatepath = NULL;
-    int option_templatepathset = 0;
     int nextoptionistemplatepath = 0;
     int nextoptionisscriptarg = 0;
     int gcframecount = 0;
@@ -385,7 +418,6 @@ int main(int argc, char** argv) {
                     main_Quit(1);
                     return 1;
                 }
-                option_templatepathset = 1;
                 file_MakeSlashesNative(option_templatepath);
                 i++;
                 continue;
@@ -693,27 +725,14 @@ int main(int argc, char** argv) {
     && file_IsDirectory(option_templatepath)) {
         checksystemwidetemplate = 0;
 
-        // change working directory to template folder:
-        int cwdfailed = 0;
-        if (!file_Cwd(option_templatepath) && option_templatepathset) {
-            printwarning("Warning: failed to change working directory to template path \"%s\"", option_templatepath);
-            cwdfailed = 1;
-        }
-
         // now run template file:
-        if (!cwdfailed && file_DoesFileExist("init.lua")) {
-            attemptTemplateLoad("init.lua");
-        }else{
+        if (!attemptTemplateLoad(option_templatepath)) {
             checksystemwidetemplate = 1;
         }
     }
 #if defined(SYSTEM_TEMPLATE_PATH)
     if (checksystemwidetemplate) {
-        if (file_Cwd(SYSTEM_TEMPLATE_PATH)) {
-            if (file_DoesFileExist("init.lua")) {
-                attemptTemplateLoad("init.lua");
-            }
-        }
+        attemptTemplateLoad(SYSTEM_TEMPLATE_PATH);
     }
 #endif
 #else // if !defined(ANDROID)
@@ -727,15 +746,8 @@ int main(int argc, char** argv) {
     }
     if (exists) {
         // run the template file:
-        if (!luastate_DoInitialFile("templates/init.lua", 0, &error)) {
-            attemptTemplateLoad("templates/init.lua");
-        }
+        attemptTemplateLoad("templates/");
     }
-#endif
-
-    // now since templates are loaded, return to old working dir:
-#if !defined(ANDROID)
-    file_Cwd(currentworkingdir);
 #endif
 
 #if defined(ANDROID) || defined(__ANDROID__)

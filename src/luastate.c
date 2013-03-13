@@ -427,6 +427,11 @@ static lua_State* luastate_New(void) {
     lua_pushcfunction(l, &luafuncs_setstep);
     lua_settable(l, -3);
 
+    // blitwiz.getTemplateDirectory:
+    lua_pushstring(l, "getTemplateDirectory");
+    lua_pushcfunction(l, &luafuncs_getTemplateDirectory);
+    lua_settable(l, -3);
+
     // blitwiz namespaces
     lua_pushstring(l, "graphics");
     luastate_CreateGraphicsTable(l);
@@ -556,7 +561,7 @@ static int luastate_DoFile(lua_State* l, int argcount, const char* file, char** 
     int returnvalue = 1;
     // process errors
     if (ret != 0) {
-        const char* e = lua_tostring(l,-1);
+        const char* e = lua_tostring(l, -1);
         *error = NULL;
         if (e) {
             *error = strdup(e);

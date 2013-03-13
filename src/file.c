@@ -67,9 +67,20 @@ static int file_IsDirectorySeparator(char c) {
 
 void file_MakeSlashesNative(char* path) {
     unsigned int i = 0;
+    char nativeslash = file_NativeSlash();
     while (i < strlen(path)) {
         if (file_IsDirectorySeparator(path[i])) {
-            path[i] = file_NativeSlash();
+            path[i] = nativeslash;
+        }
+        i++;
+    }
+}
+
+void file_MakeSlashesCrossplatform(char* path) {
+    unsigned int i = 0;
+    while (i < strlen(path)) {
+        if (file_IsDirectorySeparator(path[i])) {
+            path[i] = '/';
         }
         i++;
     }
