@@ -300,13 +300,15 @@ int physics2d_GetStepSize(struct physicsworld2d* world) {
 
 static void physics2d_DestroyObjectDo(struct physicsobject2d* obj);
 
-void physics2d_Step(struct physicsworld2d* world) {
+void physics_Step(struct physicsworld* world) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    struct physicsworld* world2d = world->wor.ld2d;
     // Do a collision step
     insidecollisioncallback = 1; // remember we are inside a step
     int i = 0;
     while (i < 2) {
-        double forcefactor = (1.0/(1000.0f/physics2d_GetStepSize(world)))*2;
-        b2Body* b = world->w->GetBodyList();
+        double forcefactor = (1.0/(1000.0f/physics2d_GetStepSize(world2d)))*2;
+        b2Body* b = world2d->w->GetBodyList();
         while (b) {
             // obtain physics object struct from body
             struct physicsobject2d* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
@@ -316,7 +318,7 @@ void physics2d_Step(struct physicsworld2d* world) {
                     b->ApplyLinearImpulse(b2Vec2(obj->gravityx * forcefactor, obj->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
                 }else{
                     // no custom gravity -> apply world gravity
-                    b->ApplyLinearImpulse(b2Vec2(world->gravityx * forcefactor, world->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
+                    b->ApplyLinearImpulse(b2Vec2(world2d->gravityx * forcefactor, world2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
                 }
             }
             b = b->GetNext();
@@ -330,7 +332,7 @@ void physics2d_Step(struct physicsworld2d* world) {
         int it1 = 7;
         int it2 = 4;
 #endif
-        world->w->Step(1.0 /(1000.0f/physics2d_GetStepSize(world)), it1, it2);
+        world2d->w->Step(1.0 /(1000.0f/physics2d_GetStepSize(world2d)), it1, it2);
         i++;
     }
     insidecollisioncallback = 0; // we are no longer inside a step
