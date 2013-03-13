@@ -79,6 +79,11 @@ static const char* luastringchunkreader(lua_State *l, void *data, size_t *size) 
 
 #endif
 
+int luafuncs_getTemplateDirectory(lua_State* l) {
+    lua_pushstring(l, templatepath);
+    return 1;
+}
+
 int luafuncs_loadfile(lua_State* l) {
     const char* p = lua_tostring(l,1);
     if (!p) {

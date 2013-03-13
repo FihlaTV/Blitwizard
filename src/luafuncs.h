@@ -39,6 +39,7 @@ int luafuncs_sysversion(lua_State* l);
 
 // blitwiz.*:
 int luafuncs_setstep(lua_State* l);
+int luafuncs_getTemplateDirectory(lua_State* l);
 
 // Base:
 int luafuncs_loadfile(lua_State* l);
