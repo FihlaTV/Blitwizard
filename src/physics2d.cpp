@@ -53,10 +53,12 @@ extern "C" {
 #ifdef USE_PHYSICS2D
 struct physicsobject2d;
 struct physicsworld2d;
+struct physicsobjectshape2d;
 #endif
 #ifdef USE_PHYSICS3D
 struct physicsobject3d;
 struct physicsworld3d;
+struct physicsobjectshape3d;
 #endif
 
 
@@ -92,6 +94,22 @@ inline void _physics_SetWorldIs3D(struct physicsworld* world, int is3d) {
 #endif
 }
 
+inline int _physics_ShapeIs3D(struct physicsobjectshape* shape) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    return shape->is3d;
+#elif defined(USE_PHYSICS2D)
+    return 0;
+#elif defined(USE_PHYSICS3D)
+    return 1;
+#endif
+}
+
+inline void _physics_SetShapeIs3D(struct physicsobject* shape, int is3d) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    shape->is3d = is3d;
+#endif
+}
+
 
 struct physicsobject {
     union dimension_specific_object {
@@ -124,6 +142,20 @@ struct physicsworld {
     int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
 };
 
+struct physicsobjectshape {
+    union dimension_specific_shape {
+#ifdef USE_PHYSICS2D
+        struct physicsobjectshape2d* pe2d;
+#endif
+#ifdef USE_PHYSICS3D
+        struct physicsobjectshape3d* pe3d;
+#endif
+    } sha;
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    int is3d;
+#endif
+};
+
 
 class mycontactlistener;
 static int insidecollisioncallback = 0;
@@ -147,6 +179,14 @@ struct physicsobject2d {
     int deleted; // 1: deleted inside collision callback, 0: everything normal
 };
 
+struct physicsobjectshape2d {
+    union {
+        b2PolygonShape* polygon;
+        b2CircleShape* circle;
+    } b2;
+    int type; // FIXME: enum? existing b2 enum constants?
+};
+
 struct deletedphysicsobject2d {
     struct physicsobject2d* obj;
     struct deletedphysicsobject2d* next;
@@ -158,6 +198,7 @@ struct bodyuserdata {
     void* userdata;
     struct physicsobject* pobj;
 };
+
 
 #ifdef USE_PHYSICS2D
 void physics_Set2dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
@@ -481,6 +522,21 @@ static struct physicsobject2d* createobj(struct physicsworld2d* world, void* use
     return object;
 }
 
+/* Shapes start here I guess */
+struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
+    struct physicsobjectshape* shapes = (struct physicsobjectshape*)malloc((sizeof(*shapes))*count);
+    // this was in earlier code so I'm doing it here as well, though tbh I don't understand the point
+    if (!shapes) {
+        return NULL;
+    }
+    return shapes;
+}
+
+size_t physics_GetShapeSize(void) {
+    return sizeof(struct physicsobjectshape*);
+}
+
+
 struct physicsobject2d* physics2d_CreateObjectRectangle(struct physicsworld2d* world, void* userdata, int movable, double friction, double width, double height) {
     struct physicsobject2d* obj = createobj(world, userdata, movable);
     if (!obj) {return NULL;}
@@ -684,6 +740,7 @@ void physics_DestroyObject(struct physicsobject* obj) {
     }
 #endif
 }
+
 
 void physics2d_Warp(struct physicsobject2d* obj, double x, double y, double angle) {
     obj->body->SetTransform(b2Vec2(x, y), angle * M_PI / 180);  
