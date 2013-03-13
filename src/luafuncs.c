@@ -52,6 +52,8 @@
 #include "win32console.h"
 #include "osinfo.h"
 #include "logging.h"
+#include "resources.h"
+#include "zipfile.h"
 
 #if defined(ANDROID) || defined(__ANDROID__)
 // required for RWops file loading for Android
@@ -84,7 +86,34 @@ int luafuncs_getTemplateDirectory(lua_State* l) {
     return 1;
 }
 
+// this lua reader reads from a zip resourcelocation:
+static struct zipfilereader* zfr = NULL;
+static char zfrbuf[256];
+const char* luazipreader(lua_State* l, void* data, size_t size) {
+    struct resourcelocation* s = data;
+    
+    // get a zip file reader if we don't have any:
+    if (!zfr) {
+        zfr = zipfile_FileOpen(s->location.ziplocation.archive,
+        s->location.ziplocation.filepath);
+        if (!zfr) {
+            return NULL;
+        }
+    }
+
+    // read more data:
+    int r = zipfile_FileRead(zfr, zfrbuf, sizeof(zfrbuf));
+    if (r == 0) {
+        zipfile_FileClose(zfr);
+        zfr = NULL;
+        return NULL;
+    }
+    return zfrbuf;
+}
+
 int luafuncs_loadfile(lua_State* l) {
+    /* our load-file is NOT thread-safe !! */
+
     // obtain load file argument:
     const char* p = lua_tostring(l,1);
     if (!p) {
@@ -123,22 +152,50 @@ int luafuncs_loadfile(lua_State* l) {
     return 1;
 #else
     // check our resources infrastructure for the file:
+    struct resourcelocation s;
+    if (!resources_LocateResource(p, &s)) {
+        return haveluaerror(l, "Cannot find file \"%s\"", p);
+    }
 
-    // regular file loading done by Lua
-    int r = luaL_loadfile(l, p);
+    // open with internal zip reader, or with Lua's
+    // regular file loading function, depending on
+    // the location type:
+    int r;
+    switch (s.type) {
+    case LOCATION_TYPE_ZIP:
+        // load with our own internal zip reader:
+        if (zfr) {
+            zipfile_FileClose(zfr);
+            zfr = NULL;
+        }
+        r = lua_load(l,
+        (lua_Reader)luazipreader,
+        &s,
+        s.location.ziplocation.filepath,
+        "t");
+        if (zfr) {
+            zipfile_FileClose(zfr);
+            zfr = NULL;
+        }
+        break;
+    case LOCATION_TYPE_DISK:
+        // regular file loading done by Lua
+        r = luaL_loadfile(l, p);
+        break;
+    default:
+        // no idea how to load this??
+        return haveluaerror(l,
+        "Unknown resource location type for \"%s\"", p);
+    }
     if (r != 0) {
         char errormsg[512];
         if (r == LUA_ERRFILE) {
-            snprintf(errormsg, sizeof(errormsg), "Cannot open file \"%s\"", p);
-            errormsg[sizeof(errormsg)-1] = 0;
-            lua_pushstring(l, errormsg);
-            return lua_error(l);
+            return haveluaerror(l,
+            "Cannot open file \"%s\"", p);
         }
         if (r == LUA_ERRSYNTAX) {
-            snprintf(errormsg,sizeof(errormsg),"Syntax error: %s",lua_tostring(l,-1));
-            lua_pop(l, 1);
-            lua_pushstring(l, errormsg);
-            return lua_error(l);
+            return haveluaerror(l,
+            "Syntax error: %s", lua_tostring(l, -1));
         }
         return lua_error(l);
     }

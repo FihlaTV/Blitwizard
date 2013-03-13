@@ -97,6 +97,8 @@ size_t bytes) {
     if (readlen == 0) {
         return 0;
     }
+
+    // do read:
     int r = fread(buffer, 1, readlen, zf->f);
     if (r <= 0) {  // eof or error
         return 0;
@@ -156,7 +158,7 @@ static int zipfile_SeekUndecrypted(void* userdata, size_t offset) {
     }
 
     // attempt to seek:
-    int i = fseek(zf->f, offset, SEEK_SET);
+    int i = fseek(zf->f, offset + zf->offsetinfile, SEEK_SET);
     if (i == 0) {
         // success
         zf->posinfile = offset;
@@ -249,6 +251,13 @@ void* userdata, struct zipdecryptionfileaccess* zdf) {
         free(zf2);
         return 0;
     }
+    // seek to position in old handle:
+    if (fseek(zf2->f, ftell(zf->f), SEEK_SET) != 0) {
+        fclose(zf2->f);
+        free(zf2->fname);
+        free(zf2);
+        return 0;
+    }
 
     // return new zipdecryptionfileaccess info:
     memset(zdf, 0, sizeof(*zdf));
@@ -272,12 +281,17 @@ static void zipfile_RandomMountPoint(char* buffer) {
 #else
         double d = drand48();
 #endif
-        int i = (int)((double)d*9.99);
-        buffer[i] = '0' + i;
+        int c = (int)((double)d*9.99);
+        buffer[i] = '0' + c;
         i++;
     }
     buffer[MOUNT_POINT_LEN-1] = '/';
     buffer[MOUNT_POINT_LEN] = 0;
+}
+
+PHYSFS_sint64 zipfile_WritePhysFS(struct PHYSFS_Io* io,
+const void* buffer, PHYSFS_uint64 len) {
+    return -1;
 }
 
 struct zipfile* zipfile_Open(const char* file, size_t offsetinfile,
@@ -326,6 +340,22 @@ size_t sizeinfile, int encrypted) {
     if (zfa->sizeinfile == 0) {
         // initialise to possible file size:
         zfa->sizeinfile = file_GetSize(zfa->fname)-zfa->offsetinfile;
+        if (zfa->sizeinfile == 0) {
+            fclose(zfa->f);
+            free(zfa->fname);
+            free(zfa);
+            free(zf);
+            return NULL;
+        }
+    }
+
+    // seek to proper position in file:
+    if (fseek(zfa->f, zfa->offsetinfile, SEEK_SET) != 0) {
+        fclose(zfa->f);
+        free(zfa->fname);
+        free(zfa);
+        free(zf);
+        return NULL;
     }
 
     // allocate physfs io struct:
@@ -348,6 +378,7 @@ size_t sizeinfile, int encrypted) {
     zf->physio->seek = &zipfile_SeekPhysFS;
     zf->physio->duplicate = &zipfile_DuplicatePhysFS;
     zf->physio->destroy = &zipfile_DestroyPhysFS;
+    zf->physio->write = &zipfile_WritePhysFS;
 
     // initialise our decryption:
     struct zipdecryptionfileaccess zdf;
@@ -379,6 +410,7 @@ size_t sizeinfile, int encrypted) {
     zipfile_RandomMountPoint(zf->mountpoint);
     if (!PHYSFS_mountIo(zf->physio, NULL, zf->mountpoint, 1)) {
         zf->physio->destroy(zf->physio);
+        free(zf);
         return 0;
     }
     return zf;
