@@ -91,8 +91,8 @@ size_t bytes) {
 
     // simply read from our file handle, but no further than the limit:
     size_t readlen = bytes;
-    if (readlen > zf->sizeinfile - (zf->posinfile + zf->offsetinfile)) {
-        readlen = zf->sizeinfile - (zf->posinfile + zf->offsetinfile);
+    if (readlen > zf->sizeinfile - zf->posinfile) {
+        readlen = zf->sizeinfile - zf->posinfile;
     }
     if (readlen == 0) {
         return 0;
@@ -588,11 +588,7 @@ size_t bytes) {
         return 0;
     }
 
-    int r = PHYSFS_readBytes(f->f, buffer, bytes);
-    if (r <= 0) {
-        r = 0;
-    }
-    return r;
+    return PHYSFS_readBytes(f->f, buffer, bytes);
 }
 
 int zipfile_FileEof(struct zipfilereader* f) {
