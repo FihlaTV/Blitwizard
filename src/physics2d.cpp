@@ -548,6 +548,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
         return NULL;
     }
     polygon.SetAsBox((width/2) - polygon.m_radius*2, (polygon/2) - polygon.m_radius*2);
+    
     shape->sha.pe2d->b2.polygon = polygon;
     shape->sha.pe2d->type = 0;
 #ifdef USE_PHYSICS3D
@@ -555,8 +556,55 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
 #endif
 }
 #endif
-void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, double height);
-void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter);
+
+#ifdef USE_PHYSICS2D
+void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, double height) {
+    if (fabs(width - height) < EPSILON) {
+        physics_Set2dShapeCircle(shape, width);
+        return;
+    }
+
+    //construct oval shape - by manually calculating the vertices
+    b2PolygonShape* polygon = (b2PolygonShape*)malloc(sizeof(*polygon));;
+    b2Vec2 vertices[OVALVERTICES];
+    int i = 0;
+    double angle = 0;
+
+    //go around with the angle in one full circle:
+    while (angle < 2*M_PI && i < OVALVERTICES) {
+        //calculate and set vertex point
+        double x,y;
+        ovalpoint(angle, width, height, &x, &y);
+        vertices[i].Set(x, -y);
+
+        //advance to next position
+        angle -= (2*M_PI)/((double)OVALVERTICES);
+        i++;
+    }
+    polygon.Set(vertices, (int32_t)OVALVERTICES);
+    
+    shape->sha.pe2d->b2.polygon = polygon;
+    shape->sha.pe2d->type = 0;
+#ifdef USE_PHYSICS3D
+    shape->is3d = 0;
+#endif
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter) {
+    b2CircleShape* circle = (b2CircleShape*)malloc(sizeof(*circle));
+    circle.m_radius = radius - 0.01;
+    
+    shape->sha.pe2d->b2.circle = circle;
+    shape->sha.pe2d->type = 1;
+#ifdef USE_PHYSICS3D
+    shape->is3d = 0;
+#endif
+}
+#endif
+
+
 // Use those commands multiple times to construct those more complex shapes:
 void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset);
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
