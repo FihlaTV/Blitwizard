@@ -36,7 +36,7 @@ struct physicsobject;
 struct physicsworld* physics_CreateWorld(int use3dphysics);
 void physics_DestroyWorld(struct physicsworld* world);
 void physics_Step(struct physicsworld* world);
-int physics2d_GetStepSize(struct physicsworld* world);
+int physics_GetStepSize(struct physicsworld* world);
 
 // Set a collision callback:
 #ifdef USE_PHYSICS2D

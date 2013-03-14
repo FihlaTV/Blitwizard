@@ -536,6 +536,34 @@ size_t physics_GetShapeSize(void) {
     return sizeof(struct physicsobjectshape*);
 }
 
+#ifdef USE_PHYSICS2D
+void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width, double height) {
+/*
+ it is of critical importance for all of this shit (i.e. functions below as well) that the object is absolutely uninitialised
+   or had its former shape data deleted when this function (or functions below) is called. otherwise:
+   XXX MEMORY LEAKS XXX
+*/
+    b2PolygonShape* polygon = (b2PolygonShape*)malloc(sizeof(*polygon));
+    if (!polygon) {
+        return NULL;
+    }
+    polygon.SetAsBox((width/2) - polygon.m_radius*2, (polygon/2) - polygon.m_radius*2);
+    shape->sha.pe2d->b2.polygon = polygon;
+    shape->sha.pe2d->type = 0;
+#ifdef USE_PHYSICS3D
+    shape->is3d = 0;
+#endif
+}
+#endif
+void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, double height);
+void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter);
+// Use those commands multiple times to construct those more complex shapes:
+void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset);
+void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
+// Use those commands to move your shapes around from the center:
+void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation);
+void physics_Get2dShapeOffsetRotation(struct physicsobjectshape* shape, double* xoffset, double* yoffset, double* rotation);
+
 
 struct physicsobject2d* physics2d_CreateObjectRectangle(struct physicsworld2d* world, void* userdata, int movable, double friction, double width, double height) {
     struct physicsobject2d* obj = createobj(world, userdata, movable);
