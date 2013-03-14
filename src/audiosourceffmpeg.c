@@ -731,7 +731,6 @@ static void audiosourceffmpeg_Close(struct audiosource* source) {
         if (idata) {
             free(idata);
         }
-        free(idata);
     }
     free(source);
 }

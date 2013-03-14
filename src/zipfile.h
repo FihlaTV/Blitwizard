@@ -81,8 +81,8 @@ struct zipfilereader;
 struct zipfilereader* zipfile_FileOpen(struct zipfile* f, const char* path);
 size_t zipfile_FileRead(struct zipfilereader* reader, char* buffer,
 size_t bytes);  // returns amount of bytes read, or 0 on end of file/error
-int zipfile_Seek(struct zipfilereader* f, size_t pos);  // seeks, returns 1/success or 0/error
-size_t zipfile_Tell(struct zipfilereader* f);  // tell current position in file
+int zipfile_FileSeek(struct zipfilereader* f, size_t pos);  // seeks, returns 1/success or 0/error
+size_t zipfile_FileTell(struct zipfilereader* f);  // tell current position in file
 void zipfile_FileClose(struct zipfilereader* reader);
 
 // Close the archive again (do not use if you still got open zipfilereader handles!):

@@ -21,14 +21,17 @@
 
 */
 
-#ifndef BLITWIZARD_AUDIOSOURCEFILE_H_
-#define BLITWIZARD_AUDIOSOURCEFILE_H_
+#ifndef BLITWIZARD_AUDIOSOURCERESOURCEFILE_H_
+#define BLITWIZARD_AUDIOSOURCERESOURCEFILE_H_
 
-struct audiosource* audiosourcefile_Create(const char* path);
-// Create an audio source from a file.
-// Please note this doesn't do any decoding or processing!
-// It just returns the binary data in that file as it is.
-// Pass into audiosourceogg or others to make them decode it.
+#include "zipfile.h"
 
-#endif  // BLITWIZARD_AUDIOSOURCEFILE_H_
+struct audiosource* audiosourceresourcefile_Create(
+struct zipfile* archive, const char* path);
+// Create an audio source from a resource file.
+// Use audiosourcefile!
+// It will automatically use this audio source internally,
+// if appropriate.
+
+#endif  // BLITWIZARD_AUDIOSOURCERESOURCEFILE_H_
 
