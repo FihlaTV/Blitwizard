@@ -103,7 +103,6 @@ const char* luazipreader(lua_State* l, void* data, size_t* size) {
 
     // read more data:
     int r = zipfile_FileRead(zfr, zfrbuf, sizeof(zfrbuf));
-    zfrbuf[sizeof(zfrbuf)] = 0;
     if (r == 0) {
         zipfile_FileClose(zfr);
         zfr = NULL;

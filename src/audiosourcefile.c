@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -28,6 +28,8 @@
 #include "os.h"
 #include "audiosource.h"
 #include "audiosourcefile.h"
+#include "audiosourceresourcefile.h"
+#include "resources.h"
 
 #ifdef SDLRW
 #include "SDL.h"
@@ -140,7 +142,7 @@ static size_t audiosourcefile_Position(struct audiosource* source) {
     if (idata->eof) {
         return source->length(source);
     }
-    long pos = ftell(idata->file);
+    size_t pos = ftell(idata->file);
     return pos;
 }
 
@@ -168,20 +170,57 @@ static void audiosourcefile_Close(struct audiosource* source) {
 }
 
 struct audiosource* audiosourcefile_Create(const char* path) {
+    // without path, no audio source:
+    if (!path) {
+        return NULL;
+    }
+
+    // first, we want to know where this file is.
+    // we shall query the resource management:
+    struct resourcelocation l;
+    if (!resources_LocateResource(path, &l)) {
+        // resource management doesn't know about this file.
+        return NULL;
+    }
+
+    // now if this file is NOT a plain disk file, hand off
+    // to the appropriate audio source:
+    if (l.type != LOCATION_TYPE_DISK) {
+        switch (l.type) {
+        case LOCATION_TYPE_ZIP:
+            return audiosourceresourcefile_Create(
+            l.location.ziplocation.archive,
+            l.location.ziplocation.filepath);
+        break;
+        default:
+        // unknown location type
+        return NULL;
+        }
+    }
+
+    // it is a plain disk file.
+    // use the resource location's file path:
+    path = l.location.disklocation.filepath;
+
+    // allocate struct:
     struct audiosource* a = malloc(sizeof(*a));
     if (!a) {
         return NULL;
     }
+    memset(a, 0, sizeof(*a));
 
-    memset(a,0,sizeof(*a));
+    // allocate internal data struct:
     a->internaldata = malloc(sizeof(struct audiosourcefile_internaldata));
     if (!a->internaldata) {
         free(a);
         return NULL;
     }
 
+    // populate internal data:
     struct audiosourcefile_internaldata* idata = a->internaldata;
     memset(idata, 0, sizeof(*idata));
+
+    // allocate file path:
     idata->path = strdup(path);
     if (!idata->path) {
         free(a->internaldata);
@@ -189,6 +228,7 @@ struct audiosource* audiosourcefile_Create(const char* path) {
         return NULL;
     }
 
+    // populate audio source functions:
     a->read = &audiosourcefile_Read;
     a->close = &audiosourcefile_Close;
     a->rewind = &audiosourcefile_Rewind;
@@ -197,5 +237,6 @@ struct audiosource* audiosourcefile_Create(const char* path) {
     a->position = &audiosourcefile_Position;
     a->seekable = 1;
 
+    // return audio source:
     return a;
 }
