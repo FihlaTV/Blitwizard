@@ -588,7 +588,11 @@ size_t bytes) {
         return 0;
     }
 
-    return PHYSFS_readBytes(f->f, buffer, bytes);
+    int r = PHYSFS_readBytes(f->f, buffer, bytes);
+    if (r < 0) {
+        r = 0;
+    }
+    return r;
 }
 
 int zipfile_FileEof(struct zipfilereader* f) {
