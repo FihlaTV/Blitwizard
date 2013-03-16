@@ -180,11 +180,12 @@ struct physicsobject2d {
 };
 
 struct physicsobjectshape2d {
-    union {
-        b2PolygonShape* polygon;
+    union specific_type_of_shape {
+        struct polygonpoint* polygonpoints;
         b2CircleShape* circle;
+        struct edge* edges;
     } b2;
-    int type; // FIXME: enum? existing b2 enum constants?
+    int type;
 };
 
 struct deletedphysicsobject2d {
@@ -543,13 +544,16 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
    or had its former shape data deleted when this function (or functions below) is called. otherwise:
    XXX MEMORY LEAKS XXX
 */
-    b2PolygonShape* polygon = (b2PolygonShape*)malloc(sizeof(*polygon));
-    if (!polygon) {
-        return NULL;
+    struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*points)*4);
+    int i = 0;
+    while (i < 4) {
+            vertices[i].x = (-2*((i+1)%4<2)+1)*(width/2);
+            vertices[i].y = (-2*(i%4<2)+1)*(height/2);
+            vertices[i].next = &points[i+1];
     }
-    polygon.SetAsBox((width/2) - polygon.m_radius*2, (polygon/2) - polygon.m_radius*2);
+    vertices[3].next = NULL;
     
-    shape->sha.pe2d->b2.polygon = polygon;
+    shape->sha.pe2d->b2.polygonpoints = vertices;
     shape->sha.pe2d->type = 0;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
@@ -565,8 +569,7 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
     }
 
     //construct oval shape - by manually calculating the vertices
-    b2PolygonShape* polygon = (b2PolygonShape*)malloc(sizeof(*polygon));;
-    b2Vec2 vertices[OVALVERTICES];
+    struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*vertices)*OVALVERTICES);
     int i = 0;
     double angle = 0;
 
@@ -575,15 +578,17 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
         //calculate and set vertex point
         double x,y;
         ovalpoint(angle, width, height, &x, &y);
-        vertices[i].Set(x, -y);
-
+        vertices[i].x = x;
+        vertices[i].y = -y;
+        vertices[i].next = &vertices[i+i];
+        
         //advance to next position
         angle -= (2*M_PI)/((double)OVALVERTICES);
         i++;
     }
-    polygon.Set(vertices, (int32_t)OVALVERTICES);
+    vertices[i-1].next = NULL;
     
-    shape->sha.pe2d->b2.polygon = polygon;
+    shape->sha.pe2d->b2.polygonpoints = vertices;
     shape->sha.pe2d->type = 0;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
@@ -604,10 +609,50 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 }
 #endif
 
+#ifdef USE_PHYSICS2D
+void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
+    if (not shape->sha.pe2d.type == 0) {
+        shape->sha.pe2d->b2.polygonpoints = NULL;
+    }
+    struct polygonpoint* p = shape->sha.pe2d->b2.polygonpoints;
+    while (p != NULL and p.next != NULL) {
+        p = p.next;
+    }
+    struct polygonpoint* new_point = (struct polygonpoint*)malloc(sizeof(*new_point));
+    new_point.x = xoffset;
+    new_point.y = yoffset;
+    p.next = new_point;
+    
+    shape->sha.pe2d->type = 0;
+#ifdef USE_PHYSICS3D
+    shape->is3d = 0;
+#endif
+}
+#endif
 
-// Use those commands multiple times to construct those more complex shapes:
-void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset);
-void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
+#ifdef USE_PHYSICS2D
+void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
+    if (not shape->sha.pe2d.type == 2) {
+        shape->sha.pe2d->b2.edges = NULL;
+    }
+    struct edge* e = shape->sha.pe2d->b2.edge;
+    while (e != NULL and e.next != NULL) {
+        e = e.next;
+    }
+    struct edge* new_edge = (struct edge*)malloc(sizeof(*new_edge));
+    new_edge.x1 = x1;
+    new_edge.y1 = y1;
+    new_edge.x2 = x2;
+    new_edge.y2 = y2;
+    p.next = new_edge;
+    
+    shape->sha.pe2d->type = 2;
+#ifdef USE_PHYSICS3D
+    shape->is3d = 0;
+#endif
+}
+#endif
+
 // Use those commands to move your shapes around from the center:
 void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation);
 void physics_Get2dShapeOffsetRotation(struct physicsobjectshape* shape, double* xoffset, double* yoffset, double* rotation);
@@ -839,6 +884,11 @@ struct edge {
     double x1,y1,x2,y2;
     struct edge* next;
     struct edge* adjacent1, *adjacent2;
+};
+
+struct polygonpoint {
+  double x,y;
+  struct polygonpoint* next;
 };
 
 struct physicsobject2dedgecontext {
