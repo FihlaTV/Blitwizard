@@ -117,7 +117,6 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
         fclose(r);
         return 0;
     }
-    fclose(r);
     void* latestSection = NULL;
     size_t latestSectionSize = -1;
     int i = 0;
