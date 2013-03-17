@@ -427,6 +427,11 @@ static lua_State* luastate_New(void) {
     lua_pushcfunction(l, &luafuncs_setstep);
     lua_settable(l, -3);
 
+    // blitwizard.loadResourceArchive
+    lua_pushstring(l, "loadResourceArchive");
+    lua_pushcfunction(l, &luafuncs_loadResourceArchive);
+    lua_settable(l, -3);
+
     // blitwiz.getTemplateDirectory:
     lua_pushstring(l, "getTemplateDirectory");
     lua_pushcfunction(l, &luafuncs_getTemplateDirectory);

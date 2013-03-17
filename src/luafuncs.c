@@ -21,6 +21,12 @@
 
 */
 
+///
+// @author Jonas Thiem  (jonas.thiem@gmail.com)
+// @copyright 2011-2013
+// @license zlib
+// @module blitwizard
+
 #include "os.h"
 #include <stdlib.h>
 #include <stdint.h>
@@ -226,6 +232,40 @@ static int luafuncs_printline(void) {
     memmove(printlinebuf, printlinebuf+(i+1), sizeof(printlinebuf)-(i+1));
     return 1;
 }
+
+
+/// Load a .zip file as a resource archive.
+//
+// All files inside the zip file will be mapped into the local
+// folder as resource files, so that you can load them
+// as sounds, graphics etc.
+//
+// E.g. if the archive contains a folder "blubb", and inside
+// "sound.ogg", you can just load "blubb/sound.ogg" as a sound
+// after loading the archive with this function.
+// @function loadResourceArchive
+// @tparam string Path to the .zip archive to be loaded
+
+int luafuncs_loadResourceArchive(lua_State* l) {
+    const char* p = lua_tostring(l, 1);
+    if (!p) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.loadResourceArchive",
+        "string", lua_strtype(l, 1));
+    }
+    if (!file_DoesFileExist(p) || file_IsDirectory(p)) {
+        return haveluaerror(l,
+        "specified resource archive file \"%s\" does not exist", p);
+    }
+    if (!resources_LoadZipFromFile(p, 1)) {
+        if (!resources_LoadZipFromFile(p, 0)) {
+            return haveluaerror(l,
+            "failed to load specified resource archive \"%s\"", p);
+        }
+    }
+    return 1;
+}
+
 int luafuncs_print(lua_State* l) { // not threadsafe
     int args = lua_gettop(l);
     int i = 1;

@@ -135,6 +135,10 @@
 	<td class="name" ><a href="#object:setMass">object:setMass&nbsp;(mass, mass_center_x, mass_center_y, mass_center_z)</a></td>
 	<td class="summary">Set the mass and the center of an object.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#object:loadResourceArchive">object:loadResourceArchive&nbsp;(Path)</a></td>
+	<td class="summary">Load a .zip file as a resource archive.</td>
+	</tr>
 </table>
 
 <br/>
@@ -628,6 +632,33 @@
       <li><span class="parameter">mass_center_z</span>
         <span class="types"><span class="type">number</span></span>
        (optional) Set the z coordinate of the mass center (default: 0)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:loadResourceArchive"></a>
+    <strong>object:loadResourceArchive&nbsp;(Path)</strong>
+    </dt>
+    <dd>
+    Load a .zip file as a resource archive.
+
+ All files inside the zip file will be mapped into the local
+ folder as resource files, so that you can load them
+ as sounds, graphics etc.
+
+ E.g. if the archive contains a folder "blubb", and inside
+ "sound.ogg", you can just load "blubb/sound.ogg" as a sound
+ after loading the archive with this function.
+
+    <h3>Parameters:</h3>
+    <ul>
+      <li><span class="parameter">Path</span>
+        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+       to the .zip archive to be loaded</li>
     </ul>
 
 
