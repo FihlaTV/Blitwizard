@@ -562,6 +562,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
 #endif
 
 #ifdef USE_PHYSICS2D
+#define OVALVERTICES 8
 void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, double height) {
     /* FIXME: Order might the "wrong way round", then again this shouldn't really matter. */
     if (fabs(width - height) < EPSILON) {
@@ -756,9 +757,23 @@ void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
 }
 #endif
 
-// Use those commands to move your shapes around from the center:
-void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation);
-void physics_Get2dShapeOffsetRotation(struct physicsobjectshape* shape, double* xoffset, double* yoffset, double* rotation);
+#ifdef USE_PHYSICS2D
+void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation) {
+    struct physicsobjectshape2d* s = shape->sha.pe2d;
+    s->xoffset = xoffset;
+    s->yoffset = yoffset;
+    s->rotation = rotation;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_Get2dShapeOffsetRotation(struct physicsobjectshape* shape, double* xoffset, double* yoffset, double* rotation) {
+    struct physicsobjectshape2d* s = shape->sha.pe2d;
+    *xoffset = s->xoffset;
+    *yoffset = s->yoffset;
+    *rotation = s->rotation;
+}
+#endif
 
 
 struct physicsobject2d* physics2d_CreateObjectRectangle(struct physicsworld2d* world, void* userdata, int movable, double friction, double width, double height) {
