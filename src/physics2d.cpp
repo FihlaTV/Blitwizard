@@ -563,6 +563,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
 
 #ifdef USE_PHYSICS2D
 void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, double height) {
+    /* FIXME: Order might the "wrong way round", then again this shouldn't really matter. */
     if (fabs(width - height) < EPSILON) {
         physics_Set2dShapeCircle(shape, width);
         return;
@@ -615,13 +616,15 @@ void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
         shape->sha.pe2d->b2.polygonpoints = NULL;
     }
     struct polygonpoint* p = shape->sha.pe2d->b2.polygonpoints;
-    while (p != NULL and p.next != NULL) {
-        p = p.next;
-    }
+    
     struct polygonpoint* new_point = (struct polygonpoint*)malloc(sizeof(*new_point));
     new_point.x = xoffset;
     new_point.y = yoffset;
-    p.next = new_point;
+    
+    if (p != NULL) {
+      new_point.next = p;
+    }
+    p = new_point;
     
     shape->sha.pe2d->type = 0;
 #ifdef USE_PHYSICS3D
@@ -631,10 +634,110 @@ void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
 #endif
 
 #ifdef USE_PHYSICS2D
+int _physics_Check2dEdgeLoop(struct edge* edge, struct edge* target) {
+    struct edge* e = edge;
+    struct edge* eprev = NULL;
+    while (e) {
+        if (e == target) {return 1;}
+        struct edge* nextprev = e;
+        if (e->adjacent1 && e->adjacent1 != eprev) {
+            e = e->adjacent1;
+        }else{
+            if (e->adjacent2 && e->adjacent2 != eprev) {
+                e = e->adjacent2;
+            }else{
+                e = NULL;
+            }
+        }
+        eprev = nextprev;
+    }
+    return 0;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
+    struct edge* newedge = (struct edge*)malloc(sizeof(*newedge));
+    if (!newedge) {return;}
+    memset(newedge, 0, sizeof(*newedge));
+    newedge->x1 = x1;
+    newedge->y1 = y1;
+    newedge->x2 = x2;
+    newedge->y2 = y2;
+    newedge->adjacentcount = 1;
+    
+    //search for adjacent edges
+    struct edge* e = shape->sha.pe2d->b2.edges;
+    while (e) {
+        if (!newedge->adjacent1) {
+            if (fabs(e->x1 - newedge->x1) < EPSILON && fabs(e->y1 - newedge->y1) < EPSILON && e->adjacent1 == NULL) {
+                if (_physics_Check2dEdgeLoop(e, newedge)) {
+                    newedge->inaloop = 1;
+                }else{
+                    e->adjacentcount += newedge->adjacentcount;
+                    newedge->adjacentcount = e->adjacentcount;
+                }
+                newedge->adjacent1 = e;
+                e->adjacent1 = newedge;
+                e = e->next;
+                continue;
+            }
+            if (fabs(e->x2 - newedge->x1) < EPSILON && fabs(e->y2 - newedge->y1) < EPSILON && e->adjacent2 == NULL) {
+                if (_physics_Check2dEdgeLoop(e, newedge)) {
+                    newedge->inaloop = 1;
+                }else{
+                    e->adjacentcount += newedge->adjacentcount;
+                    newedge->adjacentcount = e->adjacentcount;
+                }
+                newedge->adjacent1 = e;
+                e->adjacent2 = newedge;
+                e = e->next;
+                continue;
+            }
+        }
+        if (!newedge->adjacent2) {
+            if (fabs(e->x1 - newedge->x2) < EPSILON && fabs(e->y1 - newedge->y2) < EPSILON && e->adjacent1 == NULL) {
+                if (_physics_Check2dEdgeLoop(e, newedge)) {
+                    newedge->inaloop = 1;
+                }else{
+                    e->adjacentcount += newedge->adjacentcount;
+                    newedge->adjacentcount = e->adjacentcount;
+                }
+                newedge->adjacent2 = e;
+                e->adjacent1 = newedge;
+                e = e->next;
+                continue;
+            }
+            if (fabs(e->x2 - newedge->x2) < EPSILON && fabs(e->y2 - newedge->y2) < EPSILON && e->adjacent2 == NULL) {
+                if (_physics_Check2dEdgeLoop(e, newedge)) {
+                    newedge->inaloop = 1;
+                }else{
+                    e->adjacentcount += newedge->adjacentcount;
+                    newedge->adjacentcount = e->adjacentcount;
+                }
+                newedge->adjacent2 = e;
+                e->adjacent2 = newedge;
+                e = e->next;
+                continue;
+            }
+        }
+        e = e->next;
+    }
+
+    //add us to the unsorted linear list
+    newedge->next = shape->sha.pe2d->b2.edges;
+    shape->sha.pe2d->b2.edges = newedge;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
     if (not shape->sha.pe2d.type == 2) {
         shape->sha.pe2d->b2.edges = NULL;
     }
+    
+    _physics_Add2dShapeEdgeList_Do(shape, x1, y1, x2, y2);
+    
     struct edge* e = shape->sha.pe2d->b2.edge;
     while (e != NULL and e.next != NULL) {
         e = e.next;
