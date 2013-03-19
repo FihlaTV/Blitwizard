@@ -362,7 +362,8 @@ void physics_DestroyWorld(struct physicsworld* world) {
 #endif
 }
 
-int physics2d_GetStepSize(struct physicsworld2d* world) {
+int physics_GetStepSize(struct physicsworld* world) {
+    // TODO: 3D?
 #if defined(ANDROID) || defined(__ANDROID__)
     // less accurate physics on Android (40 FPS)
     return (1000/40);
