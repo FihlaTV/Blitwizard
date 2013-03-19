@@ -1380,16 +1380,35 @@ int luafuncs_getDisplayModes(lua_State* l) {
 #endif
 }
 
+/// Set the stepping frequency of the game logic.
+// The default is 16ms. Physics are unaffected.
+//
+// Please note changing this is a very invasive change
+// - don't do this if you don't know what you're doing.
+//
+// Also, do NOT use this to speed up/slow down your game
+// while it runs. While it may work, it will lead to low
+// frames per second and you should simply use a speed factor
+// in all your logic functions instead.
+//
+// Generally, bigger stepping times to 16ms can cause
+// all sorts of problems (low frames per second, physics
+// callbacks triggering oddly late, ...), so this function
+// is only useful for some rare cases.
+// @function setStep
+
 int luafuncs_setstep(lua_State* l) {
     int newtimestep = 16;
     int type = LUA_TNIL;
     if (lua_gettop(l) >= 1) {type = lua_type(l, 1);}
     if (type != LUA_TNUMBER) {
-        return haveluaerror(l, badargument1, 1, "blitwiz.setStep", "number", lua_strtype(l, 1));
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.setStep", "number", lua_strtype(l, 1));
     }
     newtimestep = lua_tointeger(l, 1);
     if (newtimestep < 16) {
-        return haveluaerror(l, badargument2, 1, "blitwiz.setStep", "time step cannot be smaller than 16");
+        return haveluaerror(l, badargument2, 1,
+        "blitwizard.setStep", "time step cannot be smaller than 16");
     }
     main_SetTimestep(newtimestep);
     return 0;

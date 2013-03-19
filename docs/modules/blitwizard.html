@@ -139,6 +139,10 @@
 	<td class="name" ><a href="#object:loadResourceArchive">object:loadResourceArchive&nbsp;(Path)</a></td>
 	<td class="summary">Load a .zip file as a resource archive.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setStep">object:setStep&nbsp;()</a></td>
+	<td class="summary">Set the stepping frequency of the game logic.</td>
+	</tr>
 </table>
 
 <br/>
@@ -660,6 +664,33 @@
         <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
        to the .zip archive to be loaded</li>
     </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setStep"></a>
+    <strong>object:setStep&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set the stepping frequency of the game logic.
+ The default is 16ms. Physics are unaffected.
+
+ Please note changing this is a very invasive change
+ - don't do this if you don't know what you're doing.
+
+ Also, do NOT use this to speed up/slow down your game
+ while it runs. While it may work, it will lead to low
+ frames per second and you should simply use a speed factor
+ in all your logic functions instead.
+
+ Generally, bigger stepping times to 16ms can cause
+ all sorts of problems (low frames per second, physics
+ callbacks triggering oddly late, ...), so this function
+ is only useful for some rare cases.
+
 
 
 
