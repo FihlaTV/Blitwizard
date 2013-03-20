@@ -75,6 +75,7 @@ struct luachunkreaderinfo {
     SDL_RWops* rwops;
     char buffer[512];
 };
+
 static const char* luastringchunkreader(lua_State *l, void *data, size_t *size) {
     struct luachunkreaderinfo* info = (struct luachunkreaderinfo*)data;
     int i = info->rwops->read(info->rwops, info->buffer, 1, sizeof(*info->buffer));
