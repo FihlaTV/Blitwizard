@@ -78,7 +78,7 @@ inline void _physics_SetObjIs3D(struct physicsobject* object, int is3d) {
 #endif
 }
 
-inline void _physics_ObjIsInit(struct physicsobject* object) {
+inline int _physics_ObjIsInit(struct physicsobject* object) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (object->is3d == -1)
 #elif defined(USE_PHYSICS2D)
@@ -89,6 +89,16 @@ inline void _physics_ObjIsInit(struct physicsobject* object) {
         return 0;
     else
         return 1;
+}
+
+inline void _physics_ResetObj(struct physicsobject* object) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    object->is3d = -1;
+#elif defined(USE_PHYSICS2D)
+    object->obj.ect2d = NULL;
+#elif defined(USE_PHYSICS3D)
+    object->obj.ect3d = NULL;
+#endif
 }
 
 inline int _physics_WorldIs3D(struct physicsworld* world) {
@@ -108,7 +118,7 @@ inline void _physics_SetWorldIs3D(struct physicsworld* world, int is3d) {
 }
 
 // Isn't really needed since worlds are always initialised from the very beginning, anyway...
-inline void _physics_WorldIsInit(struct physicsworld* world) {
+inline int _physics_WorldIsInit(struct physicsworld* world) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (world->is3d == -1)
 #elif defined(USE_PHYSICS2D)
@@ -119,6 +129,16 @@ inline void _physics_WorldIsInit(struct physicsworld* world) {
         return 0;
     else
         return 1;
+}
+
+inline void _physics_ResetWorld(struct physicsworld* world) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    world->is3d = -1;
+#elif defined(USE_PHYSICS2D)
+    world->wor.ld2d = NULL;
+#elif defined(USE_PHYSICS3D)
+    world->wor.ld3d = NULL;
+#endif
 }
 
 inline int _physics_ShapeIs3D(struct physicsobjectshape* shape) {
@@ -137,7 +157,7 @@ inline void _physics_SetShapeIs3D(struct physicsobjectshape* shape, int is3d) {
 #endif
 }
 
-inline void _physics_ShapeIsInit(struct physicsobjectshape* shape) {
+inline int _physics_ShapeIsInit(struct physicsobjectshape* shape) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (shape->is3d == -1)
 #elif defined(USE_PHYSICS2D)
@@ -148,6 +168,16 @@ inline void _physics_ShapeIsInit(struct physicsobjectshape* shape) {
         return 0;
     else
         return 1;
+}
+
+inline void _physics_ResetShape(struct physicsobjectshape* shape) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    shape->is3d = -1;
+#elif defined(USE_PHYSICS2D)
+    object->sha.pe2d = NULL;
+#elif defined(USE_PHYSICS3D)
+    object->sha.pe3d = NULL;
+#endif
 }
 
 
