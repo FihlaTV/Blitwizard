@@ -59,6 +59,7 @@ void physics_Set3dCollisionCallback(struct physicsworld* world, int (*callback)(
 // Obtain shape info struct (for use in object creation):
 struct physicsobjectshape;
 struct physicsobjectshape* physics_CreateEmptyShapes(int count);
+void physics_DestroyShapes(struct physicsobjectshape* shapes, int count);
 size_t physics_GetShapeSize(void);  // get size of one shape struct
 #define GET_SHAPE(shapes,x) (struct physicsobjectshape*) \
       (((char*)shapes)+physics_GetShapeSize())
@@ -94,7 +95,6 @@ double xoffset, double yoffset, double zoffset, double rotation);
 void physics_Get3dShapeOffsetRotation(struct physicsobjectshape* shape,
 double* xoffset, double* yoffset, double* zoffset, double* rotation);
 #endif
-void physics_DestroyShapes(struct physicsobjectshape* shape, int count);
 
 // Create an object with a given pointer list to shape structs (ended with a NULL pointer):
 struct physicsobject* physics_CreateObject(struct physicsworld* world, void* userdata, int movable, struct physicsobjectshape* shapelist);

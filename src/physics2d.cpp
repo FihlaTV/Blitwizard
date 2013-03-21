@@ -78,6 +78,19 @@ inline void _physics_SetObjIs3D(struct physicsobject* object, int is3d) {
 #endif
 }
 
+inline void _physics_ObjIsInit(struct physicsobject* object) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (object->is3d == -1)
+#elif defined(USE_PHYSICS2D)
+    if (object->obj.ect2d == NULL)
+#elif defined(USE_PHYSICS3D)
+    if (object->obj.ect3d == NULL)
+#endif
+        return 0;
+    else
+        return 1;
+}
+
 inline int _physics_WorldIs3D(struct physicsworld* world) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     return world->is3d;
@@ -94,6 +107,20 @@ inline void _physics_SetWorldIs3D(struct physicsworld* world, int is3d) {
 #endif
 }
 
+// Isn't really needed since worlds are always initialised from the very beginning, anyway...
+inline void _physics_WorldIsInit(struct physicsworld* world) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (world->is3d == -1)
+#elif defined(USE_PHYSICS2D)
+    if (world->wor.ld2d == NULL)
+#elif defined(USE_PHYSICS3D)
+    if (world->wor.ld3d == NULL)
+#endif
+        return 0;
+    else
+        return 1;
+}
+
 inline int _physics_ShapeIs3D(struct physicsobjectshape* shape) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     return shape->is3d;
@@ -104,10 +131,23 @@ inline int _physics_ShapeIs3D(struct physicsobjectshape* shape) {
 #endif
 }
 
-inline void _physics_SetShapeIs3D(struct physicsobject* shape, int is3d) {
+inline void _physics_SetShapeIs3D(struct physicsobjectshape* shape, int is3d) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     shape->is3d = is3d;
 #endif
+}
+
+inline void _physics_ShapeIsInit(struct physicsobjectshape* shape) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (shape->is3d == -1)
+#elif defined(USE_PHYSICS2D)
+    if (object->sha.pe2d == NULL)
+#elif defined(USE_PHYSICS3D)
+    if (object->sha.pe3d == NULL)
+#endif
+        return 0;
+    else
+        return 1;
 }
 
 
@@ -531,7 +571,25 @@ struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
     if (!shapes) {
         return NULL;
     }
+    int i = 0;
+    while (i < count) {
+        shapes[i].is3d = -1;
+        ++i;
+    }
     return shapes;
+}
+
+void physics_DestroyShapes(struct physicsobjectshape* shapes, int count) {
+    int i = 0;
+    while (i < count) {
+#ifdef USE_PHYSICS2D && USE_PHYSICS3D // FIXME FUCK FUCK FUCK FUCK FUCK
+        switch (shapes[i].is3d) {
+            case 1:
+                printerror(BW_E_NO3DYET);
+            break;
+            case 2:
+        }
+    }
 }
 
 size_t physics_GetShapeSize(void) {
