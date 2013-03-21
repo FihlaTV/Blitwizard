@@ -21,11 +21,16 @@
 
 */
 
+#ifndef BLITWIZARD_GRAPHICS_H_
+#define BLITWIZARD_GRAPHICS_H_
+
 #ifdef USE_GRAPHICS
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define UNIT_TO_PIXELS 50
 
 int graphics_AreGraphicsRunning(void);
 // Returns 1 if the graphics are open/active, otherwise 0.
@@ -150,13 +155,64 @@ int graphics_FreeTexture(struct graphicstexture* gt, struct graphicstexture* pre
 int graphics_HaveValidWindow(void);
 // Returns 1 if a window is open, otherwise 0
 
+int graphics_GetCameraCount(int type2d3d);
+// Get count of 2d or 3d cameras
+// Cameras are numbered from 0...count-1
+
+int graphics_GetCameraX(int type2d3d, int nb);
+// Get the screen X position of the specified camera
+// The type specifies whether the camera is 2d or 3d,
+// the 'nb' specifies the number from 0..count-1
+// for the specific camera.
+
+int graphics_GetCameraY(int type2d3d, int nb);
+// Get the screen Y position of the specified camera
+
+int graphics_GetCameraWidth(int type2d3d, int nb);
+// Get the screen width of the specified camera
+
+int graphics_GetCameraHeight(int type2d3d, int nb);
+// Get the screen height of the specified camera
+
+void graphics_SetCameraXY(int type2d3d, int nb, int x, int y);
+// Update the screen X/Y position of the camera
+
+void graphics_SetCameraSize(int type2d3d, int nb, int width,
+int height);
+// Update width/height of the given camera
+
+double graphics_GetCameraZoom(int type2d3d, int nb);
+// Get zoom factor of camera
+// 2d camera zoom factor:
+//   A 2d unit on screen equals (UNIT_TO_PIXELS * factor)
+//   pixels.
+// 3d camera zoom factor:
+//   The camera viewing angle is (90 / factor) degree.
+
+void graphics_SetCameraZoom(int type2d3d, int nb);
+// Set camera zoom factor
+
+double graphics_GetCameraAspectRatio(int type2d3d, int nb);
+// Get camera aspect ratio
+
+void graphics_SetCameraAspectRatio(int type2d3d, int nb);
+// Set camera aspect ratio
+
+int graphics_AddCamera(int type2d3d);
+// Add a camera. Returns 1 on success, 0 on error
+
+int graphics_DeleteCamera(int type2d3d, int nb);
+// Delete a specified camera.
+
 #ifdef __cplusplus
 }
 #endif
 
-#else // ifdef USE_GRAPHICS
+#else  // ifdef USE_GRAPHICS
 
 #define compiled_without_graphics "No graphics available - this binary was compiled with graphics (including null device) disabled"
 
-#endif // ifdef USE_GRAPHICS
+#endif  // ifdef USE_GRAPHICS
+
+#endif  // BLITWIZARD_GRAPHICS_H_
 
