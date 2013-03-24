@@ -431,7 +431,10 @@ if [ ! -e libs/libblitwizardlua.a ]; then
         if [ -z "$AR" ]; then
             AR="ar"
         fi
-        cd src/lua/build && rm lua.c && rm luac.c && $CC -c -O2 *.c && $AR rcs ../src/liblua.a *.o || { echo "Failed to compile Lua 5"; exit 1; }
+        cd scripts
+        SSEFLAGS=`sh checksse.sh`
+        cd "$dir"
+        cd src/lua/build && rm lua.c && rm luac.c && $CC -c -O2 $SSEFLAGS *.c && $AR rcs ../src/liblua.a *.o || { echo "Failed to compile Lua 5"; exit 1; }
         cd "$dir"
     fi
 fi
