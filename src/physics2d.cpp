@@ -170,6 +170,25 @@ inline int _physics_ShapeIsInit(struct physicsobjectshape* shape) {
         return 1;
 }
 
+// -1: None; 0: 2D; 1: 3D
+inline int _physics_ShapeType(struct physicsobjectshape* shape) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    return shape->is3d;
+#elif defined(USE_PHYSICS2D)
+    if (shape->sha.pe2d != NULL) {
+        return 0;
+    }else{
+        return -1;
+    }
+#elif defined(USE_PHYSICS3D)
+    if (shape->sha.pe3d != NULL) {
+        return 1;
+    }else{
+        return -1;
+    }
+#endif
+}
+
 inline void _physics_ResetShape(struct physicsobjectshape* shape) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     shape->is3d = -1;
@@ -251,6 +270,7 @@ struct physicsobject2d {
 
 struct physicsobjectshape2d {
     union specific_type_of_shape {
+        b2PolygonShape* rectangle;
         struct polygonpoint* polygonpoints;
         b2CircleShape* circle;
         struct edge* edges;
@@ -609,16 +629,38 @@ struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
     return shapes;
 }
 
+#ifdef USE_PHYSICS2D
+void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
+    // TBD
+}
+#endif
+
 void physics_DestroyShapes(struct physicsobjectshape* shapes, int count) {
+/*
+- for each shape:
+  FUCK
+*/
     int i = 0;
     while (i < count) {
-#ifdef USE_PHYSICS2D && USE_PHYSICS3D // FIXME FUCK FUCK FUCK FUCK FUCK
-        switch (shapes[i].is3d) {
+        switch (_physics_ShapeType(shapes[i])) {
+            case -1:
+                // not initialised -> do nothing special
+            break;
+#ifdef USE_PHYSICS2D
+            case 0:
+                // 2D
+                _physics_Destroy2dShape(shapes[i]);
+            break;
+#endif
+#ifdef USE_PHYSICS3D
             case 1:
+                // 3D
                 printerror(BW_E_NO3DYET);
             break;
-            case 2:
         }
+#endif
+        // do this no matter what:
+        free(shapes[i]);
     }
 }
 
