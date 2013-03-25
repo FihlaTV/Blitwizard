@@ -2,7 +2,7 @@
 
 cd ..
 
-if [ ! -f "scripts/.buildinfo" ]; then
+if [ ! -e scripts/.buildinfo ]; then
 	exit 1
 fi
 

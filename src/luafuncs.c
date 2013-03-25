@@ -458,56 +458,6 @@ int luafuncs_ls(lua_State* l) {
     return 1;
 }
 
-int luafuncs_setWindow(lua_State* l) {
-#ifdef USE_GRAPHICS
-    if (lua_gettop(l) <= 0) {
-        graphics_Quit();
-        return 0;
-    }
-    int x = lua_tonumber(l, 1);
-    if (x <= 0) {
-        lua_pushstring(l, "First argument is not a valid resolution width");
-        return lua_error(l);
-    }
-    int y = lua_tonumber(l, 2);
-    if (y <= 0) {
-        lua_pushstring(l, "Second argument is not a valid resolution height");
-        return lua_error(l);
-    }
-
-    char defaulttitle[] = "blitwizard";
-    const char* title = lua_tostring(l, 3);
-    if (!title) {
-        title = defaulttitle;
-    }
-
-    int fullscreen = 0;
-    if (lua_type(l,4) == LUA_TBOOLEAN) {
-        fullscreen = lua_toboolean(l, 4);
-    }else{
-        if (lua_gettop(l) >= 4) {
-            lua_pushstring(l, "Fourth argument is not a valid fullscreen boolean");
-            return lua_error(l);
-        }
-    }
-
-    const char* renderer = lua_tostring(l, 5);
-    char* error;
-    if (!graphics_SetMode(x, y, fullscreen, 0, title, renderer, &error)) {
-        if (error) {
-            lua_pushstring(l, error);
-            free(error);
-            return lua_error(l);
-        }
-        lua_pushstring(l, "Unknown error on setting mode");
-        return lua_error(l);
-    }
-    return 0;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
 
 void imgloadedcallback(int success, const char* texture); // written in main.c
 int luafuncs_unloadImage(lua_State* l) {

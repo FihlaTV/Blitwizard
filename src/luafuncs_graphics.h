@@ -33,6 +33,7 @@
 #include <assert.h>
 #include "luaheader.h"
 
+int luafuncs_setMode(lua_State* l);
 
 #endif  // USE_GRAPHICS
 

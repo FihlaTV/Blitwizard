@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -23,9 +23,7 @@
 
 #include "os.h"
 
-extern "C" {
-
-#if defined(USE_SDL_GRAPHICS) || defined(USE_OGRE_GRAPHICS)
+#ifdef USE_SDL_GRAPHICS
 
 //  various standard headers
 #include <stdio.h>
@@ -46,39 +44,17 @@ extern "C" {
 #include "main.h"
 #endif
 
-#ifdef USE_SDL_GRAPHICS
 #include "SDL.h"
 #include "SDL_syswm.h"
-#endif
-#ifdef USE_OGRE_GRAPHICS
-extern "C++" {
-#include <OgreWindowEventUtilities.h>
-#include <OgreMaterialManager.h>
-#include <OgreMeshSerializer.h>
-#include <OgreMeshManager.h>
-#include "OIS.h"
-}
-#endif
 
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "graphicstexturelist.h"
 
 
-#ifdef USE_SDL_GRAPHICS
 SDL_Window* mainwindow = NULL;
 SDL_Renderer* mainrenderer = NULL;
 int sdlvideoinit = 0;
-#endif
-#ifdef USE_OGRE_GRAPHICS
-Ogre::Root* mainogreroot = NULL;
-Ogre::Camera* mainogrecamera = NULL;
-Ogre::SceneManager* mainogrescenemanager = NULL;
-Ogre::RenderWindow* mainogrewindow = NULL;
-OIS::InputManager* maininput = NULL;
-OIS::Mouse* mainogremouse = NULL;
-OIS::Keyboard* mainogrekeyboard = NULL;
-#endif
 
 extern int graphicsactive;  // whether graphics are active/opened (1) or not (0)
 int inbackground = 0;  // whether program has focus (1) or not (0)
@@ -92,35 +68,16 @@ int graphics_HaveValidWindow() {
     return 0;
 }
 
-#ifdef USE_OGRE_GRAPHICS
-// event receiver to be used by Ogre:
-extern "C++" {
-class EventReceiver : public Ogre::WindowEventListener, public OIS::KeyListener, public OIS::MouseListener {
-public:
-    EventReceiver(void) {
-    }
-    ~EventReceiver(void) {
-    }
-};
-}
-static EventReceiver* maineventreceiver = NULL;
-#endif
 
 void graphics_DestroyHWTexture(struct graphicstexture* gt) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d && gt->tex.sdltex) {
         SDL_DestroyTexture(gt->tex.sdltex);
         gt->tex.sdltex = NULL;
     }
-#endif
-#ifdef USE_OGRE_GRAPHICS
-
-#endif
 }
 
 // initialize the video sub system, returns 1 on success or 0 on error:
 static int graphics_InitVideoSubsystem(char** error) {
-#ifdef USE_SDL_GRAPHICS
     char errormsg[512];
     // initialize SDL video if not done yet
     if (!sdlvideoinit) {
@@ -132,7 +89,6 @@ static int graphics_InitVideoSubsystem(char** error) {
         }
         sdlvideoinit = 1;
     }
-#endif
     return 1;
 }
 
@@ -140,7 +96,6 @@ int graphics_Init(char** error, int use3dgraphics) {
     char errormsg[512];
     graphics3d = (use3dgraphics ? 1 : 0);
 
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         // set scaling settings
         SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "2", SDL_HINT_NORMAL);
@@ -154,21 +109,12 @@ int graphics_Init(char** error, int use3dgraphics) {
         }
         return 1;
     }
-#endif
-#ifdef USE_OGRE_GRAPHICS
-    if (graphics3d) {
-
-    } else {
-
-    }
-#endif
 
     *error = strdup("3d graphics not available");
     return 0;
 }
 
 int graphics_TextureToHW(struct graphicstexture* gt) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (gt->tex.sdltex || gt->threadingptr || !gt->name) {
             return 1;
@@ -209,19 +155,10 @@ int graphics_TextureToHW(struct graphicstexture* gt) {
         gt->tex.sdltex = t;
         return 1;
     }
-#endif
-#ifdef USE_OGRE_GRAPHICS
-    if (graphics3d) {
-        if (gt->tex.ogretex || gt->threadingptr || !gt->name) {
-            return 1;
-        }
-    }
-#endif
     return 0;
 }
 
 void graphics_TextureFromHW(struct graphicstexture* gt) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (!gt->tex.sdltex || gt->threadingptr || !gt->name) {
             return;
@@ -259,12 +196,10 @@ void graphics_TextureFromHW(struct graphicstexture* gt) {
         SDL_DestroyTexture(gt->tex.sdltex);
         gt->tex.sdltex = NULL;
     }
-#endif
 }
 
 
 int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d && mainwindow) {
         int w,h;
         SDL_GetWindowSize(mainwindow, &w,&h);
@@ -275,14 +210,12 @@ int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
         *height = h;
         return 1;
     }
-#endif
     return 0;
 }
 
 
 
 void graphics_Close(int preservetextures) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         // close graphics, and destroy textures if instructed to do so
         graphicsactive = 0;
@@ -299,7 +232,6 @@ void graphics_Close(int preservetextures) {
             mainwindow = NULL;
         }
     }
-#endif
 }
 
 #ifdef ANDROID
@@ -345,19 +277,16 @@ void graphics_ReopenForAndroid() {
 #endif
 
 const char* graphics_GetWindowTitle() {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (!mainrenderer || !mainwindow) {
             return NULL;
         }
         return SDL_GetWindowTitle(mainwindow);
     }
-#endif
 }
 
 void graphics_Quit() {
     graphics_Close(0);
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (sdlvideoinit) {
             SDL_VideoQuit();
@@ -365,7 +294,6 @@ void graphics_Quit() {
         }
         SDL_Quit();
     }
-#endif
 }
 
 SDL_RendererInfo info;
@@ -373,7 +301,6 @@ SDL_RendererInfo info;
 static char openglstaticname[] = "opengl";
 #endif
 const char* graphics_GetCurrentRendererName() {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (!mainrenderer) {
             return NULL;
@@ -390,7 +317,6 @@ const char* graphics_GetCurrentRendererName() {
 #endif
         return info.name;
     }
-#endif
 }
 
 int* videomodesx = NULL;
@@ -407,7 +333,6 @@ static void graphics_ReadVideoModes() {
         videomodesy = 0;
     }
 
-#ifdef USE_SDL_GRAPHICS
     // -> read video modes with SDL per default! (even if using 3d/ogre)
     // allocate space for video modes
     int d = SDL_GetNumVideoDisplays();
@@ -459,9 +384,6 @@ static void graphics_ReadVideoModes() {
         }
         i++;
     }
-#else
-    // -> read video modes with ogre.
-#endif
 }
 
 int graphics_GetNumberOfVideoModes() {
@@ -499,7 +421,7 @@ void graphics_GetDesktopVideoMode(int* x, int* y) {
         }
         return;
     }
-#ifdef USE_SDL_GRAPHICS
+
     // -> do this with SDL per default
     SDL_DisplayMode m;
     if (SDL_GetDesktopDisplayMode(0, &m) == 0) {
@@ -508,36 +430,27 @@ void graphics_GetDesktopVideoMode(int* x, int* y) {
     }else{
         printwarning("Unable to determine desktop video mode: %s", SDL_GetError());
     }
-#else
-    // -> find desktop mode using ogre
-
-#endif
 }
 
 void graphics_MinimizeWindow() {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (!mainwindow) {
             return;
         }
         SDL_MinimizeWindow(mainwindow);
     }
-#endif
 }
 
 int graphics_IsFullscreen() {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (mainwindow) {
             return mainwindowfullscreen;
         }
         return 0;
     }
-#endif
 }
 
 void graphics_ToggleFullscreen() {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         if (!mainwindow) {
             return;
@@ -554,7 +467,6 @@ void graphics_ToggleFullscreen() {
             }
         }
     }
-#endif
 }
 
 #ifdef WINDOWS
@@ -771,7 +683,6 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
 int lastfingerdownx,lastfingerdowny;
 
 void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int button, int release, int x, int y), void (*mousemoveevent)(int x, int y), void (*keyboardevent)(const char* button, int release), void (*textevent)(const char* text), void (*putinbackground)(int background)) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         SDL_Event e;
         while (SDL_PollEvent(&e) == 1) {
@@ -894,15 +805,7 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
             }
         }
     }
-#endif
-#ifdef USE_OGRE_GRAPHICS
-    WindowEventUtilities::messagePump();
-    mainmouse->capture();
-    mainkeyboard->capture();    
-#endif
 }
 
-#endif // if defined(USE_SDL_GRAPHICS) || defined(USE_OGRE_GRAPHICS)
-
-} // extern "C"
+#endif  // USE_SDL_GRAPHICS
 

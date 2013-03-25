@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -23,11 +23,7 @@
 
 #include "os.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if defined(USE_SDL_GRAPHICS) || defined(USE_OGRE_GRAPHICS)
+#ifdef USE_SDL_GRAPHICS
 
 //  various standard headers
 #include <stdio.h>
@@ -48,36 +44,17 @@ extern "C" {
 #include "main.h"
 #endif
 
-#ifdef USE_SDL_GRAPHICS
 #include "SDL.h"
 #include "SDL_syswm.h"
-#endif
-#ifdef USE_OGRE_GRAPHICS
-#include <OgreWindowEventUtilities.h>
-#include <OgreMaterialManager.h>
-#include <OgreMeshSerializer.h>
-#include <OgreMeshManager.h>
-#endif
 
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "graphicstexturelist.h"
 
 
-#ifdef USE_SDL_GRAPHICS
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
 extern int sdlvideoinit;
-#endif
-#ifdef USE_OGRE_GRAPHICS
-extern Ogre::Root* mainogreroot;
-extern Ogre::Camera* mainogrecamera;
-extern Ogre::SceneManager* mainogrescenemanager;
-extern Ogre::RenderWindow* mainogrewindow;
-extern OIS::InputManager* mainogreinput;
-extern OIS::Mouse* mainogremouse;
-extern OIS::Keyboard* mainogrekeyboard;
-#endif
 
 extern int graphicsactive;
 extern int inbackground;
@@ -87,7 +64,6 @@ extern int mainwindowfullscreen;
 
 
 void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, float g, float b, float a) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         SDL_SetRenderDrawColor(mainrenderer, (int)((float)r * 255.0f),
         (int)((float)g * 255.0f), (int)((float)b * 255.0f), (int)((float)a * 255.0f));
@@ -100,11 +76,9 @@ void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, 
         SDL_SetRenderDrawBlendMode(mainrenderer, SDL_BLENDMODE_BLEND);
         SDL_RenderFillRect(mainrenderer, &rect);
     }
-#endif
 }
 
 int graphicsrender_DrawCropped(const char* texname, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue) {
-#ifdef USE_SDL_GRAPHICS
     if (!graphics3d) {
         struct graphicstexture* gt = graphicstexturelist_GetTextureByName(texname);
         if (!gt || gt->threadingptr || !gt->tex.sdltex) {
@@ -180,7 +154,6 @@ int graphicsrender_DrawCropped(const char* texname, int x, int y, float alpha, u
         }
         return 1;
     }
-#endif
     return 0;
 }
 
@@ -191,17 +164,9 @@ void graphicsrender_StartFrame() {
 }
 
 void graphicsrender_CompleteFrame() {
-#ifdef USE_SDL_GRAPHICS
     SDL_RenderPresent(mainrenderer);
-#endif
-#ifdef USE_OGRE_GRAPHICS
-    mainogreroot->renderOneFrame();
-#endif
 }
 
-#endif // if defined(USE_SDL_GRAPHICS) || defined(USE_OGRE_GRAPHICS)
+#endif  // USE_SDL_GRAPHICS
 
-#ifdef __cplusplus
-}
-#endif
 

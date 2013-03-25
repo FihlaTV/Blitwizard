@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -155,53 +155,110 @@ int graphics_FreeTexture(struct graphicstexture* gt, struct graphicstexture* pre
 int graphics_HaveValidWindow(void);
 // Returns 1 if a window is open, otherwise 0
 
-int graphics_GetCameraCount(int type2d3d);
-// Get count of 2d or 3d cameras
-// Cameras are numbered from 0...count-1
 
-int graphics_GetCameraX(int type2d3d, int nb);
+// CAMERA HANDLING:
+
+int graphics_GetCameraCount();
+// Get count of cameras
+
+int graphics_GetCameraX(int index);
 // Get the screen X position of the specified camera
-// The type specifies whether the camera is 2d or 3d,
-// the 'nb' specifies the number from 0..count-1
+// 'index' specifies the index from 0..count-1
 // for the specific camera.
 
-int graphics_GetCameraY(int type2d3d, int nb);
+int graphics_GetCameraY(int index);
 // Get the screen Y position of the specified camera
 
-int graphics_GetCameraWidth(int type2d3d, int nb);
+int graphics_GetCameraWidth(int index);
 // Get the screen width of the specified camera
 
-int graphics_GetCameraHeight(int type2d3d, int nb);
+int graphics_GetCameraHeight(int index);
 // Get the screen height of the specified camera
 
-void graphics_SetCameraXY(int type2d3d, int nb, int x, int y);
+void graphics_SetCameraXY(int index, int x, int y);
 // Update the screen X/Y position of the camera
 
-void graphics_SetCameraSize(int type2d3d, int nb, int width,
-int height);
+void graphics_SetCameraSize(int index, int width, int height);
 // Update width/height of the given camera
 
-double graphics_GetCameraZoom(int type2d3d, int nb);
-// Get zoom factor of camera
-// 2d camera zoom factor:
-//   A 2d unit on screen equals (UNIT_TO_PIXELS * factor)
-//   pixels.
-// 3d camera zoom factor:
-//   The camera viewing angle is (90 / factor) degree.
+double graphics_GetCamera2DZoom(int index);
+// Get 2d zoom factor of camera
+// A 2d unit on screen equals (UNIT_TO_PIXELS * factor)
+// pixels.
 
-void graphics_SetCameraZoom(int type2d3d, int nb);
-// Set camera zoom factor
+void graphics_Set2DCameraZoom(int index, double zoom);
+// Set 2d camera zoom factor
 
-double graphics_GetCameraAspectRatio(int type2d3d, int nb);
-// Get camera aspect ratio
+double graphics_GetCamera3DFov(int index);
+// Get the camera's 3d field of view.
+// Returns the angle that is visible through
+// the camera horizontally, e.g. 90 for 90 degree.
 
-void graphics_SetCameraAspectRatio(int type2d3d, int nb);
-// Set camera aspect ratio
+double graphics_SetCamera3DFov(int index, double fov);
+// Set the camera's 3d field of view.
 
-int graphics_AddCamera(int type2d3d);
-// Add a camera. Returns 1 on success, 0 on error
+double graphics_GetCamera2DAspectRatio(int index);
+// Get camera 2d aspect ratio.
+// Specified in vertical/horizontal,
+// 1: square, 0.5: twice as wide as vertically high
 
-int graphics_DeleteCamera(int type2d3d, int nb);
+void graphics_SetCamera2DAspectRatio(int index, double ratio);
+// Set camera 2d aspect ratio
+
+double graphics_GetCamera3DAspectRatio(int index);
+// Get the camera 3d aspect ratio, see 2d aspect ratio.
+
+void graphics_SetCamera3DAspectRatio(int index, double ratio);
+// Set the camera 3d aspect ratio
+
+double graphics_GetCamera2DCenterX(int index);
+// Get camera 2d center x position
+
+double graphics_GetCamera2DCenterY(int index);
+// Get camera 2d center y position
+
+void graphics_SetCamera2DCenterXY(int index, double x, double y);
+// Set a new camera 2d center to focus at
+
+double graphics_GetCamera3DCenterX(int index);
+double graphics_GetCamera3DCenterY(int index);
+double graphics_GetCamera3DCenterZ(int index);
+// Get camera 3d center x/y/z position
+
+void graphics_SetCamera3DCenterXYZ(int index, double x, double y,
+double z);
+// Set a new camera 3d center to focus at 
+
+double graphics_GetCamera2DRotation(int index);
+// Get the 2d rotation angle (degree, counter-clockwise around the
+// center)
+
+void graphics_SetCamera2DRotation(int index, double degree);
+// Set the 2d rotation angle
+
+void graphics_GetCamera3DRotation(int index,
+double* x, double* y, double* z, double* r);
+// Get camera 3d rotation as quaternion
+
+void graphics_SetCamera3DRotation(int index,
+double x, double y, double z, double r);
+// Set camera 3d rotation as quaternion
+
+double graphics_GetCamera3DZNear(int index);
+// Get 3d camera z near clipping value
+
+double graphics_GetCamera3DZFar(int index);
+// Get 3d camera z far clipping value
+
+void graphics_SetCamera3DZNearFar(int index,
+double near, double far);
+// Set 3d camera z near/far clipping values
+
+int graphics_AddCamera();
+// Add a camera. Returns new camera index on success (>=0),
+// -1 on error.
+
+int graphics_DeleteCamera(int index);
 // Delete a specified camera.
 
 #ifdef __cplusplus

@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = blitwizard
 
-blitwizard_SOURCES = audio.c audiomixer.c audiosourcefadepanvol.c audiosourceffmpeg.c audiosourceflac.c audiosourcefile.c audiosourceformatconvert.c audiosourceloop.c audiosourceogg.c audiosourceprereadcache.c audiosourceresample.c audiosourceresourcefile.c audiosourcewave.c connections.c file.c filelist.c graphics.c graphics2d3d.cpp graphics2d3drender.cpp graphicsnull.c graphicstexturelist.c hash.c hashtable.c hostresolver.c ipcheck.c library.c listeners.c logging.c luaerror.c luafuncs.c luafuncs_net.c luafuncs_media_object.c luafuncs_object.c luafuncs_objectgraphics.c luafuncs_objectphysics.c luastate.c main.c mathhelpers.c osinfo.c physics2d.cpp threading.c timefuncs.c win32console.c resources.c sockets.c zipdecryptionnone.c zipfile.c
+blitwizard_SOURCES = audio.c audiomixer.c audiosourcefadepanvol.c audiosourceffmpeg.c audiosourceflac.c audiosourcefile.c audiosourceformatconvert.c audiosourceloop.c audiosourceogg.c audiosourceprereadcache.c audiosourceresample.c audiosourceresourcefile.c audiosourcewave.c connections.c file.c filelist.c graphics.c graphicsnull.c graphicsogre.cpp graphicsogrerender.cpp graphicssdl.c graphicssdlrender.c graphicstexturelist.c hash.c hashtable.c hostresolver.c ipcheck.c library.c listeners.c logging.c luaerror.c luafuncs.c luafuncs_graphics.c luafuncs_media_object.c luafuncs_net.c luafuncs_object.c luafuncs_objectgraphics.c luafuncs_objectphysics.c luastate.c main.c mathhelpers.c osinfo.c physics2d.cpp threading.c timefuncs.c win32console.c resources.c sockets.c zipdecryptionnone.c zipfile.c
 blitwizard_LDADD = 
 blitwizard_LDFLAGS = $(FINAL_LD_FLAGS)
 
@@ -16,11 +16,11 @@ if WIN_APP_PATHS
 blitwizard_SOURCES += win32apppaths.c
 endif
 
-AM_CFLAGS = $(FINAL_INCLUDE_FLAGS) -fno-PIC -O3 -ffast-math  -DSYSTEM_TEMPLATE_PATH="\"${datadir}/blitwizard/templates/\"" -DUSE_LIB_FLAGS="\"$(FINAL_USE_LIB_FLAGS)\"" -fno-strict-aliasing -Werror-implicit-function-declaration -Wstrict-prototypes -Wall -Wextra -g -fno-omit-frame-pointer -L../libs/ $(FINAL_USE_LIB_FLAGS)
-AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -O3 -ffast-math -fno-strict-aliasing -Wall -Wextra -g -fexceptions -fno-omit-frame-pointer -L ../libs/ $(FINAL_USE_LIB_FLAGS)
+AM_CFLAGS = $(FINAL_INCLUDE_FLAGS) -fno-PIC -O3 -ffast-math -fno-finite-math-only -DSYSTEM_TEMPLATE_PATH="\"${datadir}/blitwizard/templates/\"" -DUSE_LIB_FLAGS="\"$(FINAL_USE_LIB_FLAGS)\"" -finline-functions -fno-strict-aliasing -Werror-implicit-function-declaration -Wstrict-prototypes -Wall -Wextra -g -fno-omit-frame-pointer -L../libs/ $(FINAL_USE_LIB_FLAGS)
+AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -O3 -finline-functions -ffast-math -fno-finite-math-only -fno-strict-aliasing -Wall -Wextra -g -fexceptions -fno-omit-frame-pointer -L ../libs/ $(FINAL_USE_LIB_FLAGS)
 AM_OBJCFLAGS = -fno-PIC -Wall -O3 -g -fno-exceptions -fno-omit-frame-pointer
 
-# -fno-PIC is only added for some extra speed, same as -O2.
+# -fno-PIC is only added for some extra speed, same as -O3.
 
 all-local: mytarget
 mytarget: blitwizard$(EXEEXT)
