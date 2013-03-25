@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-#if defined(USE_SDL_GRAPHICS) || defined(USE_OGRE_GRAPHICS)
+#ifdef USE_OGRE_GRAPHICS
 
 //  various standard headers
 #include <stdio.h>
@@ -199,7 +199,7 @@ void graphicsrender_CompleteFrame() {
 #endif
 }
 
-#endif // if defined(USE_SDL_GRAPHICS) || defined(USE_OGRE_GRAPHICS)
+#endif  // USE_OGRE_GRAPHICS
 
 #ifdef __cplusplus
 }
