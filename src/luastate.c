@@ -26,6 +26,7 @@
 #include "luastate.h"
 #include "luafuncs.h"
 #include "physics.h"
+#include "luafuncs_graphics.h"
 #include "luafuncs_object.h"
 #include "luafuncs_objectphysics.h"
 #include "luafuncs_physics.h"
@@ -39,10 +40,13 @@
 
 #include "file.h"
 
-// If USE_PHYSICS2D, or USE_PHYSICS3D respectively, isn't defined we wouldn't want to
-// actually have a function call to luastate_register2dphysics_do/luastate_register3dphysics_do
-// with the physics function pointer get evaluated by gcc.
-// This way, we can avoid linker errors due to the physics functions not being present.
+// If USE_PHYSICS2D, or USE_PHYSICS3D respectively isn't defined we
+// wouldn't want to actually have a function call to
+// luastate_register2dphysics_do/luastate_register3dphysics_do
+// with the physics function pointer get evaluated by gcc
+// because this will result in linker errors.
+// With this define, we can avoid linker errors due to the physics
+// functions not being present in such a case.
 #ifdef USE_PHYSICS2D
 #define luastate_register2dphysics luastate_register2dphysics_do
 #else
@@ -192,8 +196,8 @@ static void luastate_CreateGraphicsTable(lua_State* l) {
     lua_pushstring(l, "getRendererName");
     lua_pushcfunction(l, &luafuncs_getRendererName);
     lua_settable(l, -3);
-    lua_pushstring(l, "setWindow");
-    lua_pushcfunction(l, &luafuncs_setWindow);
+    lua_pushstring(l, "setMode");
+    lua_pushcfunction(l, &luafuncs_setMode);
     lua_settable(l, -3);
     lua_pushstring(l, "loadImage");
     lua_pushcfunction(l, &luafuncs_loadImage);

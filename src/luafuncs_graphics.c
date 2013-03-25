@@ -47,6 +47,7 @@
 #include "luafuncs_object.h"
 #include "luafuncs_physics.h"
 #include "main.h"
+#include "graphics.h"
 
 
 /// This function sets the graphics mode.
