@@ -675,16 +675,10 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
    or had its former shape data deleted when this function (or functions below) is called. otherwise:
    XXX MEMORY LEAKS XXX
 */
-    struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*points)*4);
-    int i = 0;
-    while (i < 4) {
-            vertices[i].x = (-2*((i+1)%4<2)+1)*(width/2);
-            vertices[i].y = (-2*(i%4<2)+1)*(height/2);
-            vertices[i].next = &points[i+1];
-    }
-    vertices[3].next = NULL;
+    struct b2PolygonShape* box = (struct b2PolygonShape*)malloc(sizeof(*box));
+    box.SetAsBox((width/2) - box.m_radius*2, (height/2) - box.m_radius*2);
     
-    shape->sha.pe2d->b2.polygonpoints = vertices;
+    shape->sha.pe2d->b2.rectangle = box;
     shape->sha.pe2d->type = 0;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
@@ -722,7 +716,7 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
     vertices[i-1].next = NULL;
     
     shape->sha.pe2d->b2.polygonpoints = vertices;
-    shape->sha.pe2d->type = 0;
+    shape->sha.pe2d->type = 1;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -735,7 +729,7 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
     circle.m_radius = radius - 0.01;
     
     shape->sha.pe2d->b2.circle = circle;
-    shape->sha.pe2d->type = 1;
+    shape->sha.pe2d->type = 2;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -744,7 +738,7 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
-    if (not shape->sha.pe2d.type == 0) {
+    if (not shape->sha.pe2d.type == 1) {
         shape->sha.pe2d->b2.polygonpoints = NULL;
     }
     struct polygonpoint* p = shape->sha.pe2d->b2.polygonpoints;
@@ -758,7 +752,7 @@ void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
     }
     p = new_point;
     
-    shape->sha.pe2d->type = 0;
+    shape->sha.pe2d->type = 1;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -864,7 +858,7 @@ void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
-    if (not shape->sha.pe2d.type == 2) {
+    if (not shape->sha.pe2d.type == 3) {
         shape->sha.pe2d->b2.edges = NULL;
     }
     
@@ -881,7 +875,7 @@ void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
     new_edge.y2 = y2;
     p.next = new_edge;
     
-    shape->sha.pe2d->type = 2;
+    shape->sha.pe2d->type = 3;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
