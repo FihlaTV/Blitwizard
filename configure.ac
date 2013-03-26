@@ -13,13 +13,13 @@ AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_MAKE_SET
+#AC_PROG_STRIP
 #MACTEST=`uname -a | grep Darwin`
-#AS_IF([test -n "$MACTEST"],[
 AC_PROG_OBJC
 #_AM_DEPENDENCIES(OBJC)
-#])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
+STRIP="strip"
 
 # Evaluate target os:
 
@@ -32,6 +32,16 @@ AS_IF([test -z "$maybeos"],[
 	WINDOWS="yes"
 ])
 
+
+# Remove -g from default CFLAGS since we control that through --disable-debug
+CFLAGS="${CFLAGS/-g}"
+CXXFLAGS="${CXXFLAGS/-g}"
+
+# Remove -O2 from default CFLAGS since we automatically detect O3 support
+# (and if present, we want to use it)
+CFLAGS="${CFLAGS/-O2}"
+CXXFLAGS="${CXXFLAGS/-O2}"
+
 # Check for ar:
 
 AC_CHECK_TOOL(AR, ar)
@@ -40,8 +50,15 @@ if [ test -z "$AR" ]; then
     exit 1
 fi
 
-
 # Enable/disable features:
+
+AC_ARG_ENABLE([debug],
+    [AS_HELP_STRING([--disable-debug],[compile without debugging symbols. Results in smaller blitwizard binary, but you can no longer properly debug a blitwizard crash])],
+[case "${enableval}" in
+     yes | no ) enable_debug="${enableval}" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-debug) ;;
+ esac],
+[enable_debug=yes])
 
 AC_ARG_ENABLE([sdl-graphics],
     [AS_HELP_STRING([--disable-sdl-graphics],[disable 2d graphics support through SDL (default is enabled). If you compile with Ogre, you can still use 2d graphics through Ogre])],
@@ -158,8 +175,6 @@ AC_ARG_ENABLE([speex],
      *) AC_MSG_ERROR(bad value ${enableval} for --disable-speex) ;;
  esac],
 [enable_speex=yes])
-
-
 
 # Remember which libs we want to build ourselves for static use:
 
@@ -895,6 +910,30 @@ cd scripts/
 scriptsdir="`pwd`"
 cd ..
 
+# Check for -O3 -fno-finite-math-only
+OLD_CFLAGS="$CFLAGS"
+CFLAGS="-O3 -ffast-math -fno-finite-math-only"
+O3_AND_INFINITE_MATH="no"
+AC_MSG_CHECKING([whether CC accepts -O3 -fast-math -fno-finite-math-only])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+    [AC_MSG_RESULT([yes])]
+    [O3_AND_INFINITE_MATH="yes"],
+    [AC_MSG_RESULT([no])]
+)
+CFLAGS="$OLD_CFLAGS"
+
+# Decide on some additional cflags:
+ADDITIONAL_CFLAGS=""
+AS_IF([test "x$enable_debug" = xyes],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -g"
+],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -s"
+])
+AS_IF([test "x$O3_AND_INFINITE_MATH" = xyes],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O3 -ffast-math -fno-finite-math-only"
+],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2"
+])
 
 # OS dependant things:
 AS_IF([test -z "$maybeos"],[
@@ -958,7 +997,8 @@ AS_IF([test -z "$maybeos"],[
     ])
 
     echo -e "$WRITELINE" > scripts/.buildinfo
-    CFLAGS="$CFLAGS $USE_FFMPEG `cd $scriptsdir && sh ./checksse.sh`"   
+    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS `cd $scriptsdir && sh ./checksse.sh`"   
+    CXXFLAGS="$ADDITIONA_CFLAGS $CXXFLAGS `cd $scriptdir && sh ./checksse.sh`"
 
     AC_CHECK_LIB([dl], [dlopen],, AC_MSG_ERROR(Cannot find all the necessary functions. Try to install the necessary libraries and headers))
     
@@ -990,14 +1030,17 @@ AS_IF([test -z "$maybeos"],[
     AC_WARN([You have chosen a mingw target but apparently the compiler is not a mingw cross-compiler. Please fix this if you are on Unix trying to cross-compile for Windows (if you are on Windows, everything should be fine).])
     ])
 
+    # Guess strip program:
+    STRIP="$host_alias-strip"
+
     TGHOST="$host_alias"
     AC_SUBST(TGHOST)
     
     WRITELINE="\nEXEEXT=$EXEEXT\nluatarget=mingw\nCXX=$CXX\nCC=$CC\nAR=$AR\nHOST=$TGHOST\nUSE_LIB_FLAGS=$FINAL_USE_LIB_FLAGS\nRANLIB=$RANLIB\nSTATIC_LIBS_USE=$STATIC_LIBS_USE\nMACBUILD=no\nWINDOWSBUILD=yes\n"
     echo -e "$WRITELINE" > scripts/.buildinfo
 
-    CFLAGS="$CFLAGS -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
-    CXXFLAGS="$CXXFLAGS -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
     LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lversion"
     FINAL_LD_FLAGS="-lmingw32 $FINAL_LD_FLAGS"
     STATICSTDCXX="-static-libstdc++"
@@ -1022,11 +1065,18 @@ Build flags:
 AC_SUBST(FINAL_INCLUDE_FLAGS)
 AC_SUBST(FINAL_USE_LIB_FLAGS)
 AC_SUBST(FINAL_LD_FLAGS)
+AS_IF([test "x$enable_debug" = xyes],
+    AM_CONDITIONAL([ENABLE_DEBUG], [test 1 = 1])
+],[
+    AM_CONDITIONAL([ENABLE_DEBUG], [test 0 = 1])
+])
 
-CFLAGS="$FINAL_INCLUDE_FLAGS $CFLAGS $FINAL_USE_LIB_FLAGS"
-CXXFLAGS="$FINAL_INCLUDE_FLAGS $CFLAGS $FINAL_USE_LIB_FLAGS"
 LIBS="$FINAL_LD_FLAGS $LIBS"
 
+
+# Export strip program
+
+AC_SUBST(STRIP)
 
 
 AC_CONFIG_FILES([Makefile

@@ -30,6 +30,11 @@
 extern "C" {
 #endif
 
+#ifdef WINDOWS
+// for HWND usage:
+#include <windows.h>
+#endif
+
 #define UNIT_TO_PIXELS 50
 
 int graphics_AreGraphicsRunning(void);
