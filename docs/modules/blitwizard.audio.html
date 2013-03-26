@@ -32,9 +32,9 @@
 
 <h2>Contents</h2>
 <ul>
-<li><a href="#Class_simpleSound">Class simpleSound</a></li>
-<li><a href="#Class_pannedSound">Class pannedSound</a></li>
-<li><a href="#Class_positionedSound">Class positionedSound</a></li>
+<li><a href="#Class_simpleSound_">Class simpleSound </a></li>
+<li><a href="#Class_pannedSound_">Class pannedSound </a></li>
+<li><a href="#Class_positionedSound_">Class positionedSound </a></li>
 </ul>
 
 
@@ -60,13 +60,11 @@
  for a sound with left/right panning and
  <a href="../modules/blitwizard.audio.html#Class_positionedSound">positionedSound</a> for a sound with
  positioning in 2d or 3d space inside the game world.
-
- Please note blitwizard will NEVER preload any sounds into memory,
+<p> Please note blitwizard will NEVER preload any sounds into memory,
  so it is perfectly fine to create many sound objects from the same
  sound file, it won't cause the file to be loaded into memory
  many times.
-
- Supported audio formats are .ogg and .flac, and, if a usable FFmpeg
+<p> Supported audio formats are .ogg and .flac, and, if a usable FFmpeg
  version is present on the system, many more like .mp3, .mp4 and others.
 </p>
     <h3>Info:</h3>
@@ -77,7 +75,7 @@
     </ul>
 
 
-<h2><a href="#Class_simpleSound">Class simpleSound</a></h2>
+<h2><a href="#Class_simpleSound_">Class simpleSound </a></h2>
 <table class="function_list">
 	<tr>
 	<td class="name" ><a href="#simpleSound:new">simpleSound:new&nbsp;(filename)</a></td>
@@ -101,7 +99,7 @@
  (does nothing if it's not)</td>
 	</tr>
 </table>
-<h2><a href="#Class_pannedSound">Class pannedSound</a></h2>
+<h2><a href="#Class_pannedSound_">Class pannedSound </a></h2>
 <table class="function_list">
 	<tr>
 	<td class="name" ><a href="#pannedSound:new">pannedSound:new&nbsp;(filename)</a></td>
@@ -126,7 +124,7 @@
  (does nothing if the sound is not playing)</td>
 	</tr>
 </table>
-<h2><a href="#Class_positionedSound">Class positionedSound</a></h2>
+<h2><a href="#Class_positionedSound_">Class positionedSound </a></h2>
 <table class="function_list">
 	<tr>
 	<td class="name" ><a href="#positionedSound:new">positionedSound:new&nbsp;(filename, object)</a></td>
@@ -142,7 +140,7 @@
 <br/>
 
 
-    <h2><a name="Class_simpleSound"></a>Class simpleSound</h2>
+    <h2><a name="Class_simpleSound_"></a>Class simpleSound </h2>
         Implements a simple sound which has no
  stereo left/right panning or room positioning features.
  This is the sound object suited best for background music.
@@ -167,9 +165,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">filename</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-       Filename of the audio file you want to play</li>
+        <li><span class="parameter">filename</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Filename of the audio file you want to play</li>
     </ul>
 
 
@@ -183,24 +181,22 @@
     </dt>
     <dd>
     Play the sound represented by the simple sound object.
-
- If the sound file doesn't exist or if it is in an unsupported format,
+<p> If the sound file doesn't exist or if it is in an unsupported format,
  an error will be thrown.
-
- Does nothing if the sound object is already playing: to play a sound
+<p> Does nothing if the sound object is already playing: to play a sound
  multiple times at once, use multiple sound objects.
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">volume</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Volume at which the sound plays from 0 (quiet) to 1 (full volume). Defaults to 1</li>
-      <li><span class="parameter">loop</span>
-        <span class="types"><span class="type">boolean</span></span>
-       (optional) If set to true, the sound will loop until explicitely stopped. If set to false or if not specified, it will play once</li>
-      <li><span class="parameter">fadein</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Fade in from silence to the specified volume in the given amount of seconds, instead of playing at full volume right from the start</li>
+        <li><span class="parameter">volume</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Volume at which the sound plays from 0 (quiet) to 1 (full volume). Defaults to 1</li>
+        <li><span class="parameter">loop</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) If set to true, the sound will loop until explicitely stopped. If set to false or if not specified, it will play once</li>
+        <li><span class="parameter">fadein</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Fade in from silence to the specified volume in the given amount of seconds, instead of playing at full volume right from the start</li>
     </ul>
 
 
@@ -225,9 +221,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">fadeout</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) If specified, the sound will fade out for the specified amount in seconds. Otherwise it will stop instantly</li>
+        <li><span class="parameter">fadeout</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) If specified, the sound will fade out for the specified amount in seconds. Otherwise it will stop instantly</li>
     </ul>
 
 
@@ -241,29 +237,25 @@
     </dt>
     <dd>
     Set the sound priority of the simple sound object.
-
- In blitwizard, only a fixed maximum number of sounds can play
+<p> In blitwizard, only a fixed maximum number of sounds can play
  at a time. If you attempt to <a href="../modules/blitwizard.audio.html#simpleSound:play">play</a>
  a sound object when the maximum number of sounds simultaneously
  is reached, it will kill off playing sounds with
  lower priority. If no lower or same priority sound is available
  to kill, it won't start playing at all.
-
- Changing the priority won't affect the sound object's current
+<p> Changing the priority won't affect the sound object's current
  playing, it will only have an effect the next time you use
  play.
-
- Background music should have a high priority, and short,
+<p> Background music should have a high priority, and short,
  frequent sounds like gun shots or footsteps should have a low
  priority.
-
- Simple sound objects default to a priority of 5.
+<p> Simple sound objects default to a priority of 5.
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">priority</span>
-        <span class="types"><span class="type">number</span></span>
-       Priority from 0 (lowest) to 20 (highest), values will be rounded down to have no decimal places (0.5 becomes 0, 1.7 becomes 1, etc)</li>
+        <li><span class="parameter">priority</span>
+            <span class="types"><span class="type">number</span></span>
+         Priority from 0 (lowest) to 20 (highest), values will be rounded down to have no decimal places (0.5 becomes 0, 1.7 becomes 1, etc)</li>
     </ul>
 
 
@@ -288,9 +280,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">volume</span>
-        <span class="types"><span class="type">number</span></span>
-       New volume from 0 (quiet) to 1 (full volume)</li>
+        <li><span class="parameter">volume</span>
+            <span class="types"><span class="type">number</span></span>
+         New volume from 0 (quiet) to 1 (full volume)</li>
     </ul>
 
 
@@ -299,7 +291,7 @@
 
 </dd>
 </dl>
-    <h2><a name="Class_pannedSound"></a>Class pannedSound</h2>
+    <h2><a name="Class_pannedSound_"></a>Class pannedSound </h2>
         Implements a sound with simple left/right stereo panning.
  If you want to make a sound emit from a specific location,
  you should probably use a
@@ -314,9 +306,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">filename</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-       Filename of the audio file you want to play</li>
+        <li><span class="parameter">filename</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Filename of the audio file you want to play</li>
     </ul>
 
 
@@ -333,18 +325,18 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">volume</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Volume at which the sound plays from 0 (quiet), through 1 (full volume) to 1.5 (over-amplified). Defaults to 1, values >1 can cause distortion</li>
-      <li><span class="parameter">panning</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Stereo panning which alters the left/right placement of the sound from 1 (left) through 0 (center) to -1 (right). Default is 0</li>
-      <li><span class="parameter">loop</span>
-        <span class="types"><span class="type">boolean</span></span>
-       (optional) If set to true, the sound will loop until explicitely stopped. If set to false or if not specified, it will play once</li>
-      <li><span class="parameter">fadein</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Fade in from silence to the specified volume in the given amount of seconds, instead of playing at full volume right from the start</li>
+        <li><span class="parameter">volume</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Volume at which the sound plays from 0 (quiet), through 1 (full volume) to 1.5 (over-amplified). Defaults to 1, values >1 can cause distortion</li>
+        <li><span class="parameter">panning</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Stereo panning which alters the left/right placement of the sound from 1 (left) through 0 (center) to -1 (right). Default is 0</li>
+        <li><span class="parameter">loop</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) If set to true, the sound will loop until explicitely stopped. If set to false or if not specified, it will play once</li>
+        <li><span class="parameter">fadein</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Fade in from silence to the specified volume in the given amount of seconds, instead of playing at full volume right from the start</li>
     </ul>
 
 
@@ -368,9 +360,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">fadeout</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) If specified, the sound will fade out for the specified amount in seconds. Otherwise it will stop instantly</li>
+        <li><span class="parameter">fadeout</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) If specified, the sound will fade out for the specified amount in seconds. Otherwise it will stop instantly</li>
     </ul>
 
 
@@ -385,14 +377,13 @@
     <dd>
     Set the sound priority of the panned sound,
  see explanation of <a href="../modules/blitwizard.audio.html#simpleSound:setPriority">blitwizard.audio.simpleSound:setPriority</a>.
-
- Panned sounds default to a priority of 2.
+<p> Panned sounds default to a priority of 2.
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">priority</span>
-        <span class="types"><span class="type">number</span></span>
-       Priority from 0 (lowest) to 20 (highest), values will be rounded down to have no decimal places (0.5 becomes 0, 1.7 becomes 1, etc)</li>
+        <li><span class="parameter">priority</span>
+            <span class="types"><span class="type">number</span></span>
+         Priority from 0 (lowest) to 20 (highest), values will be rounded down to have no decimal places (0.5 becomes 0, 1.7 becomes 1, etc)</li>
     </ul>
 
 
@@ -410,12 +401,12 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">volume</span>
-        <span class="types"><span class="type">number</span></span>
-       New volume from 0 to 1.5 (values higher than 1 can cause distortions)</li>
-      <li><span class="parameter">panning</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) New panning from 1 (left) to 0 (center) to -1 (right)</li>
+        <li><span class="parameter">volume</span>
+            <span class="types"><span class="type">number</span></span>
+         New volume from 0 to 1.5 (values higher than 1 can cause distortions)</li>
+        <li><span class="parameter">panning</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) New panning from 1 (left) to 0 (center) to -1 (right)</li>
     </ul>
 
 
@@ -424,7 +415,7 @@
 
 </dd>
 </dl>
-    <h2><a name="Class_positionedSound"></a>Class positionedSound</h2>
+    <h2><a name="Class_positionedSound_"></a>Class positionedSound </h2>
         Implements a positioned sound which can either follow a
  specific <a href="../modules/blitwizard.html#Class_object">blitwizard object</a> or which
  you can move to any position you like.  It will alter volume
@@ -440,12 +431,12 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">filename</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-       Filename of the audio file you want to play</li>
-      <li><span class="parameter">object</span>
-        <span class="types"><span class="type">userdata</span></span>
-       (optional) Specify a <a href="../modules/blitwizard.html#Class_object">blitwizard object</a> to which the sound should stick. If you don't specify an object to stick to, the sound can be freely placed with ???</li>
+        <li><span class="parameter">filename</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Filename of the audio file you want to play</li>
+        <li><span class="parameter">object</span>
+            <span class="types"><span class="type">userdata</span></span>
+         (optional) Specify a <a href="../modules/blitwizard.html#Class_object">blitwizard object</a> to which the sound should stick. If you don't specify an object to stick to, the sound can be freely placed with ???</li>
     </ul>
 
 
@@ -463,9 +454,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">fadeout</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) If specified, the sound will fade out for the specified amount in seconds. Otherwise it will stop instantly</li>
+        <li><span class="parameter">fadeout</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) If specified, the sound will fade out for the specified amount in seconds. Otherwise it will stop instantly</li>
     </ul>
 
 
