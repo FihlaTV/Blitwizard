@@ -52,10 +52,16 @@
 #else
 #define luastate_register2dphysics(X, Y, Z) (luastate_register2dphysics_do(X, NULL, Z))
 #endif
-#ifdef USE_PHYSICS23
+#ifdef USE_PHYSICS3D
 #define luastate_register3dphysics luastate_register2dphysics_do
 #else
 #define luastate_register3dphysics(X, Y, Z) (luastate_register2dphysics_do(X, NULL, Z))
+#endif
+
+#ifdef HAVE_GRAPHICS
+#define luastate_registergraphics luastate_registergraphics_do
+#else
+#define luastate_registergraphics(X, Y, Z) (luastate_registergraphics_do(X, NULL, Z))
 #endif
 
 static lua_State* scriptstate = NULL;
@@ -144,6 +150,10 @@ int functionalitymissing_3dphysics(lua_State* l) {
     return haveluaerror(l, "%s", error_nophysics3d);
 }
 
+int functionalitymissing_graphics(lua_State* l) {
+    return haveluaerror(l, "%s", error_nographics);
+}
+
 void luastate_register2dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
     lua_pushstring(l, name);
 #ifdef USE_PHYSICS2D
@@ -160,6 +170,16 @@ void luastate_register3dphysics_do(lua_State* l, int (*func)(lua_State*), const 
     lua_pushcfunction(l, func);
 #else
     lua_pushcfunction(l, functionalitymissing_3dphysics);
+#endif
+    lua_settable(l, -3);
+}
+
+void luastate_registergraphics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
+    lua_pushstring(l, name);
+#ifdef HAVE_GRAPHICS
+    lua_pushcfunction(l, func);
+#else
+    lua_pushcfunction(l, functionalitymissing_graphics);
 #endif
     lua_settable(l, -3);
 }
@@ -196,9 +216,7 @@ static void luastate_CreateGraphicsTable(lua_State* l) {
     lua_pushstring(l, "getRendererName");
     lua_pushcfunction(l, &luafuncs_getRendererName);
     lua_settable(l, -3);
-    lua_pushstring(l, "setMode");
-    lua_pushcfunction(l, &luafuncs_setMode);
-    lua_settable(l, -3);
+    luastate_registergraphics(l, &luafuncs_setMode, "setMode");
     lua_pushstring(l, "loadImage");
     lua_pushcfunction(l, &luafuncs_loadImage);
     lua_settable(l, -3);
