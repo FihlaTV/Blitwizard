@@ -49,6 +49,11 @@
 
 extern "C" {
 
+// Enums, ...
+#ifdef USE_PHYSICS2D
+enum shape_types_2d { BW_S2D_RECT=0, BW_S2D_POLY, BW_S2D_CIRCLE, BW_S2D_EDGE };
+#endif
+
 // Purely internal structs
 #ifdef USE_PHYSICS2D
 struct physicsobject2d;
@@ -275,7 +280,7 @@ struct physicsobjectshape2d {
         b2CircleShape* circle;
         struct edge* edges;
     } b2;
-    int type;
+    enum shape_types_2d type;
 };
 
 struct deletedphysicsobject2d {
@@ -631,15 +636,41 @@ struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
 
 #ifdef USE_PHYSICS2D
 void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
-    // TBD
+    switch ((int)(shape->type)) {
+        case BW_S2D_RECT:
+            free(shape->b2.rectangle);
+        break;
+        case BW_S2D_POLY:
+            struct polygonpoint* p, p2;
+            p = shape->b2.polygonpoints;
+            p2 = NULL;
+            while (p != NULL) {
+                p2 = p->next;
+                free(p);
+            }
+            free(p2);
+        break;
+        case BW_S2D_CIRCLE:
+            free(shape->b2.circle);
+        break;
+        case BW_S2D_EDGE:
+            struct edge* e, e2;
+            e = shape->b2.edges;
+            e2 = NULL;
+            while (e != NULL) {
+                e2 = e->next;
+                free(e);
+            }
+            free(e2);
+        break;
+        default:
+            printerror("Error: Unknown 2D shape type.");
+    }
+    free(shape);
 }
 #endif
 
 void physics_DestroyShapes(struct physicsobjectshape* shapes, int count) {
-/*
-- for each shape:
-  FUCK
-*/
     int i = 0;
     while (i < count) {
         switch (_physics_ShapeType(shapes[i])) {
@@ -679,7 +710,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
     box.SetAsBox((width/2) - box.m_radius*2, (height/2) - box.m_radius*2);
     
     shape->sha.pe2d->b2.rectangle = box;
-    shape->sha.pe2d->type = 0;
+    shape->sha.pe2d->type = BW_S2D_RECT;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -716,7 +747,7 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
     vertices[i-1].next = NULL;
     
     shape->sha.pe2d->b2.polygonpoints = vertices;
-    shape->sha.pe2d->type = 1;
+    shape->sha.pe2d->type = BW_S2D_POLY;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -729,7 +760,7 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
     circle.m_radius = radius - 0.01;
     
     shape->sha.pe2d->b2.circle = circle;
-    shape->sha.pe2d->type = 2;
+    shape->sha.pe2d->type = BW_S2D_CIRCLE;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -738,7 +769,7 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
-    if (not shape->sha.pe2d.type == 1) {
+    if (not shape->sha.pe2d.type == BW_S2D_POLY) {
         shape->sha.pe2d->b2.polygonpoints = NULL;
     }
     struct polygonpoint* p = shape->sha.pe2d->b2.polygonpoints;
@@ -752,7 +783,7 @@ void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
     }
     p = new_point;
     
-    shape->sha.pe2d->type = 1;
+    shape->sha.pe2d->type = BW_S2D_POLY;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -858,7 +889,7 @@ void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
-    if (not shape->sha.pe2d.type == 3) {
+    if (not shape->sha.pe2d.type == BW_S2D_EDGE) {
         shape->sha.pe2d->b2.edges = NULL;
     }
     
@@ -875,7 +906,7 @@ void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
     new_edge.y2 = y2;
     p.next = new_edge;
     
-    shape->sha.pe2d->type = 3;
+    shape->sha.pe2d->type = BW_S2D_EDGE;
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
