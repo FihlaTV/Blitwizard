@@ -1093,6 +1093,97 @@ void physics2d_GetMassCenterOffset(struct physicsobject2d* obj, double* offsetx,
     *offsety = mdata.center.y;
 }
 
+#ifdef USE_PHYSICS2D
+static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, void* userdata, int movable) {
+    struct physicsobject2d* object = (struct physicsobject2d*)malloc(sizeof(*object));
+    if (!object) {return NULL;}
+    memset(object, 0, sizeof(*object));
+
+    struct bodyuserdata* pdata = (struct bodyuserdata*)malloc(sizeof(*pdata));
+    if (!pdata) {
+        free(object);
+        return NULL;
+    }
+    memset(pdata, 0, sizeof(*pdata));
+    pdata->userdata = userdata;
+    pdata->pobj = object;
+
+    b2BodyDef bodyDef;
+    if (movable) {
+        bodyDef.type = b2_dynamicBody;
+    }
+    object->movable = movable;
+    bodyDef.userData = (void*)pdata;
+    object->userdata = pdata;
+    object->body = world->w->CreateBody(&bodyDef);
+    object->body->SetFixedRotation(false);
+    object->world = world->w;
+    object->pworld = world;
+    if (!object->body) {
+        free(object);
+        free(pdata);
+        return NULL;
+    }
+    return object;
+}
+#endif
+
+struct physicsobject* physics_CreateObject(struct physicsworld* world, void* userdata, int movable, struct physicsobjectshape* shapelist) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (!world->is3d) {
+#endif
+#ifdef USE_PHYSICS2D
+    struct physicsobject2d* obj = _physics_Create2dObj(world->wor.ld2d, userdata, movable);
+    if (obj == NULL) {
+        return NULL;
+    }
+    
+    struct physicsobjectshape* s = shapelist;
+    while (s != NULL) {
+        if (_physics_ShapeType(s) != 0) {
+            // TODO: error msg?
+            break;
+        }
+        switch ((int)(s->sha.pe2d->type)) {
+            case BW_S2D_RECT:
+                b2FixtureDef fixtureDef;
+                fixtureDef.shape = s->sha.pe2d->rectangle;
+                fixtureDef.friction = 1; // TODO: ???
+                fixtureDef.density = 1;
+                obj->body->SetFixedRotation(false);
+                obj->body->CreateFixture(&fixtureDef);
+                physics2d_SetMass(obj, 0); // TODO: udpate
+            break;
+            case BW_S2D_POLY:
+                // TODO
+            break;
+            case BW_S2D_CIRCLE:
+                b2FixtureDef fixtureDef;
+                fixtureDef.shape = s->sha.pe2d->circle;
+                fixtureDef.friction = 1; // TODO: ???
+                fixtureDef.density = 1;
+                obj->body->SetFixedRotation(false);
+                obj->body->CreateFixture(&fixtureDef);
+                physics2d_SetMass(obj, 0); // TODO: udpate
+            break;
+            case BW_S2D_EDGE:
+                // TODO
+            break;
+        }
+    }
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }else{
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
+
+}
+
 static void physics2d_DestroyObjectDo(struct physicsobject2d* obj) {
     if (obj->body) {
         obj->world->DestroyBody(obj->body);
