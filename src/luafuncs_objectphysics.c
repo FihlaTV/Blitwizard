@@ -520,7 +520,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 // very tiny or huge) can be unstable for movables. Create all your movable objects
 // roughly of sizes between 0.1 and 10 to avoid instability.
 // @function enableMovableCollision
-// @tparam table shape_info a @{object:shape_info|shape_info} table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes
+// @tparam table shape_info a @{object.shape_info|shape_info} table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes
 int luafuncs_enableMovableCollision(lua_State* l) {
     return luafuncs_enableCollision(l, 1);
 }
@@ -531,7 +531,7 @@ int luafuncs_enableMovableCollision(lua_State* l) {
 // provide shape information that specifies the desired collision shape
 // of the object (not necessarily similar to its visual appearance).
 // @function enableStaticCollision
-// @tparam table shape_info a @{object:shape_info|shape_info} table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes
+// @tparam table shape_info a @{object.shape_info|shape_info} table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes
 int luafuncs_enableStaticCollision(lua_State* l) {
     return luafuncs_enableCollision(l, 0);
 }

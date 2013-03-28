@@ -32,7 +32,7 @@
 
 <h2>Contents</h2>
 <ul>
-<li><a href="#Class_object">Class object</a></li>
+<li><a href="#Class_object_">Class object </a></li>
 </ul>
 
 
@@ -63,7 +63,7 @@
     </ul>
 
 
-<h2><a href="#Class_object">Class object</a></h2>
+<h2><a href="#Class_object_">Class object </a></h2>
 <table class="function_list">
 	<tr>
 	<td class="name" ><a href="#object:new">object:new&nbsp;(3d, resource, behaviour)</a></td>
@@ -92,7 +92,7 @@
 	<td class="summary">Disable the physics simulation on an object.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#object:shape_info">object:shape_info</a></td>
+	<td class="name" ><a href="#object.shape_info">object.shape_info</a></td>
 	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)</td>
 	</tr>
 	<tr>
@@ -149,7 +149,7 @@
 <br/>
 
 
-    <h2><a name="Class_object"></a>Class object</h2>
+    <h2><a name="Class_object_"></a>Class object </h2>
         Blitwizard object which represents an 'entity' in the game world
  with visual representation, behaviour code and collision shape.
     <dl class="function">
@@ -167,15 +167,15 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">3d</span>
-        <span class="types"><span class="type">boolean</span></span>
-       specify 'true' if you wish this object to be a 3d object, or 'false' if you want it to be a flat 2d object</li>
-      <li><span class="parameter">resource</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-       (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.</li>
-      <li><span class="parameter">behaviour</span>
-        <span class="types"><span class="type">function</span></span>
-       (optional) the behaviour function which will be executed immediately after object creation.</li>
+        <li><span class="parameter">3d</span>
+            <span class="types"><span class="type">boolean</span></span>
+         specify 'true' if you wish this object to be a 3d object, or 'false' if you want it to be a flat 2d object</li>
+        <li><span class="parameter">resource</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.</li>
+        <li><span class="parameter">behaviour</span>
+            <span class="types"><span class="type">function</span></span>
+         (optional) the behaviour function which will be executed immediately after object creation.</li>
     </ul>
 
     <h3>Returns:</h3>
@@ -239,15 +239,15 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">pos_x</span>
-        <span class="types"><span class="type">number</span></span>
-       x coordinate</li>
-      <li><span class="parameter">pos_y</span>
-        <span class="types"><span class="type">number</span></span>
-       y coordinate</li>
-      <li><span class="parameter">pos_z</span>
-        <span class="types"><span class="type">number</span></span>
-       (only for 3d objects) z coordinate</li>
+        <li><span class="parameter">pos_x</span>
+            <span class="types"><span class="type">number</span></span>
+         x coordinate</li>
+        <li><span class="parameter">pos_y</span>
+            <span class="types"><span class="type">number</span></span>
+         y coordinate</li>
+        <li><span class="parameter">pos_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (only for 3d objects) z coordinate</li>
     </ul>
 
 
@@ -264,15 +264,14 @@
  An object with a higher z index will be drawn above
  others with a lower z index. If two objects have the same
  z index, the newer object will be drawn on top.
-
- The z index will be internally set to an integer,
+<p> The z index will be internally set to an integer,
  so use numbers like 1, 2, 3, 99, ...
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">z_index</span>
-        <span class="types"><span class="type">number</span></span>
-       New z index</li>
+        <li><span class="parameter">z_index</span>
+            <span class="types"><span class="type">number</span></span>
+         New z index</li>
     </ul>
 
 
@@ -295,65 +294,65 @@
 
 </dd>
     <dt>
-    <a name = "object:shape_info"></a>
-    <strong>object:shape_info</strong>
+    <a name = "object.shape_info"></a>
+    <strong>object.shape_info</strong>
     </dt>
     <dd>
     This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
 
     <h3>Fields:</h3>
     <ul>
-      <li><span class="parameter">type</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-       The shape type, for 2d shapes: "rectangle", "circle", "oval", "polygon" (needs to be convex!), "edge list" (simply a list of lines that don't need to be necessarily connected as it is for the polygon), for 3d shapes: "decal" (= 3d rectangle), "box", "ball", "elliptic ball" (deformed ball with possibly non-uniform radius, e.g. rather a capsule), "triangle mesh" (a list of 3d triangles)</li>
-      <li><span class="parameter">width</span>
-        <span class="types"><span class="type">number</span></span>
-       required for "rectangle", "oval" and "decal"</li>
-      <li><span class="parameter">height</span>
-        <span class="types"><span class="type">number</span></span>
-       required for "rectangle", "oval" and "decal"</li>
-      <li><span class="parameter">diameter</span>
-        <span class="types"><span class="type">number</span></span>
-       required for "circle" and "ball"</li>
-      <li><span class="parameter">x_size</span>
-        <span class="types"><span class="type">number</span></span>
-       required for "box" and "elliptic ball"</li>
-      <li><span class="parameter">y_size</span>
-        <span class="types"><span class="type">number</span></span>
-       required for "box" and "elliptic ball"</li>
-      <li><span class="parameter">z_size</span>
-        <span class="types"><span class="type">number</span></span>
-       required for "box" and "elliptic ball"</li>
-      <li><span class="parameter">points</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-       required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. [ [ 0, 0 ], [ 1, 0 ], [ 0, 1 ] ]  (keep in mind the polygon needs to be convex!)</li>
-      <li><span class="parameter">edges</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-       required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Example: [ [ [ 0, 0 ], [ 1, 0 ] ], [ [ 0, 1 ], [ 1, 1 ] ] ]</li>
-      <li><span class="parameter">triangles</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-       required for "triangle mesh": a list of triangles, whereas a triangle is itself a 3-item list of three 3d points, each 3d point being a list of three coordinates.</li>
-      <li><span class="parameter">x_offset</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) x coordinate offset for any 2d or 3d shape, defaults to 0</li>
-      <li><span class="parameter">y_offset</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) y coordinate offset for any 2d or 3d shape, defaults to 0</li>
-      <li><span class="parameter">z_offset</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) z coordinate offset for any 3d shape, defaults to 0</li>
-      <li><span class="parameter">rotation</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) rotation of any 2d shape 0..360 degree (defaults to 0)</li>
-      <li><span class="parameter">rotation_pan</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) rotation of any 3d shape 0..360 degree left and right (horizontally)</li>
-      <li><span class="parameter">rotation_tilt</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) rotation of any 3d shape 0..360 degree up and down, applied after horizontal rotation</li>
-      <li><span class="parameter">rotation_roll</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) rotation of any 3d shape 0..360 degree around itself while remaining faced forward (basically overturning/leaning on the side), applied after the horizontal and vertical rotations</li>
+        <li><span class="parameter">type</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         The shape type, for 2d shapes: "rectangle", "circle", "oval", "polygon" (needs to be convex!), "edge list" (simply a list of lines that don't need to be necessarily connected as it is for the polygon), for 3d shapes: "decal" (= 3d rectangle), "box", "ball", "elliptic ball" (deformed ball with possibly non-uniform radius, e.g. rather a capsule), "triangle mesh" (a list of 3d triangles)</li>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         required for "rectangle", "oval" and "decal"</li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         required for "rectangle", "oval" and "decal"</li>
+        <li><span class="parameter">diameter</span>
+            <span class="types"><span class="type">number</span></span>
+         required for "circle" and "ball"</li>
+        <li><span class="parameter">x_size</span>
+            <span class="types"><span class="type">number</span></span>
+         required for "box" and "elliptic ball"</li>
+        <li><span class="parameter">y_size</span>
+            <span class="types"><span class="type">number</span></span>
+         required for "box" and "elliptic ball"</li>
+        <li><span class="parameter">z_size</span>
+            <span class="types"><span class="type">number</span></span>
+         required for "box" and "elliptic ball"</li>
+        <li><span class="parameter">points</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. [ [ 0, 0 ], [ 1, 0 ], [ 0, 1 ] ]  (keep in mind the polygon needs to be convex!)</li>
+        <li><span class="parameter">edges</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Example: [ [ [ 0, 0 ], [ 1, 0 ] ], [ [ 0, 1 ], [ 1, 1 ] ] ]</li>
+        <li><span class="parameter">triangles</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         required for "triangle mesh": a list of triangles, whereas a triangle is itself a 3-item list of three 3d points, each 3d point being a list of three coordinates.</li>
+        <li><span class="parameter">x_offset</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) x coordinate offset for any 2d or 3d shape, defaults to 0</li>
+        <li><span class="parameter">y_offset</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) y coordinate offset for any 2d or 3d shape, defaults to 0</li>
+        <li><span class="parameter">z_offset</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) z coordinate offset for any 3d shape, defaults to 0</li>
+        <li><span class="parameter">rotation</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) rotation of any 2d shape 0..360 degree (defaults to 0)</li>
+        <li><span class="parameter">rotation_pan</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) rotation of any 3d shape 0..360 degree left and right (horizontally)</li>
+        <li><span class="parameter">rotation_tilt</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) rotation of any 3d shape 0..360 degree up and down, applied after horizontal rotation</li>
+        <li><span class="parameter">rotation_roll</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) rotation of any 3d shape 0..360 degree around itself while remaining faced forward (basically overturning/leaning on the side), applied after the horizontal and vertical rotations</li>
     </ul>
 
 
@@ -392,17 +391,16 @@
  You will be required to
  provide shape information that specifies the desired collision shape
  of the object (not necessarily similar to its visual appearance).
-
- Note: some complex shape types are unavailable for
+<p> Note: some complex shape types are unavailable for
  movable objects, and some shapes (very thin/long, very complex or
  very tiny or huge) can be unstable for movables. Create all your movable objects
  roughly of sizes between 0.1 and 10 to avoid instability.
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">shape_info</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-       a <a href="../modules/blitwizard.html#object:shape_info">shape_info</a> table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes</li>
+        <li><span class="parameter">shape_info</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         a <a href="../modules/blitwizard.html#object.shape_info">shape_info</a> table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes</li>
     </ul>
 
 
@@ -423,9 +421,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">shape_info</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-       a <a href="../modules/blitwizard.html#object:shape_info">shape_info</a> table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes</li>
+        <li><span class="parameter">shape_info</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         a <a href="../modules/blitwizard.html#object.shape_info">shape_info</a> table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes</li>
     </ul>
 
 
@@ -445,24 +443,24 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">source_x</span>
-        <span class="types"><span class="type">number</span></span>
-       the x source coordinate from where the push will be given</li>
-      <li><span class="parameter">source_y</span>
-        <span class="types"><span class="type">number</span></span>
-       the y source coordinate</li>
-      <li><span class="parameter">source_z</span>
-        <span class="types"><span class="type">number</span></span>
-       (parameter only present for 3d objects) the z source coordinate</li>
-      <li><span class="parameter">force_x</span>
-        <span class="types"><span class="type">number</span></span>
-       the x coordinate of the force vector applied through the impulse</li>
-      <li><span class="parameter">force_y</span>
-        <span class="types"><span class="type">number</span></span>
-       the y coordinate of the force vector</li>
-      <li><span class="parameter">force_z</span>
-        <span class="types"><span class="type">number</span></span>
-       (parameter only present for 3d objects) the z coordinate of the force vector</li>
+        <li><span class="parameter">source_x</span>
+            <span class="types"><span class="type">number</span></span>
+         the x source coordinate from where the push will be given</li>
+        <li><span class="parameter">source_y</span>
+            <span class="types"><span class="type">number</span></span>
+         the y source coordinate</li>
+        <li><span class="parameter">source_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (parameter only present for 3d objects) the z source coordinate</li>
+        <li><span class="parameter">force_x</span>
+            <span class="types"><span class="type">number</span></span>
+         the x coordinate of the force vector applied through the impulse</li>
+        <li><span class="parameter">force_y</span>
+            <span class="types"><span class="type">number</span></span>
+         the y coordinate of the force vector</li>
+        <li><span class="parameter">force_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (parameter only present for 3d objects) the z coordinate of the force vector</li>
     </ul>
 
 
@@ -478,33 +476,31 @@
     Restrict the ability to rotate for a given object.  For 2d, the rotation
  can be totally restricted or not, for 3d it can be restricted around a specific
  axis (e.g. like a door), completely (object can not rotate at all), or not at all.
-
- For 2d and complete 3d restriction, specify 'true'. For no restriction, 'false'.
-
- For 3d restriction around a specific axis (only available for 3d objects obviously),
+<p> For 2d and complete 3d restriction, specify 'true'. For no restriction, 'false'.
+<p> For 3d restriction around a specific axis (only available for 3d objects obviously),
  specify 3 coordinates for an axis direction vector, then optionally an additional 3 coordinates
  for the point where the axis should go through (if not specified the object's center).
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">total_or_axis_x</span>
-        <span class="types"><span class="type">number/boolean</span></span>
-       Specify true or false for either full restriction or none, or the first coordinate of an axis</li>
-      <li><span class="parameter">axis_y</span>
-        <span class="types"><span class="type">number</span></span>
-       If the first parameter was the first coordinate of an axis, specify the second here</li>
-      <li><span class="parameter">axis_z</span>
-        <span class="types"><span class="type">number</span></span>
-       If the first parameter was the first coordinate of an axis, specify the third here</li>
-      <li><span class="parameter">axis_point_x</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) If you want to specify a point the axis goes through, specify its x coordinate here</li>
-      <li><span class="parameter">axis_point_y</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) y coordinate</li>
-      <li><span class="parameter">axis_point_z</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) z coordinate</li>
+        <li><span class="parameter">total_or_axis_x</span>
+            <span class="types"><span class="type">number/boolean</span></span>
+         Specify true or false for either full restriction or none, or the first coordinate of an axis</li>
+        <li><span class="parameter">axis_y</span>
+            <span class="types"><span class="type">number</span></span>
+         If the first parameter was the first coordinate of an axis, specify the second here</li>
+        <li><span class="parameter">axis_z</span>
+            <span class="types"><span class="type">number</span></span>
+         If the first parameter was the first coordinate of an axis, specify the third here</li>
+        <li><span class="parameter">axis_point_x</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) If you want to specify a point the axis goes through, specify its x coordinate here</li>
+        <li><span class="parameter">axis_point_y</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) y coordinate</li>
+        <li><span class="parameter">axis_point_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) z coordinate</li>
     </ul>
 
 
@@ -526,9 +522,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">damping</span>
-        <span class="types"><span class="type">number</span></span>
-       Angular damping factor from 0 (none) to 1 (full)</li>
+        <li><span class="parameter">damping</span>
+            <span class="types"><span class="type">number</span></span>
+         Angular damping factor from 0 (none) to 1 (full)</li>
     </ul>
 
 
@@ -546,9 +542,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">friction</span>
-        <span class="types"><span class="type">number</span></span>
-       Friction value from 0 to 1 (0 is no friction, 1 is full friction)</li>
+        <li><span class="parameter">friction</span>
+            <span class="types"><span class="type">number</span></span>
+         Friction value from 0 to 1 (0 is no friction, 1 is full friction)</li>
     </ul>
 
 
@@ -572,15 +568,15 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">gravity_x</span>
-        <span class="types"><span class="type">number</span></span>
-       x coordinate of gravity vector</li>
-      <li><span class="parameter">gravity_y</span>
-        <span class="types"><span class="type">number</span></span>
-       y coordinate of gravity vector</li>
-      <li><span class="parameter">gravity_z</span>
-        <span class="types"><span class="type">number</span></span>
-       (only for 3d objects) z coordinate of gravity vector</li>
+        <li><span class="parameter">gravity_x</span>
+            <span class="types"><span class="type">number</span></span>
+         x coordinate of gravity vector</li>
+        <li><span class="parameter">gravity_y</span>
+            <span class="types"><span class="type">number</span></span>
+         y coordinate of gravity vector</li>
+        <li><span class="parameter">gravity_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (only for 3d objects) z coordinate of gravity vector</li>
     </ul>
 
 
@@ -603,9 +599,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">damping</span>
-        <span class="types"><span class="type">number</span></span>
-       Linear damping factor from 0 (none) to 1 (full). Default: 0</li>
+        <li><span class="parameter">damping</span>
+            <span class="types"><span class="type">number</span></span>
+         Linear damping factor from 0 (none) to 1 (full). Default: 0</li>
     </ul>
 
 
@@ -624,18 +620,18 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">mass</span>
-        <span class="types"><span class="type">number</span></span>
-       Set the mass of the object in kilograms. You should experiment and pick mass here which works well for you (it shouldn't be very small or very large), rather than using the most truthful numbers.</li>
-      <li><span class="parameter">mass_center_x</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Set the x coordinate of the mass center (default: 0)</li>
-      <li><span class="parameter">mass_center_y</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Set the y coordinate of the mass center (default: 0)</li>
-      <li><span class="parameter">mass_center_z</span>
-        <span class="types"><span class="type">number</span></span>
-       (optional) Set the z coordinate of the mass center (default: 0)</li>
+        <li><span class="parameter">mass</span>
+            <span class="types"><span class="type">number</span></span>
+         Set the mass of the object in kilograms. You should experiment and pick mass here which works well for you (it shouldn't be very small or very large), rather than using the most truthful numbers.</li>
+        <li><span class="parameter">mass_center_x</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Set the x coordinate of the mass center (default: 0)</li>
+        <li><span class="parameter">mass_center_y</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Set the y coordinate of the mass center (default: 0)</li>
+        <li><span class="parameter">mass_center_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Set the z coordinate of the mass center (default: 0)</li>
     </ul>
 
 
@@ -649,20 +645,18 @@
     </dt>
     <dd>
     Load a .zip file as a resource archive.
-
- All files inside the zip file will be mapped into the local
+<p> All files inside the zip file will be mapped into the local
  folder as resource files, so that you can load them
  as sounds, graphics etc.
-
- E.g. if the archive contains a folder "blubb", and inside
+<p> E.g. if the archive contains a folder "blubb", and inside
  "sound.ogg", you can just load "blubb/sound.ogg" as a sound
  after loading the archive with this function.
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">Path</span>
-        <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-       to the .zip archive to be loaded</li>
+        <li><span class="parameter">Path</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         to the .zip archive to be loaded</li>
     </ul>
 
 
@@ -677,16 +671,13 @@
     <dd>
     Set the stepping frequency of the game logic.
  The default is 16ms. Physics are unaffected.
-
- Please note changing this is a very invasive change
+<p> Please note changing this is a very invasive change
  - don't do this if you don't know what you're doing.
-
- Also, do NOT use this to speed up/slow down your game
+<p> Also, do NOT use this to speed up/slow down your game
  while it runs. While it may work, it will lead to low
  frames per second and you should simply use a speed factor
  in all your logic functions instead.
-
- Generally, bigger stepping times to 16ms can cause
+<p> Generally, bigger stepping times to 16ms can cause
  all sorts of problems (low frames per second, physics
  callbacks triggering oddly late, ...), so this function
  is only useful for some rare cases.

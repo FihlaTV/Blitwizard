@@ -36,6 +36,7 @@ void callbackerror(lua_State* l, const char* function, const char* error, ...);
 
 #define error_nophysics2d "functionality not available - blitwizard was compiled without 2d physics support"
 #define error_nophysics3d "functionality not available - blitwizard was compiled without 3d physics support"
+#define error_nographics "functionality not available - blitwizard was compiled without graphics support"
 
 #endif  // BLITWIZARD_LUAERROR_H_
 
