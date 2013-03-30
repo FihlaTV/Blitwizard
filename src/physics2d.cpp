@@ -1131,6 +1131,7 @@ static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world
 #ifdef USE_PHYSICS2D
 // TODO: Weaken coupling, i.e. no direct reference to physicsobject2d, instead take edges and return b2 chains
 // (goal: common code for fixture etc. in outer function)
+// problem: memory mgmt., variable number of returned edge shapes
 void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object) {
     /* not sure if this is needed anymore, probably not
     if (!context->edgelist) {
@@ -1238,10 +1239,40 @@ void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d
     */
 
     physics2d_SetMass(object, 0);
-    return object;
 }
 #endif
 
+#ifdef USE_PHYSICS2D
+// TODO: cf. function above
+void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object) {
+    struct polygonpoint* p = polygonpoints;
+    // TODO: cache this instead?
+    int i = 0;
+    while (p != NULL) {
+        ++i;
+        p = p->next;
+    }
+    b2Vec2* varray = new b2Vec2[i];
+    p = polygonpoints;
+    i = 0;
+    while (p != NULL) {
+        varray[i].Set(p->x, p->y);
+        ++i;
+        p = p->next;
+    }
+    b2PolygonShape shape;
+    shape.Set(varray, i);
+    
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &shape;
+    fixtureDef.friction = 1; // TODO: ???
+    fixtureDef.density = 1; // TODO: ???
+    object->body->CreateFixture(&fixtureDef);
+    physics2d_SetMass(object, 0);
+    
+    delete[] varray;
+}
+#endif
 
 struct physicsobject* physics_CreateObject(struct physicsworld* world, void* userdata, int movable, struct physicsobjectshape* shapelist) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
@@ -1270,7 +1301,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 physics2d_SetMass(obj, 0); // TODO: udpate
             break;
             case BW_S2D_POLY:
-                // TODO
+                _physics_Create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints, obj);
             break;
             case BW_S2D_CIRCLE:
                 b2FixtureDef fixtureDef;
