@@ -1128,6 +1128,121 @@ static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world
 }
 #endif
 
+#ifdef USE_PHYSICS2D
+// TODO: Weaken coupling, i.e. no direct reference to physicsobject2d, instead take edges and return b2 chains
+// (goal: common code for fixture etc. in outer function)
+void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object) {
+    /* not sure if this is needed anymore, probably not
+    if (!context->edgelist) {
+        physics2d_DestroyObject(context->obj);
+        free(context);
+        return NULL;
+    }*/
+
+    struct edge* e = edges;
+    while (e) {
+        //skip edges we already processed
+        if (e->processed) {
+            e = e->next;
+            continue;
+        }
+
+        //only process edges which are start of an adjacent chain, in a loop or lonely
+        if (e->adjacent1 && e->adjacent2 && !e->inaloop) {
+            e = e->next;
+            continue;
+        }
+
+        int varraysize = e->adjacentcount+1;
+        b2Vec2* varray = new b2Vec2[varraysize];
+        b2ChainShape chain;
+        e->processed = 1;
+
+        //see into which direction we want to go
+        struct edge* eprev = e;
+        struct edge* e2;
+        if (e->adjacent1) {
+            varray[0] = b2Vec2(e->x2, e->y2);
+            varray[1] = b2Vec2(e->x1, e->y1);
+            e2 = e->adjacent1;
+        }else{
+            varray[0] = b2Vec2(e->x1, e->y1);
+            varray[1] = b2Vec2(e->x2, e->y2);
+            e2 = e->adjacent2;
+        }
+
+        //ok let's take a walk:
+        int i = 2;
+        while (e2) {
+            if (e2->processed) {break;}
+            e2->processed = 1;
+            struct edge* enextprev = e2;
+
+            //Check which vertex we want to add
+            if (e2->adjacent1 == eprev) {
+                varray[i] = b2Vec2(e2->x2, e2->y2);
+            }else{
+                varray[i] = b2Vec2(e2->x1, e2->y1);
+            }
+
+            //advance to next edge
+            if (e2->adjacent1 && e2->adjacent1 != eprev) {
+                e2 = e2->adjacent1;
+            }else{
+                if (e2->adjacent2 && e2->adjacent2 != eprev) {
+                    e2 = e2->adjacent2;
+                }else{
+                    e2 = NULL;
+                }
+            }
+            eprev = enextprev;
+            i++;
+        }
+
+        //debug print values
+        /*int u = 0;
+        while (u < e->adjacentcount + 1 - (1 * e->inaloop)) {
+            printf("Chain vertex: %f, %f\n", varray[u].x, varray[u].y);
+            u++;
+        }*/
+    
+        //construct an edge shape from this
+        if (e->inaloop) {
+            chain.CreateLoop(varray, e->adjacentcount);
+        }else{
+            chain.CreateChain(varray, e->adjacentcount+1);
+        }
+
+        //add it to our body
+        b2FixtureDef fixtureDef;
+        fixtureDef.shape = &chain;
+        fixtureDef.friction = 1; // TODO: ???
+        fixtureDef.density = 1; // TODO: ???
+        object->body->CreateFixture(&fixtureDef);
+
+        delete[] varray;
+    }
+    //struct physicsobject2d* obj = context->obj;
+    
+    /* probably not needed anymore, either
+    //free all edges
+    e = context->edgelist;
+    while (e) {
+        struct edge* enext = e->next;
+        free(e);
+        e = enext;
+    }
+    
+
+    free(context);
+    */
+
+    physics2d_SetMass(object, 0);
+    return object;
+}
+#endif
+
+
 struct physicsobject* physics_CreateObject(struct physicsworld* world, void* userdata, int movable, struct physicsobjectshape* shapelist) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (!world->is3d) {
@@ -1147,7 +1262,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
         switch ((int)(s->sha.pe2d->type)) {
             case BW_S2D_RECT:
                 b2FixtureDef fixtureDef;
-                fixtureDef.shape = s->sha.pe2d->rectangle;
+                fixtureDef.shape = s->sha.pe2d->b2.rectangle;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
                 obj->body->SetFixedRotation(false);
@@ -1159,7 +1274,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
             break;
             case BW_S2D_CIRCLE:
                 b2FixtureDef fixtureDef;
-                fixtureDef.shape = s->sha.pe2d->circle;
+                fixtureDef.shape = s->sha.pe2d->b2.circle;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
                 obj->body->SetFixedRotation(false);
@@ -1167,7 +1282,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 physics2d_SetMass(obj, 0); // TODO: udpate
             break;
             case BW_S2D_EDGE:
-                // TODO
+                _physics_Create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj);
             break;
         }
     }
