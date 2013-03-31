@@ -441,6 +441,17 @@ static lua_State* luastate_New(void) {
     lua_pushcfunction(l, &luafuncs_print);
     lua_setglobal(l, "print");
 
+    // safe string.find wrapper:
+    lua_getglobal(l, "string");
+    lua_pushstring(l, "find");
+    lua_gettable(l, -2);
+    lua_pushstring(l, "old_string_find");
+    lua_insert(l, -2);
+    lua_settable(l, LUA_REGISTRYINDEX);
+    lua_pushstring(l, "find");
+    lua_pushcfunction(l, &luafuncs_safefind);
+    lua_settable(l, -3);
+
     // obtain the blitwiz lib
     lua_getglobal(l, "blitwizard");
 
