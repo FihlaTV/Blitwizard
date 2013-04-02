@@ -334,23 +334,6 @@ int luafuncs_print(lua_State* l) { // not threadsafe
     return 0;
 }
 
-int luafuncs_safefind(lua_State* l) {
-    // sanity length check:
-    const char* s = lua_tostring(l, 1);
-    if (s) {
-        if (strlen(s) > 1000) {
-            return haveluaerror(l, "Search pattern too long");
-        }
-    }
-
-    // call string.find:
-    lua_pushstring(l, "old_string_find");
-    lua_gettable(l, LUA_REGISTRYINDEX);
-    lua_insert(l, -lua_gettop(l));
-    lua_call(l, lua_gettop(l)-1, LUA_MULTRET);
-    return lua_gettop(l);
-}
-
 int luafuncs_sysname(lua_State* l) {
     lua_pushstring(l, osinfo_GetSystemName());
     return 1;

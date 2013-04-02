@@ -76,7 +76,6 @@ int luafuncs_adjust(lua_State* l);
 int luafuncs_startswith(lua_State* l);
 int luafuncs_endswith(lua_State* l);
 int luafuncs_split(lua_State* l);
-int luafuncs_safefind(lua_State* l);
 
 // Math:
 int luafuncs_trandom(lua_State* l);
