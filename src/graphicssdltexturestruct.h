@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,15 +21,15 @@
 
 */
 
-struct graphicstexture;
+#ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
+#define BLITWIZARD_GRAPHICSTEXTURESDL_H_
 
-#define RAWFORMAT_32RGBA 1
+struct graphicstexture {
+    // basic info
+    unsigned int width,height;
+    // SDL info
+    SDL_Texture* sdltex;
+};
 
-// Create a graphics texture (for 3d accelerated renderers,
-// it must be created in GPU memory!) and return a handle:
-struct graphicstexture* graphicstexture_Create(void* data,
-size_t width, size_t height, int format);
-
-// Destroy graphics texure by handle:
-void graphicstexture_Destroy(struct graphicstexture* texture);
+#endif  // BLITWIZARD_GRAPHICSTEXTURESDL_H_
 
