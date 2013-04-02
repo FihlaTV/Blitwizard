@@ -462,5 +462,5 @@ void audiomixer_GetBuffer(void* buf, unsigned int len) { // SOUND THREAD
     }
 }
 
-#endif // ifdef USE_AUDIO
+#endif  // USE_AUDIO
 

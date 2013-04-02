@@ -21,9 +21,13 @@
 
 */
 
+#ifndef BLITWIZARD_GRAPHICSTEXTURE_H_
+#define BLITWIZARD_GRAPHICSTEXTURE_H_
+
 struct graphicstexture;
 
-#define RAWFORMAT_32RGBA 1
+// Formats (in little endian byte order):
+#define PIXELFORMAT_32RGBA 1
 
 // Create a graphics texture (for 3d accelerated renderers,
 // it must be created in GPU memory!) and return a handle:
@@ -32,4 +36,10 @@ size_t width, size_t height, int format);
 
 // Destroy graphics texure by handle:
 void graphicstexture_Destroy(struct graphicstexture* texture);
+
+// Get texture dimensions:
+void graphics_GetTextureDimensions(struct graphicstexture* texture,
+size_t* width, size_t* height);
+
+#endif  // BLITWIZARD_GRAPHICSTEXTURE_H_
 

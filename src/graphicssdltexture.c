@@ -64,26 +64,40 @@ void graphicstexture_Destroy(struct graphicstexture* gt) {
 }
 
 
-int graphicstexture_Create(struct graphicstexture* gt) {
+int graphicstexture_Create(struct graphicstexture* gt,
+size_t width, size_t height, int format) {
     // create basic texture struct:
     struct graphicstexture* gt = malloc(sizeof(*gt));
     if (!gt) {
         return NULL;
     }
     memset(gt, 0, sizeof(*gt));
+    gt->width = width;
+    gt->height = height;
+
+    // format conversion:
+    switch (format)
+    case PIXELFORMAT_32RGBA:
+        // we can process this as usual.
+        break;
+    default:
+        // not known to us!
+        graphicstexture_Destroy(gt);
+        return NULL;
+    } 
 
     // create hw texture
     gt->sdltex = SDL_CreateTexture(mainrenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, gt->width, gt->height);
     if (!t) {
         graphicstexture_Destroy(gt);
-        return 0;
+        return NULL;
     }
 
     // lock texture
     void* pixels; int pitch;
     if (SDL_LockTexture(gt->sdltex, NULL, &pixels, &pitch) != 0) {
         graphicstexture_Destroy(gt);
-        return 0;
+        return NULL;
     }
 
     // copy pixels into texture

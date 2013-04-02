@@ -34,7 +34,8 @@ mytarget: blitwizard$(EXEEXT)
 install:
 	mkdir -p ${datadir}/blitwizard
 #	rm -rf ${datadir}/blitwizard/templates/
-	cp -R ../templates/ ${datadir}/blitwizard/templates/
+	mkdir -p ${datadir}/blitwizard/templates/
+	cp -R ../templates/* ${datadir}/blitwizard/templates/
 	chmod -R 775 ${datadir}/blitwizard
 	cp ../bin/blitwizard${EXEEXT} ${bindir}
 	chmod 755 ${bindir}/blitwizard${EXEEXT}

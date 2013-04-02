@@ -26,7 +26,7 @@
 
 struct graphicstexture {
     // basic info
-    unsigned int width,height;
+    size_t width,height;
     // SDL info
     SDL_Texture* sdltex;
 };
