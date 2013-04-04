@@ -996,7 +996,6 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 fixtureDef.density = 1;
                 obj2d->body->SetFixedRotation(false);
                 obj2d->body->CreateFixture(&fixtureDef);
-                physics2d_SetMass(obj2d, 0); // TODO: udpate
             break;
             case BW_S2D_POLY:
                 _physics_Create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints, obj);
@@ -1008,7 +1007,6 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 fixtureDef.density = 1;
                 obj2d->body->SetFixedRotation(false);
                 obj2d->body->CreateFixture(&fixtureDef);
-                physics2d_SetMass(obj2d, 0); // TODO: udpate
             break;
             case BW_S2D_EDGE:
                 _physics_Create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj2d);
@@ -1018,6 +1016,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
     struct physicsobject* obj = (struct physicsobject*)malloc(sizeof(*obj));
     obj->obj.ect2d = obj2d;
     obj->is3d = 0;
+    physics_SetMass(obj, 0);
     return obj;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
