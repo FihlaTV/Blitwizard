@@ -334,7 +334,6 @@ int luafuncs_print(lua_State* l) { // not threadsafe
     return 0;
 }
 
-
 int luafuncs_sysname(lua_State* l) {
     lua_pushstring(l, osinfo_GetSystemName());
     return 1;

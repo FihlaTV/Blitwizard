@@ -98,33 +98,6 @@ int graphics_IsFullscreen(void);
 void graphics_MinimizeWindow(void);
 // Minimize the window
 
-void graphicsrender_StartFrame(void);
-// Clears the screen to prepare for the next frame.
-
-int graphicsrender_DrawCropped(const char* texname, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
-// Draw a texture cropped. Returns 1 on success, 0 when there is no such texture.
-
-int graphicsrender_Draw(const char* texname, int x, int y, float alpha, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
-// Draw a texture. Returns 1 on success, 0 when there is no such texture.
-
-void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, float g, float b, float a);
-// Draw a colored rectangle.
-
-void graphicsrender_CompleteFrame(void);
-// Update the current drawing changes to screen.
-// Use this always after completing one frame.
-
-void graphics_UnloadTexture(const char* texname, void (*callback)(int success, const char* texture));
-// Unload the given texture if loaded currently.
-// If the texture is currently being loaded, loading will be cancelled and,
-// if the provided callback is not NULL, the callback will be called.
-
-int graphics_IsTextureLoaded(const char* name);
-// Check if a texture is loaded. 0: no, 1: operation in progress, 2: yes
-
-int graphics_GetTextureDimensions(const char* name, unsigned int* width, unsigned int* height);
-// 1 on success, 0 on error
-
 int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height);
 // 1 on success, 0 on error (window not opened most likely)
 
