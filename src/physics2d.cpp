@@ -977,8 +977,8 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
     if (!world->is3d) {
 #endif
 #ifdef USE_PHYSICS2D
-    struct physicsobject2d* obj = _physics_Create2dObj(world->wor.ld2d, userdata, movable);
-    if (obj == NULL) {
+    struct physicsobject2d* obj2d = _physics_Create2dObj(world->wor.ld2d, userdata, movable);
+    if (obj2d == NULL) {
         return NULL;
     }
     
@@ -994,9 +994,9 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 fixtureDef.shape = s->sha.pe2d->b2.rectangle;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
-                obj->body->SetFixedRotation(false);
-                obj->body->CreateFixture(&fixtureDef);
-                physics2d_SetMass(obj, 0); // TODO: udpate
+                obj2d->body->SetFixedRotation(false);
+                obj2d->body->CreateFixture(&fixtureDef);
+                physics2d_SetMass(obj2d, 0); // TODO: udpate
             break;
             case BW_S2D_POLY:
                 _physics_Create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints, obj);
@@ -1006,15 +1006,19 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 fixtureDef.shape = s->sha.pe2d->b2.circle;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
-                obj->body->SetFixedRotation(false);
-                obj->body->CreateFixture(&fixtureDef);
-                physics2d_SetMass(obj, 0); // TODO: udpate
+                obj2d->body->SetFixedRotation(false);
+                obj2d->body->CreateFixture(&fixtureDef);
+                physics2d_SetMass(obj2d, 0); // TODO: udpate
             break;
             case BW_S2D_EDGE:
-                _physics_Create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj);
+                _physics_Create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj2d);
             break;
         }
     }
+    struct physicsobject* obj = (struct physicsobject*)malloc(sizeof(*obj));
+    obj->obj.ect2d = obj2d;
+    obj->is3d = 0;
+    return obj;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     }else{
