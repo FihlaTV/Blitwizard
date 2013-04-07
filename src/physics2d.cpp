@@ -1180,7 +1180,7 @@ void physics_UnsetGravity(struct physicsobject* obj) {
     if (not obj->is3d) {
 #endif
 #ifdef USE_PHYSIC2D
-    obj->gravityset = 0;
+    obj->obj.ect2d->gravityset = 0;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     }else{
