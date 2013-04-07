@@ -1164,6 +1164,36 @@ void physics_Get2dMassCenterOffset(struct physicsobject* obj, double* offsetx, d
 #endif
 
 #ifdef USE_PHYSICS2D
+void physics_Set2dGravity(struct physicsobject* obj, double x, double y) {
+    // TODO: again: check for is3d or not?
+    if (!obj) {return;}
+    struct physicsobject2d* obj2d = obj.ect2d;
+    obj2d->gravityset = 1;
+    obj2d->gravityx = x;
+    obj2d->gravityy = y;
+}
+#endif
+
+void physics_UnsetGravity(struct physicsobject* obj) {
+    if (!obj) {return;}
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not obj->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    obj->gravityset = 0;
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }else{
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
+}
+
+#ifdef USE_PHYSICS2D
 // 2D only due to being derived from b2 class
 class mycontactlistener : public b2ContactListener {
 public:
