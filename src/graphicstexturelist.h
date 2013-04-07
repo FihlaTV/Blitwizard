@@ -24,7 +24,7 @@
 #ifndef BLITWIZARD_GRAPHICSTEXTURELIST_H_
 #define BLITWIZARD_GRAPHICSTEXTURELIST_H_
 
-#include "graphics.h"
+#include "os.h"
 
 // This file manages a linear texture list,
 // and a hash map with texture file name -> texture list entry lookup.
@@ -42,6 +42,8 @@
 // It calls graphicstexturelist_Destroy on all textures.
 
 #ifdef USE_GRAPHICS
+
+#include "graphics.h"
 
 // This contains the cache info for one specific size of a texture:
 struct graphicstexturescaled {
