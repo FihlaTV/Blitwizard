@@ -74,7 +74,13 @@ struct physicsobjectshape3d;
 /*
     Purely internal functions
 */
-static void physics2d_DestroyObjectDo(struct physicsobject2d* obj);
+void _physics_Destroy2dShape(struct physicsobjectshape2d* shape);
+int _physics_Check2dEdgeLoop(struct edge* edge, struct edge* target);
+void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
+static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, void* userdata, int movable);
+void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object);
+void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object);
+static void _physics_Destroy2dObjectDo(struct physicsobject2d* obj);
 
 /*
     Structs
@@ -433,7 +439,7 @@ void physics_Step(struct physicsworld* world) {
     // actually delete objects marked for deletion during the step:
     while (deletedlist) {
         // delete first object in the queue
-        physics2d_DestroyObjectDo(deletedlist->obj);
+        _physics_Destroy2dObjectDo(deletedlist->obj);
 
         // update list pointers (-> remove object from queue)
         struct deletedphysicsobject2d* pobj = deletedlist;
@@ -921,22 +927,6 @@ void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d
 
         delete[] varray;
     }
-    //struct physicsobject2d* obj = context->obj;
-    
-    /* probably not needed anymore, either
-    //free all edges
-    e = context->edgelist;
-    while (e) {
-        struct edge* enext = e->next;
-        free(e);
-        e = enext;
-    }
-    
-
-    free(context);
-    */
-
-    physics2d_SetMass(object, 0);
 }
 #endif
 
@@ -966,7 +956,6 @@ void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct 
     fixtureDef.friction = 1; // TODO: ???
     fixtureDef.density = 1; // TODO: ???
     object->body->CreateFixture(&fixtureDef);
-    physics2d_SetMass(object, 0);
     
     delete[] varray;
 }
@@ -1033,7 +1022,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
 
 
 // Everything about object deletion starts here
-static void physics2d_DestroyObjectDo(struct physicsobject2d* obj) {
+static void _physics_Destroy2dObjectDo(struct physicsobject2d* obj) {
     if (obj->body) {
         obj->world->DestroyBody(obj->body);
     }
@@ -1049,7 +1038,7 @@ void physics_DestroyObject(struct physicsobject* obj) {
         return;
     }
     if (!insidecollisioncallback) {
-        physics2d_DestroyObjectDo(obj->obj.ect2d);
+        _physics_Destroy2dObjectDo(obj->obj.ect2d);
     }else{
         obj->obj.ect2d->deleted = 1;
         struct deletedphysicsobject2d* dobject = (struct deletedphysicsobject2d*)malloc(sizeof(*dobject));
