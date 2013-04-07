@@ -474,7 +474,7 @@ void physics_Set2dCollisionCallback(struct physicsworld* world, int (*callback)(
     world->callback = callback;
     world->callbackuserdata = userdata;
 }
-#ifdef USE_PHYSICS2D
+#endif
 
 #ifdef USE_PHYSICS3D
 void physics_Set3dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double z, double normalx, double normaly, double normalz, double force), void* userdata) {
