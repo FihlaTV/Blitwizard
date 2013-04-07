@@ -290,8 +290,10 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     }
                     height = lua_tonumber(l, -1);
                     lua_pop(l, 1);
+#ifdef USE_PHYSICS3D
                     physics_Set3dShapeDecal(GET_SHAPE(shapes, i),
                     width, height);
+#endif
                 }
                 if (strcmp(shapetype, "ball") == 0) {
                     isok = 1;
@@ -308,8 +310,10 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     }
                     diameter = lua_tonumber(l, -1);
                     lua_pop(l, 1);
+#ifdef USE_PHYSICS3D
                     physics_Set3dShapeBall(GET_SHAPE(shapes, i),
                     diameter);
+#endif
                 }
                 if (strcmp(shapetype, "box") == 0 ||
                 strcmp(shapetype, "elliptic ball") == 0) {
@@ -353,11 +357,15 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pop(l, 1);
 
                     if (strcmp(shapetype, "box") == 0) {
+#ifdef USE_PHYSICS3D
                         physics_Set3dShapeBox(GET_SHAPE(shapes, i),
                         x_size, y_size, z_size);
+#endif
                     } else {
+#ifdef USE_PHYSICS3D
                         physics_Set3dShapeBox(GET_SHAPE(shapes, i),
                         x_size, y_size, z_size);
+#endif
                     }
                 }
                 if (!isok) {
@@ -562,16 +570,22 @@ static void applyobjectsettings(struct blitwizardobject* obj) {
     }
     if (obj->is3d) {
         if (obj->physics->rotationrestriction3dfull) {
+#ifdef USE_PHYSICS3D
             physics_Set3dRotationRestrictionAllAxis(obj->physics->object);
+#endif
         } else {
             if (obj->physics->rotationrestriction3daxis) {
+#ifdef USE_PHYSICS3D
                 physics_Set3dRotationRestrictionAroundAxis(
                 obj->physics->object,
                 obj->physics->rotationrestriction3daxisx,
                 obj->physics->rotationrestriction3daxisy,
                 obj->physics->rotationrestriction3daxisz);
+#endif
             } else {
+#ifdef USE_PHYSICS3D
                 physics_Set3dNoRotationRestriction();
+#endif
             }
         }
     } else {
@@ -655,8 +669,10 @@ int luafuncs_impulse(lua_State* l) {
         forcez = lua_tonumber(l, 7);
     }
     if (obj->is3d) {
+#ifdef USE_PHYSICS3D
         physics_Apply3dImpulse(obj->physics->object,
         forcex, forcey, forcez, sourcex, sourcey, sourcez);
+#endif
     } else {
         physics_Apply2dImpulse(obj->physics->object,
         forcex, forcey, sourcex, sourcez);
@@ -719,12 +735,14 @@ int luafuncs_ray(lua_State* l, int use3d) {
 
     int returnvalue;
     if (use3d) {
+#ifdef USE_PHYSICS3D
         returnvalue = physics_Ray3d(main_DefaultPhysics2dPtr(),
         startx, starty, startz,
         targetx, targety, targetz,
         &hitpointx, &hitpointy, &hitpointz,
         &obj,
         &normalx, &normaly, &normalz);
+#endif
     } else {
         returnvalue = physics_Ray2d(main_DefaultPhysics2dPtr(),
         startx, starty,
@@ -924,7 +942,9 @@ int luafuncs_setGravity(lua_State* l) {
     }
     if (set) {
         if (obj->is3d) {
+#ifdef USE_PHYSICS3D
             physics_Set3dGravity(obj->physics->object, gx, gy, gz);
+#endif
         } else {
             physics_Set2dGravity(obj->physics->object, gx, gy);
         }
@@ -1015,8 +1035,10 @@ int luafuncs_setMass(lua_State* l) {
     }
     physics_SetMass(obj->physics->object, mass);
     if (obj->is3d) {
+#ifdef USE_PHYSICS3D
         physics_Set3dMassCenterOffset(obj->physics->object,
         centerx, centery, centerz);
+#endif
     } else {
         physics_Set2dMassCenterOffset(obj->physics->object,
         centerx, centery);
@@ -1062,9 +1084,11 @@ struct physicsobject* newbody) {
     double angle;
     double qx,qy,qz,qrot;
     if (is3d) {
+#ifdef USE_PHYSICS3D
         physics_Get3dMassCenterOffset(oldbody, &massx, &massy, &massz);
         physics_Get3dPosition(oldbody, &x, &y, &z);
         physics_Get3dRotationQuaternion(oldbody, &qx, &qy, &qz, &qrot);
+#endif
     } else {
         physics_Get2dMassCenterOffset(oldbody, &massx, &massy);
         physics_Get2dPosition(oldbody, &x, &y);
@@ -1072,8 +1096,10 @@ struct physicsobject* newbody) {
     }
     physics_SetMass(newbody, mass);
     if (is3d) {
+#ifdef USE_PHYSICS3D
         physics_Set3dMassCenterOffset(newbody, massx, massy, massz);
         physics_Warp3d(newbody, x, y, z, qx, qy, qz, qrot);
+#endif
     } else {
         physics_Set2dMassCenterOffset(newbody, massx, massy);
         physics_Warp2d(newbody, x, y, angle);
