@@ -1154,7 +1154,7 @@ void physics_Set2dMassCenterOffset(struct physicsobject* obj, double offsetx, do
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics2d_GetMassCenterOffset(struct physicsobject* obj, double* offsetx, double* offsety) {
+void physics_Get2dMassCenterOffset(struct physicsobject* obj, double* offsetx, double* offsety) {
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     b2MassData mdata;
     obj2d->body->GetMassData(&mdata);
