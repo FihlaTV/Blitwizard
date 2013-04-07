@@ -23,10 +23,6 @@
 
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
 
-#ifndef NDEBUG
-#include <logging.h>
-#endif
-
 #ifdef USE_PHYSICS2D
 #include <Box2D.h>
 #endif
@@ -40,6 +36,9 @@
 
 #include "physics.h"
 #include "mathhelpers.h"
+#ifndef NDEBUG
+#include "logging.h"
+#endif
 
 
 #ifndef NDEBUG
@@ -552,8 +551,8 @@ void physics_DestroyShapes(struct physicsobjectshape* shapes, int count) {
                 // 3D
                 printerror(BW_E_NO3DYET);
             break;
-        }
 #endif
+        }
         // do this no matter what:
         free(shapes[i]);
     }
