@@ -1194,6 +1194,150 @@ void physics_UnsetGravity(struct physicsobject* obj) {
 }
 
 #ifdef USE_PHYSICS2D
+void physics_Set2dRotationRestriction(struct physicsobject* obj, int restricted) {
+    // TODO: CHECK IS3D YES OR NO FFFFF
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body) {return;}
+    if (restricted) {
+        obj2d->body->SetFixedRotation(true);
+    }else{
+        obj2d->body->SetFixedRotation(false);
+    }
+}
+#endif
+
+void physics_SetFriction(struct physicsobject* obj, double friction) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not obj->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body) {return;}
+    b2Fixture* f = obj2d->body->GetFixtureList();
+    while (f) {
+        f->SetFriction(friction);
+        f = f->GetNext();
+    }
+    b2ContactEdge* e = obj2d->body->GetContactList();
+    while (e) {
+        e->contact->ResetFriction();
+        e = e->next;
+    }
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }else{
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
+}
+
+void physics_SetAngularDamping(struct physicsobject* obj, double damping) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not obj->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body) {return;}
+    obj2d->body->SetAngularDamping(damping);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }else{
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
+}
+
+void physics_SetLinearDamping(struct physicsobject* obj, double damping) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not obj->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body) {return;}
+    obj2d->body->SetLinearDamping(damping);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }else{
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
+}
+
+void physics_SetRestitution(struct physicsobject* obj, double restitution) {
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    if (not obj->is3d) {
+#endif
+#ifdef USE_PHYSIC2D
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (restitution > 1) {restitution = 1;}
+    if (restitution < 0) {restitution = 0;}
+    if (!obj2d->body) {return;}
+    b2Fixture* f = obj2d->body->GetFixtureList();
+    while (f) {
+        f->SetRestitution(restitution);
+        f = f->GetNext();
+    }
+    b2ContactEdge* e = obj2d->body->GetContactList();
+    while (e) {
+        e->contact->SetRestitution(restitution);
+        e = e->next;
+    }
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }else{
+#endif
+#ifdef USE_PHYSICS3D
+    printerror(BW_E_NO3DYET);
+#endif
+#if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
+    }
+#endif
+}
+
+#ifdef USE_PHYSICS2d
+void physics_Get2dPosition(struct physicsobject* obj, double* x, double* y) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    b2Vec2 pos = obj2d->body->GetPosition();
+    *x = pos.x;
+    *y = pos.y;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_Get2dRotation(struct physicsobject* obj, double* angle) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    *angle = (obj2d->body->GetAngle() * 180)/M_PI;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_Warp2d(struct physicsobject* obj, double x, double y, double angle) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    obj2d->body->SetTransform(b2Vec2(x, y), angle * M_PI / 180);
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_Apply2dImpulse(struct physicsobject* obj, double forcex, double forcey, double sourcex, double sourcey) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body || !obj2d->movable) {return;}
+    obj2d->body->ApplyLinearImpulse(b2Vec2(forcex, forcey), b2Vec2(sourcex, sourcey));
+}
+#endif
+
+#ifdef USE_PHYSICS2D
 // 2D only due to being derived from b2 class
 class mycontactlistener : public b2ContactListener {
 public:
