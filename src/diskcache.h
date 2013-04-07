@@ -32,11 +32,13 @@
 char* diskcache_Store(char* data, size_t datalength);
 
 // Retrieve a disk cache item again by path.
-// On success, a pointer to the cached data is returned and
-// *datalength is modified to the length of the data.
-// On failure, NULL will be returned and *datalength remains
-// unmodified.
-char* diskcache_Retrieve(const char* path, size_t* datalength);
+// On success, the callback is called with the pointer to the
+// cached data and the data length.
+// On failure, the callback will be passed NULL as data pointer.
+// The callback will happen in another thread!
+// Be sure your callback is thread-safe!
+void diskcache_Retrieve(const char* path, void (*callback)(void* data,
+size_t datalength, void* userdata), void* userdata);
 
 // Delete an item from the disk cache:
 void diskcache_Delete(const char* path);

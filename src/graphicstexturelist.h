@@ -45,6 +45,9 @@
 
 // This contains the cache info for one specific size of a texture:
 struct graphicstexturescaled {
+    int locked; // if this is 1, do not access any other fields except width
+      // and height! the entry is currently processed from another thread
+      // e.g. for scaling, disk caching or other
     struct graphicstexture* gt;  // NULL if not loaded
     int textureinhw;   // 1 if texture is in GPU memory, 0 if not
     char* diskcachepath;  // path to raw disk cache file or NULL
