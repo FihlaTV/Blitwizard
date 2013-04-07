@@ -21,6 +21,14 @@
 
 */
 
+/* TODO:
+    - Actually implement offsets, not just have them sit idly in the shape struct
+    - Look at the edge and poly functions again (linked lists done correctly?)
+    - Properly refactor the object creation function
+    - Look for memory leaks (lol)
+    - Add guard clauses for validating parameters (or don't)
+*/
+
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
 
 #ifdef USE_PHYSICS2D
@@ -47,6 +55,15 @@
 
 
 extern "C" {
+
+// TODO (cleanup, rename, ...):
+/*
+    Unsorted 2D-specific stuff
+*/
+class mycontactlistener;
+class mycallback;
+static int insidecollisioncallback = 0;
+
 
 /*
     Enums, ...
@@ -76,7 +93,7 @@ struct physicsobjectshape3d;
 void _physics_Destroy2dShape(struct physicsobjectshape2d* shape);
 int _physics_Check2dEdgeLoop(struct edge* edge, struct edge* target);
 void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
-static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, void* userdata, int movable);
+static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, struct physicsobject* object, void* userdata, int movable);
 void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object);
 void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object);
 static void _physics_Destroy2dObjectDo(struct physicsobject2d* obj);
@@ -164,6 +181,9 @@ struct physicsobjectshape2d {
         struct edge* edges;
     } b2;
     enum shape_types_2d type;
+    double xoffset;
+    double yoffset;
+    double rotation;
 };
 
 struct deletedphysicsobject2d {
@@ -178,6 +198,25 @@ struct bodyuserdata {
     struct physicsobject* pobj;
 };
 
+struct edge {
+    int inaloop;
+    int processed;
+    int adjacentcount;
+    double x1,y1,x2,y2;
+    struct edge* next;
+    struct edge* adjacent1, *adjacent2;
+};
+
+struct polygonpoint {
+  double x,y;
+  struct polygonpoint* next;
+};
+
+struct physicsobject2dedgecontext {
+    struct physicsobject2d* obj;
+    double friction;
+    struct edge* edgelist;
+};
 
 /*
     Struct helper functions
@@ -281,9 +320,9 @@ inline int _physics_ShapeIsInit(struct physicsobjectshape* shape) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (shape->is3d == -1)
 #elif defined(USE_PHYSICS2D)
-    if (object->sha.pe2d == NULL)
+    if (shape->sha.pe2d == NULL)
 #elif defined(USE_PHYSICS3D)
-    if (object->sha.pe3d == NULL)
+    if (shape->sha.pe3d == NULL)
 #endif
         return 0;
     else
@@ -313,19 +352,11 @@ inline void _physics_ResetShape(struct physicsobjectshape* shape) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     shape->is3d = -1;
 #elif defined(USE_PHYSICS2D)
-    object->sha.pe2d = NULL;
+    shape->sha.pe2d = NULL;
 #elif defined(USE_PHYSICS3D)
-    object->sha.pe3d = NULL;
+    shape->sha.pe3d = NULL;
 #endif
 }
-
-
-// TODO (cleanup, rename, ...):
-/*
-    Unsorted 2D-specific stuff
-*/
-class mycontactlistener;
-static int insidecollisioncallback = 0;
 
 
 /*
@@ -400,20 +431,21 @@ void physics_Step(struct physicsworld* world) {
     if (world->is3d) {
 #endif
 #ifdef USE_PHYSICS2D
-    struct physicsworld* world2d = world->wor.ld2d;
+    struct physicsworld2d* world2d = world->wor.ld2d;
     // Do a collision step
     insidecollisioncallback = 1; // remember we are inside a step
     int i = 0;
     while (i < 2) {
-        double forcefactor = (1.0/(1000.0f/physics2d_GetStepSize(world2d)))*2;
+        double forcefactor = (1.0/(1000.0f/physics_GetStepSize(world)))*2;
         b2Body* b = world2d->w->GetBodyList();
         while (b) {
             // obtain physics object struct from body
-            struct physicsobject2d* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
+            struct physicsobject* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
+            struct physicsobject2d* obj2d = obj->obj.ect2d;
             if (obj) {
-                if (obj->gravityset) {
+                if (obj2d->gravityset) {
                     // custom gravity which we want to apply
-                    b->ApplyLinearImpulse(b2Vec2(obj->gravityx * forcefactor, obj->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
+                    b->ApplyLinearImpulse(b2Vec2(obj2d->gravityx * forcefactor, obj2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
                 }else{
                     // no custom gravity -> apply world gravity
                     b->ApplyLinearImpulse(b2Vec2(world2d->gravityx * forcefactor, world2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
@@ -430,7 +462,7 @@ void physics_Step(struct physicsworld* world) {
         int it1 = 7;
         int it2 = 4;
 #endif
-        world2d->w->Step(1.0 /(1000.0f/physics2d_GetStepSize(world2d)), it1, it2);
+        world2d->w->Step(1.0 /(1000.0f/physics_GetStepSize(world)), it1, it2);
         i++;
     }
     insidecollisioncallback = 0; // we are no longer inside a step
@@ -491,7 +523,7 @@ struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
     }
     int i = 0;
     while (i < count) {
-        shapes[i].is3d = -1;
+        _physics_ResetShape(&(shapes[i]));
         ++i;
     }
     return shapes;
@@ -504,7 +536,7 @@ void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
             free(shape->b2.rectangle);
         break;
         case BW_S2D_POLY:
-            struct polygonpoint* p, p2;
+            struct polygonpoint* p,* p2;
             p = shape->b2.polygonpoints;
             p2 = NULL;
             while (p != NULL) {
@@ -517,7 +549,7 @@ void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
             free(shape->b2.circle);
         break;
         case BW_S2D_EDGE:
-            struct edge* e, e2;
+            struct edge* e,* e2;
             e = shape->b2.edges;
             e2 = NULL;
             while (e != NULL) {
@@ -536,14 +568,14 @@ void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
 void physics_DestroyShapes(struct physicsobjectshape* shapes, int count) {
     int i = 0;
     while (i < count) {
-        switch (_physics_ShapeType(shapes[i])) {
+        switch (_physics_ShapeType(&(shapes[i]))) {
             case -1:
                 // not initialised -> do nothing special
             break;
 #ifdef USE_PHYSICS2D
             case 0:
                 // 2D
-                _physics_Destroy2dShape(shapes[i]);
+                _physics_Destroy2dShape(shapes[i].sha.pe2d);
             break;
 #endif
 #ifdef USE_PHYSICS3D
@@ -553,9 +585,9 @@ void physics_DestroyShapes(struct physicsobjectshape* shapes, int count) {
             break;
 #endif
         }
-        // do this no matter what:
-        free(shapes[i]);
     }
+    // do this no matter what
+    free(shapes);
 }
 
 size_t physics_GetShapeSize(void) {
@@ -571,7 +603,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
    XXX MEMORY LEAKS XXX
 */
     struct b2PolygonShape* box = (struct b2PolygonShape*)malloc(sizeof(*box));
-    box.SetAsBox((width/2) - box.m_radius*2, (height/2) - box.m_radius*2);
+    box->SetAsBox((width/2) - box->m_radius*2, (height/2) - box->m_radius*2);
     
     shape->sha.pe2d->b2.rectangle = box;
     shape->sha.pe2d->type = BW_S2D_RECT;
@@ -621,7 +653,8 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
 #ifdef USE_PHYSICS2D
 void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter) {
     b2CircleShape* circle = (b2CircleShape*)malloc(sizeof(*circle));
-    circle.m_radius = radius - 0.01;
+    double radius = diameter/2;
+    circle->m_radius = radius - 0.01;
     
     shape->sha.pe2d->b2.circle = circle;
     shape->sha.pe2d->type = BW_S2D_CIRCLE;
@@ -633,17 +666,17 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
-    if (not shape->sha.pe2d.type == BW_S2D_POLY) {
+    if (not shape->sha.pe2d->type == BW_S2D_POLY) {
         shape->sha.pe2d->b2.polygonpoints = NULL;
     }
     struct polygonpoint* p = shape->sha.pe2d->b2.polygonpoints;
     
     struct polygonpoint* new_point = (struct polygonpoint*)malloc(sizeof(*new_point));
-    new_point.x = xoffset;
-    new_point.y = yoffset;
+    new_point->x = xoffset;
+    new_point->y = yoffset;
     
     if (p != NULL) {
-      new_point.next = p;
+      new_point->next = p;
     }
     p = new_point;
     
@@ -753,22 +786,23 @@ void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
-    if (not shape->sha.pe2d.type == BW_S2D_EDGE) {
+    // FIXME FIXME FIXME this function might be complete bollocks, reconsider pls
+    if (not shape->sha.pe2d->type == BW_S2D_EDGE) {
         shape->sha.pe2d->b2.edges = NULL;
     }
     
     _physics_Add2dShapeEdgeList_Do(shape, x1, y1, x2, y2);
     
-    struct edge* e = shape->sha.pe2d->b2.edge;
-    while (e != NULL and e.next != NULL) {
-        e = e.next;
+    struct edge* e = shape->sha.pe2d->b2.edges;
+    while (e != NULL and e->next != NULL) {
+        e = e->next;
     }
     struct edge* new_edge = (struct edge*)malloc(sizeof(*new_edge));
-    new_edge.x1 = x1;
-    new_edge.y1 = y1;
-    new_edge.x2 = x2;
-    new_edge.y2 = y2;
-    p.next = new_edge;
+    new_edge->x1 = x1;
+    new_edge->y1 = y1;
+    new_edge->x2 = x2;
+    new_edge->y2 = y2;
+    e->next = new_edge;
     
     shape->sha.pe2d->type = BW_S2D_EDGE;
 #ifdef USE_PHYSICS3D
@@ -797,14 +831,14 @@ void physics_Get2dShapeOffsetRotation(struct physicsobjectshape* shape, double* 
 
 // Everything about object creation starts here
 #ifdef USE_PHYSICS2D
-static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, void* userdata, int movable) {
-    struct physicsobject2d* object = (struct physicsobject2d*)malloc(sizeof(*object));
-    if (!object) {return NULL;}
-    memset(object, 0, sizeof(*object));
+static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, struct physicsobject* object, void* userdata, int movable) {
+    struct physicsobject2d* obj2d = (struct physicsobject2d*)malloc(sizeof(*obj2d));
+    if (!obj2d) {return NULL;}
+    memset(obj2d, 0, sizeof(*obj2d));
 
     struct bodyuserdata* pdata = (struct bodyuserdata*)malloc(sizeof(*pdata));
     if (!pdata) {
-        free(object);
+        free(obj2d);
         return NULL;
     }
     memset(pdata, 0, sizeof(*pdata));
@@ -815,19 +849,19 @@ static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world
     if (movable) {
         bodyDef.type = b2_dynamicBody;
     }
-    object->movable = movable;
+    obj2d->movable = movable;
     bodyDef.userData = (void*)pdata;
-    object->userdata = pdata;
-    object->body = world->w->CreateBody(&bodyDef);
-    object->body->SetFixedRotation(false);
-    object->world = world->w;
-    object->pworld = world;
-    if (!object->body) {
-        free(object);
+    obj2d->userdata = pdata;
+    obj2d->body = world->w->CreateBody(&bodyDef);
+    obj2d->body->SetFixedRotation(false);
+    obj2d->world = world->w;
+    obj2d->pworld = world;
+    if (!obj2d->body) {
+        free(obj2d);
         free(pdata);
         return NULL;
     }
-    return object;
+    return obj2d;
 }
 #endif
 
@@ -965,7 +999,8 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
     if (!world->is3d) {
 #endif
 #ifdef USE_PHYSICS2D
-    struct physicsobject2d* obj2d = _physics_Create2dObj(world->wor.ld2d, userdata, movable);
+    struct physicsobject* obj = (struct physicsobject*)malloc(sizeof(*obj));
+    struct physicsobject2d* obj2d = _physics_Create2dObj(world->wor.ld2d, obj, userdata, movable);
     if (obj2d == NULL) {
         return NULL;
     }
@@ -976,9 +1011,9 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
             // TODO: error msg?
             break;
         }
+        b2FixtureDef fixtureDef;
         switch ((int)(s->sha.pe2d->type)) {
             case BW_S2D_RECT:
-                b2FixtureDef fixtureDef;
                 fixtureDef.shape = s->sha.pe2d->b2.rectangle;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
@@ -986,10 +1021,9 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 obj2d->body->CreateFixture(&fixtureDef);
             break;
             case BW_S2D_POLY:
-                _physics_Create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints, obj);
+                _physics_Create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints, obj2d);
             break;
             case BW_S2D_CIRCLE:
-                b2FixtureDef fixtureDef;
                 fixtureDef.shape = s->sha.pe2d->b2.circle;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
@@ -1001,9 +1035,10 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
             break;
         }
     }
-    struct physicsobject* obj = (struct physicsobject*)malloc(sizeof(*obj));
     obj->obj.ect2d = obj2d;
+#ifdef USE_PHYSICS3D
     obj->is3d = 0;
+#endif
     physics_SetMass(obj, 0);
     return obj;
 #endif
@@ -1337,92 +1372,6 @@ void physics_Apply2dImpulse(struct physicsobject* obj, double forcex, double for
 #endif
 
 #ifdef USE_PHYSICS2D
-int physics_Ray2d(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly) {
-    struct physicsworld2d* world2d = world->wor.ld2d;    
-    
-    // create callback object which finds the closest impact
-    mycallback callbackobj;
-    
-    // cast a ray and have our callback object check for closest impact
-    world2d->w->RayCast(&callbackobj, b2Vec2(startx, starty), b2Vec2(targetx, targety));
-    if (callbackobj.closestcollidedbody) {
-        // we have a closest collided body, provide hitpoint information:
-        *hitpointx = callbackobj.closestcollidedposition.x;
-        *hitpointy = callbackobj.closestcollidedposition.y;
-        *hitobject = ((struct bodyuserdata*)callbackobj.closestcollidedbody->GetUserData())->pobj;
-        *hitnormalx = callbackobj.closestcollidednormal.x;
-        *hitnormaly = callbackobj.closestcollidednormal.y;
-        return 1;
-    }
-    // no collision found
-    return 0;
-}
-#endif
-
-#ifdef USE_PHYSICS2D
-// 2D only due to being derived from b2 class
-class mycontactlistener : public b2ContactListener {
-public:
-    mycontactlistener();
-    ~mycontactlistener();
-private:
-    void PreSolve(b2Contact *contact, const b2Manifold *oldManifold);
-};
-
-mycontactlistener::mycontactlistener() {return;}
-mycontactlistener::~mycontactlistener() {return;}
-
-
-void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifold) {
-    struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()->GetBody()->GetUserData())->pobj;
-    struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()->GetBody()->GetUserData())->pobj;
-    if (obj1->obj.ect2d->deleted || obj2->obj.ect2d->deleted) {
-        // one of the objects should be deleted already, ignore collision
-        contact->SetEnabled(false);
-        return;
-    }
-
-    // get collision point (this is never really accurate, but mostly sufficient)
-    int n = contact->GetManifold()->pointCount;
-    b2WorldManifold wmanifold;
-    contact->GetWorldManifold(&wmanifold);
-    float collidex = wmanifold.points[0].x;
-    float collidey = wmanifold.points[0].y;
-    float divisor = 1;
-    int i = 1;
-    while (i < n) {
-        collidex += wmanifold.points[i].x;
-        collidey += wmanifold.points[i].y;
-        divisor += 1;
-        i++;
-    }
-    collidex /= divisor;
-    collidey /= divisor;
-
-    // get collision normal ("push out" direction)
-    float normalx = wmanifold.normal.x;
-    float normaly = wmanifold.normal.y;
-
-    // impact force:
-    float impact = contact->GetManifold()->points[0].normalImpulse; //oldManifold->points[0].normalImpulse; //impulse->normalImpulses[0];
-
-    // find our current world
-    struct physicsworld* w = obj1->pworld;
-
-    // return the information through the callback
-    if (w->callback) {
-        if (!w->callback(w->callbackuserdata, obj1, obj2, collidex, collidey, normalx, normaly, impact)) {
-            // contact should be disabled:
-            contact->SetEnabled(false);
-        }else{
-            // contact should remain enabled:
-            contact->SetEnabled(true);
-        }
-    }
-}
-#endif
-
-
 class mycallback : public b2RayCastCallback {
 public:
     b2Body* closestcollidedbody;
@@ -1440,26 +1389,31 @@ public:
         return fraction;
     }
 };
+#endif
 
-struct edge {
-    int inaloop;
-    int processed;
-    int adjacentcount;
-    double x1,y1,x2,y2;
-    struct edge* next;
-    struct edge* adjacent1, *adjacent2;
-};
+#ifdef USE_PHYSICS2D
+int physics_Ray2d(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly) {
+    struct physicsworld2d* world2d = world->wor.ld2d;    
+    
+    // create callback object which finds the closest impact
+    mycallback callbackobj;
+    
+    // cast a ray and have our callback object check for closest impact
+    world2d->w->RayCast(&callbackobj, b2Vec2(startx, starty), b2Vec2(targetx, targety));
+    if (callbackobj.closestcollidedbody) {
+        // we have a closest collided body, provide hitpoint information:
+        *hitpointx = callbackobj.closestcollidedposition.x;
+        *hitpointy = callbackobj.closestcollidedposition.y;
+        *objecthit = ((struct bodyuserdata*)callbackobj.closestcollidedbody->GetUserData())->pobj;
+        *hitnormalx = callbackobj.closestcollidednormal.x;
+        *hitnormaly = callbackobj.closestcollidednormal.y;
+        return 1;
+    }
+    // no collision found
+    return 0;
+}
+#endif
 
-struct polygonpoint {
-  double x,y;
-  struct polygonpoint* next;
-};
-
-struct physicsobject2dedgecontext {
-    struct physicsobject2d* obj;
-    double friction;
-    struct edge* edgelist;
-};
 
 } //extern "C"
 
