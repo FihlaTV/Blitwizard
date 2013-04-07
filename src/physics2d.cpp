@@ -1338,6 +1338,29 @@ void physics_Apply2dImpulse(struct physicsobject* obj, double forcex, double for
 #endif
 
 #ifdef USE_PHYSICS2D
+int physics_Ray2d(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly) {
+    struct physicsworld2d* world2d = world->wor.ld2d;    
+    
+    // create callback object which finds the closest impact
+    mycallback callbackobj;
+    
+    // cast a ray and have our callback object check for closest impact
+    world2d->w->RayCast(&callbackobj, b2Vec2(startx, starty), b2Vec2(targetx, targety));
+    if (callbackobj.closestcollidedbody) {
+        // we have a closest collided body, provide hitpoint information:
+        *hitpointx = callbackobj.closestcollidedposition.x;
+        *hitpointy = callbackobj.closestcollidedposition.y;
+        *hitobject = ((struct bodyuserdata*)callbackobj.closestcollidedbody->GetUserData())->pobj;
+        *hitnormalx = callbackobj.closestcollidednormal.x;
+        *hitnormaly = callbackobj.closestcollidednormal.y;
+        return 1;
+    }
+    // no collision found
+    return 0;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
 // 2D only due to being derived from b2 class
 class mycontactlistener : public b2ContactListener {
 public:
