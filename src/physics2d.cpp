@@ -1167,7 +1167,7 @@ void physics_Get2dMassCenterOffset(struct physicsobject* obj, double* offsetx, d
 void physics_Set2dGravity(struct physicsobject* obj, double x, double y) {
     // TODO: again: check for is3d or not?
     if (!obj) {return;}
-    struct physicsobject2d* obj2d = obj.ect2d;
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
     obj2d->gravityset = 1;
     obj2d->gravityx = x;
     obj2d->gravityy = y;
