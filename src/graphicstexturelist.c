@@ -50,7 +50,7 @@
 #include "main.h"
 #endif
 
-static struct graphicstexture* texlist = NULL;
+static struct graphicstexturemanaged* texlist = NULL;
 hashmap* texhashmap = NULL;
 
 void graphicstexturelist_InitializeHashmap() {
@@ -60,34 +60,51 @@ void graphicstexturelist_InitializeHashmap() {
     texhashmap = hashmap_New(1024 * 1024);
 }
 
-void graphicstexturelist_AddTextureToList(struct graphicstexture* gt) {
-    gt->next = texlist;
-    texlist = gt;
+struct graphicstexturemanaged* graphicstexturelist_AddTextureToList(
+const char* path) {
+    struct graphicstexturemanaged* m = malloc(sizeof(*m));
+    if (!m) {
+        return NULL;
+    }
+    memset(m, 0, sizeof(*m));
+    m->path = strdup(path);
+    if (!m->path) {
+        free(m);
+        return NULL;
+    }
+    m->next = texlist;
+    texlist = m;
+    return m;
 }
 
-void graphicstexturelist_RemoveTextureFromList(struct graphicstexture* gt, struct graphicstexture* prev) {
+void graphicstexturelist_RemoveTextureFromList(
+struct graphicstexturemanaged* li, struct graphicstexturemanaged* prev) {
     if (prev) {
-        prev->next = gt->next;
-    }else{
-        texlist = gt->next;
+        prev->next = m->next;
+    } else {
+        texlist = m->next;
     }
 }
 
-struct graphicstexture* graphicstexturelist_GetTextureByName(const char* name) {
+struct graphicstexturemanaged* graphicstexturelist_GetTextureByName(
+const char* name) {
     graphicstexturelist_InitializeHashmap();
     uint32_t i = hashmap_GetIndex(texhashmap, name, strlen(name), 1);
-    struct graphicstexture* gt = (struct graphicstexture*)(texhashmap->items[i]);
-    while (gt && !(strcasecmp(gt->name, name) == 0)) {
-        gt = gt->hashbucketnext;
+    struct graphicstexturemanaged* m =
+    (struct graphicstexturemanaged*)(texhashmap->items[i]);
+    while (m && !(strcasecmp(m->path, name) == 0)) {
+        m = m->hashbucketnext;
     }
-    return gt;
+    return m;
 }
 
-void graphicstexturelist_AddTextureToHashmap(struct graphicstexture* gt) {
+void graphicstexturelist_AddTextureToHashmap(
+struct graphicstexturemanaged* m) {
     graphicstexturelist_InitializeHashmap();
-    uint32_t i = hashmap_GetIndex(texhashmap, gt->name, strlen(gt->name), 1);
-    gt->hashbucketnext = (struct graphicstexture*)(texhashmap->items[i]);
-    texhashmap->items[i] = gt;
+    uint32_t i = hashmap_GetIndex(texhashmap, m->path, strlen(m->path), 1);
+    
+    m->hashbucketnext = (struct graphicstexturemanaged*)(texhashmap->items[i]);
+    texhashmap->items[i] = m;
 }
 
 void graphicstexturelist_RemoveTextureFromHashmap(struct graphicstexture* gt) {
