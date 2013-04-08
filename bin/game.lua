@@ -1,6 +1,8 @@
 
+print("a")
 -- Initialise audio first so FFmpeg is found in case we want it
 pcall(blitwiz.sound.play)
+print("b")
 
 -- Try to run the templates first if they are one folder up
 if os.exists("samplebrowser/browser.lua") then
