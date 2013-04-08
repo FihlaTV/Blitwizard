@@ -21,6 +21,7 @@ scripts/.depsarebuilt_flags
 scripts/.depsarebuilt_luatarget
 libtool
 m4
+confdefs.h
 config.ld
 deps
 autom4te.cache/
@@ -34,6 +35,7 @@ config.log
 config.guess
 config.sub
 configure
+compile
 Makefile.in
 depcomp
 install-sh

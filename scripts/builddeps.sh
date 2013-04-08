@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# blitwizard game engine - dependency build script
+
 cd ..
 
 luatarget=`cat scripts/.buildinfo | grep luatarget | sed -e 's/^luatarget\=//'`
@@ -43,7 +45,7 @@ if [ "$REBUILDALL" = "yes" ]; then
 fi
 if [ "$REBUILDCORE" = "yes" ]; then
     echo "Core will be rebuilt to match different build flags or target.";
-    rm src/*.o > /dev/null 2>&1
+    rm -f src/*.o > /dev/null 2>&1
 fi
 
 CC=`cat scripts/.buildinfo | grep CC | sed -e 's/^.*\=//'`
@@ -166,7 +168,7 @@ if [ ! -e libs/libblitwizardOgreMainStatic.a ]; then
     if [ -n "`echo $static_libs_use | grep Ogre3D`" ]; then
         cd src/ogre/
         rm ./CMakeCache.txt
-        cmake -DOGRE_CONFIG_ENABLE_ZIP=FALSE -DOGRE_BUILD_PLUGIN_BSP=0 -DOGRE_CONFIG_DOUBLE=1 -DOGRE_BUILD_PLUGIN_PFX=0 -DOGRE_BUILD_PLUGIN_PCZ=0 -DOGRE_BUILD_PLUGIN_OCTREE=1 -DOGRE_CONFIG_ENABLE_FREEIMAGE=0 -DOGRE_CONFIG_ENABLE_DDS=0 -DOGRE_CONFIG_THREADS=2 -DOGRE_STATIC=on -DOGRE_BUILD_RENDERSYSTEM_GL=on -DOGRE_BUILD_TESTS=0 -DOGRE_BUILD_TOOLS=0 -DOGRE_BUILD_SAMPLES=0 -DOGRE_CONFIG_DOUBLE=1 -DOGRE_BUILD_PLUGIN_CG=off . || { echo "Failed to compile Ogre3D"; exit 1; }
+        cmake -DOGRE_CONFIG_ENABLE_ZIP=FALSE -DOGRE_BUILD_PLUGIN_BSP=0 -DOGRE_CONFIG_DOUBLE=1 -DOGRE_BUILD_PLUGIN_PFX=0 -DOGRE_BUILD_PLUGIN_PCZ=1 -DOGRE_BUILD_PLUGIN_OCTREE=1 -DOGRE_CONFIG_ENABLE_FREEIMAGE=0 -DOGRE_CONFIG_ENABLE_DDS=0 -DOGRE_CONFIG_THREADS=2 -DOGRE_STATIC=on -DOGRE_BUILD_RENDERSYSTEM_GL=on -DOGRE_BUILD_TESTS=0 -DOGRE_BUILD_TOOLS=0 -DOGRE_BUILD_SAMPLES=0 -DOGRE_BUILD_PLUGIN_CG=off . || { echo "Failed to compile Ogre3D"; exit 1; }
         make || { echo "Failed to compile Ogre3D"; exit 1; }
         cd "$dir"
     fi
@@ -181,6 +183,27 @@ if [ ! -e libs/libblitwizardOgreMainStatic.a ]; then
             NEWNAME="`echo $NEWNAME | sed -e 's/libblitwizardlib/libblitwizard/'`.a"
             cp "$f" "$NEWNAME"
         done
+    fi
+fi
+
+# PhysFS:
+if [ ! -e libs/libblitwizardPhysFS.a ]; then
+    if [ -n "`echo $static_libs_use | grep PhysFS`" ]; then
+        cd src/physfs/
+        rm ./CMakeCache.txt
+        rm -f *.o
+        rm src/archiver_lzma.c
+        $CC -c src/*.c -Isrc/ || { echo "Failed to compile PhysFS"; exit 1; }
+        $AR rcs "$dir"/libs/libblitwizardPhysFS.a *.o || { echo "Failed to compile PhysFS"; exit 1; }
+        rm *.o
+        cd "$dir"
+    fi
+fi
+
+# Copy PhysFS:
+if [ ! -e libs/libblitwizardPhysFS.a ]; then
+    if [ -n "`echo $static_libs_use | grep PhysFS`" ]; then
+        cp src/physfs/libphysfs.a libs/libblitwizardPhysFS.a
     fi
 fi
 
@@ -228,6 +251,15 @@ if [ ! -e libs/libblitwizardFLAC.a ]; then
         if [ "$MACBUILD" = "yes" ]; then
             # This doesn't work on Mac OS X as it seems
             asmoption="--disable-asm-optimizations"
+        fi
+        if [ ! -e "src/flac/configure" ]; then
+            # we need to run autogen.sh first
+            cd src/flac
+            autoreconf -ivf || { if [ ! e "src/flac/configure" ]; then
+                    echo "Failed to compile libFLAC - you might need to install autoconf/automake/libtool"; exit 1;
+                fi
+            }
+            cd "$dir"
         fi
         if [ -n "`echo $static_libs_use | grep ogg`" ]; then
             # Build flac and tell it where ogg is
@@ -399,7 +431,10 @@ if [ ! -e libs/libblitwizardlua.a ]; then
         if [ -z "$AR" ]; then
             AR="ar"
         fi
-        cd src/lua/build && rm lua.c && rm luac.c && $CC -c -O2 *.c && $AR rcs ../src/liblua.a *.o || { echo "Failed to compile Lua 5"; exit 1; }
+        cd scripts
+        SSEFLAGS=`sh checksse.sh`
+        cd "$dir"
+        cd src/lua/build && rm lua.c && rm luac.c && $CC -c -O2 $SSEFLAGS *.c && $AR rcs ../src/liblua.a *.o || { echo "Failed to compile Lua 5"; exit 1; }
         cd "$dir"
     fi
 fi

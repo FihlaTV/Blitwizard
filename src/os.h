@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2012 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,14 +25,12 @@
 
 #define BLITWIZARD_OS_H_
 
-#undef USE_FLAC_AUDIO
-
 #define USE_SOCKETS
 
 // Detect operating system:
 
 // We don't want Cygwin:
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(CYGWIN32) || defined(_CYGWIN32_) || defined(_CYGWIN64_)
 #error "You should compile blitwizard natively for Windows, not using Cygwin."
 #endif
 
@@ -96,6 +94,19 @@
 #endif
 #endif
 
+// Use either SDL or OGRE graphics:
+#ifdef USE_OGRE_GRAPHICS
+#undef USE_SDL_GRAPHICS
+#define HAVE_3D_GRAPHICS
+#endif
+
+#if defined(USE_OGRE_GRAPHICS) || defined(USE_SDL_GRAPHICS)
+#define HAVE_2D_GRAPHICS
+#endif
+
+#ifdef USE_GRAPHICS
+#define HAVE_GRAPHICS
+#endif
 
 #endif  // BLITWIZARD_OS_H_
 

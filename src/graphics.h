@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,11 +21,21 @@
 
 */
 
+#ifndef BLITWIZARD_GRAPHICS_H_
+#define BLITWIZARD_GRAPHICS_H_
+
 #ifdef USE_GRAPHICS
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef WINDOWS
+// for HWND usage:
+#include <windows.h>
+#endif
+
+#define UNIT_TO_PIXELS 50
 
 int graphics_AreGraphicsRunning(void);
 // Returns 1 if the graphics are open/active, otherwise 0.
@@ -88,33 +98,6 @@ int graphics_IsFullscreen(void);
 void graphics_MinimizeWindow(void);
 // Minimize the window
 
-void graphicsrender_StartFrame(void);
-// Clears the screen to prepare for the next frame.
-
-int graphicsrender_DrawCropped(const char* texname, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
-// Draw a texture cropped. Returns 1 on success, 0 when there is no such texture.
-
-int graphicsrender_Draw(const char* texname, int x, int y, float alpha, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
-// Draw a texture. Returns 1 on success, 0 when there is no such texture.
-
-void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, float g, float b, float a);
-// Draw a colored rectangle.
-
-void graphicsrender_CompleteFrame(void);
-// Update the current drawing changes to screen.
-// Use this always after completing one frame.
-
-void graphics_UnloadTexture(const char* texname, void (*callback)(int success, const char* texture));
-// Unload the given texture if loaded currently.
-// If the texture is currently being loaded, loading will be cancelled and,
-// if the provided callback is not NULL, the callback will be called.
-
-int graphics_IsTextureLoaded(const char* name);
-// Check if a texture is loaded. 0: no, 1: operation in progress, 2: yes
-
-int graphics_GetTextureDimensions(const char* name, unsigned int* width, unsigned int* height);
-// 1 on success, 0 on error
-
 int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height);
 // 1 on success, 0 on error (window not opened most likely)
 
@@ -150,13 +133,121 @@ int graphics_FreeTexture(struct graphicstexture* gt, struct graphicstexture* pre
 int graphics_HaveValidWindow(void);
 // Returns 1 if a window is open, otherwise 0
 
+
+// CAMERA HANDLING:
+
+int graphics_GetCameraCount();
+// Get count of cameras
+
+int graphics_GetCameraX(int index);
+// Get the screen X position of the specified camera
+// 'index' specifies the index from 0..count-1
+// for the specific camera.
+
+int graphics_GetCameraY(int index);
+// Get the screen Y position of the specified camera
+
+int graphics_GetCameraWidth(int index);
+// Get the screen width of the specified camera
+
+int graphics_GetCameraHeight(int index);
+// Get the screen height of the specified camera
+
+void graphics_SetCameraXY(int index, int x, int y);
+// Update the screen X/Y position of the camera
+
+void graphics_SetCameraSize(int index, int width, int height);
+// Update width/height of the given camera
+
+double graphics_GetCamera2DZoom(int index);
+// Get 2d zoom factor of camera
+// A 2d unit on screen equals (UNIT_TO_PIXELS * factor)
+// pixels.
+
+void graphics_Set2DCameraZoom(int index, double zoom);
+// Set 2d camera zoom factor
+
+double graphics_GetCamera3DFov(int index);
+// Get the camera's 3d field of view.
+// Returns the angle that is visible through
+// the camera horizontally, e.g. 90 for 90 degree.
+
+double graphics_SetCamera3DFov(int index, double fov);
+// Set the camera's 3d field of view.
+
+double graphics_GetCamera2DAspectRatio(int index);
+// Get camera 2d aspect ratio.
+// Specified in vertical/horizontal,
+// 1: square, 0.5: twice as wide as vertically high
+
+void graphics_SetCamera2DAspectRatio(int index, double ratio);
+// Set camera 2d aspect ratio
+
+double graphics_GetCamera3DAspectRatio(int index);
+// Get the camera 3d aspect ratio, see 2d aspect ratio.
+
+void graphics_SetCamera3DAspectRatio(int index, double ratio);
+// Set the camera 3d aspect ratio
+
+double graphics_GetCamera2DCenterX(int index);
+// Get camera 2d center x position
+
+double graphics_GetCamera2DCenterY(int index);
+// Get camera 2d center y position
+
+void graphics_SetCamera2DCenterXY(int index, double x, double y);
+// Set a new camera 2d center to focus at
+
+double graphics_GetCamera3DCenterX(int index);
+double graphics_GetCamera3DCenterY(int index);
+double graphics_GetCamera3DCenterZ(int index);
+// Get camera 3d center x/y/z position
+
+void graphics_SetCamera3DCenterXYZ(int index, double x, double y,
+double z);
+// Set a new camera 3d center to focus at 
+
+double graphics_GetCamera2DRotation(int index);
+// Get the 2d rotation angle (degree, counter-clockwise around the
+// center)
+
+void graphics_SetCamera2DRotation(int index, double degree);
+// Set the 2d rotation angle
+
+void graphics_GetCamera3DRotation(int index,
+double* x, double* y, double* z, double* r);
+// Get camera 3d rotation as quaternion
+
+void graphics_SetCamera3DRotation(int index,
+double x, double y, double z, double r);
+// Set camera 3d rotation as quaternion
+
+double graphics_GetCamera3DZNear(int index);
+// Get 3d camera z near clipping value
+
+double graphics_GetCamera3DZFar(int index);
+// Get 3d camera z far clipping value
+
+void graphics_SetCamera3DZNearFar(int index,
+double near, double far);
+// Set 3d camera z near/far clipping values
+
+int graphics_AddCamera();
+// Add a camera. Returns new camera index on success (>=0),
+// -1 on error.
+
+int graphics_DeleteCamera(int index);
+// Delete a specified camera.
+
 #ifdef __cplusplus
 }
 #endif
 
-#else // ifdef USE_GRAPHICS
+#else  // ifdef USE_GRAPHICS
 
 #define compiled_without_graphics "No graphics available - this binary was compiled with graphics (including null device) disabled"
 
-#endif // ifdef USE_GRAPHICS
+#endif  // ifdef USE_GRAPHICS
+
+#endif  // BLITWIZARD_GRAPHICS_H_
 

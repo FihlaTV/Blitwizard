@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -44,7 +44,12 @@ void audiosourceloop_SetLooping(struct audiosource* source, int looping) {
 }
 
 static void audiosourceloop_Rewind(struct audiosource* source) {
-    // this audio source has no rewind functionality
+    struct audiosourceloop_internaldata* idata = source->internaldata;
+    // if we aren't looping, we offer a rewind:
+    if (!idata->looping) {
+        idata->source->rewind(idata->source);
+        idata->sourceeof = 0;
+    }
     return;
 }
 
@@ -61,6 +66,7 @@ static int audiosourceloop_Read(struct audiosource* source, char* buffer, unsign
         if (!idata->sourceeof) {
             i = idata->source->read(idata->source, buffer, bytes);
             if (i == 0 && idata->looping == 1 && !rewinded) {
+                // we reached EOF. -> rewind
                 rewinded = 1;
                 idata->sourceeof = 0;
                 idata->source->rewind(idata->source);
@@ -68,15 +74,19 @@ static int audiosourceloop_Read(struct audiosource* source, char* buffer, unsign
             }
         }
         if (i > 0) {
+            // we got bytes from our audio source. return them:
             byteswritten += i;
             buffer += i;
             bytes -= i;
             rewinded = 0;
         }else{
             if (i <= 0) {
-                if (i < 0) {
+                // EOF or error?
+                if (i < 0) {  // error!
                     idata->returnerroroneof = 1;
                 }
+                // EOF! (this can also happen with looping enabled
+                // when the rewind of our audio source fails)
                 idata->sourceeof = 1;
                 if (byteswritten == 0) {
                     idata->eof = 1;
@@ -93,17 +103,53 @@ static int audiosourceloop_Read(struct audiosource* source, char* buffer, unsign
     return byteswritten;
 }
 
-static void audiosourceloop_Close(struct audiosource* source) {
+static size_t audiosourceloop_Length(struct audiosource* source) {
     struct audiosourceloop_internaldata* idata = source->internaldata;
 
-    // close the processed source
-    if (idata->source) {
-        idata->source->close(idata->source);
+    // if our audio source supports telling its length, delegate:
+    if (idata->source->length) {
+        return idata->source->length(idata->source);
+    }
+    return 0;
+}
+
+static size_t audiosourceloop_Position(struct audiosource* source) {
+    struct audiosourceloop_internaldata* idata = source->internaldata;
+
+    // if our audio source supports telling the position, delegate:
+    if (idata->source->position) {
+        return idata->source->position(idata->source);
+    }
+    return 0;
+}
+
+static int audiosourceloop_Seek(struct audiosource* source, size_t pos) {
+    struct audiosourceloop_internaldata* idata = source->internaldata;
+
+    if (idata->eof && idata->returnerroroneof) {
+        return 0;
     }
 
-    // free all structs
-    if (source->internaldata) {
-        free(source->internaldata);
+    // if our audio source supports seeking, delegate:
+    if (idata->source->seekable) {
+        if (idata->source->seek(idata->source, pos)) {
+            idata->eof = 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void audiosourceloop_Close(struct audiosource* source) {
+    struct audiosourceloop_internaldata* idata = source->internaldata;
+    if (idata) {
+        // close the processed source
+        if (idata->source) {
+            idata->source->close(idata->source);
+        }
+
+        // free all structs
+        free(idata);
     }
     free(source);
 }
@@ -146,6 +192,12 @@ struct audiosource* audiosourceloop_Create(struct audiosource* source) {
     a->read = &audiosourceloop_Read;
     a->close = &audiosourceloop_Close;
     a->rewind = &audiosourceloop_Rewind;
+    a->position = &audiosourceloop_Position;
+    a->length = &audiosourceloop_Length;
+    a->seek = &audiosourceloop_Seek;
+
+    // if our source can seek, we can do so too:
+    a->seekable = source->seekable;
 
     return a;
 }

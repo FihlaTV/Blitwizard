@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2012 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -73,6 +73,18 @@ int luafuncs_ray2d(lua_State* l) {
 // @treturn userdata Returns a @{blitwizard.object|blitwizard object} if an object was hit by the ray (the closest object that was hit), or otherwise it returns nil
 int luafuncs_ray3d(lua_State* l) {
     return luafuncs_ray(l, 1);
+}
+
+/// Set the world gravity for all 2d objects.
+// @function set2dGravity
+int luafuncs_set2dGravity(lua_State* l) {
+    return 0;
+}
+
+/// Set the world gravity for all 3d objects.
+// @function set3dGravity
+int luafuncs_set3dGravity(lua_State* l) {
+    return 0;
 }
 
 #endif  // USE_PHYSICS2D || USE_PHYSICS3D

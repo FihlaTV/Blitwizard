@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,3 +20,16 @@
   3. This notice may not be removed or altered from any source distribution.
 
 */
+
+#ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
+#define BLITWIZARD_GRAPHICSTEXTURESDL_H_
+
+struct graphicstexture {
+    // basic info
+    size_t width,height;
+    // SDL info
+    SDL_Texture* sdltex;
+};
+
+#endif  // BLITWIZARD_GRAPHICSTEXTURESDL_H_
+

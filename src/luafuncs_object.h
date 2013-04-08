@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,11 +21,16 @@
 
 */
 
-#ifndef BLITWIZARD_OBJECT_H_ 
+#ifndef BLITWIZARD_OBJECT_H_
 #define BLITWIZARD_OBJECT_H_
 
+int luafuncs_object_new(lua_State* l);
 void luafuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o);
 struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, const char* func);
+
+int luafuncs_getPosition(lua_State* l);
+int luafuncs_setPosition(lua_State* l);
+int luafuncs_setZIndex(lua_State* l);
 
 #endif  // BLITWIZARD_OBJECT_H_
 

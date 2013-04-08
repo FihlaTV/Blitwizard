@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,8 +37,10 @@ int luafuncs_exit(lua_State* l);
 int luafuncs_sysname(lua_State* l);
 int luafuncs_sysversion(lua_State* l);
 
-// blitwiz.*:
+// blitwizard.*:
 int luafuncs_setstep(lua_State* l);
+int luafuncs_getTemplateDirectory(lua_State* l);
+int luafuncs_loadResourceArchive(lua_State* l);
 
 // Base:
 int luafuncs_loadfile(lua_State* l);

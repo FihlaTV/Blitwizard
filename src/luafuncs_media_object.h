@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,13 +21,21 @@
 
 */
 
-#ifndef BLITWIZARD_LUAFUNCS_OBJECT_MEDIA_H_
-#define BLITWIZARD_LUAFUNCS_OBJECT_MEDIA_H_
+#ifndef BLITWIZARD_LUAFUNCS_MEDIA_OBJECT_H_
+#define BLITWIZARD_LUAFUNCS_MEDIA_OBJECT_H_
 
-#include "blitwizardobject.h"
+#include "resources.h"
+#include "luaheader.h"
+#include "mediaobject.h"
 
-void luacfuncs_media_object_new(struct blitwizardobject* o);
-void luacfuncs_media_object_destroy(struct blitwizardobject* o);
+int luafuncs_media_simpleSound_new(lua_State* l);
+int luafuncs_media_simpleSound_play(lua_State* l);
+int luafuncs_media_simpleSound_stop(lua_State* l);
+int luafuncs_media_simpleSound_setPriority(lua_State* l);
+int luafuncs_media_simpleSound_adjust(lua_State* l);
+int luafuncs_media_pannedSound_new(lua_State* l);
+int luafuncs_media_positionedSound_new(lua_State* l);
+void checkAllMediaObjectsForCleanup(void);
 
-#endif  // BLITWIZARD_LUAFUNCS_OBJECT_MEDIA_H_
+#endif  // BLITWIZARD_LUAFUNCS_MEDIA_OBJECT_H_
 

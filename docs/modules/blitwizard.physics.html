@@ -3,7 +3,7 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <head>
-    <title>Blitwizard documentation</title>
+    <title>Blitwizard API reference</title>
     <link rel="stylesheet" href="../ldoc.css" type="text/css" />
 </head>
 <body>
@@ -39,6 +39,7 @@
 <h2>Modules</h2>
 <ul>
   <li><a href="../modules/blitwizard.html">blitwizard</a></li>
+  <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
   <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
   <li><strong>blitwizard.physics</strong></li>
 </ul>
@@ -65,14 +66,22 @@
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#ray2d">ray2d&nbsp;(startx, starty, targetx, targety)</a></td>
+	<td class="name" ><a href="#ray2d">ray2d&nbsp;(startx, starty, targetx, targety)</a></td>
 	<td class="summary">Do a ray collision test by shooting out a ray and checking where it hits
  in 2d realm.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#ray3d">ray3d&nbsp;(startx, starty, startz, targetx, targety, targetz)</a></td>
+	<td class="name" ><a href="#ray3d">ray3d&nbsp;(startx, starty, startz, targetx, targety, targetz)</a></td>
 	<td class="summary">Do a ray collision test by shooting out a ray and checking where it hits
  in 3d realm.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#set2dGravity">set2dGravity&nbsp;()</a></td>
+	<td class="summary">Set the world gravity for all 2d objects.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#set3dGravity">set3dGravity&nbsp;()</a></td>
+	<td class="summary">Set the world gravity for all 3d objects.</td>
 	</tr>
 </table>
 
@@ -81,7 +90,6 @@
 
 
     <h2><a name="Functions"></a>Functions</h2>
-
     <dl class="function">
     <dt>
     <a name = "ray2d"></a>
@@ -93,18 +101,18 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">startx</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray starting point, x coordinate (please note the starting point shouldn't be inside the collision shape of an object)</li>
-      <li><span class="parameter">starty</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray starting point, y coordinate</li>
-      <li><span class="parameter">targetx</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray target point, x coordinate</li>
-      <li><span class="parameter">targety</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray target point, y coordinate</li>
+        <li><span class="parameter">startx</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray starting point, x coordinate (please note the starting point shouldn't be inside the collision shape of an object)</li>
+        <li><span class="parameter">starty</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray starting point, y coordinate</li>
+        <li><span class="parameter">targetx</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray target point, x coordinate</li>
+        <li><span class="parameter">targety</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray target point, y coordinate</li>
     </ul>
 
     <h3>Returns:</h3>
@@ -128,24 +136,24 @@
 
     <h3>Parameters:</h3>
     <ul>
-      <li><span class="parameter">startx</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray starting point, x coordinate (please note the starting point shouldn't be inside the collision shape of an object)</li>
-      <li><span class="parameter">starty</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray starting point, y coordinate</li>
-      <li><span class="parameter">startz</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray starting point, z coordinate</li>
-      <li><span class="parameter">targetx</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray target point, x coordinate</li>
-      <li><span class="parameter">targety</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray target point, y coordinate</li>
-      <li><span class="parameter">targetz</span>
-        <span class="types"><span class="type">number</span></span>
-       Ray target point, z coordinate</li>
+        <li><span class="parameter">startx</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray starting point, x coordinate (please note the starting point shouldn't be inside the collision shape of an object)</li>
+        <li><span class="parameter">starty</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray starting point, y coordinate</li>
+        <li><span class="parameter">startz</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray starting point, z coordinate</li>
+        <li><span class="parameter">targetx</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray target point, x coordinate</li>
+        <li><span class="parameter">targety</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray target point, y coordinate</li>
+        <li><span class="parameter">targetz</span>
+            <span class="types"><span class="type">number</span></span>
+         Ray target point, z coordinate</li>
     </ul>
 
     <h3>Returns:</h3>
@@ -154,6 +162,32 @@
           <span class="types"><span class="type">userdata</span></span>
         Returns a <a href="../modules/blitwizard.html#Class_object">blitwizard object</a> if an object was hit by the ray (the closest object that was hit), or otherwise it returns nil
     </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "set2dGravity"></a>
+    <strong>set2dGravity&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set the world gravity for all 2d objects.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "set3dGravity"></a>
+    <strong>set3dGravity&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set the world gravity for all 3d objects.
+
+
 
 
 

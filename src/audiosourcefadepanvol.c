@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -46,7 +46,39 @@ struct audiosourcefadepanvol_internaldata {
 
     char processedsamplesbuf[512];
     unsigned int processedsamplesbytes;
+
+    int noamplify; // don't amplify with soft clipping
 };
+
+static size_t audiosourcefadepanvol_Position(struct audiosource* source) {
+    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+    return idata->source->position(idata->source);
+}
+
+static size_t audiosourcefadepanvol_Length(struct audiosource* source) {
+    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+    return idata->source->position(idata->source);
+}
+
+static int audiosourcefadepanvol_Seek(struct audiosource* source, size_t pos) {
+    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+    if (idata->eof && idata->returnerroroneof) {
+        return 0;
+    }
+    if (idata->source->seekable) {
+        // source supports seeking -> attempt to seek:
+        if (idata->source->seek(idata->source, pos)) {
+            // it worked!
+            idata->eof = 0;
+            // reset our buffer to empty:
+            idata->processedsamplesbytes = 0;
+            return 1;
+        }
+        return 0;
+    } else {
+        return 0;
+    }
+}
 
 static void audiosourcefadepanvol_Rewind(struct audiosource* source) {
     struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
@@ -57,6 +89,22 @@ static void audiosourcefadepanvol_Rewind(struct audiosource* source) {
         idata->returnerroroneof = 0;
         idata->processedsamplesbytes = 0;
     }
+}
+
+static float amplify(float value, float amplification) {
+    // amplifies with soft clipping applied
+    float maxamplify = 2;
+    float clippingstart = 0.95;
+    value *= amplification;
+    if (abs(value) > clippingstart) {
+        float excess = abs(value)-clippingstart;
+        if (value > 0) {
+            value += (excess/(maxamplify-clippingstart))*(1-clippingstart);
+        } else {
+            value -= (excess/(maxamplify-clippingstart))*(1-clippingstart);
+        }
+    }
+    return value;
 }
 
 static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
@@ -123,12 +171,34 @@ static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, 
             }
 
             // apply volume
-            leftchannel *= idata->vol;
-            rightchannel *= idata->vol;
+            if (!idata->noamplify) {
+                leftchannel = amplify(leftchannel, idata->vol);
+                rightchannel = amplify(rightchannel, idata->vol);
+            } else {
+                leftchannel *= idata->vol;
+                rightchannel *= idata->vol;
+            }
 
             // calculate panning
-            leftchannel *= (idata->pan+1)/2;
-            rightchannel *= 1-(idata->pan+1)/2;
+            if (idata->pan < 0) {
+                leftchannel *= (1+idata->pan);
+            }
+            if (idata->pan > 0) {
+                rightchannel *= (1-idata->pan);
+            }
+
+            // amplify channels when closer to edges:
+            float panningamplifyfactor = abs(idata->pan);
+            float amplifyamount = 0.3;
+            if (!idata->noamplify) {
+                if (idata->pan > 0) {
+                    leftchannel = amplify(leftchannel,
+                    0.7 + panningamplifyfactor * amplifyamount);
+                } else {
+                    rightchannel = amplify(rightchannel,
+                    0.7 + panningamplifyfactor * amplifyamount);
+                }
+            }
 
             // write floats back
             memcpy(idata->processedsamplesbuf+i, &leftchannel, sizeof(float));
@@ -160,7 +230,9 @@ static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, 
         }
         // move away processed & returned samples
         if (returnbytes > 0) {
-            memmove(idata->processedsamplesbuf, idata->processedsamplesbuf + returnbytes, sizeof(idata->processedsamplesbuf) - returnbytes);
+            if (idata->processedsamplesbytes - returnbytes > 0) {
+                memmove(idata->processedsamplesbuf, idata->processedsamplesbuf + returnbytes, sizeof(idata->processedsamplesbuf) - returnbytes);
+            }
             idata->processedsamplesbytes -= returnbytes;
         }
     }
@@ -169,15 +241,14 @@ static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, 
 
 static void audiosourcefadepanvol_Close(struct audiosource* source) {
     struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+    if (idata) {
+        // close the processed source
+        if (idata->source) {
+            idata->source->close(idata->source);
+        }
 
-    // close the processed source
-    if (idata->source) {
-        idata->source->close(idata->source);
-    }
-
-    // free all structs
-    if (source->internaldata) {
-        free(source->internaldata);
+        // free all structs
+        free(idata);
     }
     free(source);
 }
@@ -222,24 +293,40 @@ struct audiosource* audiosourcefadepanvol_Create(struct audiosource* source) {
     a->read = &audiosourcefadepanvol_Read;
     a->close = &audiosourcefadepanvol_Close;
     a->rewind = &audiosourcefadepanvol_Rewind;
+    a->position = &audiosourcefadepanvol_Position;
+    a->length = &audiosourcefadepanvol_Length;
+    a->seek = &audiosourcefadepanvol_Seek;
+
+    // if our source is seekable, we are so too:
+    a->seekable = source->seekable;
 
     return a;
 }
 
-void audiosourcefadepanvol_SetPanVol(struct audiosource* source, float vol, float pan) {
+void audiosourcefadepanvol_SetPanVol(struct audiosource* source, float vol, float pan, int noamplify) {
     struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+    // limit panning range:
     if (pan < -1) {
         pan = -1;
     }
     if (pan > 1) {
         pan = 1;
     }
+    // limit volume range:
     if (vol < 0) {
         vol = 0;
     }
-    if (vol > 1) {
-        vol = 1;
+    if (vol > 1.5) {
+        vol = 1.5;
     }
+    // the user wants to avoid excess amplification:
+    if (noamplify) {
+        if (vol > 1) {
+            vol = 1;
+        }
+    }
+
+    idata->noamplify = noamplify;
     idata->pan = pan;
     idata->vol = vol;
 
@@ -249,7 +336,11 @@ void audiosourcefadepanvol_SetPanVol(struct audiosource* source, float vol, floa
 }
 
 void audiosourcefadepanvol_StartFade(struct audiosource* source, float seconds, float targetvol, int terminate) {
+    // start a fade to a specified volume
+    // terminate: stop sound when fade is done
     struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+
+    // if seconds <= 0, terminate current fade:
     if (seconds <= 0) {
         idata->fadevaluestart = 0;
         idata->fadevalueend = 0;
@@ -257,13 +348,18 @@ void audiosourcefadepanvol_StartFade(struct audiosource* source, float seconds, 
         idata->fadesampleend = 0;
         return;
     }
+    // check target volume bounds:
     if (targetvol < 0) {
         targetvol = 0;
     }
-    if (targetvol > 1) {
+    if (targetvol > 1.5) {
+        targetvol = 1.5;
+    }
+    if (idata->noamplify && targetvol > 1) {
         targetvol = 1;
     }
 
+    // set fade info:
     idata->terminateafterfade = terminate;
     idata->fadevaluestart = idata->vol;
     idata->fadevalueend = targetvol;

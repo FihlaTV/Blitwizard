@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,3 +20,18 @@
   3. This notice may not be removed or altered from any source distribution.
 
 */
+
+#ifndef BLITWIZARD_AUDIOSOURCERESOURCEFILE_H_
+#define BLITWIZARD_AUDIOSOURCERESOURCEFILE_H_
+
+#include "zipfile.h"
+
+struct audiosource* audiosourceresourcefile_Create(
+struct zipfile* archive, const char* path);
+// Create an audio source from a resource file.
+// Use audiosourcefile!
+// It will automatically use this audio source internally,
+// if appropriate.
+
+#endif  // BLITWIZARD_AUDIOSOURCERESOURCEFILE_H_
+

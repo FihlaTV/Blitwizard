@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2012 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,8 +24,6 @@
 #ifndef BLItWIZARD_LUAFUNCS_PHYSICS_H_
 #define BLITWIZARD_LUAFUNCS_PHYSICS_H_
 
-#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,8 +35,8 @@
 
 int luafuncs_ray2d(lua_State* l);
 int luafuncs_ray3d(lua_State* l);
-
-#endif  // USE_PHYSICS2D || USE_PHYSICS3D
+int luafuncs_set2dGravity(lua_State* l);
+int luafuncs_set3dGravity(lua_State* l);
 
 #endif  // BLITWIZARD_LUAFUNCS_PHYSICS_H_
 

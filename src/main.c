@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -22,8 +22,10 @@
 */
 
 #include "os.h"
+#include "resources.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdarg.h>
@@ -40,12 +42,16 @@
 struct physicsobject2d;
 int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force);
 
+// media cleanup callback:
+void checkAllMediaObjectsForCleanup(void);
+
 int wantquit = 0; // set to 1 if there was a quit event
 int suppressfurthererrors = 0; // a critical error was shown, don't show more
 int windowisfocussed = 0;
 int appinbackground = 0; // app is in background (mobile/Android)
 static int sdlinitialised = 0; // sdl was initialised and needs to be quit
 extern int drawingallowed; // stored in luafuncs.c, checks if we come from an on_draw() event or not
+char* templatepath = NULL; // global template directory path as determined at runtime
 
 #include "luastate.h"
 #include "file.h"
@@ -111,9 +117,7 @@ void main_InitAudio(void) {
     audioinitialised = 1;
 
     // get audio backend
-#ifdef USE_SDL_AUDIO
     char* p = luastate_GetPreferredAudioBackend();
-#endif
 
     // load FFmpeg if we happen to want it
     if (luastate_GetWantFFmpeg()) {
@@ -122,7 +126,7 @@ void main_InitAudio(void) {
         audiosourceffmpeg_DisableFFmpeg();
     }
 
-#ifdef USE_SDL_AUDIO
+#if defined(USE_SDL_AUDIO) || defined(WINDOWS)
     char* error;
 
     // initialise audio - try 32bit first
@@ -150,18 +154,19 @@ void main_InitAudio(void) {
     if (p) {
         free(p);
     }
-#else
+#else  // USE_SDL_AUDIO || WINDOWS
     // simulate audio:
     simulateaudio = 1;
     s16mixmode = 0;
-#endif
+#endif  // USE_SDL_AUDIO || WINDOWS
 #else // ifdef USE_AUDIO
+    // we don't support any audio
     return;
-#endif // ifdef USE_AUDIO
+#endif  // ifdef USE_AUDIO
 }
 
 
-static void quitevent() {
+static void quitevent(void) {
     char* error;
     if (!luastate_CallFunctionInMainstate("blitwiz.on_close", 0, 1, 1, &error, NULL)) {
         printerror("Error when calling blitwiz.on_close: %s",error);
@@ -308,10 +313,43 @@ static void putinbackground(int background) {
     }
 }
 
-void attemptTemplateLoad(const char* path) {
+int attemptTemplateLoad(const char* path) {
+#ifdef WINDOWS
+    // check for invalid absolute unix paths:
+    if (path[0] == '/' || path[0] == '\\') {
+        return 0;
+    }
+#endif
+
+    // path to init.lua:
+    char* p = malloc(strlen(path) + 1 + strlen("init.lua") + 1);
+    if (!p) {
+        printerror("Error: failed to allocate string when attempting to run templates init.lua");
+        main_Quit(1);
+        return 0;
+    }
+    memcpy(p, path, strlen(path));
+    p[strlen(path)] = '/';
+    memcpy(p+strlen(path)+1, "init.lua", strlen("init.lua"));
+    p[strlen(path)+1+strlen("init.lua")] = 0;
+    file_MakeSlashesNative(p);
+
+    // if file doesn't exist, report failure:
+    if (!file_DoesFileExist(p)) {
+        free(p);
+        return 0;
+    }
+
+    // update global template path:
+    if (templatepath) {
+        free(templatepath);
+    }
+    templatepath = strdup(path);
+
+    // run file:
     char outofmem[] = "Out of memory";
     char* error;
-    if (!luastate_DoInitialFile(path, 0, &error)) {
+    if (!luastate_DoInitialFile(p, 0, &error)) {
         if (error == NULL) {
             error = outofmem;
         }
@@ -320,9 +358,12 @@ void attemptTemplateLoad(const char* path) {
             free(error);
         }
         fatalscripterror();
+        free(p);
         main_Quit(1);
-        return;
+        return 0;
     }
+    free(p);
+    return 1;
 }
 
 
@@ -349,8 +390,8 @@ int main(int argc, char** argv) {
     int scriptargfound = 0;
     int option_changedir = 0;
     char* option_templatepath = NULL;
-    int option_templatepathset = 0;
     int nextoptionistemplatepath = 0;
+    int nextoptionisscriptarg = 0;
     int gcframecount = 0;
 
 #ifdef WINDOWS
@@ -374,31 +415,49 @@ int main(int argc, char** argv) {
             // process template path option parameter:
             if (nextoptionistemplatepath) {
                 nextoptionistemplatepath = 0;
+                if (option_templatepath) {
+                    free(option_templatepath);
+                }
                 option_templatepath = strdup(argv[i]);
                 if (!option_templatepath) {
                     printerror("Error: failed to strdup() template path argument");
                     main_Quit(1);
                     return 1;
                 }
-                option_templatepathset = 1;
                 file_MakeSlashesNative(option_templatepath);
                 i++;
                 continue;
             }
 
             // various options:
-            if (argv[i][0] == '-' || strcasecmp(argv[i],"/?") == 0) {
+            if ((argv[i][0] == '-' || strcasecmp(argv[i],"/?") == 0)
+            && !nextoptionisscriptarg) {
+                if (strcasecmp(argv[i], "--") == 0) {
+                    // this enforces the next arg to be the script name:
+                    nextoptionisscriptarg = 1;
+                    i++;
+                    continue;
+                }
+
                 if (strcasecmp(argv[i],"--help") == 0 || strcasecmp(argv[i], "-help") == 0
                 || strcasecmp(argv[i], "-?") == 0 || strcasecmp(argv[i],"/?") == 0
                 || strcasecmp(argv[i],"-h") == 0) {
-                    printf("blitwizard %s\n",VERSION);
-                    printf("Usage: blitwizard [blitwizard options] [lua script] [script options]\n\n");
-                    printf("The lua script should be a .lua file containing Lua source code.\n\n");
-                    printf("The script options (optional) are passed through to the script.\n\n");
-                    printf("The blitwizard options (optional) can be some of those:\n");
-                    printf("   -changedir             Change working directory to the dir of the lua script path\n");
+                    printf("blitwizard %s (C) 2011-2013 Jonas Thiem et al\n",VERSION);
+                    printf("Usage:\n   blitwizard [blitwizard options] [script name] [script options]\n\n");
+                    printf("The script name should be a .lua file containing\n"
+                    "Lua source code for use with blitwizard.\n\n");
+                    printf("The script options (optional) are passed through\n"
+                    "to the script.\n\n");
+                    printf("Supported blitwizard options:\n");
+                    printf("   -changedir             Change working directory to "
+                           "the\n"
+                           "                          folder of the script\n");
                     printf("   -help                  Show this help text and quit\n");
-                    printf("   -templatepath [path]   Check another place for templates, not \"templates/\"\n");
+                    printf("   -templatepath [path]   Check another place for "
+                           "templates\n"
+                           "                          (not the default "
+                           "\"templates/\")\n");
+                    printf("   -version               Show extended version info and quit\n");
                     return 0;
                 }
                 if (strcasecmp(argv[i],"-changedir") == 0) {
@@ -410,6 +469,106 @@ int main(int argc, char** argv) {
                     nextoptionistemplatepath = 1;
                     i++;
                     continue;
+                }
+                if (strcmp(argv[i], "-v") == 0 || strcasecmp(argv[i], "-version") == 0
+                || strcasecmp(argv[i], "--version") == 0) {
+                    printf("blitwizard %s (C) 2011-2013 Jonas Thiem et al\n",VERSION);
+                    printf("\nSupported features of this build:\n");
+
+                    #ifdef USE_SDL_AUDIO
+                    printf("  Audio device: SDL 2\n");
+                    #else
+                    #ifdef USE_AUDIO
+                    #ifdef WINDOWS
+                    printf("  Audio device: waveOut\n");
+                    #else
+                    printf("  Audio device: only virtual (not audible)\n");
+                    #endif
+                    #else
+                    printf("  Audio device: no\n");
+                    printf("     Playback support: none, audio disabled\n");
+                    printf("     Resampling support: none, audio disabled\n");
+                    #endif
+                    #endif
+
+                    #if (defined(USE_SDL_AUDIO) || defined(USE_AUDIO))
+                    printf("     Playback support: Ogg (libogg)%s%s\n",
+                    #if defined(USE_FLAC_AUDIO)
+                    ", FLAC (libFLAC)"
+                    #else
+                    ""
+                    #endif
+                    ,
+                    #if defined(USE_FFMPEG_AUDIO)
+                    #ifndef USE_FLAC_AUDIO
+                    ", FLAC (FFmpeg),\n      mp3 (FFmpeg), WAVE (FFmpeg), mp4 (FFmpeg),\n      many more.. (FFmpeg)\n     (Please note FFmpeg can fail to load at runtime,\n     resulting in FFmpeg playback support not working)"
+                    #else
+                    ",\n      mp3 (FFmpeg), WAVE (FFmpeg), mp4 (FFmpeg),\n      many more.. (FFmpeg)\n     (Please note FFmpeg can fail to load at runtime,\n      resulting in FFmpeg playback support not working)"
+                    #endif
+                    #else
+                    ""
+                    #endif
+                    );
+                    #if defined(USE_SPEEX_RESAMPLING)
+                    printf("     Resampling: libspeex\n");
+                    #else
+                    printf("     Resampling: none (non-48kHz audio will sound wrong!)\n");
+                    #endif
+                    #endif
+
+                    #ifdef USE_GRAPHICS
+                    #ifdef USE_SDL_GRAPHICS
+                    #ifdef USE_OGRE_GRAPHICS
+                    printf("  Graphics device: SDL 2, Ogre\n");
+                    printf("     2d graphics support: SDL 2, Ogre\n");
+                    printf("     3d graphics support: Ogre\n");
+                    #else
+                    printf("  Graphics device: SDL 2\n");
+                    printf("     2d graphics support: SDL 2\n");
+                    printf("     3d graphics support: none\n");
+                    #endif
+                    #else
+                    printf("  Graphics device: only virtual (not visible)\n");
+                    printf("     2d graphics support: virtual\n");
+                    printf("     3d graphics support: none\n");
+                    #endif
+                    #else
+                    printf("  Graphics device: none\n");
+                    printf("     2d graphics support: none, graphics disabled\n");
+                    printf("     3d graphics support: none, graphics disabled\n");
+                    #endif
+                    #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
+                    printf("  Physics: yes\n");
+                    #else
+                    printf("  Physics: no\n");
+                    #endif
+                    #if defined(USE_PHYSICS2D)
+                    printf("     2d physics: Box2D\n");
+                    #else
+                    printf("     2d physics: none\n");
+                    #endif
+                    #if defined(USE_PHYSICS3D)
+                    printf("     3d physics: bullet\n");
+                    #else
+                    printf("     3d physics: none\n");
+                    #endif
+                    #if defined(USE_PHYSFS)
+                    printf("  .zip archive resource loading: yes\n");
+                    #else
+                    printf("  .zip archive resource loading: no\n");
+                    #endif     
+
+                    printf("\nVarious build options:\n");
+                    printf("  SYSTEM_TEMPLATE_PATH:\n   %s\n",
+                    SYSTEM_TEMPLATE_PATH);
+                    printf("  FINAL_USE_LIB_FLAGS:\n   %s\n",
+                    USE_LIB_FLAGS);
+
+                    printf("\nCheck out http://www.blitwizard.de/"
+                    " for info about blitwizard.\n");
+
+                    fflush(stdout);
+                    exit(0);
                 }
                 printwarning("Warning: Unknown Blitwizard option: %s", argv[i]);
             }else{
@@ -427,7 +586,8 @@ int main(int argc, char** argv) {
     }
 
 #ifdef USE_AUDIO
-    // This needs to be done at some point before we actually initialise audio
+    // This needs to be done at some point before we actually 
+    // initialise audio so that the mixer is ready for use then
     audiomixer_Init();
 #endif
 
@@ -451,15 +611,40 @@ int main(int argc, char** argv) {
         file_MakeSlashesNative(option_templatepath);
     }
 
+    // load internal resources appended to this binary,
+    // so we can load the game.lua from it if there is any inside:
+#ifdef WINDOWS
+    // windows
+    // try encrypted first:
+    if (!resources_LoadZipFromOwnExecutable(NULL, 1)) {
+        // ... ok, then attempt unencrypted:
+        resources_LoadZipFromOwnExecutable(NULL, 0);
+    }
+#else
+#ifndef ANDROID
+    // unix systems
+    // encrypted first:
+    if (!resources_LoadZipFromOwnExecutable(argv[0], 1)) {
+        // ... ok, then attempt unencrypted:
+        resources_LoadZipFromOwnExecutable(argv[0], 0);
+    }
+#endif
+#endif
+
     // check if provided script path is a folder:
     if (file_IsDirectory(script)) {
-        filenamebuf = file_AddComponentToPath(script, "game.lua");
-        if (!filenamebuf) {
-            printerror("Error: failed to add component to template path");
-            main_Quit(1);
-            return 1;
+        // make sure it isn't inside a resource file as a proper file:
+        if (!resources_LocateResource(script, NULL)) {
+            // it isn't, so we can safely assume it is a folder.
+            // -> append "game.lua" to the path
+            filenamebuf = file_AddComponentToPath(script, "game.lua");
+            if (!filenamebuf) {
+                printerror("Error: failed to add component to script path");
+                main_Quit(1);
+                return 1;
+            }
+            script = filenamebuf;
         }
-        script = filenamebuf;
     }
 
     // check if we want to change directory to the provided script path:
@@ -477,11 +662,13 @@ int main(int argc, char** argv) {
             main_Quit(1);
             return 1;
         }
-        if (filenamebuf) {free(filenamebuf);}
+        if (filenamebuf) {
+            free(filenamebuf);
+        }
         filenamebuf = newfilenamebuf;
         if (!file_Cwd(p)) {
             free(filenamebuf);
-            printerror("Error: Cannot cd to \"%s\"",p);
+            printerror("Error: Cannot cd to \"%s\"", p);
             free(p);
             main_Quit(1);
             return 1;
@@ -530,40 +717,20 @@ int main(int argc, char** argv) {
     // android having the templates in embedded resources (where cwd'ing to
     // isn't supported), while for the desktop it is a regular folder.
 #if !defined(ANDROID)
-    // remember current directory:
-    char* currentworkingdir = file_GetCwd();
-    if (!currentworkingdir) {
-        printerror("Error: failed to change current working directory");
-        main_Quit(1);
-        return 1;
-    }
-
     int checksystemwidetemplate = 1;
     // see if there is a template directory & file:
-    if (file_DoesFileExist(option_templatepath) && file_IsDirectory(option_templatepath)) {
+    if (file_DoesFileExist(option_templatepath)
+    && file_IsDirectory(option_templatepath)) {
         checksystemwidetemplate = 0;
 
-        // change working directory to template folder:
-        int cwdfailed = 0;
-        if (!file_Cwd(option_templatepath) && option_templatepathset) {
-            printwarning("Warning: failed to change working directory to template path \"%s\"", option_templatepath);
-            cwdfailed = 1;
-        }
-
         // now run template file:
-        if (!cwdfailed && file_DoesFileExist("init.lua")) {
-            attemptTemplateLoad("init.lua");
-        }else{
+        if (!attemptTemplateLoad(option_templatepath)) {
             checksystemwidetemplate = 1;
         }
     }
 #if defined(SYSTEM_TEMPLATE_PATH)
     if (checksystemwidetemplate) {
-        if (file_Cwd(SYSTEM_TEMPLATE_PATH)) {
-            if (file_DoesFileExist("init.lua")) {
-                attemptTemplateLoad("init.lua");
-            }
-        }
+        attemptTemplateLoad(SYSTEM_TEMPLATE_PATH);
     }
 #endif
 #else // if !defined(ANDROID)
@@ -577,16 +744,13 @@ int main(int argc, char** argv) {
     }
     if (exists) {
         // run the template file:
-        if (!luastate_DoInitialFile("templates/init.lua", 0, &error)) {
-            attemptTemplateLoad("templates/init.lua");
-        }
+        attemptTemplateLoad("templates/");
     }
 #endif
 
-    // now since templates are loaded, return to old working dir:
-#if !defined(ANDROID)
-    file_Cwd(currentworkingdir);
-#endif
+    // free template dir now that we've loaded things:
+    free(option_templatepath);
+
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Executing lua start script...");
@@ -613,7 +777,7 @@ int main(int argc, char** argv) {
         if (error == NULL) {
             error = outofmem;
         }
-        printerror("Error: An error occured when running \"%s\": %s", script, error);
+        printerror("Error: an error occured when running \"%s\": %s", script, error);
         if (error != outofmem) {
             free(error);
         }
@@ -627,8 +791,8 @@ int main(int argc, char** argv) {
 #endif
 
     // call init
-    if (!luastate_CallFunctionInMainstate("blitwiz.on_init", 0, 1, 1, &error, NULL)) {
-        printerror("Error: An error occured when calling blitwiz.on_init: %s",error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.on_init", 0, 1, 1, &error, NULL)) {
+        printerror("Error: An error occured when calling blitwizard.on_init: %s",error);
         if (error != outofmem) {
             free(error);
         }
@@ -669,11 +833,15 @@ int main(int argc, char** argv) {
         // simulate audio
         if (simulateaudio) {
             while (simulateaudiotime < time_GetMilliseconds()) {
-                audiomixer_GetBuffer(48 * 4 * 2);
+                char buf[48 * 4 * 2];
+                audiomixer_GetBuffer(buf, 48 * 4 * 2);
                 simulateaudiotime += 1; // 48 * 1000 times * 4 bytes * 2 channels per second = simulated 48kHz 32bit stereo audio
             }
         }
 #endif // ifdef USE_AUDIO
+
+        // check for unused, no longer playing media objects:
+        checkAllMediaObjectsForCleanup();
 
         // slow sleep: check if we can safe some cpu by waiting longer
         unsigned int deltaspan = 16;
@@ -717,18 +885,8 @@ int main(int argc, char** argv) {
         int iterations = 0;
         while ((logictimestamp < time || physicstimestamp < time) && iterations < MAXLOGICITERATIONS) {
             if (logictimestamp < time && logictimestamp <= physicstimestamp) {
-                int onstepdoesntexist = 0;
-                if (!luastate_CallFunctionInMainstate("blitwiz.on_step", 0, 1, 1, &error, &onstepdoesntexist)) {
-                    printerror("Error: An error occured when calling blitwiz.on_step: %s", error);
-                    if (error) {free(error);}
-                    fatalscripterror();
-                    main_Quit(1);
-                    blitwizonstepworked = 0;
-                }else{
-                    if (onstepdoesntexist) {
-                        blitwizonstepworked = 0;
-                    }
-                }
+                // call logic functions of all objects:
+                
                 logictimestamp += TIMESTEP;
             }
 #ifdef USE_PHYSICS2D

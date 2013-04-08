@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -87,7 +87,6 @@ int audiomixer_NoSoundsPlaying(void) {
 
 // Cancel channel, we are in the sound thread
 static void audiomixer_CancelChannel(int slot) {
-    printf("Cancelling %d\n", slot);
     if (channels[slot].mixsource) {
         channels[slot].mixsource->close(channels[slot].mixsource);
         channels[slot].mixsource = NULL;
@@ -168,41 +167,76 @@ void audiomixer_StopSound(int id) {
     audio_UnlockAudioThread();
 }
 
-void audiomixer_AdjustSound(int id, float volume, float panning) {
+void audiomixer_AdjustSound(int id, float volume, float panning, int noamplify) {
     audio_LockAudioThread();
     int slot = audiomixer_GetChannelSlotById(id);
     if (slot >= 0 && channels[slot].fadepanvolsource) {
-        audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning);
+        audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning, noamplify);
     }
     audio_UnlockAudioThread();
 }
 
 
-int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, float panning, float fadeinseconds, int loop) {
+int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, float panning, int noamplify, float fadeinseconds, int loop) {
     audio_LockAudioThread();
     int id = audiomixer_FreeSoundId();
-    int slot = audiomixer_GetFreeChannelSlot(priority);
-    if (slot < 0) {
+    // see if in theory, the sound could be played:
+    if (audiomixer_GetFreeChannelSlot(priority) < 0) {
         // all slots are full. do nothing and simply return an unused unplaying id
         audio_UnlockAudioThread();
         return id;
     }
 
-    // try ogg format:
-    struct audiosource* decodesource = audiosourceogg_Create(audiosourceprereadcache_Create(audiosourcefile_Create(path)));
-   if (!decodesource) {
-        // try flac format:
-        decodesource = audiosourceformatconvert_Create(audiosourceflac_Create(audiosourceprereadcache_Create(audiosourcefile_Create(path))), AUDIOSOURCEFORMAT_F32LE);
+    // allow audio thread to do things again while we open the file
+    // and determine its format:
+    audio_UnlockAudioThread();
 
-        if (!decodesource) {
-            // try FFmpeg:
-            decodesource = audiosourceformatconvert_Create(audiosourceffmpeg_Create(audiosourceprereadcache_Create(audiosourcefile_Create(path))), AUDIOSOURCEFORMAT_F32LE);
-            if (!decodesource) {
-                // unsupported audio format
-                audio_UnlockAudioThread();
-                return -1;
-            }
+    // try ogg format:
+    struct audiosource* decodesource = NULL;
+    if (!decodesource && strlen(path) > strlen(".ogg") &&
+    strcasecmp(path+strlen(path)-strlen(".ogg"), ".ogg") == 0) {
+        decodesource = audiosourceogg_Create(
+        audiosourceprereadcache_Create(audiosourcefile_Create(path))
+        );
+    }
+
+    // try flac format:
+    if (!decodesource && strlen(path) > strlen(".flac") &&
+    strcasecmp(path+strlen(path)-strlen(".flac"), ".flac") == 0) {
+        decodesource = audiosourceformatconvert_Create(
+            audiosourceflac_Create(
+            audiosourceprereadcache_Create(audiosourcefile_Create(path))
+            ),
+            AUDIOSOURCEFORMAT_F32LE
+        );
+    }
+
+    // try FFmpeg:
+    if (!decodesource) {
+        decodesource = audiosourceformatconvert_Create(
+        audiosourceffmpeg_Create(
+        audiosourceprereadcache_Create(audiosourcefile_Create(path))),
+        AUDIOSOURCEFORMAT_F32LE);
+    }
+
+    // if we got no decode source at this point, the audio file is unsupported:
+    if (!decodesource) {
+        // unsupported audio format
+        return -1;
+    }
+
+    // lock audio thread again so we can update the audio channel info:
+    audio_LockAudioThread();
+
+    // obtain free slot:
+    int slot = audiomixer_GetFreeChannelSlot(priority);
+    if (slot < 0) {
+        // no free slot :(
+        audio_UnlockAudioThread();
+        if (decodesource) {
+            decodesource->close(decodesource);
         }
+        return -1;
     }
 
     // wrap up the decoded audio into the resampler and fade/pan/vol modifier
@@ -213,8 +247,12 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     }
 
     // set the options for the fade/pan/vol modifier
-    audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning);
+    audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning, noamplify);
     if (fadeinseconds > 0) {
+        // reset volume to 0 for fadein:
+        audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, 0, panning, noamplify);
+
+        // instruct fadein:
         audiosourcefadepanvol_StartFade(channels[slot].fadepanvolsource, fadeinseconds, volume, 0);
     }
 
@@ -233,6 +271,7 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     // remember that loop audio source as final processed audio
     channels[slot].mixsource = channels[slot].loopsource;
 
+    // we're done, unlock audio thread:
     audio_UnlockAudioThread();
     return id;
 }
@@ -357,31 +396,14 @@ static void audiomixer_RequestMix(unsigned int bytes) { // SOUND THREAD
 
 int s16mixmode = 0;
 
-char* streambuf = NULL;
-unsigned int streambuflen = 0;
-void* audiomixer_GetBuffer(unsigned int len) { // SOUND THREAD
-    unsigned int s16downmixlen = 0;
-    if (s16mixmode) {
-        len *= 2; // get twice the amount of float 32 samples
-        s16downmixlen = len;
-    }
-
-    if (streambuflen != len && (streambuflen < len || streambuflen > len * 2)) {
-        if (streambuf) {
-            free(streambuf);
-        }
-        streambuf = malloc(len);
-        streambuflen = len;
-    }
-    memset(streambuf, 0, len);
-
-    char* p = streambuf;
+void audiomixer_GetBuffer(void* buf, unsigned int len) { // SOUND THREAD
+    char* p = buf;
     while (len > 0) {
         audiomixer_RequestMix(len);
 
         // see how much bytes we can get
         unsigned int filledbytes = filledmixpartial + filledmixfull * sizeof(MIXTYPE);
-        unsigned int amount = len;
+        unsigned int amount = len+len*s16mixmode;  // doubled for s16mixmode
         if (amount > filledbytes) {
             amount = filledbytes;
         }
@@ -390,9 +412,24 @@ void* audiomixer_GetBuffer(unsigned int len) { // SOUND THREAD
         }
 
         // copy the amount of bytes we have
-        memcpy(p, mixbuf, amount);
-        len -= amount;
-        p += amount;
+        if (s16mixmode) {
+            // copy them and convert them to S16 on the fly
+            // FIXME: this doesn't work properly with partial samples
+            unsigned int i = 0;
+            while (i <= amount-sizeof(MIXTYPE)) {
+                MIXTYPE fval = *((MIXTYPE*)((char*)mixbuf+i));
+                fval *= 32767;
+                *((int16_t*)((char*)p)) = (int16_t)fastdoubletoint32(fval);
+                p += sizeof(int16_t);
+                len -= sizeof(int16_t);
+                i += sizeof(MIXTYPE);
+            }
+        } else {
+            // copy them as float 32:
+            memcpy(p, mixbuf, amount);
+            len -= amount;
+            p += amount;
+        }
 
         // trim mix buffer:
         if (amount >= filledbytes) {
@@ -423,23 +460,7 @@ void* audiomixer_GetBuffer(unsigned int len) { // SOUND THREAD
             }
         }
     }
-
-    // FIXME: this assumes that only complete samples are fetched
-    //  (which isn't guaranteed)
-    if (s16mixmode) {
-        unsigned int i = 0;
-        unsigned int i2 = 0;
-        while (i + sizeof(MIXTYPE) <= s16downmixlen) {
-            double fval = *((float*)((char*)streambuf+i));
-            fval *= 32767;
-            *((int16_t*)((char*)streambuf+i2)) = (int16_t)fastdoubletoint32(fval);
-            i += sizeof(MIXTYPE);
-            i2 += sizeof(int16_t);
-        }
-    }
-
-    return streambuf;
 }
 
-#endif // ifdef USE_AUDIO
+#endif  // USE_AUDIO
 

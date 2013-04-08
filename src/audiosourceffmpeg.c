@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2012 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -23,7 +23,7 @@
 
 #ifdef USE_AUDIO
 
-// #define FFMPEGDEBUG
+ #define FFMPEGDEBUG
 
 #ifdef USE_FFMPEG_AUDIO
 #include "libavcodec/avcodec.h"
@@ -102,6 +102,7 @@ static void* avutilptr;
 
 static void (*ffmpeg_av_register_all)(void);
 static AVFormatContext* (*ffmpeg_avformat_alloc_context)(void);
+static AVCodecContext* (*ffmpeg_avcodec_alloc_context)(void);
 static AVCodecContext* (*ffmpeg_avcodec_alloc_context3)(AVCodec*);
 static AVFrame* (*ffmpeg_avcodec_alloc_frame)(void);
 static void (*ffmpeg_av_free)(void*);
@@ -113,7 +114,8 @@ static AVIOContext* (*ffmpeg_avio_alloc_context)(
     int(*write_packet)(void *opaque, uint8_t *buf, int buf_size),
     int64_t(*seek)(void *opaque, int64_t offset, int whence)
 );
-static int (*ffmpeg_av_find_stream_info)(AVFormatContext*,AVDictionary**);
+static int (*ffmpeg_avformat_find_stream_info)(AVFormatContext*, AVDictionary**);
+static int (*ffmpeg_av_find_stream_info)(AVFormatContext*);
 static int (*ffmpeg_av_find_best_stream)(AVFormatContext*, enum AVMediaType, int, int, AVCodec**, int);
 static int (*ffmpeg_avcodec_open2)(AVCodecContext*, AVCodec*, AVDictionary**);
 static int (*ffmpeg_avformat_open_input)(AVFormatContext**, const char*, AVInputFormat*, AVDictionary**);
@@ -136,36 +138,53 @@ static void loadorfail(void** ptr, void* lib, const char* name) {
 
     if (!*ptr) {
 #ifdef FFMPEGDEBUG
-        printwarning("Warning: [FFmpeg-debug] Failed to load symbol: %s",name);
+        printwarning("Warning: [FFmpeg-debug] Failed to load crucial symbol: %s",name);
 #endif
         loadorfailstate = 1;
         return;
+    }
+}
+static void loadorwarn(void** ptr, void* lib, const char* name) {
+    if (loadorfailstate) {
+        return;
+    }
+    *ptr = library_GetSymbol(lib, name);
+    if (!*ptr) {
+#ifdef FFMPEGDEBUG
+        printwarning("Warning: [FFmpeg-debug] Failed to load unimportant symbol: %s", name);
+#endif
     }
 }
 
 static int audiosourceffmpeg_LoadFFmpegFunctions(void) {
     loadorfail((void**)(&ffmpeg_av_register_all), avformatptr, "av_register_all");
     loadorfail((void**)(&ffmpeg_avformat_alloc_context), avformatptr, "avformat_alloc_context");
-    loadorfail((void**)(&ffmpeg_avcodec_alloc_context3), avcodecptr, "avcodec_alloc_context3");
+    loadorwarn((void**)(&ffmpeg_avcodec_alloc_context3), avcodecptr, "avcodec_alloc_context3");
+    if (!ffmpeg_avcodec_alloc_context3) {
+        loadorfail((void*)(&ffmpeg_avcodec_alloc_context), avcodecptr, "avcodec_alloc_context");
+    }
     loadorfail((void**)(&ffmpeg_av_free), avutilptr, "av_free");
     loadorfail((void**)(&ffmpeg_avio_alloc_context), avformatptr, "avio_alloc_context");
     loadorfail((void**)(&ffmpeg_av_malloc), avutilptr, "av_malloc");
-    loadorfail((void**)(&ffmpeg_av_find_stream_info), avformatptr, "av_find_stream_info");
-    loadorfail((void**)(&ffmpeg_av_find_best_stream), avformatptr, "av_find_best_stream");
+    loadorwarn((void**)(&ffmpeg_avformat_find_stream_info), avformatptr, "avformat_find_stream_info");
+    if (!ffmpeg_avformat_find_stream_info) {
+        loadorfail((void**)(&ffmpeg_av_find_stream_info), avformatptr, "av_find_stream_info");
+    }
+    loadorwarn((void**)(&ffmpeg_av_find_best_stream), avformatptr, "av_find_best_stream");
     loadorfail((void**)(&ffmpeg_avcodec_open2), avcodecptr, "avcodec_open2");
     loadorfail((void**)(&ffmpeg_avformat_open_input), avformatptr, "avformat_open_input");
-    loadorfail((void**)(&ffmpeg_avcodec_decode_audio3), avcodecptr, "avcodec_decode_audio3");
+    loadorwarn((void**)(&ffmpeg_avcodec_decode_audio3), avcodecptr, "avcodec_decode_audio3");
+    if (!ffmpeg_avcodec_decode_audio4) {
+        loadorfail((void**)(&ffmpeg_avcodec_decode_audio4), avcodecptr, "avcodec_decode_audio4");
+        loadorfail((void**)(&ffmpeg_av_samples_get_buffer_size), avutilptr, "av_samples_get_buffer_size");
+    }
     loadorfail((void**)(&ffmpeg_av_read_frame), avformatptr, "av_read_frame");
     loadorfail((void**)(&ffmpeg_av_free_packet), avcodecptr, "av_free_packet");
     loadorfail((void**)(&ffmpeg_av_init_packet), avcodecptr, "av_init_packet");
-    loadorfail((void**)(&ffmpeg_av_strerror), avutilptr, "av_strerror");
+    loadorwarn((void**)(&ffmpeg_av_strerror), avutilptr, "av_strerror");
     loadorfail((void**)(&ffmpeg_avcodec_find_decoder), avcodecptr, "avcodec_find_decoder");
     loadorfail((void**)(&ffmpeg_avcodec_alloc_frame), avcodecptr, "avcodec_alloc_frame");
     loadorfail((void**)(&ffmpeg_av_log_set_level), avutilptr, "av_log_set_level");
-
-    // decode_audio4 (new, unused variant):
-    // loadorfail((void**)(&ffmpeg_avcodec_decode_audio4), avcodecptr, "avcodec_decode_audio4");
-    // loadorfail((void**)(&ffmpeg_av_samples_get_buffer_size), avutilptr, "av_samples_get_buffer_size");
 
     if (loadorfailstate) {
         return 0;
@@ -209,6 +228,7 @@ static int audiosourceffmpeg_InitFFmpeg(void) {
 #else
     ffmpeg_av_log_set_level(AV_LOG_ERROR);
 #endif
+    ffmpeg_av_log_set_level(AV_LOG_QUIET);
 
     return 1;
 }
@@ -243,10 +263,19 @@ int audiosourceffmpeg_LoadFFmpeg(void) {
     avformatptr = ffmpegptr;
 #endif
 #else
-    // Windows
-    avutilptr = library_LoadSearch("avutil");
-    avcodecptr = library_LoadSearch("avcodec");
-    avformatptr = library_LoadSearch("avformat");
+    // Windows ffmpegsumo variant (Google Chrome):
+    void* ffmpegptr = library_LoadSearch("ffmpegsumo");
+    if (ffmpegptr) {
+        avutilptr = ffmpegptr;
+        avcodecptr = ffmpegptr;
+        avformatptr = ffmpegptr;
+    }
+    // Windows normal variant:
+    if (!ffmpegptr) {
+        avutilptr = library_LoadSearch("avutil");
+        avcodecptr = library_LoadSearch("avcodec");
+        avformatptr = library_LoadSearch("avformat");
+    }
 #endif
 
     // Check library load state
@@ -348,7 +377,7 @@ static void audiosourceffmpeg_FreeFFmpegData(struct audiosource* source) {
     }
     struct audiosourceffmpeg_internaldata* idata = source->internaldata;
     if (idata->codeccontext) {
-        ffmpeg_av_free(idata->codeccontext);
+        // ffmpeg_av_free(idata->codeccontext);  // handled by format contex
         idata->codeccontext = NULL;
     }
     if (idata->formatcontext) {
@@ -427,13 +456,41 @@ static int audiosourceffmpeg_Read(struct audiosource* source, char* buffer, unsi
         }
 
         // Read detailed stream info
-        if (ffmpeg_av_find_stream_info(idata->formatcontext, NULL) < 0) {
-            audiosourceffmpeg_FatalError(source);
-            return -1;
+        int i = 0;
+        if (ffmpeg_avformat_find_stream_info) {
+            // new FFmpeg with avformat_find_stream_info
+            if ((i = ffmpeg_avformat_find_stream_info(idata->formatcontext,
+            NULL)) < 0) {
+                audiosourceffmpeg_FatalError(source);
+                return -1;
+            }
+        } else{
+            // old FFmpeg
+            if (ffmpeg_av_find_stream_info(idata->formatcontext) < 0) {
+                audiosourceffmpeg_FatalError(source);
+                return -1;
+            }
         }
 
         // Find best stream
-        int stream = ffmpeg_av_find_best_stream(idata->formatcontext, AVMEDIA_TYPE_AUDIO, -1, -1, &idata->audiocodec, 0);
+        int stream;
+        if (ffmpeg_av_find_best_stream) {
+            // use the awesome FFmpeg function
+            stream = ffmpeg_av_find_best_stream(idata->formatcontext,
+            AVMEDIA_TYPE_AUDIO, -1, -1, &idata->audiocodec, 0);
+        } else {
+            // simply take the first audio stream
+            unsigned int i = 0;
+            stream = 0;
+            while (i < idata->formatcontext->nb_streams) {
+                if (idata->formatcontext->streams[i]->codec->codec_type
+                == AVMEDIA_TYPE_AUDIO) {
+                    stream = i;
+                    break;
+                }
+                i++;
+            }
+        }
         if (stream < 0) {
             audiosourceffmpeg_FatalError(source);
             return -1;
@@ -457,7 +514,14 @@ static int audiosourceffmpeg_Read(struct audiosource* source, char* buffer, unsi
         }
 
         // Get our actual codec context:
-        idata->codeccontext = ffmpeg_avcodec_alloc_context3(idata->audiocodec);
+        /*if (ffmpeg_avcodec_alloc_context3) {
+            // new FFmpeg with avcodec_alloc_context3
+            idata->codeccontext = ffmpeg_avcodec_alloc_context3(idata->audiocodec);
+        } else {
+            // old FFmpeg
+            idata->codeccontext = ffmpeg_avcodec_alloc_context();
+        }*/
+        idata->codeccontext = c;
 
         // Initialise codec. XXX avcodec_open2 is not thread-safe!
         if (ffmpeg_avcodec_open2(idata->codeccontext, idata->audiocodec, NULL) < 0) {
@@ -479,7 +543,7 @@ static int audiosourceffmpeg_Read(struct audiosource* source, char* buffer, unsi
         source->samplerate = c->sample_rate;
         switch (c->sample_fmt) {
         case AV_SAMPLE_FMT_U8:
-            source->format = AUDIOSOURCEFORMAT_U8LE;
+            source->format = AUDIOSOURCEFORMAT_U8;
             break;
         case AV_SAMPLE_FMT_S16:
             source->format = AUDIOSOURCEFORMAT_S16LE;
@@ -491,9 +555,9 @@ static int audiosourceffmpeg_Read(struct audiosource* source, char* buffer, unsi
             audiosourceffmpeg_FatalError(source);
             return -1;
         }
-        if (source->channels <= 0 || source->samplerate <= 0) {
+        if (source->channels <= 1 || source->samplerate <= 0) {
 #ifdef FFMPEGDEBUG
-            printwarning("[FFmpeg-debug] format probing failed: channels or sample rate unknown");
+            printwarning("[FFmpeg-debug] format probing failed: channels or sample rate unknown or unsupported");
 #endif
             // not a known format apparently
             audiosourceffmpeg_FatalError(source);
@@ -537,27 +601,45 @@ static int audiosourceffmpeg_Read(struct audiosource* source, char* buffer, unsi
         }
         if (packetresult == 0) {
             // decode with FFmpeg:
-            //    old variant: decode_audio3:
-            if (!idata->tempbuf) {
-                idata->tempbuf = ffmpeg_av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + 32);
-            }
-            char* outputbuf __attribute__ ((aligned(16))) = idata->tempbuf;
-            int bufsize = AVCODEC_MAX_AUDIO_FRAME_SIZE + 16;
-            int gotframe = 0;
-            int len = ffmpeg_avcodec_decode_audio3(idata->codeccontext, (int16_t*)outputbuf, &bufsize, &idata->packet);
-            if (len > 0) {
-                gotframe = 1;
-            }
+            int len,gotframe;
+            char* outputbuf __attribute__ ((aligned(16)));
+            int bufsize = 0;
+            // old variant: decode_audio3:
+            if (!ffmpeg_avcodec_decode_audio4) {
+                if (!idata->tempbuf) {
+                    idata->tempbuf = ffmpeg_av_malloc(
+                    AVCODEC_MAX_AUDIO_FRAME_SIZE + 32);
+                    outputbuf = idata->tempbuf;
+                }
 
-            //    new variant: decode_audio4:
-            // int gotframe;
-            // int len = ffmpeg_avcodec_decode_audio4(idata->codeccontext, idata->decodedframe, &gotframe, &idata->packet);
+                bufsize = AVCODEC_MAX_AUDIO_FRAME_SIZE + 16;
+                gotframe = 0;
+                len = ffmpeg_avcodec_decode_audio3(
+                    idata->codeccontext,
+                    (int16_t*)outputbuf,
+                    &bufsize,
+                    &idata->packet
+                );
+                if (len > 0) {
+                    gotframe = 1;
+                }
+            } else {
+                // new variant: decode_audio4:
+                len = ffmpeg_avcodec_decode_audio4(
+                    idata->codeccontext,
+                    idata->decodedframe,
+                    &gotframe,
+                    &idata->packet
+                );
+            }
 
             if (len < 0) {
                 // A decode error occured:
 #ifdef FFMPEGDEBUG
                 char errbuf[512] = "Unknown";
-                ffmpeg_av_strerror(len, errbuf, sizeof(errbuf)-1);
+                if (ffmpeg_av_strerror) {
+                    ffmpeg_av_strerror(len, errbuf, sizeof(errbuf)-1);
+                }
                 errbuf[sizeof(errbuf)-1] = 0;
                 printwarning("[FFmpeg-debug] avcodec_decode_audio3 error: %s",errbuf);
 #endif
@@ -579,13 +661,22 @@ static int audiosourceffmpeg_Read(struct audiosource* source, char* buffer, unsi
 
             // return data if we have some
             if (gotframe) {
-                //    old variant: decode_audio3:
-                int framesize = bufsize;
-                const char* p = outputbuf;
-
-                //    new variant: decode_audio4:
-                // int framesize = ffmpeg_av_samples_get_buffer_size(NULL, idata->codeccontext->channels, idata->decodedframe->nb_samples, idata->codeccontext->sample_fmt, 1);
-                // const char* p = (char*)idata->decodedframe->data[0];
+                int framesize;  // amount of bytes
+                const char* p;  // pointer to byte data
+                if (!ffmpeg_avcodec_decode_audio4) {
+                    // old variant: decode_audio3:
+                    framesize = bufsize;
+                    p = outputbuf;
+                } else {
+                    // new variant: decode_audio4:
+                    framesize = ffmpeg_av_samples_get_buffer_size(
+                    NULL,
+                    idata->codeccontext->channels,
+                    idata->decodedframe->nb_samples,
+                    idata->codeccontext->sample_fmt,
+                    1);
+                    p = (char*)idata->decodedframe->data[0];
+                }
 
                 // first, export as much as we can
                 if (bytes > 0) {
@@ -629,17 +720,31 @@ static int audiosourceffmpeg_Read(struct audiosource* source, char* buffer, unsi
 
 static void audiosourceffmpeg_Close(struct audiosource* source) {
     struct audiosourceffmpeg_internaldata* idata = source->internaldata;
-    // close audio source we might have opened
-    if (idata && idata->source) {
-        idata->source->close(idata->source);
-    }
-    // close FFmpeg stuff
-    audiosourceffmpeg_FreeFFmpegData(source);
-    // free all structs & strings
     if (idata) {
-        free(idata);
+        // close audio source we might have opened
+        if (idata && idata->source) {
+            idata->source->close(idata->source);
+        }
+        // close FFmpeg stuff
+        audiosourceffmpeg_FreeFFmpegData(source);
+        // free all structs & strings
+        if (idata) {
+            free(idata);
+        }
     }
     free(source);
+}
+
+static size_t audiosourceffmpeg_Length(struct audiosource* source) {
+    return 0;
+}
+
+static size_t audiosourceffmpeg_Position(struct audiosource* source) {
+    return 0;
+}
+
+static int audiosourceffmpeg_Seek(struct audiosource* source, size_t pos) {
+    return 0;
 }
 
 struct audiosource* audiosourceffmpeg_Create(struct audiosource* source) {
@@ -681,23 +786,27 @@ struct audiosource* audiosourceffmpeg_Create(struct audiosource* source) {
     if (!idata->decodedframe) {
         free(idata);
         free(a);
+        if (source) {
+            source->close(source);
+        }
         return NULL;
     }
-
     a->format = AUDIOSOURCEFORMAT_S16LE;
     a->read = &audiosourceffmpeg_Read;
     a->close = &audiosourceffmpeg_Close;
     a->rewind = &audiosourceffmpeg_Rewind;
-    a->seek = NULL;
+    a->seek = &audiosourceffmpeg_Seek;
+    a->position = &audiosourceffmpeg_Position;
+    a->length = &audiosourceffmpeg_Length;
+    a->seekable = 0;
 
     // ensure proper initialisation of sample rate + channels variables
     audiosourceffmpeg_Read(a, NULL, 0);
     if (idata->eof && idata->returnerroroneof) {
-        // There was an error reading this ogg file - probably not ogg (or broken ogg)
+        // There was an error reading this audio file - probably not a supported format
         audiosourceffmpeg_Close(a);
         return NULL;
     }
-
     return a;
 }
 

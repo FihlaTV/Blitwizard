@@ -1,6 +1,7 @@
 
 # blitwizard configure.ac - autoconf generated, extended by Jonas Thiem
-# Process this file with autoconf to produce a configure script.
+# Process this file with autoreconf to produce a configure script
+# (see autogen.sh)
 
 AC_PREREQ([2.60])
 
@@ -12,14 +13,34 @@ AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_MAKE_SET
+#AC_PROG_STRIP
 #MACTEST=`uname -a | grep Darwin`
-#AS_IF([test -n "$MACTEST"],[
 AC_PROG_OBJC
 #_AM_DEPENDENCIES(OBJC)
-#])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
+STRIP="strip"
 
+# Evaluate target os:
+
+maybeos=`echo $EXEEXT | grep exe`
+AS_IF([test -z "$maybeos"],[
+	# Unix
+	WINDOWS="no"
+],[
+	# Windows
+	WINDOWS="yes"
+])
+
+
+# Remove -g from default CFLAGS since we control that through --disable-debug
+CFLAGS="${CFLAGS/-g}"
+CXXFLAGS="${CXXFLAGS/-g}"
+
+# Remove -O2 from default CFLAGS since we automatically detect O3 support
+# (and if present, we want to use it)
+CFLAGS="${CFLAGS/-O2}"
+CXXFLAGS="${CXXFLAGS/-O2}"
 
 # Check for ar:
 
@@ -29,11 +50,18 @@ if [ test -z "$AR" ]; then
     exit 1
 fi
 
-
 # Enable/disable features:
 
+AC_ARG_ENABLE([debug],
+    [AS_HELP_STRING([--disable-debug],[compile without debugging symbols. Results in smaller blitwizard binary, but you can no longer properly debug a blitwizard crash])],
+[case "${enableval}" in
+     yes | no ) enable_debug="${enableval}" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-debug) ;;
+ esac],
+[enable_debug=yes])
+
 AC_ARG_ENABLE([sdl-graphics],
-    [AS_HELP_STRING([--disable-sdl-graphics],[disable 2d graphics support through SDL (default is enabled)])],
+    [AS_HELP_STRING([--disable-sdl-graphics],[disable 2d graphics support through SDL (default is enabled). If you compile with Ogre, you can still use 2d graphics through Ogre])],
 [case "${enableval}" in
     yes | no ) enable_sdlgraphics="${enableval}" ;;
     *) AC_MSG_ERROR(bad value ${enableval} for --disable-sdl-graphics) ;;
@@ -95,7 +123,7 @@ AS_IF([test "x$enable_audio" = xno], [
 ])
 
 AC_ARG_ENABLE([physics2d],
-    [AS_HELP_STRING([--disable-physics2d],[disable physics simulation support based on Box2D (default is enabled)])],
+    [AS_HELP_STRING([--disable-physics2d],[disable physics simulation support based on Box2D for 2d objects (default is enabled)])],
 [case "${enableval}" in
      yes | no ) enable_physics2d="${enableval}" ;;
      *) AC_MSG_ERROR(bad value ${enableval} for --disable-physics2d) ;;
@@ -103,15 +131,37 @@ AC_ARG_ENABLE([physics2d],
 [enable_physics2d=yes])
 
 AC_ARG_ENABLE([physics3d],
-    [AS_HELP_STRING([--disable-physics3d],[disable physics simulation support based on bullet physics (default is enabled)])],
+    [AS_HELP_STRING([--disable-physics3d],[disable physics simulation support based on bullet physics for 3d objects (default is enabled)])],
 [case "${enableval}" in
      yes | no ) enable_physics3d="${enableval}" ;;
      *) AC_MSG_ERROR(bad value ${enableval} for --disable-physics3d) ;;
  esac],
 [enable_physics3d=yes])
 
+AC_ARG_ENABLE([physics],
+    [AS_HELP_STRING([--disable-physics],[disable physics simulation support completely])],
+[case "${enableval}" in
+    yes | no ) enable_physics="${enableval}" ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --disable-physics) ;;
+ esac],
+[enable_physics=yes])
+
+
+AS_IF([test "x$enable_physics" = xno], [
+    enable_physics2d="no"
+    enable_physics3d="no"
+])
+
+AC_ARG_ENABLE([physfs],
+    [AS_HELP_STRING([--disable-physfs],[disable optional PhysFS support which enables reading resources from .zip files])],
+[case "${enableval}" in
+    yes | no ) enable_physfs="${enableval}" ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --disable-physfs) ;;
+ esac],
+[enable_physfs=yes])
+
 AC_ARG_ENABLE([flac],
-    [AS_HELP_STRING([--disable-flac],[disable optional FLAC audio support.])],
+    [AS_HELP_STRING([--disable-flac],[disable optional FLAC audio support through libFLAC. If FFmpeg support is enabled and FFmpeg is available at runtime, you might still be able to play FLAC audio])],
 [case "${enableval}" in
      yes | no ) enable_flac="${enableval}" ;;
      *) AC_MSG_ERROR(bad value ${enableval} for --disable-flac) ;;
@@ -119,20 +169,12 @@ AC_ARG_ENABLE([flac],
 [enable_flac=yes])
 
 AC_ARG_ENABLE([speex],
-    [AS_HELP_STRING([--disable-speex],[disable optional Speex audio support.])],
+    [AS_HELP_STRING([--disable-speex],[disable optional Speex support for proper resampling. Use only if you want to supply all your audio in 48kHz to avoid the need for resampling entirely])],
 [case "${enableval}" in
      yes | no ) enable_speex="${enableval}" ;;
      *) AC_MSG_ERROR(bad value ${enableval} for --disable-speex) ;;
  esac],
 [enable_speex=yes])
-
-# cmake -DOGRE_CONFIG_ENABLE_FREEIMAGE=0 -DOGRE_CONFIG_ENABLE_DDS=0 -DOGRE_CONFIG_THREADS=2 -DOGRE_STATIC=on -DOGRE_BUILD_RENDERSYSTEM_GL=on -DOGRE_BUILD_TOOLS=0 -DOGRE_BUILD_SAMPLES=0 -DOGRE_CONFIG_DOUBLE=1 -DOGRE_BUILD_PLUGIN_CG=off
-
-
-# Evaluate target os:
-
-maybeos=`echo $EXEEXT | grep exe`
-
 
 # Remember which libs we want to build ourselves for static use:
 
@@ -145,6 +187,7 @@ SDL_GRAPHICS_FEATURE_ENABLED="yes"
 OGRE_GRAPHICS_FEATURE_ENABLED="yes"
 NULL_GRAPHICS_FEATURE_ENABLED="yes"
 AUDIO_FEATURE_ENABLED="yes"
+AUDIO_FEATURE_ENABLED_TYPE="SDL2"
 NULL_AUDIO_FEATURE_ENABLED="yes"
 FLAC_FEATURE_ENABLED="yes"
 SPEEX_RESAMPLING_FEATURE_ENABLED="yes"
@@ -152,6 +195,7 @@ FFMPEG_FEATURE_ENABLED="yes"
 PHYSICS2D_FEATURE_ENABLED="yes"
 PHYSICS3D_FEATURE_ENABLED="yes"
 FAST_FLOAT2INT_FEATURE_ENABLED="yes"
+ZIP_FEATURE_ENABLED="yes"
 
 
 # Lib deps info text for later output:
@@ -170,6 +214,13 @@ AS_IF([test -e "src/ffmpeg/libavcodec/avcodec.h"],[
         CONFIGUREFFMPEG="cd src/ffmpeg && ./configure --disable-libgsm --enable-runtime-cpudetect  --enable-version3 --disable-gpl --enable-shared --disable-doc --disable-ffmpeg --disable-avconv --disable-ffplay --disable-ffprobe --disable-ffserver --disable-protocols --disable-devices;"
         eval $CONFIGUREFFMPEG || { FFMPEG_CONFIG_FAILED="yes"; }
         cd ../../
+        # Recent versions of FFmpeg no longer know about --disable-avconf:
+        AS_IF([test "x$FFMPEG_CONFIG_FAILED" = xyes], [ 
+            FFMPEG_CONFIG_FAILED="no"
+            CONFIGUREFFMPEG="cd src/ffmpeg && ./configure --disable-libgsm --enable-runtime-cpudetect --enable-version3 --disable-gpl --enable-shared --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffprobe --disable-ffserver --disable-protocols --disable-devices;"
+            eval $CONFIGUREFFMPEG || { FFMPEG_CONFIG_FAILED="yes"; }
+            cd ../../
+        ]) 
     ])
     AS_IF([test "x$FFMPEG_CONFIG_FAILED" = xno],[
         LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
@@ -211,6 +262,13 @@ AS_IF([test "x$NEEDSDL" = xyes],[
             LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
   SDL2: no"
             SDL_GRAPHICS_FEATURE_ENABLED="no, need SDL2"
+			# Windows can do audio without SDL (WaveOut):
+			AS_IF([test "x$WINDOWS" = xno],[
+				AUDIO_FEATURE_ENABLED="no, need SDL2"
+			],[
+				AUDIO_FEATURE_ENABLED="yes"
+                AUDIO_FEATURE_ENABLED_TYPE="waveOut"
+			])
         ])
     ],[
         AC_MSG_RESULT([yes])
@@ -305,7 +363,13 @@ AS_IF([test "x$enable_sdlgraphics" = xno],[
     SDL_GRAPHICS_FEATURE_ENABLED="no, disabled"
 ])
 AS_IF([test "x$enable_sdlaudio" = xno],[
-    AUDIO_FEATURE_ENABLED="no, disabled"
+	# Windows can do audio without SDL (WaveOut):
+	AS_IF([test "x$WINDOWS" = xno],[
+		AUDIO_FEATURE_ENABLED="no, disabled"
+	],[
+		AUDIO_FEATURE_ENABLED="yes"
+        AUDIO_FEATURE_ENABLED_TYPE="waveOut"
+	])
 ])
 AS_IF([test "x$enable_ogregraphics" = xno],[
     OGRE_GRAPHICS_FEATURE_ENABLED="no, disabled"
@@ -366,6 +430,27 @@ AS_IF([test "x$enable_graphics" = xyes],[ # START enable_graphics block
     SDL_GRAPHICS_FEATURE_ENABLED="no, disabled"
     OGRE_GRAPHICS_FEATURE_ENABLED="no, disabled"
     NULL_GRAPHICS_FEATURE_ENABLED="no, disabled"
+])
+
+# Check PhysFS:
+AC_MSG_CHECKING([for static PhysFS >=2.1 library])
+AS_IF([test ! -f "src/physfs/src/physfs.c"],[
+    AC_MSG_RESULT([no])
+    AC_CHECK_LIB([physfs], [PHYSFS_mountIo],[
+        #shared lib is there!
+        LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  libphysfs: shared"
+    ],[
+        #nothing there
+        LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  libphysfs: no"
+        ZIP_FEATURE_ENABLED="no, need libphysfs"
+    ])
+],[
+    AC_MSG_RESULT([yes])
+    STATIC_LIBS_USE="${STATIC_LIBS_USE} PhysFS"
+    LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  libphysfs: static"
 ])
 
 AS_IF([test "x$enable_audio" = xyes],[ # START enable_audio block
@@ -630,23 +715,6 @@ AS_IF([test "x$enable_physics2d" = xyes],[
     PHYSICS2D_FEATURE_ENABLED="no, disabled"
 ])
 
-# Prepare final deps info output:
-
-DEPS_INFO_OUTPUT="
-This results in the following feature set:
-  SDL Graphics (2d only): ${SDL_GRAPHICS_FEATURE_ENABLED}
-  Ogre Graphics (2d or 3d): ${OGRE_GRAPHICS_FEATURE_ENABLED}
-  Null device graphics: ${NULL_GRAPHICS_FEATURE_ENABLED}
-  Audio: ${AUDIO_FEATURE_ENABLED}
-  Null device audio: ${NULL_AUDIO_FEATURE_ENABLED}
-  Flac decoding: ${FLAC_FEATURE_ENABLED}
-  Speex-based resampling: ${SPEEX_RESAMPLING_FEATURE_ENABLED}
-  Runtime FFmpeg support: ${FFMPEG_FEATURE_ENABLED}
-  2D physics simulation support: ${PHYSICS2D_FEATURE_ENABLED}
-  3D physics simulation support: ${PHYSICS3D_FEATURE_ENABLED}
-  Fast float-to-int conversion: ${FAST_FLOAT2INT_FEATURE_ENABLED}
-"
-
 
 # Compose ld/include/define flags:
 
@@ -673,9 +741,18 @@ AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS"
 ])
+AS_IF([test "x$ZIP_FEATURE_ENABLED" = xyes],[
+    statictest=`echo $STATIC_LIBS_USE | grep PhysFS`
+    AS_IF([test -z "$statictest"], [
+        FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lphysfs"
+    ], [
+        FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardPhysFS"
+        FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iphysfs/src"
+    ])
+    FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_PHYSFS"
+])
 AS_IF([test "x$OGRE_GRAPHICS_FEATURE_ENABLED" = xyes],[
     statictest=`echo $STATIC_LIBS_USE | grep Ogre3D`
-    SDLADDED=yes
 
     # Add ogre to include path:
     AS_IF([test -z "$statictest"], [
@@ -707,17 +784,21 @@ AS_IF([test "x$OGRE_GRAPHICS_FEATURE_ENABLED" = xyes],[
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_OGRE_GRAPHICS"
 ])
 AS_IF([test "x$AUDIO_FEATURE_ENABLED" = xyes],[
-    AS_IF([test "x$SDLADDED" = xno],[
-        statictest=`echo $STATIC_LIBS_USE | grep SDL2`
-        SDLADDED=yes
-        AS_IF([test -z "$statictest"], [
-            FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lSDL2"
-        ], [
-            FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardSDL"
-            FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Isdl/include"
+    AS_IF([test "x$AUDIO_FEATURE_ENABLED_TYPE" = xSDL2],[
+        # make sure SDL 2 is linked for audio:
+        AS_IF([test "x$SDLADDED" = xno],[
+            statictest=`echo $STATIC_LIBS_USE | grep SDL2`
+            SDLADDED=yes
+            AS_IF([test -z "$statictest"], [
+                FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lSDL2"
+            ], [
+                FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardSDL"
+                FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Isdl/include"
+            ])
         ])
+        
+        FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_AUDIO"
     ])
-    FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_AUDIO"
 ])
 
 AS_IF([test "x$NULL_GRAPHICS_FEATURE_ENABLED" = xyes],[
@@ -829,6 +910,30 @@ cd scripts/
 scriptsdir="`pwd`"
 cd ..
 
+# Check for -O3 -fno-finite-math-only
+OLD_CFLAGS="$CFLAGS"
+CFLAGS="-O3 -ffast-math -fno-finite-math-only"
+O3_AND_INFINITE_MATH="no"
+AC_MSG_CHECKING([whether CC accepts -O3 -fast-math -fno-finite-math-only])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+    [AC_MSG_RESULT([yes])]
+    [O3_AND_INFINITE_MATH="yes"],
+    [AC_MSG_RESULT([no])]
+)
+CFLAGS="$OLD_CFLAGS"
+
+# Decide on some additional cflags:
+ADDITIONAL_CFLAGS=""
+AS_IF([test "x$enable_debug" = xyes],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -g"
+],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -s"
+])
+AS_IF([test "x$O3_AND_INFINITE_MATH" = xyes],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O3 -ffast-math -fno-finite-math-only"
+],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2"
+])
 
 # OS dependant things:
 AS_IF([test -z "$maybeos"],[
@@ -856,12 +961,14 @@ AS_IF([test -z "$maybeos"],[
         AC_WARN([Cannot find Xlib header files required for Ogre3D and SDL2. No Ogre or SDL2 support possible.])
         OGRE_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
         SDL_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
+        AUDIO_FEATURE_ENABLED="no, need SDL2"
     ])
     AS_IF([test "x$NEED_XHEADERS" = xyes], [
         AC_CHECK_HEADERS([X11/extensions/Xext.h],,[
             AC_MSG_ERROR([Cannot find Xext header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
             OGRE_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
             SDL_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
+            AUDIO_FEATURE_ENABLED="no, need SDL2"
         ],[
 #include <X11/Xlib.h>
         ])
@@ -890,7 +997,8 @@ AS_IF([test -z "$maybeos"],[
     ])
 
     echo -e "$WRITELINE" > scripts/.buildinfo
-    CFLAGS="$CFLAGS $USE_FFMPEG `cd $scriptsdir && sh ./checksse.sh`"   
+    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS `cd $scriptsdir && sh ./checksse.sh`"   
+    CXXFLAGS="$ADDITIONA_CFLAGS $CXXFLAGS `cd $scriptdir && sh ./checksse.sh`"
 
     AC_CHECK_LIB([dl], [dlopen],, AC_MSG_ERROR(Cannot find all the necessary functions. Try to install the necessary libraries and headers))
     
@@ -922,14 +1030,17 @@ AS_IF([test -z "$maybeos"],[
     AC_WARN([You have chosen a mingw target but apparently the compiler is not a mingw cross-compiler. Please fix this if you are on Unix trying to cross-compile for Windows (if you are on Windows, everything should be fine).])
     ])
 
+    # Guess strip program:
+    STRIP="$host_alias-strip"
+
     TGHOST="$host_alias"
     AC_SUBST(TGHOST)
     
     WRITELINE="\nEXEEXT=$EXEEXT\nluatarget=mingw\nCXX=$CXX\nCC=$CC\nAR=$AR\nHOST=$TGHOST\nUSE_LIB_FLAGS=$FINAL_USE_LIB_FLAGS\nRANLIB=$RANLIB\nSTATIC_LIBS_USE=$STATIC_LIBS_USE\nMACBUILD=no\nWINDOWSBUILD=yes\n"
     echo -e "$WRITELINE" > scripts/.buildinfo
 
-    CFLAGS="$CFLAGS -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
-    CXXFLAGS="$CXXFLAGS -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
     LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lversion"
     FINAL_LD_FLAGS="-lmingw32 $FINAL_LD_FLAGS"
     STATICSTDCXX="-static-libstdc++"
@@ -954,17 +1065,50 @@ Build flags:
 AC_SUBST(FINAL_INCLUDE_FLAGS)
 AC_SUBST(FINAL_USE_LIB_FLAGS)
 AC_SUBST(FINAL_LD_FLAGS)
+AS_IF([test "x$enable_debug" = xyes],
+    AM_CONDITIONAL([ENABLE_DEBUG], [test 1 = 1])
+],[
+    AM_CONDITIONAL([ENABLE_DEBUG], [test 0 = 1])
+])
 
-CFLAGS="$FINAL_INCLUDE_FLAGS $CFLAGS $FINAL_USE_LIB_FLAGS"
-CXXFLAGS="$FINAL_INCLUDE_FLAGS $CFLAGS $FINAL_USE_LIB_FLAGS"
 LIBS="$FINAL_LD_FLAGS $LIBS"
 
+
+# Export strip program
+
+AC_SUBST(STRIP)
 
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  tests/Makefile])
 AC_OUTPUT
+
+# Prepare final deps info output:
+
+AS_IF([test ! "x$AUDIO_FEATURE_ENABLED" = xyes],[
+    AUDIO_FEATURE_ENABLED_TYPE=""
+],[
+    AUDIO_FEATURE_ENABLED_TYPE="($AUDIO_FEATURE_ENABLED_TYPE)"
+])
+
+DEPS_INFO_OUTPUT="
+This results in the following feature set:
+  SDL Graphics (2d only): ${SDL_GRAPHICS_FEATURE_ENABLED}
+  Ogre Graphics (2d or 3d): ${OGRE_GRAPHICS_FEATURE_ENABLED}
+  Null device graphics: ${NULL_GRAPHICS_FEATURE_ENABLED}
+  Audio: ${AUDIO_FEATURE_ENABLED} ${AUDIO_FEATURE_ENABLED_TYPE}
+  Null device audio: ${NULL_AUDIO_FEATURE_ENABLED}
+  Flac decoding: ${FLAC_FEATURE_ENABLED}
+  Speex-based resampling: ${SPEEX_RESAMPLING_FEATURE_ENABLED}
+  Runtime FFmpeg support: ${FFMPEG_FEATURE_ENABLED}
+  2D physics simulation support: ${PHYSICS2D_FEATURE_ENABLED}
+  3D physics simulation support: ${PHYSICS3D_FEATURE_ENABLED}
+  Fast float-to-int conversion: ${FAST_FLOAT2INT_FEATURE_ENABLED}
+  Zip archive resource loading: ${ZIP_FEATURE_ENABLED}
+"
+
+
 
 echo "$LIBS_DEP_INFO_TEXT"
 echo "$DEPS_INFO_OUTPUT"

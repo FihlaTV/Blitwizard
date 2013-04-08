@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -49,12 +49,12 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
 
 #define IDREF_MAGIC 373482
 
-#define IDREF_SOUND 1
-#define IDREF_PHYSICS2D 2
-#define IDREF_PHYSICS3D 3
-#define IDREF_NETSTREAM 4
-#define IDREF_BLITWIZARDOBJECT 5
-struct blitwizardobject; 
+#define IDREF_MEDIA 1
+#define IDREF_NETSTREAM 2
+#define IDREF_BLITWIZARDOBJECT 3
+
+struct blitwizardobject;
+struct mediaobject;
 struct luaidref {
     int magic;
     int type;
@@ -62,6 +62,7 @@ struct luaidref {
         int id;
         void* ptr;
         struct blitwizardobject* bobj;
+        struct mediaobject* mobj;
     } ref;
 };
 

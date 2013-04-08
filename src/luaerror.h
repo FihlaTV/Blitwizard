@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,6 +33,10 @@ void luatypetoname(int type, char* buf, size_t bufsize);
 const char* lua_strtype(lua_State* l, int stack);
 
 void callbackerror(lua_State* l, const char* function, const char* error, ...);
+
+#define error_nophysics2d "functionality not available - blitwizard was compiled without 2d physics support"
+#define error_nophysics3d "functionality not available - blitwizard was compiled without 3d physics support"
+#define error_nographics "functionality not available - blitwizard was compiled without graphics support"
 
 #endif  // BLITWIZARD_LUAERROR_H_
 

@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2012 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -49,9 +49,6 @@ int luafuncs_setFriction(lua_State* l);
 int luafuncs_setAngularDamping(lua_State* l);
 int luafuncs_setCollisionCallback(lua_State* l);
 int luafuncs_setLinearDamping(lua_State* l);
-int luafuncs_getRotation(lua_State* l);
-int luafuncs_getPosition(lua_State* l);
-int luafuncs_warp(lua_State* l);
 int luafuncs_setGravity(lua_State* l);
 
 int luafuncs_freeObjectPhysicsData(struct objectphysicsdata* d);
@@ -61,6 +58,23 @@ int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physic
 int luafuncs_globalcollision3dcallback_unprotected(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double z, double normalx, double normaly, double normalz, double force);
 
 #endif  // USE_PHYSICS2D || USE_PHYSICS3D
+
+// The following functions are available even when physics support
+// is not compiled in:
+
+int luafuncs_getRotation(lua_State* l);
+int luafuncs_getPosition(lua_State* l);
+
+void objectphysics_get2dRotation(struct blitwizardobject* obj,
+double* angle);
+void objectphysics_get3dRotation(struct blitwizardobject* obj,
+double* qx, double* qy, double* qz, double* qrot);
+void objectphysics_getPosition(struct blitwizardobject* obj,
+double* x, double* y, double* z);
+void objectphysics_warp2d(struct blitwizardobject* obj, double x, double y,
+double angle, int anglespecified);
+void objectphysics_warp3d(struct blitwizardobject* obj, double x, double y,
+double z, double qx, double qy, double qz, double qrot, int anglespecified);
 
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTPHYSICS_H_
 

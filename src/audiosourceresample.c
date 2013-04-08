@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -80,7 +80,9 @@ struct audiosource* audiosourceresample_Create(struct audiosource* source, unsig
     as->position = &audiosourceresample_Position;
     as->length = &audiosourceresample_Length;
     as->seek = &audiosourceresample_Seek;
-
+    as->samplerate = targetrate;
+    as->channels = source->channels;
+    as->format = source->format;
     return as;
 }
 
@@ -106,20 +108,19 @@ struct audiosourceresample_internaldata {
 
 static void audiosourceresample_Close(struct audiosource* source) {
     struct audiosourceresample_internaldata* idata = source->internaldata;
+    if (idata) {
+        // close the processed source
+        if (idata->source) {
+            idata->source->close(idata->source);
+        }
 
-    // close the processed source
-    if (idata->source) {
-        idata->source->close(idata->source);
-    }
+        // close resampler
+        if (idata->st) {
+            speex_resampler_destroy(idata->st);
+        }
 
-    // close resampler
-    if (idata->st) {
-        speex_resampler_destroy(idata->st);
-    }
-
-    // free all structs
-    if (source->internaldata) {
-        free(source->internaldata);
+        // free all structs
+        free(idata);
     }
     free(source);
 }
@@ -151,7 +152,7 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
 #ifdef ANDROID
         idata->st = speex_resampler_init(idata->source->channels, idata->source->samplerate, source->samplerate, 1, &error);
 #else
-        idata->st = speex_resampler_init(idata->source->channels, idata->source->samplerate, source->samplerate, 6, &error);
+        idata->st = speex_resampler_init(idata->source->channels, idata->source->samplerate, source->samplerate, 3, &error);
 #endif
         if (!idata->st) {
             idata->eof = 1;
@@ -268,6 +269,47 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
     }
 }
 
+static size_t audiosourceresample_Length(struct audiosource* source) {
+    struct audiosourceresample_internaldata* idata = source->internaldata;
+
+    if (idata->eof && idata->returnerroroneof) {
+        return 0;
+    }
+
+    return (idata->source->length(idata->source) *
+    source->samplerate) / idata->source->samplerate;
+}
+
+static size_t audiosourceresample_Position(struct audiosource* source) {
+    struct audiosourceresample_internaldata* idata = source->internaldata;
+
+    if (idata->eof && idata->returnerroroneof) {
+        return 0;
+    }
+
+    return (idata->source->position(idata->source) *
+    source->samplerate) / idata->source->samplerate;
+}
+
+static int audiosourceresample_Seek(struct audiosource* source, size_t pos) {
+    struct audiosourceresample_internaldata* idata = source->internaldata;
+
+    if (!source->seekable || (idata->eof && idata->returnerroroneof)) {
+        return 0;
+    }
+
+    // check position against valid boundaries:
+    size_t tpos = (pos * source->samplerate) / idata->source->samplerate;
+    if (tpos > idata->source->length(idata->source)) {
+        tpos = idata->source->length(idata->source);
+    }
+
+    // try seeking:
+    if (idata->source->seek(idata->source, pos)) {
+        return 1;
+    }
+    return 0;
+}
 
 struct audiosource* audiosourceresample_Create(struct audiosource* source, unsigned int targetrate) {
     // check for a correct source and usable sample rates
@@ -322,6 +364,12 @@ struct audiosource* audiosourceresample_Create(struct audiosource* source, unsig
     a->read = &audiosourceresample_Read;
     a->close = &audiosourceresample_Close;
     a->rewind = &audiosourceresample_Rewind;
+    a->position = &audiosourceresample_Position;
+    a->length = &audiosourceresample_Length;
+    a->seek = &audiosourceresample_Seek;
+
+    // if our source is seekable, we are so too:
+    a->seekable = source->seekable;
 
     // complete!
     return a;

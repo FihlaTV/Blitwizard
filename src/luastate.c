@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -26,8 +26,12 @@
 #include "luastate.h"
 #include "luafuncs.h"
 #include "physics.h"
+#include "luafuncs_graphics.h"
+#include "luafuncs_object.h"
+#include "luafuncs_objectphysics.h"
 #include "luafuncs_physics.h"
 #include "luafuncs_net.h"
+#include "luafuncs_media_object.h"
 #include "luaerror.h"
 
 #include <stdlib.h>
@@ -35,6 +39,30 @@
 #include <string.h>
 
 #include "file.h"
+
+// If USE_PHYSICS2D, or USE_PHYSICS3D respectively isn't defined we
+// wouldn't want to actually have a function call to
+// luastate_register2dphysics_do/luastate_register3dphysics_do
+// with the physics function pointer get evaluated by gcc
+// because this will result in linker errors.
+// With this define, we can avoid linker errors due to the physics
+// functions not being present in such a case.
+#ifdef USE_PHYSICS2D
+#define luastate_register2dphysics luastate_register2dphysics_do
+#else
+#define luastate_register2dphysics(X, Y, Z) (luastate_register2dphysics_do(X, NULL, Z))
+#endif
+#ifdef USE_PHYSICS3D
+#define luastate_register3dphysics luastate_register2dphysics_do
+#else
+#define luastate_register3dphysics(X, Y, Z) (luastate_register2dphysics_do(X, NULL, Z))
+#endif
+
+#ifdef HAVE_GRAPHICS
+#define luastate_registergraphics luastate_registergraphics_do
+#else
+#define luastate_registergraphics(X, Y, Z) (luastate_registergraphics_do(X, NULL, Z))
+#endif
 
 static lua_State* scriptstate = NULL;
 
@@ -114,70 +142,54 @@ void luastate_SetGCCallback(void* luastate, int tablestackindex, int (*callback)
     if (tablestackindex < 0) {tablestackindex++;}
 }
 
-static void luastate_CreatePhysics2dTable(lua_State* l) {
-    lua_newtable(l);
+int functionalitymissing_2dphysics(lua_State* l) {
+    return haveluaerror(l, "%s", error_nophysics2d);
+}
+
+int functionalitymissing_3dphysics(lua_State* l) {
+    return haveluaerror(l, "%s", error_nophysics3d);
+}
+
+int functionalitymissing_graphics(lua_State* l) {
+    return haveluaerror(l, "%s", error_nographics);
+}
+
+void luastate_register2dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
+    lua_pushstring(l, name);
 #ifdef USE_PHYSICS2D
-    lua_pushstring(l, "setGravity");
-    lua_pushcfunction(l, &luafuncs_setGravity);
-    lua_settable(l, -3);
-    lua_pushstring(l, "createMovableObject");
-    lua_pushcfunction(l, &luafuncs_createMovableObject);
-    lua_settable(l, -3);
-    lua_pushstring(l, "createStaticObject");
-    lua_pushcfunction(l, &luafuncs_createStaticObject);
-    lua_settable(l, -3);
-    lua_pushstring(l, "destroyObject");
-    lua_pushcfunction(l, &luafuncs_destroyObject);
-    lua_settable(l, -3);
-    lua_pushstring(l, "restrictRotation");
-    lua_pushcfunction(l, &luafuncs_restrictRotation);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setShapeRectangle");
-    lua_pushcfunction(l, &luafuncs_setShapeRectangle);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setShapeCircle");
-    lua_pushcfunction(l, &luafuncs_setShapeCircle);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setShapeOval");
-    lua_pushcfunction(l, &luafuncs_setShapeOval);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setShapeEdges");
-    lua_pushcfunction(l, &luafuncs_setShapeEdges);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setCollisionCallback");
-    lua_pushcfunction(l, &luafuncs_setCollisionCallback);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setMass");
-    lua_pushcfunction(l, &luafuncs_setMass);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setFriction");
-    lua_pushcfunction(l, &luafuncs_setFriction);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setRestitution");
-    lua_pushcfunction(l, &luafuncs_setRestitution);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setAngularDamping");
-    lua_pushcfunction(l, &luafuncs_setAngularDamping);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setLinearDamping");
-    lua_pushcfunction(l, &luafuncs_setLinearDamping);
-    lua_settable(l, -3);
-    lua_pushstring(l, "getRotation");
-    lua_pushcfunction(l, &luafuncs_getRotation);
-    lua_settable(l, -3);
-    lua_pushstring(l, "getPosition");
-    lua_pushcfunction(l, &luafuncs_getPosition);
-    lua_settable(l, -3);
-    lua_pushstring(l, "warp");
-    lua_pushcfunction(l, &luafuncs_warp);
-    lua_settable(l, -3);
-    lua_pushstring(l, "impulse");
-    lua_pushcfunction(l, &luafuncs_impulse);
-    lua_settable(l, -3);
-    lua_pushstring(l, "ray");
-    lua_pushcfunction(l, &luafuncs_ray);
-    lua_settable(l, -3);
+    lua_pushcfunction(l, func);
+#else
+    lua_pushcfunction(l, functionalitymissing_2dphysics);
 #endif
+    lua_settable(l, -3);
+}
+
+void luastate_register3dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
+    lua_pushstring(l, name);
+#ifdef USE_PHYSICS2D
+    lua_pushcfunction(l, func);
+#else
+    lua_pushcfunction(l, functionalitymissing_3dphysics);
+#endif
+    lua_settable(l, -3);
+}
+
+void luastate_registergraphics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
+    lua_pushstring(l, name);
+#ifdef HAVE_GRAPHICS
+    lua_pushcfunction(l, func);
+#else
+    lua_pushcfunction(l, functionalitymissing_graphics);
+#endif
+    lua_settable(l, -3);
+}
+
+static void luastate_CreatePhysicsTable(lua_State* l) {
+    lua_newtable(l);
+    luastate_register2dphysics(l, &luafuncs_set2dGravity, "set2dGravity");
+    luastate_register2dphysics(l, &luafuncs_ray2d, "ray2d");
+    luastate_register3dphysics(l, &luafuncs_set3dGravity, "set3dGravity");
+    luastate_register3dphysics(l, &luafuncs_ray3d, "ray3d");
 }
 
 static void luastate_CreateNetTable(lua_State* l) {
@@ -204,9 +216,7 @@ static void luastate_CreateGraphicsTable(lua_State* l) {
     lua_pushstring(l, "getRendererName");
     lua_pushcfunction(l, &luafuncs_getRendererName);
     lua_settable(l, -3);
-    lua_pushstring(l, "setWindow");
-    lua_pushcfunction(l, &luafuncs_setWindow);
-    lua_settable(l, -3);
+    luastate_registergraphics(l, &luafuncs_setMode, "setMode");
     lua_pushstring(l, "loadImage");
     lua_pushcfunction(l, &luafuncs_loadImage);
     lua_settable(l, -3);
@@ -239,22 +249,30 @@ static void luastate_CreateGraphicsTable(lua_State* l) {
     lua_settable(l, -3);
 }
 
-static void luastate_CreateSoundTable(lua_State* l) {
+static void luastate_CreateSimpleSoundTable(lua_State* l) {
     lua_newtable(l);
+    lua_pushstring(l, "new");
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_new);
+    lua_settable(l, -3);
     lua_pushstring(l, "play");
-    lua_pushcfunction(l, &luafuncs_play);
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_play);
     lua_settable(l, -3);
     lua_pushstring(l, "adjust");
-    lua_pushcfunction(l, &luafuncs_adjust);
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_adjust);
+    lua_settable(l, -3);
+    lua_pushstring(l, "setPriority");
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_setPriority);
     lua_settable(l, -3);
     lua_pushstring(l, "stop");
-    lua_pushcfunction(l, &luafuncs_stop);
+    lua_pushcfunction(l, &luafuncs_media_simpleSound_stop);
     lua_settable(l, -3);
-    lua_pushstring(l, "playing");
-    lua_pushcfunction(l, &luafuncs_playing);
-    lua_settable(l, -3);
-    lua_pushstring(l, "getBackendName");
-    lua_pushcfunction(l, &luafuncs_getBackendName);
+}
+
+static void luastate_CreateAudioTable(lua_State* l) {
+    lua_newtable(l);
+
+    lua_pushstring(l, "simpleSound");
+    luastate_CreateSimpleSoundTable(l);
     lua_settable(l, -3);
 }
 
@@ -268,14 +286,15 @@ static void luastate_CreateTimeTable(lua_State* l) {
     lua_settable(l, -3);
 }
 
-static int openlib_blitwiz(lua_State* l) {
+static int openlib_blitwizard(lua_State* l) {
+    // add an empty "blitwizard" lib namespace
     static const struct luaL_Reg blitwizlib[] = { {NULL, NULL} };
     luaL_newlib(l, blitwizlib);
     return 1;
 }
 
 static int luastate_AddBlitwizFuncs(lua_State* l) {
-    luaL_requiref(l, "blitwiz", openlib_blitwiz, 1);
+    luaL_requiref(l, "blitwizard", openlib_blitwizard, 1);
     lua_pop(l, 1);
     return 0;
 }
@@ -402,7 +421,7 @@ static void luastate_VoidDebug(lua_State* l) {
     // should we void binary loaders to avoid loading a debug.so?
 }
 
-static lua_State* luastate_New() {
+static lua_State* luastate_New(void) {
     lua_State* l = luaL_newstate();
 
     lua_gc(l, LUA_GCSETPAUSE, 110);
@@ -423,11 +442,21 @@ static lua_State* luastate_New() {
     lua_setglobal(l, "print");
 
     // obtain the blitwiz lib
-    lua_getglobal(l, "blitwiz");
+    lua_getglobal(l, "blitwizard");
 
     // blitwiz.setStep:
     lua_pushstring(l, "setStep");
     lua_pushcfunction(l, &luafuncs_setstep);
+    lua_settable(l, -3);
+
+    // blitwizard.loadResourceArchive
+    lua_pushstring(l, "loadResourceArchive");
+    lua_pushcfunction(l, &luafuncs_loadResourceArchive);
+    lua_settable(l, -3);
+
+    // blitwiz.getTemplateDirectory:
+    lua_pushstring(l, "getTemplateDirectory");
+    lua_pushcfunction(l, &luafuncs_getTemplateDirectory);
     lua_settable(l, -3);
 
     // blitwiz namespaces
@@ -439,8 +468,8 @@ static lua_State* luastate_New() {
     luastate_CreateNetTable(l);
     lua_settable(l, -3);
 
-    lua_pushstring(l, "sound");
-    luastate_CreateSoundTable(l);
+    lua_pushstring(l, "audio");
+    luastate_CreateAudioTable(l);
     lua_settable(l, -3);
 
     lua_pushstring(l, "callback");
@@ -454,8 +483,8 @@ static lua_State* luastate_New() {
     luastate_CreateTimeTable(l);
     lua_settable(l, -3);
 
-    lua_pushstring(l, "physics2d");
-    luastate_CreatePhysics2dTable(l);
+    lua_pushstring(l, "physics");
+    luastate_CreatePhysicsTable(l);
     lua_settable(l, -3);
 
     // we still have the module "blitwiz" on the stack here
@@ -463,7 +492,7 @@ static lua_State* luastate_New() {
 
     // obtain math table
     lua_getglobal(l, "math");
-    
+
     // math namespace extensions
     lua_pushstring(l, "trandom");
     lua_pushcfunction(l, &luafuncs_trandom);
@@ -559,7 +588,7 @@ static int luastate_DoFile(lua_State* l, int argcount, const char* file, char** 
     int returnvalue = 1;
     // process errors
     if (ret != 0) {
-        const char* e = lua_tostring(l,-1);
+        const char* e = lua_tostring(l, -1);
         *error = NULL;
         if (e) {
             *error = strdup(e);
@@ -586,23 +615,30 @@ int luastate_DoInitialFile(const char* file, int argcount, char** error) {
     return luastate_DoFile(scriptstate, argcount, file, error);
 }
 
+static void preparepush(void) {
+    if (!scriptstate) {
+        scriptstate = luastate_New();
+        if (!scriptstate) {
+            return;
+        }
+    }
+    lua_checkstack(scriptstate, 1);
+}
+
 int luastate_PushFunctionArgumentToMainstate_Bool(int yesno) {
+    preparepush();
     lua_pushboolean(scriptstate, yesno);
     return 1;
 }
 
 int luastate_PushFunctionArgumentToMainstate_String(const char* string) {
-    if (!scriptstate) {
-        scriptstate = luastate_New();
-        if (!scriptstate) {
-            return 0;
-        }
-    }
+    preparepush();
     lua_pushstring(scriptstate, string);
     return 1;
 }
 
 int luastate_PushFunctionArgumentToMainstate_Double(double i) {
+    preparepush();
     lua_pushnumber(scriptstate, i);
     return 1;
 }
@@ -621,6 +657,22 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
         int recursed = 0;
         while (r < strlen(function)) {
             if (function[r] == '.') {
+                if (tablerecursion > 0) {
+                    // check if what we got on the stack as a base table
+                    // is actually a table
+                    if (lua_type(scriptstate, -1) != LUA_TTABLE) {
+                        // not a table.
+                        lua_pop(scriptstate, 1);  // error func
+                        lua_pop(scriptstate, args);
+
+                        // remove recursive table
+                        lua_pop(scriptstate, 1);
+
+                        *error = strdup("part of recursive call path is not a table");
+                        return 0;
+                    }
+                }
+
                 recursed = 1;
                 // extract the component
                 char* fp = malloc(r+1);
@@ -629,10 +681,11 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
                     // clean up stack again:
                     lua_pop(scriptstate, 1); // error func
                     lua_pop(scriptstate, args);
-                    if (recursivetables > 0) {
+                    if (recursivetables > 0 && tablerecursion > 0) {
                         // clean up recursive table left on stack
                         lua_pop(scriptstate, 1);
                     }
+                    *error = strdup("failed to allocate memory for component string");
                     return 0;
                 }
                 memcpy(fp, function, r);
@@ -669,10 +722,25 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
     // lookup function normally if there was no recursion lookup:
     if (tablerecursion <= 0) {
         lua_getglobal(scriptstate, function);
-    }else{
+    } else {
+        // check if what we got on the stack as a base table
+        // is actually a table
+        if (lua_type(scriptstate, -1) != LUA_TTABLE) {
+            // not a table.
+            lua_pop(scriptstate, 1);  // error func
+            lua_pop(scriptstate, args);
+
+            // remove recursive table
+            lua_pop(scriptstate, 1);
+
+            *error = strdup("part of recursive call path is not a table");
+            return 0;
+        }
+
         // get the function from our recursive lookup
         lua_pushstring(scriptstate, function);
         lua_gettable(scriptstate, -2);
+
         // wipe out the table we got it from
         lua_insert(scriptstate,-2);
         lua_pop(scriptstate, 1);
@@ -692,6 +760,16 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
             *functiondidnotexist = 1;
         }
         return 1;
+    }
+
+    if (lua_type(scriptstate, -1) != LUA_TFUNCTION) {
+        lua_pop(scriptstate, 1); // error func
+        if (recursivetables > 0) {
+            // clean up recursive origin table left on stack
+            lua_pop(scriptstate, 1);
+        }
+        *error = strdup("tried to call something which is not a function");
+        return 0;
     }
 
     // function needs to be first, then arguments. -> correct order
