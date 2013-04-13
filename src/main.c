@@ -53,6 +53,8 @@ static int sdlinitialised = 0; // sdl was initialised and needs to be quit
 extern int drawingallowed; // stored in luafuncs.c, checks if we come from an on_draw() event or not
 char* templatepath = NULL; // global template directory path as determined at runtime
 
+char* binpath = NULL;  // path to blitwizard binary
+
 #include "luastate.h"
 #include "file.h"
 #include "timefuncs.h"
@@ -61,6 +63,7 @@ char* templatepath = NULL; // global template directory path as determined at ru
 #include "audiomixer.h"
 #include "logging.h"
 #include "audiosourceffmpeg.h"
+#include "signalhandling.h"
 #include "physics.h"
 #include "connections.h"
 #include "listeners.h"
@@ -384,6 +387,21 @@ int main(int argc, char** argv) {
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard %s starting", VERSION);
 #endif
+
+    // set signal handlers:
+    signalhandling_Init();
+
+    // set path to blitwizard binary:
+#ifdef UNIX
+    if (argc > 0) {
+        binpath = file_GetAbsolutePathFromRelativePath(argv[0]);
+    }
+#endif
+
+    char* s = strdup("blubb");
+    s[2] = 3;
+    free(s);free(s);free(s);
+    *((int*)5) = 2;
 
     // evaluate command line arguments:
     const char* script = "game.lua";

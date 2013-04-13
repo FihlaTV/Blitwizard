@@ -21,6 +21,6 @@
 
 */
 
-//This function will be used by the image (imgloader.c). You are advised to use the imgloader, not this function directly.
-int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize, char** imagedata, unsigned int* imagedatasize,
-int* imagewidth, int* imageheight, int maxwidth, int maxheight);
+// Set signal handling for crash handlers etc:
+void signalhandling_Init(void);
+
