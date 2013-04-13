@@ -398,10 +398,8 @@ int main(int argc, char** argv) {
     }
 #endif
 
-    char* s = strdup("blubb");
-    s[2] = 3;
-    free(s);free(s);free(s);
-    *((int*)5) = 2;
+    // test crash handling:
+    //*((int*)5) = 2;
 
     // evaluate command line arguments:
     const char* script = "game.lua";

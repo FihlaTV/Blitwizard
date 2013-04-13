@@ -1065,7 +1065,7 @@ Build flags:
 AC_SUBST(FINAL_INCLUDE_FLAGS)
 AC_SUBST(FINAL_USE_LIB_FLAGS)
 AC_SUBST(FINAL_LD_FLAGS)
-AS_IF([test "x$enable_debug" = xyes],
+AS_IF([test "x$enable_debug" = xyes],[
     AM_CONDITIONAL([ENABLE_DEBUG], [test 1 = 1])
 ],[
     AM_CONDITIONAL([ENABLE_DEBUG], [test 0 = 1])

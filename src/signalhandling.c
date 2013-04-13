@@ -34,9 +34,14 @@
 #ifdef UNIX
 #include <execinfo.h>
 #endif
+#ifdef WINDOWS
+#include <windows.h>
+#endif
 
 #define FATALERROR_MSG "************\nThe blitwizard engine has encountered a fatal error.\nTHIS SHOULD NEVER HAPPEN!\n\nPlease report this error at http://www.blitwizard.de/forum/\nand include the following error information:\n************\n\nError information:\n\n%s"
 
+static const char* GetCrashInfo(const char* reason);
+static void handleerror(const char* name);
 
 #ifdef UNIX
 char escapedstrbuf[512];
@@ -150,26 +155,6 @@ static void generatebacktrace(char* buffer, size_t buffersize) {
     }
 }
 
-char unixcrashinfo[10 * 4096];
-char unixbacktracebuf[10 * 4096];
-static const char* UnixGetCrashInfo(const char* reason) {
-    generatebacktrace(unixbacktracebuf, sizeof(unixbacktracebuf));
-    snprintf(unixcrashinfo, sizeof(unixcrashinfo),
-    "Operating system: %s (%s)\n"
-    "Blitwizard version: %s\n"
-    "Error reason: %s\n"
-    "Backtrace:\n%s",
-    osinfo_GetSystemName(), osinfo_GetSystemVersion(), VERSION,
-    reason, unixbacktracebuf);
-    return unixcrashinfo;
-}
-static void handleerror(const char* name) {
-    char msg[4096];
-    snprintf(msg, sizeof(msg), FATALERROR_MSG, UnixGetCrashInfo(name));
-    fprintf(stderr, "%s\n", msg);
-    osinfo_ShowMessage(msg, 1);
-    exit(1);
-}
 void signalhandler_FatalUnix(int signal) {
     switch (signal) {
     case SIGSEGV:
@@ -189,6 +174,43 @@ void signalhandler_FatalUnix(int signal) {
         break;
     default:
         handleerror("unknown");
+        break;
+    }
+}
+#endif
+
+static char crashinfo[10 * 4096];
+static char backtracebuf[10 * 4096];
+static const char* GetCrashInfo(const char* reason) {
+#ifdef UNIX
+    generatebacktrace(backtracebuf, sizeof(backtracebuf));
+#else
+    backtracebuf[0] = 0;
+#endif
+    snprintf(crashinfo, sizeof(crashinfo),
+    "Operating system: %s (%s)\n"
+    "Blitwizard version: %s\n"
+    "Error reason: %s\n"
+    "Backtrace:\n%s",
+    osinfo_GetSystemName(), osinfo_GetSystemVersion(), VERSION,
+    reason, backtracebuf);
+    return crashinfo;
+}
+
+static void handleerror(const char* name) {
+    char msg[4096];
+    snprintf(msg, sizeof(msg), FATALERROR_MSG, GetCrashInfo(name));
+    fprintf(stderr, "%s\n", msg);
+    osinfo_ShowMessage(msg, 1);
+    exit(1);
+}
+
+#ifdef WINDOWS
+LONG signalhandler_FatalWindows(struct _EXCEPTION_POINTERS* ex) {
+    switch (ex->ExceptionRecord->ExceptionCode) {
+    default:
+        handleerror("unknown");
+        break;
     }
 }
 #endif
@@ -206,6 +228,9 @@ void signalhandling_Init(void) {
     sigaction(SIGFPE, &crashhandler, NULL);
     sigaction(SIGILL, &crashhandler, NULL);
     sigaction(SIGBUS, &crashhandler, NULL);
+#endif
+#ifdef WINDOWS
+    SetUnhandledExceptionFilter(signalhandler_FatalWindows);
 #endif
     return;
 }
