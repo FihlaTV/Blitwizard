@@ -27,6 +27,7 @@
 #include <signal.h>
 #endif
 #include <unistd.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,12 +37,15 @@
 #endif
 #ifdef WINDOWS
 #include <windows.h>
+#include <dbghelp.h>
 #endif
 
+#define MAX_BACKTRACE 20
 #define FATALERROR_MSG "************\nThe blitwizard engine has encountered a fatal error.\nTHIS SHOULD NEVER HAPPEN!\n\nPlease report this error at http://www.blitwizard.de/forum/\nand include the following error information:\n************\n\nError information:\n\n%s"
 
 static const char* GetCrashInfo(const char* reason);
 static void handleerror(const char* name);
+static void generatebacktrace(char* buffer, size_t buffersize);
 
 #ifdef UNIX
 char escapedstrbuf[512];
@@ -120,13 +124,15 @@ static void generatebacktrace(char* buffer, size_t buffersize) {
         return;
     }
 
-    void* backtraceptrs[50];
+    // get backtrace addresses:
+    void* backtraceptrs[MAX_BACKTRACE];
     int count = backtrace(backtraceptrs, sizeof(backtraceptrs));
     if (count <= 0) {
         buffer[buffersize] = 0;
         return;
     }
 
+    // get symbol name strings:
     char** symbols = backtrace_symbols(backtraceptrs, count);
     if (!symbols) {
         buffer[buffersize] = 0;
@@ -182,11 +188,7 @@ void signalhandler_FatalUnix(int signal) {
 static char crashinfo[10 * 4096];
 static char backtracebuf[10 * 4096];
 static const char* GetCrashInfo(const char* reason) {
-#ifdef UNIX
     generatebacktrace(backtracebuf, sizeof(backtracebuf));
-#else
-    backtracebuf[0] = 0;
-#endif
     snprintf(crashinfo, sizeof(crashinfo),
     "Operating system: %s (%s)\n"
     "Blitwizard version: %s\n"
@@ -206,12 +208,73 @@ static void handleerror(const char* name) {
 }
 
 #ifdef WINDOWS
+static void generatebacktrace(char* buffer, size_t buffersize) {
+    if (buffersize <= 0) {
+        return;
+    }
+    if (buffersize == 1) {
+        buffer[buffersize] = 0;
+        return;
+    }
+
+    // get backtrace addresses:
+    void* backtraceptrs[MAX_BACKTRACE];
+    int count = CaptureStackBackTrace(0, sizeof(backtraceptrs), backtraceptrs, NULL);
+    printf("trace count: %d\n", count);
+
+    // initialise symbol info:
+    SymInitialize(GetCurrentProcess(), NULL, TRUE);
+
+    // we need a struct for the symbol name:
+    char symbuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(char)];
+    SYMBOL_INFO* syminfo = (SYMBOL_INFO*)symbuffer;
+    syminfo->SizeOfStruct = sizeof(SYMBOL_INFO);
+    syminfo->MaxNameLen = MAX_SYM_NAME;
+
+    // walk through stack and assemble info:
+    buffer[0] = 0;
+    int i = 0;
+    while (i < count) {
+        // fetch symbol name:
+        uint64_t displacement;
+        SymFromAddr(GetCurrentProcess(), (uint64_t)(backtraceptrs[i]), &displacement, syminfo);
+
+        // output info:
+        char appendstr[512];
+        snprintf(appendstr, sizeof(appendstr), "%s+%I64u [%p]\n",
+        syminfo->Name, displacement, backtraceptrs[i]);
+        strncat(buffer, appendstr, buffersize-(strlen(buffer)+1));
+        i++;
+    }
+}
+
 LONG signalhandler_FatalWindows(struct _EXCEPTION_POINTERS* ex) {
     switch (ex->ExceptionRecord->ExceptionCode) {
+    case EXCEPTION_ACCESS_VIOLATION:
+        handleerror("access violation");
+        break;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+        handleerror("illegal instruction");
+        break;
+    case EXCEPTION_STACK_OVERFLOW:
+        handleerror("stack overflow");
+        break;
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+        handleerror("data type misalignment");
+        break;
+    case EXCEPTION_IN_PAGE_ERROR:
+        handleerror("page error");
+        break;
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+        handleerror("divide by zero");
+        break;
     default:
         handleerror("unknown");
         break;
     }
+    exit(1);
+    return EXCEPTION_EXECUTE_HANDLER;
 }
 #endif
 
