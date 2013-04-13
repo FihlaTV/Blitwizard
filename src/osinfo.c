@@ -28,6 +28,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 static char versionbuf[512] = "";
 
@@ -235,4 +237,143 @@ const char* osinfo_GetSystemName(void) {
     return osbuf;
 }
 #endif
+
+int osinfo_CheckForCmdProg(const char* name) {
+    // cancel if supplied name is weird:
+    if (strstr(name, " ") || strstr(name, "\n") ||
+    strstr(name, "\"") || strstr(name, "\r") || strstr(name, "'")
+    || strstr(name, "\t") || strstr(name, ":") || strstr(name, "/")
+    || strstr(name, "\\") || strstr(name, "?") || strstr(name, "$")
+    || strstr(name, "`")) {
+        return 0;
+    }
+
+    // check if command line tool is present:
+#ifdef WINDOWS
+    if (!file_DoesFileExist(name) || file_IsDirectory(name)) {
+        // require tool to be present in current folder for windows for now
+        return 0;
+    }
+    return 1;
+#else
+    // check whereis output for slash (=some path found):
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd), "whereis \"%s\"", name);
+    cmd[strlen(cmd)-1] = '"';
+    FILE* f = popen(cmd, "r");
+    if (!f) {
+        return 0;
+    }
+    char resultbuf[256];
+    char* s = fgets(resultbuf, sizeof(resultbuf), f);
+    fclose(f);
+    if (s && strstr(s, "/")) {
+        return 1;
+    }
+    return 0;
+#endif
+}
+
+const char* osinfo_ShowMessageTool(int error) {
+#ifdef UNIX
+    if (osinfo_CheckForCmdProg("gxmessage")) {
+        if (error) {
+            return "gxmessage -ontop -title \"Error\" ";
+        } else {
+            return "gxmessage -ontop -title \"Information\" ";
+        }
+    } else {
+        if (osinfo_CheckForCmdProg("zenity")) {
+            if (error) {
+                return "zenity --error --no-markup --no-wrap --height=300 --text=";
+            } else {
+                return "zenity --info --no-markup --no-wrap --height=300 --text=";
+            }
+        } else {
+            if (osinfo_CheckForCmdProg("xmessage")) {
+                return "xmessage ";
+            }
+            return NULL;
+        }
+    }
+#else
+    return NULL;
+#endif
+}
+
+// we have this function just locally so we can use a static buffer.
+// while that would be a bad idea normally, this function
+// might be used from osinfo_ShowMessage(), which might be used
+// under conditions where malloc() might not work well (segfault handler).
+static char escapedstrbuf[4096];
+static const char* escapedosinfostr(const char* str) {
+    if (!str) {
+        return NULL;
+    }
+
+    size_t i = 0;
+    while (*str && i < sizeof(escapedstrbuf)-2) {
+        if (*str == '"') {
+            escapedstrbuf[i] = '\\';
+            escapedstrbuf[i+1] = '\"';
+            i += 2;
+        } else if (*str == '\\') {
+            escapedstrbuf[i] = '\\';
+            escapedstrbuf[i+1] = '\\';
+            i += 2;
+        } else {
+            escapedstrbuf[i] = *str;
+            i++;
+        }
+        str++;
+    }
+    escapedstrbuf[i] = 0;
+    return escapedstrbuf;
+}
+
+void osinfo_ShowMessage(const char* msg, int error) {
+#ifndef WINDOWS
+    // for linux, we use some external command line tools
+    // to do this. this allows us to avoid linking GTK+
+    // or other GUI libs for simply showing error dialogs.
+
+    // examine if we got a useful message showing tool:
+    const char* tool = osinfo_ShowMessageTool(error);
+    if (!tool) {
+        // we cannot show a message.
+        return;
+    }
+
+    // compose cmd beginning:
+    char cmdbegin[64];
+    snprintf(cmdbegin, sizeof(cmdbegin), "%s\"", tool);
+
+    // copy message to stack to avoid strdup/malloc:
+    char s[4096];
+    memcpy(s, cmdbegin, strlen(cmdbegin));
+    const char* escapedmsg = escapedosinfostr(msg);
+    size_t i = strlen(escapedmsg);
+    if (i >= sizeof(s)-(strlen(cmdbegin)+2)) {
+        i = sizeof(s)-(3+strlen(cmdbegin));
+    }
+    memcpy(s+strlen(cmdbegin), escapedmsg, i);
+    s[i+strlen(cmdbegin)] = 0;
+
+    // make sure it ends with \"\n:
+    i = strlen(s);
+    s[i] = '"';
+    s[i+1] = '\n';
+    s[i+2] = 0;
+
+    // run command:
+    system(s);
+#else
+    // on windows, use a simple message box:
+    if (error) {
+        MessageBox(NULL, msg, "Error", MB_ICONERROR);
+    } else {
+        MessageBox(NULL, msg, "Information", MB_ICONINFORMATION);
+    }
+#endif
+}
 

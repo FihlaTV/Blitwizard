@@ -21,6 +21,20 @@
 
 */
 
+// get various system info:
 const char* osinfo_GetSystemName(void);
 const char* osinfo_GetSystemVersion(void);
+
+// check whether a specific command line program is present
+// (= in the environment/PATH and can be used)
+int osinfo_CheckForCmdProg(const char* name);
+
+// get a command line tool that shows a simple message string
+// as graphical message box (mainly useful on Linux):
+const char* osinfo_ShowMessageTool(int error);
+// specify 1 if you want to show an error, 0 for an info message.
+
+// show a simple message:
+void osinfo_ShowMessage(const char* msg, int error);
+// specify 1 for error message, 0 for info message.
 
