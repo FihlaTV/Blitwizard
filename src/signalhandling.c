@@ -184,6 +184,9 @@ void signalhandler_FatalUnix(int signal) {
     case SIGILL:
         handleerror("SIGILL");
         break;
+    case SIGBUS:
+        handleerror("SIGBUS");
+        break;
     default:
         handleerror("unknown");
     }
@@ -202,6 +205,7 @@ void signalhandling_Init(void) {
     sigaction(SIGABRT, &crashhandler, NULL);
     sigaction(SIGFPE, &crashhandler, NULL);
     sigaction(SIGILL, &crashhandler, NULL);
+    sigaction(SIGBUS, &crashhandler, NULL);
 #endif
     return;
 }
