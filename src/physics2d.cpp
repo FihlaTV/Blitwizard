@@ -585,6 +585,7 @@ void physics_DestroyShapes(struct physicsobjectshape* shapes, int count) {
             break;
 #endif
         }
+        ++i;
     }
     // do this no matter what
     free(shapes);
@@ -1034,6 +1035,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
                 _physics_Create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj2d);
             break;
         }
+        s += 1;
     }
     obj->obj.ect2d = obj2d;
 #ifdef USE_PHYSICS3D
