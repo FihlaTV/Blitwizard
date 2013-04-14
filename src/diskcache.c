@@ -276,8 +276,33 @@ static void diskcache_RetrieveThread(void* userdata) {
         rti->callback(NULL, 0, rti->userdata);
         free(rti->resourcepath);
         free(rti);
+        free(data);
         return;
     }
+
+    // see if file size has changed until we got that lock:
+    size_t newsize = file_GetSize(rti->resourcepath);
+    if (newsize < size) {
+        // we don't like shrinking files.
+        // is it just being deleted?
+        diskcache_CloseLockedFile(f);
+        rti->callback(NULL, 0, rti->userdata);
+        free(rti->resourcepath);
+        free(rti);
+        return;
+    }
+    size = newsize;
+
+    // allocate data buffer:
+    char* data = malloc(size);
+    if (!data) {
+        // no point in continuing.
+        diskcache_CloseLockedFile(f);
+        rti->callback(NULL, 0, rti->userdata);
+        free(rti->resourcepath);
+        free(rti);
+        return;
+    } 
 
     // read data:
     if (fread(data, 1, size, f) != size) {
@@ -286,6 +311,7 @@ static void diskcache_RetrieveThread(void* userdata) {
         rti->callback(NULL, 0, rti->userdata);
         free(rti->resourcepath);
         free(rti);
+        free(data);
         return;
     }
 
