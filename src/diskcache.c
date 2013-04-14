@@ -25,11 +25,341 @@
 #include "threading.h"
 #include "diskcache.h"
 
-char* diskcache_Store(char* data, size_t datalength);
+#define RANDOM_FOLDER_CHARS 8
+#define RANDOM_FILE_CHARS 10
+
+static mutex* cachemutex = NULL;
+static char* cachefolder = NULL;
+
+static void diskcache_RandomLetters(char* buffer, size_t len) {
+    int i = 0;
+    while (i < len) {
+#ifdef WINDOWS
+        double d = (double)((double)rand())/RAND_MAX;
+#else
+        double d = drand48();
+#endif
+        int c = (int)((double)d*9.99);
+        buffer[i] = '0' + c;
+        i++;
+    }
+}
+
+static char* diskcache_GenerateCacheFolderPath() {
+    // generate folder name:
+    const char basename[] = "blitwizardcache";
+    char folderbuf[64];
+    memcpy(folderbuf, basename, strlen(basename));
+    diskcache_RandomLetters(folderbuf + strlen(basename), RANDOM_FOLDER_CHARS);
+    folderbuf[strlen(basename) + RANDOM_FOLDER_CHARS] = 0;
+
+    // return temporary folder item path with this folder name:
+    return file_GetTempPath(folderbuf);
+}
+
+__attribute__((constructor)) static void diskcache_Init() {
+    // create mutex and lock it instantly:
+    cachemutex = mutex_Create();
+    mutex_Lock(cachemutex);
+
+    // get folder path & create folder:
+    cachefolder = diskcache_GenerateCacheFolderPath();
+    if (!cachefolder) {
+        // oops, not good
+        return NULL;
+    }
+    if (!file_CreateDirectory(cachefolder)) {
+        // we failed to create the cache dir.
+        free(cachefolder);
+        cachefolder = NULL;
+        return NULL;
+    }
+
+    // release mutex again:
+    mutex_Release(cachemutex);
+}
+
+struct diskcache_StoreThreadInfo {
+    char* resourcepath;
+    char* data;
+    size_t datalength;
+};
+
+static void diskcache_CloseLockedFile(FILE* f) {
+#ifdef UNIX
+#ifndef MAC
+    // for non-Mac OS X Unix (Linux/BSD), we use flock
+    flock(f, LOCK_UN);
+#else
+    // for Mac OS X, we currently use nothing!
+#endif
+#else
+    // on windows, we use LockFileEx
+    HANDLE h = (HANDLE)_get_osfhandle(fileno(f));
+    UnlockFile(h, 0, 0, 0, 0);
+    _close(h);
+#endif
+    fclose(f);
+}
+
+static FILE* diskcache_OpenLockedFile(const char* path, int write) {
+    if (!file_DoesFileExist(path)) {
+        // if we don't want to write, this means failure.
+        if (!write) {
+            return 0;
+        }
+
+        // create file.
+        FILE* f = fopen(path, "wb");
+        if (!f) {
+            return 0;
+        }
+    } else {
+        if (write) {
+            // open up file in append mode for writing
+            FILE* f = fopen(path, "ab");
+        } else {
+            // .. otherwise in read mode
+            FILE* f = fopen(path, "rb");
+        }
+        if (!f) {
+            return 0;
+        }
+    }
+#ifdef UNIX
+#ifndef MAC
+    // for non-Mac OS X Unix (Linux/BSD), we use flock
+    int operation = LOCK_SH;
+    if (write) {
+        operation = LOCK_EX;
+    }
+    if (flock(f, operation) == 0) {
+        return f;
+    }
+    fclose(f);
+    return 0;
+#else
+    // for Mac OS X, we currently use nothing!
+    return f;
+#endif
+#else
+    // on windows, we use LockFileEx
+    HANDLE h = (HANDLE)_get_osfhandle(fileno(f));
+    int flags = 0;
+    if (write) {
+        flags |= LOCKFILE_EXCLUSIVE_LOCK;
+    }
+    OVERLAPPED ov;
+    memset(&ov, 0, sizeof(ov));
+    if (LockFileEx(h, flags, 0, 0, 0, &ov)) {
+        _close(h);
+        return f;
+    }
+    _close(h);
+    fclose(f);
+    return 0;
+#endif
+}
+
+static void diskcache_StoreThread(void* userdata) {
+    // this thread simply writes the given data to disk.
+
+    // retrieve data & path to write to:
+    struct diskcache_StoreThreadInfo* sti =
+    (struct diskcache_StoreThreadInfo*)userdata;
+
+    // open file for writing with proper file locking:
+    FILE* f = diskcache_OpenLockedFile(sti->resourcepath, 1);
+    if (!f) {
+        free(sti->resourcepath);
+        free(sti->data);    
+        free(sti);
+        return;
+    }
+
+    // write data:
+    fwrite(sti->data, 1, sti->datalength, f);
+
+    // close file and free resources:
+    diskcache_CloseLockedFile(f);
+    free(sti->resourcepath);
+    free(sti->data);
+    free(sti);
+}
+
+char* diskcache_Store(char* data, size_t datalength) {
+    // no disk cache directory, no disk cache storing:
+    if (!cachefolder) {
+        return NULL;
+    }
+
+    // we don't store empty data:
+    if (!data || datalength == 0) {
+        return NULL;
+    }
+
+    // create a copy of the data so we can operate in another thread:
+    char* newdata = malloc(datalength);
+    if (!newdata) {
+        return NULL;
+    }
+    memcpy(newdata, data, datalength);
+
+    // generate a resource path:
+    char resourcefilename[RANDOM_FILE_CHARS+1];
+    diskcache_RandomLetters(resourcefilename, RANDOM_FILE_CHARS);
+    resourcefilename[RANDOM_FILE_CHARS] = 0;
+    char* resourcepath = file_AddComponentToPath(cachefolder, resourcefilename);
+    if (!resourcepath) {
+        free(newdata);
+        return NULL;
+    }
+
+    // prepare thread info struct:
+    struct diskcache_StoreThreadInfo* sti = malloc(sizeof(*sti));
+    if (!sti) {
+        free(resourcepath);
+        free(newdata);
+        return NULL;
+    }
+    memset(sti, 0, sizeof(*sti));
+    sti->resourcepath = strdup(resourcepath);
+    if (!sti->resourcepath) {
+        free(resourcepath);
+        free(sti);
+        free(newdata);
+        return NULL;
+    }
+    sti->data = newdata;
+    sti->datalength = datalength;
+
+    // spawn store thread and return resource path:
+    threadinfo* ti = thread_CreateInfo();
+    if (!ti) {
+        free(sti);
+        free(sti->resourcepath);
+        free(resourcepath);
+        free(newdata);
+        return NULL;
+    }
+    thread_Spawn(ti, diskcache_StoreThread, sti);
+    thread_FreeInfo(ti);
+    return resourcepath;
+}
+
+struct diskcache_RetrieveThreadInfo {
+    char* resourcepath;
+    void (*callback)(void* data, size_t datalength, void* userdata);
+    void* userdata;
+};
+
+static void diskcache_RetrieveThread(void* userdata) {
+    struct diskcache_RetrieveThreadInfo* rti = userdata;
+
+    // peek on file size:
+    size_t size = file_GetSize(rti->resourcepath);
+
+    // allocate data buffer:
+    char* data = malloc(size);
+    if (!data) {
+        // no point in continuing.
+        rti->callback(NULL, 0, rti->userdata);
+        free(rti->resourcepath);
+        free(rti);
+        return;
+    }
+
+    // open file for reading with proper file locking:
+    FILE* f = diskcache_OpenLockedFile(rti->resourcepath, 0);
+    if (!f) {
+        // we couldn't open the file.
+        rti->callback(NULL, 0, rti->userdata);
+        free(rti->resourcepath);
+        free(rti);
+        return;
+    }
+
+    // read data:
+    if (fread(data, 1, size, f) != size) {
+        // failed to read all (any?) data.
+        diskcache_CloseLockedFile(f);
+        rti->callback(NULL, 0, rti->userdata);
+        free(rti->resourcepath);
+        free(rti);
+        return;
+    }
+
+    // close file:
+    diskcache_CloseLockedFile(f);
+
+    // issue callback:
+    rti->callback(data, size, rti->userdata);
+
+    // free resources:
+    free(rti->resourcepath);
+    free(rti);
+}
 
 void diskcache_Retrieve(const char* path, void (*callback)(void* data,
-size_t datalength, void* userdata), void* userdata);
+size_t datalength, void* userdata), void* userdata) {
+    // rule out some obvious error conditions:
+    if (!callback) {
+        return;
+    }
+    if (!path) {
+        callback(NULL, 0, userdata);
+        return;
+    }
+    if (!cachefolder) {
+        callback(NULL, 0, userdata);
+        return;
+    }
 
-void diskcache_Delete(const char* path);
+    // prepare info struct:
+    struct diskcache_RetrieveThreadInfo* rti = malloc(sizeof(*rti));
+    if (!rti) {
+        callback(NULL, 0, userdata);
+        return;
+    }
+    memset(rti, 0, sizeof(*rti));
+    rti->resourcepath = strdup(path);
+    if (!rti->resourcepath) {
+        free(rti);
+        callback(NULL, 0, userdata);
+        return;
+    }
+    rti->callback = callback;
+    rti->userdata = userdata;
 
+    // spawn retrieving thread:
+    threadinfo* ti = thread_CreateInfo();
+    if (!ti) {
+        free(rti->resourcepath);
+        free(rti);
+        callback(NULL, 0, userdata);
+        return;
+    }
+    thread_Spawn(ti, diskcache_RetrieveThread, rti);
+    thread_FreeInfo(ti);
+    return;
+}
+
+void diskcache_Delete(const char* path) {
+    if (!file_DeleteFile(path) && file_DoesFileExist(path)) {
+        int attempts = 0;
+        while (attempts < 10) {
+            // attempt to open file with an exclusive lock, then retry:
+            FILE* f = diskcache_OpenLockedFile(rti->resourcepath, 0);
+            if (f) {
+                diskcache_CloseLockedFile(f);
+                if (file_DeleteFile(path)) {
+                    break;
+                }
+                // if file is not deleted, keep retrying
+                attempts++;
+            }
+        }
+        // we are unable to delete it. sadface :(
+    }
+}
 

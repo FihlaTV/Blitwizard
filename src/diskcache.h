@@ -33,7 +33,7 @@ char* diskcache_Store(char* data, size_t datalength);
 
 // Retrieve a disk cache item again by path.
 // On success, the callback is called with the pointer to the
-// cached data and the data length.
+// cached data and the data length. YOU MUST free() THE DATA!!
 // On failure, the callback will be passed NULL as data pointer.
 // The callback will happen in another thread!
 // Be sure your callback is thread-safe!
