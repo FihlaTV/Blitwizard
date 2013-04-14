@@ -22,8 +22,16 @@
 */
 
 #include "os.h"
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef WINDOWS
+#include <windows.h>
+#endif
+
 #include "threading.h"
 #include "diskcache.h"
+#include "file.h"
 
 #define RANDOM_FOLDER_CHARS 8
 #define RANDOM_FILE_CHARS 10
@@ -32,7 +40,7 @@ static mutex* cachemutex = NULL;
 static char* cachefolder = NULL;
 
 static void diskcache_RandomLetters(char* buffer, size_t len) {
-    int i = 0;
+    unsigned int i = 0;
     while (i < len) {
 #ifdef WINDOWS
         double d = (double)((double)rand())/RAND_MAX;
@@ -45,7 +53,7 @@ static void diskcache_RandomLetters(char* buffer, size_t len) {
     }
 }
 
-static char* diskcache_GenerateCacheFolderPath() {
+static char* diskcache_GenerateCacheFolderPath(void) {
     // generate folder name:
     const char basename[] = "blitwizardcache";
     char folderbuf[64];
@@ -57,7 +65,7 @@ static char* diskcache_GenerateCacheFolderPath() {
     return file_GetTempPath(folderbuf);
 }
 
-__attribute__((constructor)) static void diskcache_Init() {
+__attribute__((constructor)) static void diskcache_Init(void) {
     // create mutex and lock it instantly:
     cachemutex = mutex_Create();
     mutex_Lock(cachemutex);
@@ -66,13 +74,13 @@ __attribute__((constructor)) static void diskcache_Init() {
     cachefolder = diskcache_GenerateCacheFolderPath();
     if (!cachefolder) {
         // oops, not good
-        return NULL;
+        return;
     }
     if (!file_CreateDirectory(cachefolder)) {
         // we failed to create the cache dir.
         free(cachefolder);
         cachefolder = NULL;
-        return NULL;
+        return;
     }
 
     // release mutex again:
@@ -97,12 +105,13 @@ static void diskcache_CloseLockedFile(FILE* f) {
     // on windows, we use LockFileEx
     HANDLE h = (HANDLE)_get_osfhandle(fileno(f));
     UnlockFile(h, 0, 0, 0, 0);
-    _close(h);
+    _close((int)h);
 #endif
     fclose(f);
 }
 
 static FILE* diskcache_OpenLockedFile(const char* path, int write) {
+    FILE* f;
     if (!file_DoesFileExist(path)) {
         // if we don't want to write, this means failure.
         if (!write) {
@@ -110,17 +119,17 @@ static FILE* diskcache_OpenLockedFile(const char* path, int write) {
         }
 
         // create file.
-        FILE* f = fopen(path, "wb");
+        f = fopen(path, "wb");
         if (!f) {
             return 0;
         }
     } else {
         if (write) {
             // open up file in append mode for writing
-            FILE* f = fopen(path, "ab");
+            f = fopen(path, "ab");
         } else {
             // .. otherwise in read mode
-            FILE* f = fopen(path, "rb");
+            f = fopen(path, "rb");
         }
         if (!f) {
             return 0;
@@ -152,10 +161,10 @@ static FILE* diskcache_OpenLockedFile(const char* path, int write) {
     OVERLAPPED ov;
     memset(&ov, 0, sizeof(ov));
     if (LockFileEx(h, flags, 0, 0, 0, &ov)) {
-        _close(h);
+        _close((int)h);
         return f;
     }
-    _close(h);
+    _close((int)h);
     fclose(f);
     return 0;
 #endif
@@ -259,16 +268,6 @@ static void diskcache_RetrieveThread(void* userdata) {
     // peek on file size:
     size_t size = file_GetSize(rti->resourcepath);
 
-    // allocate data buffer:
-    char* data = malloc(size);
-    if (!data) {
-        // no point in continuing.
-        rti->callback(NULL, 0, rti->userdata);
-        free(rti->resourcepath);
-        free(rti);
-        return;
-    }
-
     // open file for reading with proper file locking:
     FILE* f = diskcache_OpenLockedFile(rti->resourcepath, 0);
     if (!f) {
@@ -276,7 +275,6 @@ static void diskcache_RetrieveThread(void* userdata) {
         rti->callback(NULL, 0, rti->userdata);
         free(rti->resourcepath);
         free(rti);
-        free(data);
         return;
     }
 
@@ -375,7 +373,7 @@ void diskcache_Delete(const char* path) {
         int attempts = 0;
         while (attempts < 10) {
             // attempt to open file with an exclusive lock, then retry:
-            FILE* f = diskcache_OpenLockedFile(rti->resourcepath, 0);
+            FILE* f = diskcache_OpenLockedFile(path, 0);
             if (f) {
                 diskcache_CloseLockedFile(f);
                 if (file_DeleteFile(path)) {

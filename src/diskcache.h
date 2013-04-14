@@ -24,6 +24,8 @@
 #ifndef BLITWIZARD_DISKCACHE_H_
 #define BLITWIZARD_DISKCACHE_H_
 
+#include <unistd.h>
+
 // This module implements a disk cache.
 
 // Stores data in the disk cache and returns the path
