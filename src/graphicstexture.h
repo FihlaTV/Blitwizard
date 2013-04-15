@@ -32,7 +32,7 @@ struct graphicstexture;
 // Create a graphics texture (for 3d accelerated renderers,
 // it must be created in GPU memory!) and return a handle:
 struct graphicstexture* graphicstexture_Create(void* data,
-size_t width, size_t height, int format);
+size_t width, size_t height, int format, void* pixels);
 
 // Destroy graphics texure by handle:
 void graphicstexture_Destroy(struct graphicstexture* texture);
@@ -40,6 +40,17 @@ void graphicstexture_Destroy(struct graphicstexture* texture);
 // Get texture dimensions:
 void graphics_GetTextureDimensions(struct graphicstexture* texture,
 size_t* width, size_t* height);
+
+// Get texture format
+int graphics_GetTextureFormat(struct graphicstexture* texture);
+
+// Extract pixel data from texture again (not necessarily supported
+// by all renderers). The pixels pointer must point to a buffer
+// which is large enough to hold the pixel data of the texture.
+// Returns 1 on success (pixels will be modified to hold the data),
+// otherwise 0 (pixels will have undefined contents).
+int graphicstexture_PixelsFromTexture(
+struct graphicstexture* gt, void* pixels);
 
 #endif  // BLITWIZARD_GRAPHICSTEXTURE_H_
 

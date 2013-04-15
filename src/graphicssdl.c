@@ -114,90 +114,6 @@ int graphics_Init(char** error, int use3dgraphics) {
     return 0;
 }
 
-int graphics_TextureToHW(struct graphicstexture* gt) {
-    if (!graphics3d) {
-        if (gt->tex.sdltex || gt->threadingptr || !gt->name) {
-            return 1;
-        }
-
-        // create texture
-        SDL_Texture* t = SDL_CreateTexture(mainrenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, gt->width, gt->height);
-        if (!t) {
-            printwarning("Warning: SDL failed to create texture: %s\n", SDL_GetError());
-            return 0;
-        }
-
-        // lock texture
-        void* pixels; int pitch;
-        if (SDL_LockTexture(t, NULL, &pixels, &pitch) != 0) {
-            printwarning("Warning: SDL failed to lock texture: %s\n", SDL_GetError());
-            SDL_DestroyTexture(t);
-            return 0;
-        }
-
-        // copy pixels into texture
-        memcpy(pixels, gt->pixels, gt->width * gt->height * 4);
-
-        // unlock texture
-        SDL_UnlockTexture(t);
-
-        // set blend mode
-        if (SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND) < 0) {
-            printf("Warning: Blend mode SDL_BLENDMODE_BLEND not applied: %s\n",SDL_GetError());
-        }
-
-        // if on the desktop, discard texture from regular memory
-#if !defined(ANDROID)
-        free(gt->pixels);
-        gt->pixels = NULL;
-#endif
-
-        gt->tex.sdltex = t;
-        return 1;
-    }
-    return 0;
-}
-
-void graphics_TextureFromHW(struct graphicstexture* gt) {
-    if (!graphics3d) {
-        if (!gt->tex.sdltex || gt->threadingptr || !gt->name) {
-            return;
-        }
-
-        if (!gt->pixels) {
-            gt->pixels = malloc(gt->width * gt->height * 4);
-            if (!gt->pixels) {
-                // wipe this texture
-                SDL_DestroyTexture(gt->tex.sdltex);
-                gt->tex.sdltex = NULL;
-                graphicstexturelist_RemoveTextureFromHashmap(gt);
-                free(gt->name);
-                gt->name = NULL;
-                return;
-            }
-
-            // Lock SDL Texture
-            void* pixels;int pitch;
-            if (SDL_LockTexture(gt->tex.sdltex, NULL, &pixels, &pitch) != 0) {
-                // success, the texture is now officially garbage.
-                // can/should we do anything about this? (a purely visual problem)
-                printf("Warning: SDL_LockTexture() failed\n");
-            }else{
-
-                // Copy texture
-                memcpy(gt->pixels, pixels, gt->width * gt->height * 4);
-
-                // unlock texture again
-                SDL_UnlockTexture(gt->tex.sdltex);
-
-            }
-        }
-
-        SDL_DestroyTexture(gt->tex.sdltex);
-        gt->tex.sdltex = NULL;
-    }
-}
-
 
 int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
     if (!graphics3d && mainwindow) {
@@ -427,7 +343,7 @@ void graphics_GetDesktopVideoMode(int* x, int* y) {
     if (SDL_GetDesktopDisplayMode(0, &m) == 0) {
         *x = m.w;
         *y = m.h;
-    }else{
+    } else {
         printwarning("Unable to determine desktop video mode: %s", SDL_GetError());
     }
 }
@@ -462,7 +378,7 @@ void graphics_ToggleFullscreen() {
         if (SDL_SetWindowFullscreen(mainwindow, wantfull) == 0) {
             if (wantfull == SDL_TRUE) {
                 mainwindowfullscreen = 1;
-            }else{
+            } else {
                 mainwindowfullscreen = 0;
             }
         }
@@ -521,7 +437,7 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
             softwarerendering = 1;
             strcpy(preferredrenderer, "software");
 #endif
-        }else{
+        } else {
             if (strcasecmp(renderer, "opengl") == 0) {
 #ifdef ANDROID
                 // opengles is the opengl we want for android :-)
@@ -616,7 +532,7 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
     if (fullscreen) {
         mainwindow = SDL_CreateWindow(title, 0,0, width, height, SDL_WINDOW_FULLSCREEN);
         mainwindowfullscreen = 1;
-    }else{
+    } else {
         mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, width, height, 0);
         mainwindowfullscreen = 0;
     }
@@ -646,16 +562,20 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
             mainwindow = NULL;
         }
         if (softwarerendering) {
-            snprintf(errormsg,sizeof(errormsg),"Failed to create SDL renderer (backend software): %s", SDL_GetError());
-        }else{
+            snprintf(errormsg, sizeof(errormsg),
+            "Failed to create SDL renderer (backend software): %s",
+            SDL_GetError());
+        } else {
             SDL_RendererInfo info;
             SDL_GetRenderDriverInfo(rendererindex, &info);
-            snprintf(errormsg,sizeof(errormsg),"Failed to create SDL renderer (backend %s): %s", info.name, SDL_GetError());
+            snprintf(errormsg, sizeof(errormsg),
+            "Failed to create SDL renderer (backend %s): %s",
+            info.name, SDL_GetError());
         }
         errormsg[sizeof(errormsg)-1] = 0;
         *error = strdup(errormsg);
         return 0;
-    }else{
+    } else {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(mainrenderer, &info);
     }
@@ -664,7 +584,9 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
     if (!graphicstexturelist_TransferTexturesToHW()) {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(mainrenderer, &info);
-        snprintf(errormsg,sizeof(errormsg),"Failed to create SDL renderer (backend %s): Cannot recreate textures", info.name);
+        snprintf(errormsg, sizeof(errormsg),
+        "Failed to create SDL renderer (backend %s): "
+        "Cannot recreate textures", info.name);
         *error = strdup(errormsg);
         SDL_DestroyRenderer(mainrenderer);
         SDL_DestroyWindow(mainwindow);
@@ -726,7 +648,7 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
                     x = lastfingerdownx;
                     y = lastfingerdowny;
                     release = 1;
-                }else{
+                } else {
                     // remember coordinates on fingerdown
                     x = e.tfinger.x;
                     y = e.tfinger.y;

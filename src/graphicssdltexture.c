@@ -65,7 +65,7 @@ void graphicstexture_Destroy(struct graphicstexture* gt) {
 
 
 int graphicstexture_Create(struct graphicstexture* gt,
-size_t width, size_t height, int format) {
+size_t width, size_t height, int format, void* pixels) {
     // create basic texture struct:
     struct graphicstexture* gt = malloc(sizeof(*gt));
     if (!gt) {
@@ -84,7 +84,8 @@ size_t width, size_t height, int format) {
         // not known to us!
         graphicstexture_Destroy(gt);
         return NULL;
-    } 
+    }
+    gt->format = format;
 
     // create hw texture
     gt->sdltex = SDL_CreateTexture(mainrenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, gt->width, gt->height);
@@ -111,6 +112,28 @@ size_t width, size_t height, int format) {
     SDL_SetTextureBlendMode(gt->sdltex, SDL_BLENDMODE_BLEND);
 
     return gt;
+}
+
+void graphics_GetTextureFormat(struct graphicstexture* gt) {
+    return gt->format;
+}
+
+int graphicstexture_PixelsFromTexture(
+struct graphicstexture* gt, void* pixels) {
+    // Lock SDL Texture
+    void* pixels;int pitch;
+    if (SDL_LockTexture(gt->tex.sdltex, NULL, &pixels, &pitch) != 0) {
+        // locking failed, we cannot extract pixels
+        return 0;
+    } else {
+
+        // Copy texture
+        memcpy(gt->pixels, pixels, gt->width * gt->height * 4);
+
+        // unlock texture again
+        SDL_UnlockTexture(gt->tex.sdltex);
+        return 1;
+    }
 }
 
 #endif  // USE_SDL_GRAPHICS

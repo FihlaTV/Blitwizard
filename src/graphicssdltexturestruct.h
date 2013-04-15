@@ -24,9 +24,12 @@
 #ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
 #define BLITWIZARD_GRAPHICSTEXTURESDL_H_
 
+#include "os.h"
+
 struct graphicstexture {
     // basic info
     size_t width,height;
+    int format;
     // SDL info
     SDL_Texture* sdltex;
 };

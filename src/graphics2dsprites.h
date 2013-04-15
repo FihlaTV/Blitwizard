@@ -21,40 +21,21 @@
 
 */
 
-#include "os.h"
-#include <stdlib.h>
+#ifndef BLITWIZARD_GRAPHICS2DSPRITES_H_
+#define BLITWIZARD_GRAPHICS2DSPRITES_H_
 
 #ifdef USE_GRAPHICS
 
-#include "graphics.h"
-#include "graphicstexturemanager.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-struct texturerequesthandle {
 
-};
-
-struct texturerequesthandle* texturemanager_RequestTexture(
-const char* path,
-void (*textureDimensionInfo)(struct texturerequesthandle* request,
-size_t width, size_t height),
-void (*textureSwitch)(struct texturerequesthandle* request,
-struct graphicstexture* texture)) {
-    struct texturerequesthandle* request = malloc(sizeof(*request));
-    if (!request) {
-        return NULL;
-    }
+#ifdef __cplusplus
 }
-
-void texturemanager_UsingRequest(
-struct texturerequesthandle* request, int visibility) {
-
-}
-
-void texturemanager_DestroyRequest(
-struct texturerequesthandle* request) {
-    free(request);
-}
+#endif
 
 #endif  // USE_GRAPHICS
 
+#endif  // BLITWIZARD_GRAPHICS2DSPRITES_H_
 
