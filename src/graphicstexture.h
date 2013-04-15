@@ -32,7 +32,7 @@ struct graphicstexture;
 // Create a graphics texture (for 3d accelerated renderers,
 // it must be created in GPU memory!) and return a handle:
 struct graphicstexture* graphicstexture_Create(void* data,
-size_t width, size_t height, int format, void* pixels);
+size_t width, size_t height, int format);
 
 // Destroy graphics texure by handle:
 void graphicstexture_Destroy(struct graphicstexture* texture);

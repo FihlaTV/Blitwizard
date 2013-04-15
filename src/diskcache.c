@@ -25,8 +25,14 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef WINDOWS
 #include <windows.h>
+#endif
+#ifdef UNIX
+#ifndef MAC
+#include <sys/file.h>
+#endif
 #endif
 
 #include "threading.h"

@@ -50,8 +50,8 @@ struct graphicstexturescaled {
     int locked; // if this is 1, do not access any other fields except width
       // and height! the entry is currently processed from another thread
       // e.g. for scaling, disk caching or other
-    struct graphicstexture* gt;  // NULL if not loaded
-    int textureinhw;   // 1 if texture is in GPU memory, 0 if not
+    struct graphicstexture* gt;  // NULL if not loaded or not in GPU memory
+    void* pixels; // not NULL if texture is in regular memory
     char* diskcachepath;  // path to raw disk cache file or NULL
     size_t width,height;  // width/height of this particular scaled entry
 };
@@ -80,8 +80,19 @@ struct graphicstexturemanaged* gt);
 void graphicstexturelist_RemoveTextureFromHashmap(
 struct graphicstexturemanaged* gt);
 
+// get all sizes of a specific graphics texture out of GPU memory:
+void graphicstexturelist_TransferTextureFromHW(
+struct graphicstexturemanaged* gt);
+
+// invalidate a texture's scaled versions in GPU memory:
+void graphicstexturelist_InvalidateTextureInHW(
+struct graphicstexturemanaged* gt);
+
 // get all textures out of GPU memory:
-void graphicstexturelist_TransferTexturesFromHW();
+void graphicstexturelist_TransferTexturesFromHW(void);
+
+// invalidate all textures' copies in GPU memory:
+void graphicstexturelist_InvalidateHWTextures(void);
 
 // get previous texture in texture list:
 struct graphicstexturemanaged* graphicstexturelist_GetPreviousTexture(
@@ -93,6 +104,8 @@ struct graphicstexturemanaged* graphicstexturelist_AddTextureToList(
 const char* path);
 
 // Remove a texture from the linear list (it might still be in the hash map):
+// You need to specify the previous list entry, which you can
+// obtain through graphicstexturelist_GetPreviousTexture.
 void graphicstexturelist_RemoveTextureFromList(
 struct graphicstexturemanaged* gt, struct graphicstexturemanaged* prev);
 
@@ -103,7 +116,7 @@ struct graphicstexturemanaged* gt, struct graphicstexturemanaged* prev);
 void graphicstexturelist_DestroyTexture(struct graphicstexturemanaged* gt);
 
 // Calls graphicstexturelist_DestroyTexture on all textures.
-int graphicstexturelist_FreeAllTextures();
+int graphicstexturelist_FreeAllTextures(void);
 
 // Do something with all textures:
 void graphicstexturelist_DoForAllTextures(

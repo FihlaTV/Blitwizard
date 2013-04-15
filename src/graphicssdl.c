@@ -69,13 +69,6 @@ int graphics_HaveValidWindow() {
 }
 
 
-void graphics_DestroyHWTexture(struct graphicstexture* gt) {
-    if (!graphics3d && gt->tex.sdltex) {
-        SDL_DestroyTexture(gt->tex.sdltex);
-        gt->tex.sdltex = NULL;
-    }
-}
-
 // initialize the video sub system, returns 1 on success or 0 on error:
 static int graphics_InitVideoSubsystem(char** error) {
     char errormsg[512];
@@ -193,12 +186,10 @@ void graphics_ReopenForAndroid() {
 #endif
 
 const char* graphics_GetWindowTitle() {
-    if (!graphics3d) {
-        if (!mainrenderer || !mainwindow) {
-            return NULL;
-        }
-        return SDL_GetWindowTitle(mainwindow);
+    if (!mainrenderer || !mainwindow) {
+        return NULL;
     }
+    return SDL_GetWindowTitle(mainwindow);
 }
 
 void graphics_Quit() {
@@ -217,28 +208,26 @@ SDL_RendererInfo info;
 static char openglstaticname[] = "opengl";
 #endif
 const char* graphics_GetCurrentRendererName() {
-    if (!graphics3d) {
-        if (!mainrenderer) {
-            return NULL;
-        }
-        SDL_GetRendererInfo(mainrenderer, &info);
-#if defined(ANDROID)
-        if (strcasecmp(info.name, "opengles") == 0) {
-            // we return "opengl" here aswell, since we want "opengl"
-            // to represent the best/default opengl renderer consistently
-            // across all platforms, which is opengles on Android (and
-            // regular opengl for normal desktop platforms).
-            return openglstaticname;
-        }
-#endif
-        return info.name;
+    if (!mainrenderer) {
+        return NULL;
     }
+    SDL_GetRendererInfo(mainrenderer, &info);
+#if defined(ANDROID)
+    if (strcasecmp(info.name, "opengles") == 0) {
+        // we return "opengl" here aswell, since we want "opengl"
+        // to represent the best/default opengl renderer consistently
+        // across all platforms, which is opengles on Android (and
+        // regular opengl for normal desktop platforms).
+        return openglstaticname;
+    }
+#endif
+    return info.name;
 }
 
 int* videomodesx = NULL;
 int* videomodesy = NULL;
 
-static void graphics_ReadVideoModes() {
+static void graphics_ReadVideoModes(void) {
     // free old video mode data
     if (videomodesx) {
         free(videomodesx);
@@ -348,25 +337,21 @@ void graphics_GetDesktopVideoMode(int* x, int* y) {
     }
 }
 
-void graphics_MinimizeWindow() {
-    if (!graphics3d) {
-        if (!mainwindow) {
-            return;
-        }
-        SDL_MinimizeWindow(mainwindow);
+void graphics_MinimizeWindow(void) {
+    if (!mainwindow) {
+        return;
     }
+    SDL_MinimizeWindow(mainwindow);
 }
 
-int graphics_IsFullscreen() {
-    if (!graphics3d) {
-        if (mainwindow) {
-            return mainwindowfullscreen;
-        }
-        return 0;
+int graphics_IsFullscreen(void) {
+    if (mainwindow) {
+        return mainwindowfullscreen;
     }
+    return 0;
 }
 
-void graphics_ToggleFullscreen() {
+void graphics_ToggleFullscreen(void) {
     if (!graphics3d) {
         if (!mainwindow) {
             return;
@@ -581,7 +566,7 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
     }
 
     // Transfer textures back to SDL
-    if (!graphicstexturelist_TransferTexturesToHW()) {
+    /*if (!graphicstexturelist_TransferTexturesToHW()) {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(mainrenderer, &info);
         snprintf(errormsg, sizeof(errormsg),
@@ -591,7 +576,7 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
         SDL_DestroyRenderer(mainrenderer);
         SDL_DestroyWindow(mainwindow);
         return 0;
-    }
+    }*/
 
     // Re-focus window if previously focussed
     if (!inbackground) {

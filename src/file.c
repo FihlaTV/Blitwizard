@@ -90,7 +90,7 @@ size_t file_GetSize(const char* name) {
 #ifdef UNIX
     // use stat to get file size:
     struct stat info;
-    int r = stat(path,&info);
+    int r = stat(name, &info);
     if (r < 0) {
         return 0;
     }
@@ -181,7 +181,7 @@ char* file_GetCwd() {
 int file_IsDirectory(const char* path) {
 #ifdef UNIX
     struct stat info;
-    int r = stat(path,&info);
+    int r = stat(path, &info);
     if (r < 0) {
         return 0;
     }
@@ -473,14 +473,14 @@ char* file_GetTempPath(const char* name) {
 
 #ifdef WINDOWS
 #include <shlobj.h>
-char* file_GetUserFileDir() {
+char* file_GetUserFileDir(void) {
     char programsdirbuf[MAX_PATH+1];
     SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, programsdirbuf);
     programsdirbuf[MAX_PATH] = 0;
     return strdup(programsdirbuf);
 }
 #else
-char* filesystem_GetUserFileDir() {
+char* filesystem_GetUserFileDir(void) {
     char programsdirbuf[300];
     strncpy(programsdirbuf, getenv("HOME"), 299);
     programsdirbuf[299] = 0;

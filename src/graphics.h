@@ -118,25 +118,13 @@ void graphics_ReopenForAndroid(void);
 // Reopen graphics and reupload textures. Required when coming back into foreground
 #endif
 
-void graphics_TextureFromHW(struct graphicstexture* gt);
-// Push texture onto 3d accelerated hardware
-
-int graphics_TextureToHW(struct graphicstexture* gt);
-// Pull texture from 3d accelerated hardware
-
-void graphics_DestroyHWTexture(struct graphicstexture* gt);
-// Destroy the 3d texture (e.g. in preparation for free'ing the texture)
-
-int graphics_FreeTexture(struct graphicstexture* gt, struct graphicstexture* prev);
-// Free a texture
-
 int graphics_HaveValidWindow(void);
 // Returns 1 if a window is open, otherwise 0
 
 
 // CAMERA HANDLING:
 
-int graphics_GetCameraCount();
+int graphics_GetCameraCount(void);
 // Get count of cameras
 
 int graphics_GetCameraX(int index);
@@ -232,7 +220,7 @@ void graphics_SetCamera3DZNearFar(int index,
 double near, double far);
 // Set 3d camera z near/far clipping values
 
-int graphics_AddCamera();
+int graphics_AddCamera(void);
 // Add a camera. Returns new camera index on success (>=0),
 // -1 on error.
 
