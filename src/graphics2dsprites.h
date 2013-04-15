@@ -30,6 +30,38 @@
 extern "C" {
 #endif
 
+struct graphics2dsprite;
+
+// Create a sprite at a given position (x/y specify the sprite center).
+//
+// The geometry callback will be called once as soon as the actual
+// width and height obtained by the texture loaded from texturePath
+// is known. userdata is set to the specified userdata.
+//
+// The visibility callback will be called once the texture is
+// fully loaded and the sprite will be truly visible on screen.
+//
+// userdata is a pointer that will be passed to your callbacks.
+//
+// Please note you can freely move/resize/destroy the sprite even
+// when the geometryCallback or visibilityCallback haven't been
+// called yet.
+struct graphics2dsprite* graphics2dsprites_Create(
+const char* texturePath, double x, double y, double width, double height,
+void (*geometryCallback)(double width, double height, void* userdata),
+void (*visibilityCallback)(void* userdata),
+void* userdata);
+
+// Move a sprite.
+void graphics2dsprites_Move(struct graphics2dsprite* sprite,
+double x, double y);
+
+// Resize a sprite.
+void graphics2dsprites_Resize(struct graphics2dsprite* sprite,
+double width, double height);
+
+// Destroy the specified sprite:
+void graphics2dsprite_Destroy(struct graphics2dsprite* sprite);
 
 #ifdef __cplusplus
 }
