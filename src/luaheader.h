@@ -36,6 +36,21 @@
 #include "lualib.h"
 #endif
 
+// We don't really care about the distinction of TNIL and TNONE,
+// since unspecified parameters (=TNONE) should have the same
+// effect as if specified as nil (=TNIL).
+// Therefore, we override lua_type to map TNONE to TNIL.
+
+static int lua_wrappedtype(lua_State* l, int index) {
+    int i = lua_type(l, index);
+    if (i == LUA_TNONE) {
+        return LUA_TNIL;
+    }
+    return i;
+}
+
+#define lua_type lua_wrappedtype
+
 #endif  // BLITWIZARD_LUAHEADER_H_
 
 
