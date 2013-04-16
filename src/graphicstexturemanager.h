@@ -49,6 +49,7 @@
 #ifdef USE_GRAPHICS
 
 #include "graphics.h"
+#include "graphicstexture.h"
 
 struct texturerequesthandle;
 

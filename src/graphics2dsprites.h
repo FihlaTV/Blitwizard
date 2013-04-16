@@ -54,14 +54,58 @@ void* userdata);
 
 // Move a sprite.
 void graphics2dsprites_Move(struct graphics2dsprite* sprite,
-double x, double y);
+double x, double y, double angle);
 
 // Resize a sprite.
 void graphics2dsprites_Resize(struct graphics2dsprite* sprite,
 double width, double height);
 
+// Flip/mirror a sprite
+void graphics2dsprites_Flip(struct graphics2dsprite* sprite,
+int horizontalflip, int verticalflip);
+
+// Set sprite coloring. (1, 1, 1) is normal full brightness
+void graphics2dsprites_SetColor(struct graphics2dsprites* sprite,
+double r, double g, double b);
+
+// Set sprite alpha from 0 (invisible) to 1 (fully opaque)
+void graphics2dsprites_SetAlpha(struct graphics2dsprite* sprite,
+double alpha);
+
 // Destroy the specified sprite:
 void graphics2dsprite_Destroy(struct graphics2dsprite* sprite);
+
+
+// --- internally used to draw sprites: ---
+
+// Set callback for sprite creation/deletion. modified/moved sprites
+// will end up deleted and recreated.
+// If your graphics output creates and uploads meshes/geometry to the
+// graphics card, you might want to use those callbacks for that.
+// NOTE: The callbacks are always batched up and you can request them
+// to happen with graphics2dsprite_TriggerCallbacks.
+void graphics2dsprite_SetCreateDeleteCallbacks(
+void (*spriteCreated) (void* handle,
+const char* path, double x, double y,
+double width, double height, double angle, int horizontalflip,
+int verticalflip,
+double alpha, double r, double g, double b),
+void (*spriteDeleted) (void* handle)
+);
+
+// Trigger the sprite callbacks you previously set.
+// As soon as the function returns, the callbacks for all
+// recent sprite changes will be completed.
+void graphics2dsprite_TriggerCallbacks(void);
+
+// Get information on all sprites in one go.
+// If your graphics output simply redraws everything per frame,
+// you might want to use this function.
+void graphics2dsprite_DoForAllSprites(
+void (*spriteInformation) (const char* path, double x, double y,
+double width, double height, double angle, int horizontalflip,
+int verticalflip, double alpha, double r, double g, double b));
+
 
 #ifdef __cplusplus
 }

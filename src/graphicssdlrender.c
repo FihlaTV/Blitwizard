@@ -158,13 +158,19 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
 }
 
 
-void graphicsrender_StartFrame(void) {
+void graphicssdlrender_StartFrame(void) {
     SDL_SetRenderDrawColor(mainrenderer, 0, 0, 0, 1);
     SDL_RenderClear(mainrenderer);
 }
 
-void graphicsrender_CompleteFrame(void) {
+void graphicssdlrender_CompleteFrame(void) {
     SDL_RenderPresent(mainrenderer);
+}
+
+void graphicsrender_Draw(void) {
+    graphicssdlrender_StartFrame();
+
+    graphicssdlrender_CompleteFrame();
 }
 
 #endif  // USE_SDL_GRAPHICS

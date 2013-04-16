@@ -217,35 +217,14 @@ static void luastate_CreateGraphicsTable(lua_State* l) {
     lua_pushcfunction(l, &luafuncs_getRendererName);
     lua_settable(l, -3);
     luastate_registergraphics(l, &luafuncs_setMode, "setMode");
-    lua_pushstring(l, "loadImage");
-    lua_pushcfunction(l, &luafuncs_loadImage);
-    lua_settable(l, -3);
-    lua_pushstring(l, "loadImageAsync");
-    lua_pushcfunction(l, &luafuncs_loadImageAsync);
-    lua_settable(l, -3);
-    lua_pushstring(l, "getImageSize");
-    lua_pushcfunction(l, &luafuncs_getImageSize);
-    lua_settable(l, -3);
     lua_pushstring(l, "getWindowSize");
     lua_pushcfunction(l, &luafuncs_getWindowSize);
-    lua_settable(l, -3);
-    lua_pushstring(l, "isImageLoaded");
-    lua_pushcfunction(l, &luafuncs_isImageLoaded);
-    lua_settable(l, -3);
-    lua_pushstring(l, "drawImage");
-    lua_pushcfunction(l, &luafuncs_drawImage);
-    lua_settable(l, -3);
-    lua_pushstring(l, "drawRectangle");
-    lua_pushcfunction(l, &luafuncs_drawRectangle);
     lua_settable(l, -3);
     lua_pushstring(l, "getDisplayModes");
     lua_pushcfunction(l, &luafuncs_getDisplayModes);
     lua_settable(l, -3);
     lua_pushstring(l, "getDesktopDisplayMode");
     lua_pushcfunction(l, &luafuncs_getDesktopDisplayMode);
-    lua_settable(l, -3);
-    lua_pushstring(l, "unloadImage");
-    lua_pushcfunction(l, &luafuncs_unloadImage);
     lua_settable(l, -3);
 }
 

@@ -21,42 +21,12 @@
 
 */
 
-#include "os.h"
+#ifndef BLITWIZARD_GRAPHICSRENDER_H_
+#define BLITWIZARD_GRAPHICSRENDER_H_
 
-#ifdef USE_GRAPHICS
+void graphicsrender_Draw(void);
+// Draw a frame
 
-//  various standard headers
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#ifdef WINDOWS
-#include <windows.h>
-#endif
-#include <stdarg.h>
+#endif  // BLITWIZARD_GRAPHICSRENDER_H_
 
-#include "logging.h"
-#include "imgloader.h"
-#include "timefuncs.h"
-#include "hash.h"
-#include "file.h"
-#ifdef NOTHREADEDSDLRW
-#include "main.h"
-#endif
-
-#ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
-#endif
-
-#include "graphicstexture.h"
-#include "graphics.h"
-#include "graphicstexturelist.h"
-
-int graphicsactive = 0;
-
-int graphics_AreGraphicsRunning() {
-    return graphicsactive;
-}
-
-#endif // USE_GRAPHICS
 

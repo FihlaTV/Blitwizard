@@ -53,7 +53,7 @@ struct graphicstexturescaled {
     struct graphicstexture* gt;  // NULL if not loaded or not in GPU memory
     void* pixels; // not NULL if texture is in regular memory
     char* diskcachepath;  // path to raw disk cache file or NULL
-    size_t width,height;  // width/height of this particular scaled entry
+    size_t width, height;  // width/height of this particular scaled entry
 };
 
 // A managed texture entry containing all the different sized cached versions:
@@ -116,7 +116,7 @@ struct graphicstexturemanaged* gt, struct graphicstexturemanaged* prev);
 void graphicstexturelist_DestroyTexture(struct graphicstexturemanaged* gt);
 
 // Calls graphicstexturelist_DestroyTexture on all textures.
-int graphicstexturelist_FreeAllTextures(void);
+void graphicstexturelist_FreeAllTextures(void);
 
 // Do something with all textures:
 void graphicstexturelist_DoForAllTextures(
