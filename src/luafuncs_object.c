@@ -56,6 +56,8 @@ struct blitwizardobject* deletedobjects = NULL;
 // @type object
 
 void cleanupobject(struct blitwizardobject* o) {
+    // clear up all the graphics, physics, event function things
+    // attached to the object:
     luafuncs_objectgraphics_unload(o);
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
     if (o->physics) {
@@ -63,6 +65,7 @@ void cleanupobject(struct blitwizardobject* o) {
         o->physics = NULL;
     }
 #endif
+    luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
 }
 
 static int garbagecollect_blitwizobjref(lua_State* l) {
@@ -115,7 +118,34 @@ void luafuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
     ref->magic = IDREF_MAGIC;
     ref->type = IDREF_BLITWIZARDOBJECT;
     ref->ref.bobj = o;
+
+    // set garbage collect callback:
     luastate_SetGCCallback(l, -1, (int (*)(void*))&garbagecollect_blitwizobjref);
+
+    // set metatable __index to blitwizard.object table
+    lua_getmetatable(l, -1);
+    lua_pushstring(l, "__index");
+    lua_getglobal(l, "blitwizard");
+    if (lua_type(l, -1) == LUA_TTABLE) {
+        // extract blitwizard.object:
+        lua_pushstring(l, "object");
+        lua_gettable(l, -2);
+        lua_insert(l, -2);
+        lua_pop(l, 1);  // pop blitwizard table
+
+        if (lua_type(l, -1) != LUA_TTABLE) {
+            // error: blitwizard.object isn't a table as it should be
+            lua_pop(l, 3); // blitwizard.object, "__index", metatable
+        } else {
+            lua_rawset(l, -3); // removes blitwizard.object, "__index"
+            lua_setmetatable(l, -2); // setting remaining metatable
+            // stack is now back empty, apart from new userdata!
+        }
+    } else {
+        // error: blitwizard namespace is broken. nothing we could do
+        lua_pop(l, 3);  // blitwizard, "__index", metatable
+    }
+
     o->refcount++;
 }
 
@@ -150,30 +180,54 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 // @tparam function behaviour (optional) the behaviour function which will be executed immediately after object creation.
 // @treturn userdata Returns a @{blitwizard.object|blitwizard object}
 int luafuncs_object_new(lua_State* l) {
+    // technical first argument is the object table,
+    // which we don't care about in the :new function.
+    // actual specified first argument is the second one
+    // on the lua stack.
+
     // first argument needs to be 2d/3d boolean:
-    if (lua_type(l, 1) != LUA_TBOOLEAN) {
+    if (lua_type(l, 2) != LUA_TBOOLEAN) {
         return haveluaerror(l, badargument1, 1, "blitwizard.object:new",
-        "boolean", lua_strtype(l, 1));
+        "boolean", lua_strtype(l, 2));
     }
-    int is3d = lua_toboolean(l, 1);
+    int is3d = lua_toboolean(l, 2);
 
     // second argument, if present, needs to be the resource:
     const char* resource = NULL;
-    if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
-        if (lua_type(l, 2) != LUA_TSTRING) {
+    if (lua_gettop(l) >= 3 && lua_type(l, 3) != LUA_TNIL) {
+        if (lua_type(l, 3) != LUA_TSTRING) {
             return haveluaerror(l, badargument1, 2, "blitwizard.object:new",
-            "string", lua_strtype(l, 2));
+            "string", lua_strtype(l, 3));
         }
-        resource = lua_tostring(l, 2);
+        resource = lua_tostring(l, 3);
+    }
+
+    // third argument, if present, needs to be a function:
+    if (lua_gettop(l) >= 4 && lua_type(l, 4) != LUA_TNIL) {
+        if (lua_type(l, 4) != LUA_TFUNCTION) {
+            return haveluaerror(l, badargument1, 3, "blitwizard.object:new",
+            "function", lua_strtype(l, 4));
+        }
+        
+        // remove everything above this function from the stack:
+        if (lua_gettop(l) > 4) {
+            lua_pop(l, lua_gettop(l)-4);
+        }
     }
 
     // create new object
     struct blitwizardobject* o = malloc(sizeof(*o));
     if (!o) {
+        luacfuncs_object_clearRegistryTable(l, o);
         return haveluaerror(l, "Failed to allocate new object");
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
+
+    // if we have an init function, set it:
+    if (lua_gettop(l) == 4 && lua_type(l, 4) == LUA_TFUNCTION) {
+        luacfuncs_object_setEvent(l, o, "init");
+    }
 
     // add us to the object list:
     o->next = objects;
@@ -184,13 +238,73 @@ int luafuncs_object_new(lua_State* l) {
 
     // if resource is present, start loading it:
     luafuncs_objectgraphics_load(o, resource);
-    return 0;
+
+    // if we have an "init" function, call it now:
+
+
+    // push idref to object onto stack as return value:
+    luafuncs_pushbobjidref(l, o);
+    return 1;
+}
+
+void luacfuncs_object_clearRegistryTable(lua_State* l,
+struct blitwizardobject* o) {
+    char s[128];
+    // compose object registry entry string
+    snprintf(s, sizeof(s), "bobj_info_table_%p", o);
+
+    // clear entry:
+    lua_pushstring(l, s);
+    lua_pushnil(l);
+    lua_settable(l, LUA_REGISTRYINDEX);
+}
+
+void luacfuncs_object_obtainRegistryTable(lua_State* l,
+struct blitwizardobject* o) {
+    char s[128];
+    // compose object registry entry string
+    snprintf(s, sizeof(s), "bobj_info_table_%p", o);
+
+    // obtain registry entry:
+    lua_pushstring(l, s);
+    lua_gettable(l, LUA_REGISTRYINDEX);
+
+    // if table is not present yet, create it:
+    if (lua_type(l, -1) != LUA_TTABLE) {
+        lua_pop(l, 1);  // pop whatever value this is
+
+        // create a proper table:
+        lua_pushstring(l, s);
+        lua_newtable(l);
+        lua_settable(l, LUA_REGISTRYINDEX);
+
+        // obtain it again:
+        lua_pushstring(l, s);
+        lua_gettable(l, LUA_REGISTRYINDEX);
+    }
 }
 
 // implicitely calls luafuncs_onError() when an error happened
 void luacfuncs_object_callEvent(struct blitwizardobject* o,
 const char* eventName) {
+    
+}
 
+void luacfuncs_object_setEvent(lua_State* l,
+struct blitwizardobject* o, const char* eventName) {
+    // set the event function on top of the stack
+    // to the blitwizard object
+
+    // obtain registry table for object:
+    luacfuncs_object_obtainRegistryTable(l, o);
+    lua_insert(l, -2);  // move it below event func on stack
+
+    // set function to table:
+    char func[512];
+    snprintf(func, sizeof(func), "eventfunc_%s", eventName);
+    lua_pushstring(l, func);
+    lua_insert(l, -2);  // move string below event func
+    lua_settable(l, -3); 
 }
 
 /// Delete the given object explicitely, to make it instantly disappear
@@ -231,7 +345,7 @@ int luafuncs_object_delete(lua_State* l) {
 // @treturn number x coordinate
 // @treturn number y coordinate
 // @treturn number (if 3d object) z coordinate
-int luafuncs_getPosition(lua_State* l) {
+int luafuncs_object_getPosition(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:getPosition");
     if (obj->deleted) {
@@ -253,8 +367,8 @@ int luafuncs_getPosition(lua_State* l) {
 // @tparam number pos_x x coordinate
 // @tparam number pos_y y coordinate
 // @tparam number pos_z (only for 3d objects) z coordinate
-int luafuncs_setPosition(lua_State* l) {
-
+int luafuncs_object_setPosition(lua_State* l) {
+    return 0;
 }
 
 /// Set the z-index of the object (only for 2d objects).
@@ -266,8 +380,8 @@ int luafuncs_setPosition(lua_State* l) {
 // so use numbers like 1, 2, 3, 99, ...
 // @function setZIndex
 // @tparam number z_index New z index
-int luafuncs_setZIndex(lua_State* l) {
-
+int luafuncs_object_setZIndex(lua_State* l) {
+    return 0;
 }
 
 

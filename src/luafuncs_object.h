@@ -28,9 +28,20 @@ int luafuncs_object_new(lua_State* l);
 void luafuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o);
 struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, const char* func);
 
-int luafuncs_getPosition(lua_State* l);
-int luafuncs_setPosition(lua_State* l);
-int luafuncs_setZIndex(lua_State* l);
+int luafuncs_object_getPosition(lua_State* l);
+int luafuncs_object_setPosition(lua_State* l);
+int luafuncs_object_setZIndex(lua_State* l);
+
+// set the function on top of the stack as event function:
+// (put nil on top of the stack if you want to clear the event)
+void luacfuncs_object_setEvent(lua_State* l,
+struct blitwizardobject* o, const char* eventName);
+
+// clear the registry table of the object:
+// (used internally for cleanup)
+void luacfuncs_object_clearRegistryTable(lua_State* l,
+struct blitwizardobject* o);
+
 
 #endif  // BLITWIZARD_OBJECT_H_
 

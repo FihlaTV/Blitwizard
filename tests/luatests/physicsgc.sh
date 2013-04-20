@@ -47,6 +47,7 @@ rm ./test.lua
 if [ "x$RETURNVALUE" = "x0" ]; then
     exit 0
 else
+    echo "Error: invalid test return value: $RETURNVALUE"
     exit 1
 fi
 

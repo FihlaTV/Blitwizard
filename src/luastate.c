@@ -228,23 +228,29 @@ static void luastate_CreateGraphicsTable(lua_State* l) {
     lua_settable(l, -3);
 }
 
+static void luastate_registerfunc(lua_State* l, void* func, const char* name) {
+    // register an object function on the table on stack position -1
+    lua_pushstring(l, name);
+    lua_pushcfunction(l, func);
+    lua_settable(l, -3); 
+}
+
+static void luastate_CreateObjectTable(lua_State* l) {
+    // create a lua table populated with all object functions (blitwizard.object)
+    lua_newtable(l);
+    luastate_registerfunc(l, &luafuncs_object_new, "new");
+    luastate_registerfunc(l, &luafuncs_object_getPosition, "getPosition");
+    luastate_registerfunc(l, &luafuncs_object_getPosition, "setPosition");
+    luastate_registerfunc(l, &luafuncs_object_setZIndex, "setZIndex");
+}
+
 static void luastate_CreateSimpleSoundTable(lua_State* l) {
     lua_newtable(l);
-    lua_pushstring(l, "new");
-    lua_pushcfunction(l, &luafuncs_media_simpleSound_new);
-    lua_settable(l, -3);
-    lua_pushstring(l, "play");
-    lua_pushcfunction(l, &luafuncs_media_simpleSound_play);
-    lua_settable(l, -3);
-    lua_pushstring(l, "adjust");
-    lua_pushcfunction(l, &luafuncs_media_simpleSound_adjust);
-    lua_settable(l, -3);
-    lua_pushstring(l, "setPriority");
-    lua_pushcfunction(l, &luafuncs_media_simpleSound_setPriority);
-    lua_settable(l, -3);
-    lua_pushstring(l, "stop");
-    lua_pushcfunction(l, &luafuncs_media_simpleSound_stop);
-    lua_settable(l, -3);
+    luastate_registerfunc(l, &luafuncs_media_simpleSound_new, "new");
+    luastate_registerfunc(l, &luafuncs_media_simpleSound_play, "play");
+    luastate_registerfunc(l, &luafuncs_media_simpleSound_adjust, "adjust");
+    luastate_registerfunc(l, &luafuncs_media_simpleSound_setPriority, "setPriority");
+    luastate_registerfunc(l, &luafuncs_media_simpleSound_stop, "stop");
 }
 
 static void luastate_CreateAudioTable(lua_State* l) {
@@ -422,6 +428,11 @@ static lua_State* luastate_New(void) {
 
     // obtain the blitwiz lib
     lua_getglobal(l, "blitwizard");
+
+    // blitwizard.object:
+    lua_pushstring(l, "object");
+    luastate_CreateObjectTable(l);
+    lua_settable(l, -3);
 
     // blitwiz.setStep:
     lua_pushstring(l, "setStep");

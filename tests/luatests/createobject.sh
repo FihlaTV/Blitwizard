@@ -8,7 +8,7 @@ source preparetest.sh
 
 # Run blitwizard test:
 echo "local obj = blitwizard.object:new(false, nil, function()
-    print(\"success\")
+    print(\"success: \" .. tostring(self))
 end)
 obj:setPosition(1, 2)
 " > ./test.lua
@@ -23,6 +23,7 @@ rm ./testoutput
 if [ "x$testoutput" = "xsuccess" ]; then
     exit 0
 else
+    echo "Error: invalid test output: '$testoutput'"
     exit 1
 fi
 

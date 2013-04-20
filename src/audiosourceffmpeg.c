@@ -23,7 +23,7 @@
 
 #ifdef USE_AUDIO
 
- #define FFMPEGDEBUG
+// #define FFMPEGDEBUG
 
 #ifdef USE_FFMPEG_AUDIO
 #include "libavcodec/avcodec.h"
