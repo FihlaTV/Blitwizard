@@ -67,7 +67,7 @@ struct texturerequesthandle;
 // DIMENSIONS THEN THE ONE YOU GOT. Also, the callback can be
 // called again any time, at which point it will provide a new
 // texture and THE OLD ONE WILL GET INVALID with the next call
-// of graphicstexturemanager_InvalidateTextures().
+// of texturemanager_InvalidateTextures().
 //
 // The textureSwitch texture passed to you can be NULL aswell!
 // (you must stop using the old one and not draw anything until
@@ -145,7 +145,7 @@ struct texturerequesthandle* request);
 // Hence, call this at a point where your drawing operations are
 // complete and it won't crash your drawing code when textures
 // become unavailable and new ones need to be used.
-void graphicstexture_InvalidateTextures();
+void texturemanager_InvalidateTextures();
 
 #endif  // USE_GRAPHICS
 

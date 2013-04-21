@@ -51,6 +51,7 @@
 #include "graphics.h"
 #include "graphicstexturelist.h"
 #include "graphicssdltexturestruct.h"
+#include "graphics2dsprites.h"
 
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
@@ -180,7 +181,8 @@ void graphicsrender_Draw(void) {
     graphicssdlrender_StartFrame();
 
     // render sprites:
-    graphics2dsprite_DoForAllSprites(
+    graphics2dsprites_DoForAllSprites(
+    &graphicssdlrender_SpriteCallback);
 
     graphicssdlrender_CompleteFrame();
 }

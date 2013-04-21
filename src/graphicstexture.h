@@ -24,6 +24,8 @@
 #ifndef BLITWIZARD_GRAPHICSTEXTURE_H_
 #define BLITWIZARD_GRAPHICSTEXTURE_H_
 
+#include <stdlib.h>
+
 struct graphicstexture;
 
 // Formats (in little endian byte order):

@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -70,7 +70,7 @@ void graphics2dsprites_Flip(struct graphics2dsprite* sprite,
 int horizontalflip, int verticalflip);
 
 // Set sprite coloring. (1, 1, 1) is normal full brightness
-void graphics2dsprites_SetColor(struct graphics2dsprites* sprite,
+void graphics2dsprites_SetColor(struct graphics2dsprite* sprite,
 double r, double g, double b);
 
 // Set sprite alpha from 0 (invisible) to 1 (fully opaque)
@@ -78,7 +78,7 @@ void graphics2dsprites_SetAlpha(struct graphics2dsprite* sprite,
 double alpha);
 
 // Destroy the specified sprite:
-void graphics2dsprite_Destroy(struct graphics2dsprite* sprite);
+void graphics2dsprites_Destroy(struct graphics2dsprite* sprite);
 
 
 // --- internally used to draw sprites: ---
@@ -96,7 +96,7 @@ void graphics2dsprite_Destroy(struct graphics2dsprite* sprite);
 //
 // NOTE: The callbacks are always batched up and you can request them
 // to happen with graphics2dsprite_TriggerCallbacks.
-void graphics2dsprite_SetCreateDeleteCallbacks(
+void graphics2dsprites_SetCreateDeleteCallbacks(
 void (*spriteCreated) (void* handle,
 const char* path, struct graphicstexture* tex,
 double x, double y,
@@ -110,7 +110,7 @@ void (*spriteDeleted) (void* handle)
 // Trigger the sprite callbacks you previously set.
 // As soon as the function returns, the callbacks for all
 // recent sprite changes will be completed.
-void graphics2dsprite_TriggerCallbacks(void);
+void graphics2dsprites_TriggerCallbacks(void);
 
 // Get information on all sprites in one go.
 //
@@ -119,7 +119,7 @@ void graphics2dsprite_TriggerCallbacks(void);
 //
 // For sprites with no texture loaded/available,
 // the tex parameter will be set to NULL.
-void graphics2dsprite_DoForAllSprites(
+void graphics2dsprites_DoForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
 double angle, int horizontalflip,

@@ -24,15 +24,16 @@
 #ifdef USE_GRAPHICS
 
 #include "luafuncs_objectgraphics.h"
+#include "luafuncs_objectphysics.h"
+#include "graphics2dsprites.h"
 
 void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource) {
     double x,y,z;
-    objectphysics_getPosition(obj, &x, &y, &z);
+    objectphysics_getPosition(o, &x, &y, &z);
 
     o->graphics->sprite = graphics2dsprites_Create(
-    resource, x, y, 0, 0, luafuncs_objectgraphics_geometryCallback,
-    luafuncs_objectgraphics_visiblityCallback);
+    resource, x, y, 0, 0);
 }
 
 void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
@@ -40,7 +41,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
 
     } else {
         if (o->graphics->sprite) {
-            graphics2dsprite_Destroy(o->graphics->sprite);
+            graphics2dsprites_Destroy(o->graphics->sprite);
             o->graphics->sprite = NULL;
         }
     }

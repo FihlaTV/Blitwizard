@@ -58,6 +58,7 @@ int luafuncs_globalcollision3dcallback_unprotected(void* userdata, struct physic
 // The following functions are available even when physics support
 // is not compiled in:
 
+#include "luaheader.h"
 int luafuncs_getRotation(lua_State* l);
 int luafuncs_getPosition(lua_State* l);
 

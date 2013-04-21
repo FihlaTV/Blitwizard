@@ -70,6 +70,7 @@ char* binpath = NULL;  // path to blitwizard binary
 #include "SDL.h"
 #endif
 #include "graphicstexture.h"
+#include "graphicstexturemanager.h"
 #include "graphics.h"
 #include "graphicsrender.h"
 
@@ -968,7 +969,7 @@ int main(int argc, char** argv) {
         }
 
         // invalidate textures
-        graphicstexture_InvalidateTextures();
+        texturemanager_InvalidateTextures();
     }
     main_Quit(0);
     return 0;
