@@ -32,6 +32,7 @@
 #include "luafuncs_physics.h"
 #include "luafuncs_net.h"
 #include "luafuncs_media_object.h"
+#include "luafuncs_os.h"
 #include "luaerror.h"
 #include "luastate_functionTables.h"
 

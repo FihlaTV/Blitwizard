@@ -42,6 +42,7 @@
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
   <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
+  <li><a href="../modules/os.html">os</a></li>
 </ul>
 
 </div>
@@ -66,13 +67,13 @@
 <h2><a href="#Class_object">Class object </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#object:new">object:new&nbsp;(3d, resource, behaviour)</a></td>
+	<td class="name" ><a href="#object:new">object:new&nbsp;(3d, resource)</a></td>
 	<td class="summary">Create a new blitwizard object which is represented as a 2d or
  3d object in the game world.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#object:delete">object:delete&nbsp;()</a></td>
-	<td class="summary">Delete the given object explicitely, to make it instantly disappear
+	<td class="name" ><a href="#object:destroy">object:destroy&nbsp;()</a></td>
+	<td class="summary">Destroy the given object explicitely, to make it instantly disappear
  from the game world.</td>
 	</tr>
 	<tr>
@@ -155,7 +156,7 @@
     <dl class="function">
     <dt>
     <a name = "object:new"></a>
-    <strong>object:new&nbsp;(3d, resource, behaviour)</strong>
+    <strong>object:new&nbsp;(3d, resource)</strong>
     </dt>
     <dd>
     Create a new blitwizard object which is represented as a 2d or
@@ -173,9 +174,6 @@
         <li><span class="parameter">resource</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
          (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.</li>
-        <li><span class="parameter">behaviour</span>
-            <span class="types"><span class="type">function</span></span>
-         (optional) the behaviour function which will be executed immediately after object creation.</li>
     </ul>
 
     <h3>Returns:</h3>
@@ -190,12 +188,14 @@
 
 </dd>
     <dt>
-    <a name = "object:delete"></a>
-    <strong>object:delete&nbsp;()</strong>
+    <a name = "object:destroy"></a>
+    <strong>object:destroy&nbsp;()</strong>
     </dt>
     <dd>
-    Delete the given object explicitely, to make it instantly disappear
+    Destroy the given object explicitely, to make it instantly disappear
  from the game world.
+<p> If you still have references to this object, they will no longer
+ work.
 
 
 
