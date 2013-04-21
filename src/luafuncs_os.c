@@ -21,7 +21,10 @@
 
 */
 
-/// This is the default Lua "os" module. However, blitwizard extends
+/// This is the default Lua "os" module.
+// (<a href="http://www.lua.org/manual/5.2/manual.html#6.9">Check here for its documentation</a>)
+//
+// However, blitwizard extends
 // it with a few additional functions as documented here.
 // Hopefully they'll be useful with your game building!
 // @author Jonas Thiem  (jonas.thiem@gmail.com)
