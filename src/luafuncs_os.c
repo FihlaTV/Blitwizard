@@ -130,7 +130,8 @@ int luafuncs_isdir(lua_State* l) {
     return 1;
 }
 
-/// Returns a table array containing all the files in a directory.
+/// Returns a table array containing all the file names of the
+// files in the specified directory.
 // @function ls
 // @tparam string directory path, empty string ("") for current directory
 // @usage
