@@ -509,7 +509,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 // -- Set the dimensions of the object to a 1x1 square
 // -- (find out how large that is in pixels
 // -- at the default zoom level with
-// -- @{blitwizard.graphics.getDefaultCamera}:@{blitwizard.graphics.camera:gameUnitsPerPixel|gameUnitsPerPixel}() - multiply this
+// -- @{blitwizard.graphics.getCameras}()[1]:@{blitwizard.graphics.camera:gameUnitsPerPixel|gameUnitsPerPixel}() - multiply this
 // -- with any number of game units to get their size in pixels)
 // myobject:setScale(1, 1)
 //
