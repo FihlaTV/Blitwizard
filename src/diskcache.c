@@ -22,6 +22,7 @@
 */
 
 #include "os.h"
+#include <time.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,6 +73,14 @@ static char* diskcache_GenerateCacheFolderPath(void) {
 }
 
 __attribute__((constructor)) static void diskcache_Init(void) {
+#ifdef UNIX
+    // initialise drand48():
+    srand48(time(NULL));
+#else
+    // initialise rand():
+    srand(time(NULL));
+#endif
+
     // create mutex and lock it instantly:
     cachemutex = mutex_Create();
     mutex_Lock(cachemutex);
@@ -103,7 +112,7 @@ static void diskcache_CloseLockedFile(FILE* f) {
 #ifdef UNIX
 #ifndef MAC
     // for non-Mac OS X Unix (Linux/BSD), we use flock
-    flock(f, LOCK_UN);
+    flock(fileno(f), LOCK_UN);
 #else
     // for Mac OS X, we currently use nothing!
 #endif
@@ -148,7 +157,7 @@ static FILE* diskcache_OpenLockedFile(const char* path, int write) {
     if (write) {
         operation = LOCK_EX;
     }
-    if (flock(f, operation) == 0) {
+    if (flock(fileno(f), operation) == 0) {
         return f;
     }
     fclose(f);
