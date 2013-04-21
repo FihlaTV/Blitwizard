@@ -26,17 +26,6 @@
 
 #include "luaheader.h"
 
-// os:
-int luafuncs_getcwd(lua_State* l);
-int luafuncs_chdir(lua_State* l);
-int luafuncs_isdir(lua_State* l);
-int luafuncs_exists(lua_State* l);
-int luafuncs_ls(lua_State* l);
-int luafuncs_openConsole(lua_State* l);
-int luafuncs_exit(lua_State* l);
-int luafuncs_sysname(lua_State* l);
-int luafuncs_sysversion(lua_State* l);
-
 // blitwizard.*:
 int luafuncs_setstep(lua_State* l);
 int luafuncs_getTemplateDirectory(lua_State* l);
@@ -64,11 +53,6 @@ int luafuncs_play(lua_State* l);
 int luafuncs_playing(lua_State* l);
 int luafuncs_stop(lua_State* l);
 int luafuncs_adjust(lua_State* l);
-
-// Strings:
-int luafuncs_startswith(lua_State* l);
-int luafuncs_endswith(lua_State* l);
-int luafuncs_split(lua_State* l);
 
 // Math:
 int luafuncs_trandom(lua_State* l);
