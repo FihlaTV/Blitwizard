@@ -33,36 +33,13 @@
 #include "luafuncs_net.h"
 #include "luafuncs_media_object.h"
 #include "luaerror.h"
+#include "luastate_functionTables.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "file.h"
-
-// If USE_PHYSICS2D, or USE_PHYSICS3D respectively isn't defined we
-// wouldn't want to actually have a function call to
-// luastate_register2dphysics_do/luastate_register3dphysics_do
-// with the physics function pointer get evaluated by gcc
-// because this will result in linker errors.
-// With this define, we can avoid linker errors due to the physics
-// functions not being present in such a case.
-#ifdef USE_PHYSICS2D
-#define luastate_register2dphysics luastate_register2dphysics_do
-#else
-#define luastate_register2dphysics(X, Y, Z) (luastate_register2dphysics_do(X, NULL, Z))
-#endif
-#ifdef USE_PHYSICS3D
-#define luastate_register3dphysics luastate_register2dphysics_do
-#else
-#define luastate_register3dphysics(X, Y, Z) (luastate_register2dphysics_do(X, NULL, Z))
-#endif
-
-#ifdef HAVE_GRAPHICS
-#define luastate_registergraphics luastate_registergraphics_do
-#else
-#define luastate_registergraphics(X, Y, Z) (luastate_registergraphics_do(X, NULL, Z))
-#endif
 
 static lua_State* scriptstate = NULL;
 
@@ -140,135 +117,6 @@ void luastate_SetGCCallback(void* luastate, int tablestackindex, int (*callback)
     if (tablestackindex < 0) {tablestackindex--;} // metatable is now at the top
     lua_setmetatable(l, tablestackindex);
     if (tablestackindex < 0) {tablestackindex++;}
-}
-
-int functionalitymissing_2dphysics(lua_State* l) {
-    return haveluaerror(l, "%s", error_nophysics2d);
-}
-
-int functionalitymissing_3dphysics(lua_State* l) {
-    return haveluaerror(l, "%s", error_nophysics3d);
-}
-
-int functionalitymissing_graphics(lua_State* l) {
-    return haveluaerror(l, "%s", error_nographics);
-}
-
-void luastate_register2dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
-    lua_pushstring(l, name);
-#ifdef USE_PHYSICS2D
-    lua_pushcfunction(l, func);
-#else
-    lua_pushcfunction(l, functionalitymissing_2dphysics);
-#endif
-    lua_settable(l, -3);
-}
-
-void luastate_register3dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
-    lua_pushstring(l, name);
-#ifdef USE_PHYSICS2D
-    lua_pushcfunction(l, func);
-#else
-    lua_pushcfunction(l, functionalitymissing_3dphysics);
-#endif
-    lua_settable(l, -3);
-}
-
-void luastate_registergraphics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
-    lua_pushstring(l, name);
-#ifdef HAVE_GRAPHICS
-    lua_pushcfunction(l, func);
-#else
-    lua_pushcfunction(l, functionalitymissing_graphics);
-#endif
-    lua_settable(l, -3);
-}
-
-static void luastate_CreatePhysicsTable(lua_State* l) {
-    lua_newtable(l);
-    luastate_register2dphysics(l, &luafuncs_set2dGravity, "set2dGravity");
-    luastate_register2dphysics(l, &luafuncs_ray2d, "ray2d");
-    luastate_register3dphysics(l, &luafuncs_set3dGravity, "set3dGravity");
-    luastate_register3dphysics(l, &luafuncs_ray3d, "ray3d");
-}
-
-static void luastate_CreateNetTable(lua_State* l) {
-    lua_newtable(l);
-    lua_pushstring(l, "open");
-    lua_pushcfunction(l, &luafuncs_netopen);
-    lua_settable(l, -3);
-    lua_pushstring(l, "server");
-    lua_pushcfunction(l, &luafuncs_netserver);
-    lua_settable(l, -3);
-    lua_pushstring(l, "set");
-    lua_pushcfunction(l, &luafuncs_netset);
-    lua_settable(l, -3);
-    lua_pushstring(l, "send");
-    lua_pushcfunction(l, &luafuncs_netsend);
-    lua_settable(l, -3);
-    lua_pushstring(l, "close");
-    lua_pushcfunction(l, &luafuncs_netclose);
-    lua_settable(l, -3);
-}
-
-static void luastate_CreateGraphicsTable(lua_State* l) {
-    lua_newtable(l);
-    lua_pushstring(l, "getRendererName");
-    lua_pushcfunction(l, &luafuncs_getRendererName);
-    lua_settable(l, -3);
-    luastate_registergraphics(l, &luafuncs_setMode, "setMode");
-    lua_pushstring(l, "getWindowSize");
-    lua_pushcfunction(l, &luafuncs_getWindowSize);
-    lua_settable(l, -3);
-    lua_pushstring(l, "getDisplayModes");
-    lua_pushcfunction(l, &luafuncs_getDisplayModes);
-    lua_settable(l, -3);
-    lua_pushstring(l, "getDesktopDisplayMode");
-    lua_pushcfunction(l, &luafuncs_getDesktopDisplayMode);
-    lua_settable(l, -3);
-}
-
-static void luastate_registerfunc(lua_State* l, void* func, const char* name) {
-    // register an object function on the table on stack position -1
-    lua_pushstring(l, name);
-    lua_pushcfunction(l, func);
-    lua_settable(l, -3); 
-}
-
-static void luastate_CreateObjectTable(lua_State* l) {
-    // create a lua table populated with all object functions (blitwizard.object)
-    lua_newtable(l);
-    luastate_registerfunc(l, &luafuncs_object_new, "new");
-    luastate_registerfunc(l, &luafuncs_object_getPosition, "getPosition");
-    luastate_registerfunc(l, &luafuncs_object_getPosition, "setPosition");
-    luastate_registerfunc(l, &luafuncs_object_setZIndex, "setZIndex");
-}
-
-static void luastate_CreateSimpleSoundTable(lua_State* l) {
-    lua_newtable(l);
-    luastate_registerfunc(l, &luafuncs_media_simpleSound_new, "new");
-    luastate_registerfunc(l, &luafuncs_media_simpleSound_play, "play");
-    luastate_registerfunc(l, &luafuncs_media_simpleSound_adjust, "adjust");
-    luastate_registerfunc(l, &luafuncs_media_simpleSound_setPriority, "setPriority");
-    luastate_registerfunc(l, &luafuncs_media_simpleSound_stop, "stop");
-}
-
-static void luastate_CreateAudioTable(lua_State* l) {
-    lua_newtable(l);
-
-    lua_pushstring(l, "simpleSound");
-    luastate_CreateSimpleSoundTable(l);
-    lua_settable(l, -3);
-}
-
-static void luastate_CreateTimeTable(lua_State* l) {
-    lua_newtable(l);
-    lua_pushstring(l, "getTime");
-    lua_pushcfunction(l, &luafuncs_getTime);
-    lua_settable(l, -3);
-    lua_pushstring(l, "sleep");
-    lua_pushcfunction(l, &luafuncs_sleep);
-    lua_settable(l, -3);
 }
 
 static int openlib_blitwizard(lua_State* l) {

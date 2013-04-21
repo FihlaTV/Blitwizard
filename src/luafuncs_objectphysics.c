@@ -664,97 +664,6 @@ int luafuncs_impulse(lua_State* l) {
     return 0;
 }
 
-int luafuncs_ray(lua_State* l, int use3d) {
-    char func[64];
-    if (use3d) {
-        strcpy(func, "blitwizard.physics.ray3d");
-    } else {
-        strcpy(func, "blitwizard.physics.ray2d");
-    }
-    if (lua_type(l, 1) != LUA_TNUMBER) {
-        return haveluaerror(l, badargument1, 1, func, "number",
-        lua_strtype(l, 1));
-    }
-    if (lua_type(l, 2) != LUA_TNUMBER) {
-        lua_pushstring(l, "Second parameter is not a valid start y position");
-        return lua_error(l);
-    }
-    if (use3d) {
-        if (lua_type(l, 3) != LUA_TNUMBER) {
-            lua_pushstring(l, "Fourth parameter is not a valid start z position");
-            return lua_error(l);
-        }
-    }
-    if (lua_type(l, 3 + use3d) != LUA_TNUMBER) {
-        lua_pushstring(l, "Third parameter is not a valid target x position");
-        return lua_error(l);
-    }
-    if (lua_type(l, 4 + use3d) != LUA_TNUMBER) {
-        lua_pushstring(l, "Fourth parameter is not a valid target y position");
-        return lua_error(l);
-    }
-    if (use3d) {
-        if (lua_type(l, 6) != LUA_TNUMBER) {
-            lua_pushstring(l, "Fourth parameter is not a valid target z position");
-            return lua_error(l);
-        }
-    }
-
-    double startx = lua_tonumber(l, 1);
-    double starty = lua_tonumber(l, 2);
-    double startz;
-    if (use3d) {
-        startz = lua_tonumber(l, 3);
-    }
-    double targetx = lua_tonumber(l, 3+use3d);
-    double targety = lua_tonumber(l, 4+use3d);
-    double targetz;
-    if (use3d) {
-        targetz = lua_tonumber(l, 6);
-    }
-
-    struct physicsobject* obj;
-    double hitpointx,hitpointy,hitpointz;
-    double normalx,normaly,normalz;
-
-    int returnvalue;
-    if (use3d) {
-        returnvalue = physics_Ray3d(main_DefaultPhysics2dPtr(),
-        startx, starty, startz,
-        targetx, targety, targetz,
-        &hitpointx, &hitpointy, &hitpointz,
-        &obj,
-        &normalx, &normaly, &normalz);
-    } else {
-        returnvalue = physics_Ray2d(main_DefaultPhysics2dPtr(),
-        startx, starty,
-        targetx, targety,
-        &hitpointx, &hitpointy,
-        &obj,
-        &normalx, &normaly);
-    }
-
-    if (returnvalue) {
-        // create a new reference to the (existing) object the ray has hit:
-        luafuncs_pushbobjidref(l, (struct blitwizardobject*)physics_GetObjectUserdata(obj));
-
-        // push the other information we also want to return:
-        lua_pushnumber(l, hitpointx);
-        lua_pushnumber(l, hitpointy);
-        if (use3d) {
-            lua_pushnumber(l, hitpointz);
-        }
-        lua_pushnumber(l, normalx);
-        lua_pushnumber(l, normaly);
-        if (use3d) {
-            lua_pushnumber(l, normalz);
-        }
-        return 5+2*use3d;  // return it all
-    }
-    lua_pushnil(l);
-    return 1;
-}
-
 /// Restrict the ability to rotate for a given object. For 2d, the rotation
 // can be totally restricted or not, for 3d it can be restricted around a specific
 // axis (e.g. like a door), completely (object can not rotate at all), or not at all.
@@ -1232,35 +1141,6 @@ double* qx, double* qy, double* qz, double* qrot) {
         physics2d_DestroyObject(oldobject);
     }
     applyobjectsettings(obj);
-    return 0;
-}*/
-
-
-/*int luafuncs_setCollisionCallback(lua_State* l) {
-    struct blitwizardobject* obj = toblitwizardobject(l, 1);
-    if (obj->deleted) {
-        lua_pushstring(l, "Object was deleted");
-        return lua_error(l);
-    }
-    if (!obj->object) {
-        lua_pushstring(l, "Object doesn't have a shape");
-        return lua_error(l);
-    }
-    if (lua_gettop(l) < 2 || lua_type(l, 2) != LUA_TFUNCTION) {
-        return haveluaerror(l, badargument1, 2, "blitwiz.physics.setCollisionCallback", "function", lua_strtype(l, 2));
-    }
-
-    if (lua_gettop(l) > 2) {
-        lua_pop(l, lua_gettop(l)-2);
-    }
-
-    char funcname[200];
-    snprintf(funcname, sizeof(funcname), "collisioncallback%p", obj->physics);
-    funcname[sizeof(funcname)-1] = 0;
-    lua_pushstring(l, funcname);
-    lua_insert(l, -2);
-    lua_settable(l, LUA_REGISTRYINDEX);
-
     return 0;
 }*/
 

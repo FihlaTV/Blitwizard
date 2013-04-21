@@ -1,16 +1,14 @@
 #!/bin/bash
 
-# This test confirms os.ls() (a blitwizard lua api function) works.
-# It lists the files in the templates/ directory using blitwizard/os.ls,
-# then does the same in bash and compares the results.
+# This test confirms blitiwzard.object:new works.
+# It will also test the init event function.
 
 source preparetest.sh
 
 # Run blitwizard test:
-echo "local obj = blitwizard.object:new(false, nil, function()
-    print(\"success: \" .. tostring(self))
-end)
+echo "local obj = blitwizard.object:new(false)
 obj:setPosition(1, 2)
+print(\"success\")
 " > ./test.lua
 $RUNBLITWIZARD ./test.lua > ./testoutput
 rm ./test.lua

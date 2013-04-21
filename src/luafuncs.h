@@ -73,5 +73,8 @@ int luafuncs_split(lua_State* l);
 // Math:
 int luafuncs_trandom(lua_State* l);
 
+// Internal error handling:
+void luacfuncs_onError(const char* funcname, const char* error);
+
 #endif  // BLITWIZARD_LUAFUNCS_H_
 

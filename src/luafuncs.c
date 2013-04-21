@@ -86,6 +86,14 @@ static const char* luastringchunkreader(lua_State *l, void *data, size_t *size) 
 
 #endif
 
+void luacfuncs_onError(const char* funcname, const char* error) {
+    printerror("Error when calling %s: %s", funcname, error);
+
+    // send error to ingame lua console:
+
+
+}
+
 int luafuncs_getTemplateDirectory(lua_State* l) {
     lua_pushstring(l, templatepath);
     return 1;

@@ -31,11 +31,26 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 int luafuncs_object_getPosition(lua_State* l);
 int luafuncs_object_setPosition(lua_State* l);
 int luafuncs_object_setZIndex(lua_State* l);
+int luafuncs_object_destroy(lua_State* l);
 
 // set the function on top of the stack as event function:
 // (put nil on top of the stack if you want to clear the event)
 void luacfuncs_object_setEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName);
+
+// Call the event function for a given event.
+// 'self' will be set to the given object.
+//
+// If you want to pass arguments to the event functions,
+// push them onto the stack (last argument on top)
+// and specify their number with the args parameter.
+//
+// Arguments will be popped from the stack.
+int luacfuncs_object_callEvent(lua_State* l,
+struct blitwizardobject* o, const char* eventName,
+int args);
+// Returns 0 if there was a lua error in the
+// event function, otherwise 1.
 
 // clear the registry table of the object:
 // (used internally for cleanup)

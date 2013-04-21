@@ -10,9 +10,24 @@ source preparetest.sh
 echo "
 -- create a static 3d and a movable 2d object
 local obj1 = blitwizard.object:new(true)
-obj1:enableStaticCollision({type="box",x_size=1,y_size=1,z_size=1})
+local success = pcall(function()
+    -- attempt to activate 3d collision:
+    obj1:enableStaticCollision({type="box",x_size=1,y_size=1,z_size=1})
+end)
+if not success then
+    -- apparently, 3d collision is disabled
+    print(\"WARNING: This build has no 3d collision, test cannot run meaningfully.\")
+    os.exit(0)
+end
 local obj2 = blitwizard.object:new(false)
-obj2:enableMovableCollision({type="rectangle",width=2,height=2})
+local success = pcall(function()
+    obj2:enableMovableCollision({type="rectangle",width=2,height=2})
+end)
+if not success then
+    -- apparently, 3d collision is disabled
+    print(\"WARNING: This build has no 2d collision, test cannot run meaningfully.\")
+    os.exit(0)
+end
 
 -- a ray is also generating new references and affecting garbage collection:
 blitwizard.physics.ray2d(-10, 0, 0, 0)
