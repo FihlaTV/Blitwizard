@@ -66,8 +66,6 @@
 #include "SDL.h"
 #endif
 
-int drawingallowed = 0;
-
 #if defined(ANDROID) || defined(__ANDROID__)
 // the lua chunk reader for Android
 SDL_RWops* loadfilerwops = NULL;
@@ -87,6 +85,14 @@ static const char* luastringchunkreader(lua_State *l, void *data, size_t *size) 
 }
 
 #endif
+
+void luacfuncs_onError(const char* funcname, const char* error) {
+    printerror("Error when calling %s: %s", funcname, error);
+
+    // send error to ingame lua console:
+
+
+}
 
 int luafuncs_getTemplateDirectory(lua_State* l) {
     lua_pushstring(l, templatepath);
@@ -457,98 +463,6 @@ int luafuncs_ls(lua_State* l) {
     return 1;
 }
 
-
-void imgloadedcallback(int success, const char* texture); // written in main.c
-int luafuncs_unloadImage(lua_State* l) {
-#ifdef USE_GRAPHICS
-    const char* p = lua_tostring(l,1);
-    if (!p) {
-        lua_pushstring(l, "First parameter is not a valid image name string");
-        return lua_error(l);
-    }
-    // check on texture state and decide what to do:
-    int i = graphics_IsTextureLoaded(p);
-    if (i > 0) { // loaded or currently being loaded
-        graphics_UnloadTexture(p, &imgloadedcallback);
-    }
-    return 0;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
-int luafuncs_isImageLoaded(lua_State* l) {
-#ifdef USE_GRAPHICS
-    const char* p = lua_tostring(l,1);
-    if (!p) {
-        lua_pushstring(l, "First parameter is not a valid image name string");
-        return lua_error(l);
-    }
-    int i = graphics_IsTextureLoaded(p);
-    if (i == 2) { // loaded: true
-        lua_pushboolean(l, 1);
-    }else{
-        if (i == 1) { // operation in progress: false
-            lua_pushboolean(l, 0);
-        }else{ // not loaded: nil
-            lua_pushnil(l);
-        }
-    }
-    return 1;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
-int luafuncs_loadImage(lua_State* l) {
-#ifdef USE_GRAPHICS
-    const char* p = lua_tostring(l,1);
-    if (!p) {
-        lua_pushstring(l, "First parameter is not a valid image name string");
-        return lua_error(l);
-    }
-    int i = graphics_IsTextureLoaded(p);
-    if (i > 0) {
-        lua_pushstring(l, "Image is either already loaded or currently being asynchronously loaded");
-        return lua_error(l);
-    }
-    i = graphics_LoadTextureInstantly(p);
-    if (i == 0) {
-        lua_pushstring(l, "Failed to load image");
-        return lua_error(l);
-    }
-    return 0;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
-int luafuncs_loadImageAsync(lua_State* l) {
-#ifdef USE_GRAPHICS
-    const char* p = lua_tostring(l,1);
-    if (!p) {
-        lua_pushstring(l, "First parameter is not a valid image name string");
-        return lua_error(l);
-    }
-    int i = graphics_PromptTextureLoading(p);
-    if (i == 0) {
-        lua_pushstring(l, "Failed to load image due to fatal error: Out of memory?");
-        return lua_error(l);
-    }
-    if (i == 2) {
-        lua_pushstring(l, "Image is already loaded");
-        return lua_error(l);
-    }
-    return 0;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
 int luafuncs_split(lua_State* l) {
     size_t len1,len2;
     const char* src1 = luaL_checklstring(l, 1, &len1);
@@ -648,7 +562,7 @@ int luafuncs_sleep(lua_State* l) {
     return 0;
 }
 
-int luafuncs_getImageSize(lua_State* l) {
+/*int luafuncs_getImageSize(lua_State* l) {
 #ifdef USE_GRAPHICS
     const char* p = lua_tostring(l,1);
     if (!p) {
@@ -667,7 +581,7 @@ int luafuncs_getImageSize(lua_State* l) {
     lua_pushstring(l, compiled_without_graphics);
     return lua_error(l);
 #endif
-}
+}*/
 
 int luafuncs_getWindowSize(lua_State* l) {
 #ifdef USE_GRAPHICS
@@ -685,307 +599,6 @@ int luafuncs_getWindowSize(lua_State* l) {
 #endif
 }
 
-int luafuncs_drawRectangle(lua_State* l) {
-#ifdef USE_GRAPHICS
-    if (!drawingallowed) {
-        lua_pushstring(l, "You cannot draw now");
-        return lua_error(l);
-    }
-
-    // rectangle position
-    int x,y;
-    float alpha = 1;
-    if (lua_type(l, 1) != LUA_TNUMBER) {
-       lua_pushstring(l, "First parameter is not a valid x position number");
-        return lua_error(l);
-    }
-    if (lua_type(l, 2) != LUA_TNUMBER) {
-        lua_pushstring(l, "Second parameter is not a valid y position number");
-        return lua_error(l);
-    }
-    x = (int)((float)lua_tonumber(l, 1)+0.5f);
-    y = (int)((float)lua_tonumber(l, 2)+0.5f);
-
-    // rectangle widths
-    int width,height;
-    if (lua_type(l, 3) != LUA_TNUMBER) {
-        lua_pushstring(l, "Third parameter is not a valid width number");
-        return lua_error(l);
-    }
-    if (lua_type(l, 4) != LUA_TNUMBER) {
-        lua_pushstring(l, "Fourth parameter is not a valid height number");
-        return lua_error(l);
-    }
-    width = (int)((float)lua_tonumber(l, 3)+0.5f);
-    height = (int)((float)lua_tonumber(l, 4)+0.5f);
-
-    // see if we are on screen anyway
-    if (width <= 0 || height <= 0) {return 0;}
-    if (x + width < 0 || y + height < 0) {return 0;}
-
-    // read rectangle colors
-    float r,g,b;
-    if (lua_type(l, 5) != LUA_TNUMBER) {
-        lua_pushstring(l, "Fifth parameter is not a valid red color number");
-        return lua_error(l);
-    }
-    if (lua_type(l, 6) != LUA_TNUMBER) {
-        lua_pushstring(l, "Sixth parameter is not a valid red color number");
-        return lua_error(l);
-    }
-    if (lua_type(l, 7) != LUA_TNUMBER) {
-        lua_pushstring(l, "Seventh parameter is not a valid red color number");
-        return lua_error(l);
-    }
-    r = lua_tonumber(l, 5);
-    g = lua_tonumber(l, 6);
-    b = lua_tonumber(l, 7);
-    if (r < 0) {r = 0;}
-    if (r > 1) {r = 1;}
-    if (g < 0) {g = 0;}
-    if (g > 1) {g = 1;}
-    if (b < 0) {b = 0;}
-    if (b > 1) {b = 1;}
-
-    // obtain alpha if given
-    if (lua_gettop(l) >= 8) {
-        if (lua_type(l, 8) != LUA_TNUMBER) {
-            lua_pushstring(l, "Eighth parameter is not a valid alpha number");
-            return lua_error(l);
-        }
-        alpha = lua_tonumber(l, 8);
-        if (alpha < 0) {alpha = 0;}
-        if (alpha > 1) {alpha = 1;}
-    }
-
-    graphicsrender_DrawRectangle(x, y, width, height, r, g, b, alpha);
-    return 0;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
-#ifdef USE_GRAPHICS
-void luafuncs_pushnosuchtex(lua_State* l, const char* tex) {
-    char errmsg[512];
-    snprintf(errmsg,sizeof(errmsg), "Requested texture \"%s\" isn't loaded or available", tex);
-    errmsg[sizeof(errmsg)-1] = 0;
-    lua_pushstring(l, errmsg);
-}
-#endif
-
-// Helper function to obtain a setting on a settings table at stack pos -1
-// and to check the setting for the proper lua type.
-static int gettablesetting(lua_State* l, const char* name, int type) {
-    // obtain a setting from a settings table at stack -1 and check its type
-    lua_pushstring(l, name);
-    lua_gettable(l, -2);
-
-    // get the string name of the desired type of the setting:
-    char buf[64];
-    luatypetoname(type, buf, sizeof(buf));
-
-    if (lua_type(l, -1) != LUA_TNIL) {
-        // the setting is either not nil, or nil is not allowed
-        // compare with desired type:
-        if (lua_type(l, -1) != type) {
-            // setting has a wrong type, compose and emit error:
-            char msg[512];
-            snprintf(msg, sizeof(msg), "setting '%s' is of type '%s', but expected '%s'", name, lua_strtype(l, -1), buf);
-            msg[sizeof(msg)-1] = 0;
-            return haveluaerror(l, badargument2, 2, "blitwiz.graphics.drawImage", msg);
-        }
-        return 1;
-    }
-    return 0;
-}
-
-
-int luafuncs_drawImage(lua_State* l) {
-#ifdef USE_GRAPHICS
-    const char* p = lua_tostring(l,1);
-    if (!p) {
-        return haveluaerror(l, badargument1, 1, "blitwiz.graphics.drawImage", "string", lua_strtype(l, 1));
-    }
-
-    if (!drawingallowed) {
-        lua_pushstring(l, "You cannot draw now");
-        return lua_error(l);
-    }
-
-    int type = LUA_TNIL;
-    if (lua_gettop(l) >= 2) {type = lua_type(l, 2);}
-    if (type != LUA_TTABLE) {
-        return haveluaerror(l, badargument1, 2, "blitwiz.graphics.drawImage", "table", lua_strtype(l, 2));
-    }
-
-    // drop other unrequired parameters:
-    if (lua_gettop(l) > 2) {lua_pop(l, lua_gettop(l)-2);}
-
-    // get position parameters
-    int x = 0;
-    int y = 0;
-    if (gettablesetting(l, "x", LUA_TNUMBER)) {
-        x = (int)((float)lua_tonumber(l, -1)+0.5f);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "y", LUA_TNUMBER)) {
-        y = (int)((float)lua_tonumber(l, -1)+0.5);
-    }
-    lua_pop(l, 1);
-
-    // read alpha value
-    float alpha = 1;
-    if (gettablesetting(l, "alpha", LUA_TNUMBER)) {
-        alpha = lua_tonumber(l, -1);
-        if (alpha < 0) {alpha = 0;}
-        if (alpha > 1) {alpha = 1;}
-    }
-    lua_pop(l, 1);
-
-    // read cut rectangle parameters
-    int cutx = 0;
-    int cuty = 0;
-    int cutwidth = -1;
-    int cutheight = -1;
-    if (gettablesetting(l, "cutx", LUA_TNUMBER)) {
-        cutx = (int)((float)lua_tonumber(l, -1)+0.5f);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "cuty", LUA_TNUMBER)) {
-        cuty = (int)((float)lua_tonumber(l, -1)+0.5);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "cutwidth", LUA_TNUMBER)) {
-        cutwidth = (int)((float)lua_tonumber(l, -1)+0.5f);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "cutheight", LUA_TNUMBER)) {
-        cutheight = (int)((float)lua_tonumber(l, -1)+0.5);
-    }
-    lua_pop(l, 1);
-
-    // obtain scale parameters
-    float scalex = 1;
-    float scaley = 1;
-    if (gettablesetting(l, "scalex", LUA_TNUMBER)) {
-        scalex = (float)lua_tonumber(l, -1);
-        if (scalex <= 0) {scalex = 0;}
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "scaley", LUA_TNUMBER)) {
-        scaley = (float)lua_tonumber(l, -1);
-        if (scaley <= 0) {scaley = 0;}
-    }
-    lua_pop(l, 1);
-
-    // obtain rotation parameters
-    double rotationangle = 0;
-    int rotationcenterx = 0;
-    int rotationcentery = 0;
-    // make rotation center default to image center
-    unsigned int imgw,imgh;
-    if (graphics_GetTextureDimensions(p, &imgw, &imgh)) {
-        rotationcenterx = imgw/2;
-        rotationcentery = imgh/2;
-    }
-    // get supplied rotation info
-    if (gettablesetting(l, "rotationangle", LUA_TNUMBER)) {
-        rotationangle = lua_tonumber(l, -1);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "rotationcenterx", LUA_TNUMBER)) {
-        rotationcenterx = (int)(lua_tonumber(l, -1) + 0.5f);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "rotationcentery", LUA_TNUMBER)) {
-        rotationcentery = (int)(lua_tonumber(l, -1) + 0.5f);
-    }
-    lua_pop(l, 1);
-
-    // get flipping info
-    int horiflipped = 0;
-    if (gettablesetting(l, "flipped", LUA_TBOOLEAN)) {
-        horiflipped = lua_toboolean(l, -1);
-    }
-    lua_pop(l, 1);
-
-    // get color info
-    double red = 1;
-    double green = 1;
-    double blue = 1;
-    if (gettablesetting(l, "red", LUA_TNUMBER)) {
-        red = lua_tonumber(l, -1);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "green", LUA_TNUMBER)) {
-        green = lua_tonumber(l, 16);
-    }
-    lua_pop(l, 1);
-    if (gettablesetting(l, "blue", LUA_TNUMBER)) {
-        blue = lua_tonumber(l, 17);
-    }
-    lua_pop(l, 1);
-
-    // process negative cut positions and adjust output position accordingly
-    if (cutx < 0) {
-        if (cutwidth > 0) { // decrease draw width accordingly
-            cutwidth += cutx;
-            if (cutwidth < 0) {
-                cutwidth = 0;
-            }
-        }
-        // move position to the right
-        cutx = 0;
-        x -= cutx;
-    }
-    if (cuty < 0) {
-        if (cutheight < 0) { // decrease draw height accordingly
-            cutheight += cuty;
-            if (cutheight < 0) {
-                cutheight = 0;
-            }
-        }
-        cuty = 0;
-        x -= cuty;
-    }
-
-    // empty draw calls aren't possible, but we will "emulate" it to provide an error on a missing texture anyway
-    if (scalex <= 0 || scaley <= 0 || cutwidth == 0 || cutheight == 0) {
-        if (!graphics_IsTextureLoaded(p)) {
-            luafuncs_pushnosuchtex(l, p);
-            return lua_error(l);
-        }
-    }
-
-    if (cutwidth < 0) {cutwidth = 0;}
-    if (cutheight < 0) {cutheight = 0;}
-
-    int imgdraww = cutwidth;
-    int imgdrawh = cutheight;
-
-    if (imgdraww == 0 || imgdrawh == 0) {
-        unsigned int w,h;
-        if (graphics_GetTextureDimensions(p, &w, &h)) {
-            if (imgdraww == 0) {imgdraww = w;}
-            if (imgdrawh == 0) {imgdrawh = h;}
-        }
-    }
-    unsigned int drawwidth = (unsigned int)((float)(imgdraww) * scalex + 0.5f);
-    unsigned int drawheight = (unsigned int)((float)(imgdrawh) * scaley + 0.5f);
-
-    // draw:
-    if (!graphicsrender_DrawCropped(p, x, y, alpha, cutx, cuty, cutwidth, cutheight, drawwidth, drawheight, rotationcenterx, rotationcentery, rotationangle, horiflipped, red, green, blue)) {
-        luafuncs_pushnosuchtex(l, p);
-        return lua_error(l);
-    }
-    return 0;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
 
 int luafuncs_getcwd(lua_State* l) {
     char* p = file_GetCwd();

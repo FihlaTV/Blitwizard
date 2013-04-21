@@ -50,8 +50,9 @@ int suppressfurthererrors = 0; // a critical error was shown, don't show more
 int windowisfocussed = 0;
 int appinbackground = 0; // app is in background (mobile/Android)
 static int sdlinitialised = 0; // sdl was initialised and needs to be quit
-extern int drawingallowed; // stored in luafuncs.c, checks if we come from an on_draw() event or not
 char* templatepath = NULL; // global template directory path as determined at runtime
+
+char* binpath = NULL;  // path to blitwizard binary
 
 #include "luastate.h"
 #include "file.h"
@@ -61,6 +62,7 @@ char* templatepath = NULL; // global template directory path as determined at ru
 #include "audiomixer.h"
 #include "logging.h"
 #include "audiosourceffmpeg.h"
+#include "signalhandling.h"
 #include "physics.h"
 #include "connections.h"
 #include "listeners.h"
@@ -69,6 +71,7 @@ char* templatepath = NULL; // global template directory path as determined at ru
 #endif
 #include "graphicstexture.h"
 #include "graphics.h"
+#include "graphicsrender.h"
 
 int TIMESTEP = 16;
 int MAXLOGICITERATIONS = 50; // 50 * 16 = 800ms
@@ -170,28 +173,6 @@ static void quitevent(void) {
     char* error;
     if (!luastate_CallFunctionInMainstate("blitwiz.on_close", 0, 1, 1, &error, NULL)) {
         printerror("Error when calling blitwiz.on_close: %s",error);
-        if (error) {
-            free(error);
-        }
-        fatalscripterror();
-        return;
-    }
-}
-
-void imgloadedcallback(int success, const char* texture) {
-    char* error;
-    if (!luastate_PushFunctionArgumentToMainstate_String(texture)) {
-        printerror("Error when pushing func args to blitwiz.on_image");
-        fatalscripterror();
-        return;
-    }
-    if (!luastate_PushFunctionArgumentToMainstate_Bool(success)) {
-        printerror("Error when pushing func args to blitwiz.on_image");
-        fatalscripterror();
-        return;
-    }
-    if (!luastate_CallFunctionInMainstate("blitwiz.on_image", 2, 1, 1, &error, NULL)) {
-        printerror("Error when calling blitwiz.on_image: %s", error);
         if (error) {
             free(error);
         }
@@ -384,6 +365,19 @@ int main(int argc, char** argv) {
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard %s starting", VERSION);
 #endif
+
+    // set signal handlers:
+    signalhandling_Init();
+
+    // set path to blitwizard binary:
+#ifdef UNIX
+    if (argc > 0) {
+        binpath = file_GetAbsolutePathFromRelativePath(argv[0]);
+    }
+#endif
+
+    // test crash handling:
+    //*((int*)5) = 2;
 
     // evaluate command line arguments:
     const char* script = "game.lua";
@@ -802,8 +796,6 @@ int main(int argc, char** argv) {
     }
 
     // when graphics or audio is open, run the main loop
-    int blitwizonstepworked = 0;
-    int blitwizondrawworked = 0;
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Entering main loop...");
 #endif
@@ -823,8 +815,6 @@ int main(int argc, char** argv) {
     uint64_t lastdrawingtime = 0;
     uint64_t physicstimestamp = time_GetMilliseconds();
     while (!wantquit) {
-        blitwizonstepworked = 1;
-        blitwizondrawworked = 0;
         uint64_t time = time_GetMilliseconds();
 
         // this is a hack for SDL bug http://bugzilla.libsdl.org/show_bug.cgi?id=1422
@@ -849,7 +839,9 @@ int main(int argc, char** argv) {
         int nodraw = 1;
 #else
         int nodraw = 1;
-        if (graphics_AreGraphicsRunning()) {nodraw = 0;}
+        if (graphics_AreGraphicsRunning()) {
+            nodraw = 0;
+        }
 #endif
         uint64_t delta = time_GetMilliseconds()-lastdrawingtime;
         if (nodraw) {
@@ -865,7 +857,7 @@ int main(int argc, char** argv) {
             }else{
                 connections_SleepWait(deltaspan-delta);
             }
-        }else{
+        } else {
             connections_SleepWait(0);
         }
 
@@ -919,44 +911,19 @@ int main(int argc, char** argv) {
                     logictimestamp = time_GetMilliseconds();
                     printwarning("Warning: logic is too slow, maximum logic iterations have been reached (%d)", (int)MAXLOGICITERATIONS);
                 }
-            }else{
+            } else {
                 // we don't need to iterate anymore -> everything is fine
             }
         }
-
-#ifdef USE_GRAPHICS
-        // check for image loading progress
-        if (!appinbackground) {
-            graphics_CheckTextureLoading(&imgloadedcallback);
-        }
-#endif
 
 #ifdef USE_GRAPHICS
         if (graphics_AreGraphicsRunning()) {
 #ifdef ANDROID
             if (!appinbackground) {
 #endif
-                // start drawing
-                drawingallowed = 1;
-                graphicsrender_StartFrame();
-
-                // call the drawing function
-                int ondrawdoesntexist = 0;
-                if (!luastate_CallFunctionInMainstate("blitwiz.on_draw", 0, 1, 1, &error, &ondrawdoesntexist)) {
-                printerror("Error: An error occured when calling blitwiz.on_draw: %s",error);
-                    if (error) {free(error);}
-                    fatalscripterror();
-                    main_Quit(1);
-                }else{
-                    if (!ondrawdoesntexist) {blitwizondrawworked = 1;}
-                }
-
-                // complete the drawing
-                drawingallowed = 0;
-                graphicsrender_CompleteFrame();
+                // draw a frame
+                graphicsrender_Draw();
 #ifdef ANDROID
-            }else{
-                blitwizondrawworked = 1;
             }
 #endif
         }
@@ -964,9 +931,13 @@ int main(int argc, char** argv) {
 
         // we might want to quit if there is nothing else to do
 #ifdef USE_AUDIO
-        if (!blitwizondrawworked && !blitwizonstepworked && connections_NoConnectionsOpen() && !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()) {
+        if (!graphics_AreGraphicsRunning() &&
+        connections_NoConnectionsOpen() &&
+        !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()) {
 #else
-        if (!blitwizondrawworked && !blitwizonstepworked && connections_NoConnectionsOpen() && !listeners_HaveActiveListeners()) {
+        if (!graphics_AreGraphicsRunning() &&
+        connections_NoConnectionsOpen() &&
+        !listeners_HaveActiveListeners()) {
 #endif
             main_Quit(1);
         }

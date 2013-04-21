@@ -8,14 +8,29 @@ source preparetest.sh
 
 # Get output from blitwizard
 echo "
--- create a static and a movable object:
-local obj1 = blitwiz.physics2d.createStaticObject()
-local obj2 = blitwiz.physics2d.createMovableObject()
-blitwiz.physics2d.setShapeOval(obj1, 3, 2)
-blitwiz.physics2d.setShapeRectangle(obj2, 5, 4)
+-- create a static 3d and a movable 2d object
+local obj1 = blitwizard.object:new(true)
+local success = pcall(function()
+    -- attempt to activate 3d collision:
+    obj1:enableStaticCollision({type="box",x_size=1,y_size=1,z_size=1})
+end)
+if not success then
+    -- apparently, 3d collision is disabled
+    print(\"WARNING: This build has no 3d collision, test cannot run meaningfully.\")
+    os.exit(0)
+end
+local obj2 = blitwizard.object:new(false)
+local success = pcall(function()
+    obj2:enableMovableCollision({type="rectangle",width=2,height=2})
+end)
+if not success then
+    -- apparently, 3d collision is disabled
+    print(\"WARNING: This build has no 2d collision, test cannot run meaningfully.\")
+    os.exit(0)
+end
 
 -- a ray is also generating new references and affecting garbage collection:
-blitwiz.physics2d.ray(-10, 0, 0, 0)
+blitwizard.physics.ray2d(-10, 0, 0, 0)
 
 -- collect garbage until something happens
 print(\"Physics GC test phase 1/2\")
@@ -25,8 +40,10 @@ while i < 1000 do
     i = i + 1
 end
 
--- Now nil the references explicitely:
+-- Now nil one reference explicitely,
+-- and delete the other object and nil it:
 obj1 = nil
+obj2:delete()
 obj2 = nil
 
 -- collect more garbage
@@ -45,6 +62,7 @@ rm ./test.lua
 if [ "x$RETURNVALUE" = "x0" ]; then
     exit 0
 else
+    echo "Error: invalid test return value: $RETURNVALUE"
     exit 1
 fi
 

@@ -54,16 +54,9 @@ int luafuncs_sleep(lua_State* l);
 // Graphics:
 int luafuncs_getRendererName(lua_State* l);
 int luafuncs_setWindow(lua_State* l);
-int luafuncs_loadImage(lua_State* l);
-int luafuncs_loadImageAsync(lua_State* l);
-int luafuncs_getImageSize(lua_State* l);
 int luafuncs_getWindowSize(lua_State* l);
-int luafuncs_drawImage(lua_State* l);
-int luafuncs_drawRectangle(lua_State* l);
 int luafuncs_getDisplayModes(lua_State* l);
 int luafuncs_getDesktopDisplayMode(lua_State* l);
-int luafuncs_isImageLoaded(lua_State* l);
-int luafuncs_unloadImage(lua_State* l);
 
 // Sound:
 int luafuncs_getBackendName(lua_State* l);
@@ -79,6 +72,9 @@ int luafuncs_split(lua_State* l);
 
 // Math:
 int luafuncs_trandom(lua_State* l);
+
+// Internal error handling:
+void luacfuncs_onError(const char* funcname, const char* error);
 
 #endif  // BLITWIZARD_LUAFUNCS_H_
 

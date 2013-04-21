@@ -42,6 +42,7 @@
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "graphicstexturelist.h"
+#include "diskcache.h"
 #include "imgloader.h"
 #include "timefuncs.h"
 #include "hash.h"
@@ -50,51 +51,70 @@
 #include "main.h"
 #endif
 
-static struct graphicstexture* texlist = NULL;
+static struct graphicstexturemanaged* texlist = NULL;
 hashmap* texhashmap = NULL;
 
-void graphicstexturelist_InitializeHashmap() {
+void graphicstexturelist_InitializeHashmap(void) {
     if (texhashmap) {
         return;
     }
     texhashmap = hashmap_New(1024 * 1024);
 }
 
-void graphicstexturelist_AddTextureToList(struct graphicstexture* gt) {
-    gt->next = texlist;
-    texlist = gt;
+struct graphicstexturemanaged* graphicstexturelist_AddTextureToList(
+const char* path) {
+    struct graphicstexturemanaged* m = malloc(sizeof(*m));
+    if (!m) {
+        return NULL;
+    }
+    memset(m, 0, sizeof(*m));
+    m->path = strdup(path);
+    if (!m->path) {
+        free(m);
+        return NULL;
+    }
+    m->next = texlist;
+    texlist = m;
+    return m;
 }
 
-void graphicstexturelist_RemoveTextureFromList(struct graphicstexture* gt, struct graphicstexture* prev) {
+void graphicstexturelist_RemoveTextureFromList(
+struct graphicstexturemanaged* li, struct graphicstexturemanaged* prev) {
     if (prev) {
-        prev->next = gt->next;
-    }else{
-        texlist = gt->next;
+        prev->next = li->next;
+    } else {
+        texlist = li->next;
     }
 }
 
-struct graphicstexture* graphicstexturelist_GetTextureByName(const char* name) {
+struct graphicstexturemanaged* graphicstexturelist_GetTextureByName(
+const char* name) {
     graphicstexturelist_InitializeHashmap();
     uint32_t i = hashmap_GetIndex(texhashmap, name, strlen(name), 1);
-    struct graphicstexture* gt = (struct graphicstexture*)(texhashmap->items[i]);
-    while (gt && !(strcasecmp(gt->name, name) == 0)) {
-        gt = gt->hashbucketnext;
+    struct graphicstexturemanaged* m =
+    (struct graphicstexturemanaged*)(texhashmap->items[i]);
+    while (m && !(strcasecmp(m->path, name) == 0)) {
+        m = m->hashbucketnext;
     }
-    return gt;
+    return m;
 }
 
-void graphicstexturelist_AddTextureToHashmap(struct graphicstexture* gt) {
+void graphicstexturelist_AddTextureToHashmap(
+struct graphicstexturemanaged* m) {
     graphicstexturelist_InitializeHashmap();
-    uint32_t i = hashmap_GetIndex(texhashmap, gt->name, strlen(gt->name), 1);
-    gt->hashbucketnext = (struct graphicstexture*)(texhashmap->items[i]);
-    texhashmap->items[i] = gt;
+    uint32_t i = hashmap_GetIndex(texhashmap, m->path, strlen(m->path), 1);
+    
+    m->hashbucketnext = (struct graphicstexturemanaged*)(texhashmap->items[i]);
+    texhashmap->items[i] = m;
 }
 
-void graphicstexturelist_RemoveTextureFromHashmap(struct graphicstexture* gt) {
+void graphicstexturelist_RemoveTextureFromHashmap(
+struct graphicstexturemanaged* gt) {
     graphicstexturelist_InitializeHashmap();
-    uint32_t i = hashmap_GetIndex(texhashmap, gt->name, strlen(gt->name), 1);
-    struct graphicstexture* gt2 = (struct graphicstexture*)(texhashmap->items[i]);
-    struct graphicstexture* gtprev = NULL;
+    uint32_t i = hashmap_GetIndex(texhashmap, gt->path, strlen(gt->path), 1);
+    struct graphicstexturemanaged* gt2 =
+    (struct graphicstexturemanaged*)(texhashmap->items[i]);
+    struct graphicstexturemanaged* gtprev = NULL;
     while (gt2) {
         if (gt2 == gt) {
             if (gtprev) {
@@ -111,61 +131,146 @@ void graphicstexturelist_RemoveTextureFromHashmap(struct graphicstexture* gt) {
     }
 }
 
-void graphicstexturelist_TransferTexturesFromHW() {
-    struct graphicstexture* gt = texlist;
-    while (gt) {
-        graphics_TextureFromHW(gt);
-        gt = gt->next;
-    }
-}
-
-void graphicstexturelist_InvalidateHWTextures() {
-    struct graphicstexture* gt = texlist;
-    while (gt) {
-        graphics_DestroyHWTexture(gt);
-        gt = gt->next;
-    }
-}
-
-int graphicstexturelist_TransferTexturesToHW() {
-    struct graphicstexture* gt = texlist;
-    while (gt) {
-        if (!graphics_TextureToHW(gt)) {
-            return 0;
+void graphicstexturelist_TransferTextureFromHW(
+struct graphicstexturemanaged* gt) {
+    int i = 0;
+    while (i < gt->scalelistcount) {
+        struct graphicstexturescaled* s = &gt->scalelist[i];
+        if (!s->pixels) {  // no pixels stored in system memory
+            // if we can, download texture from GPU:
+            if (s->gt) {
+                void* newpixels = malloc(s->width * s->height * 4);
+                if (newpixels) {
+                    int r = graphicstexture_PixelsFromTexture(s->gt,
+                    newpixels);
+                    if (r) {
+                        s->pixels = newpixels;
+                    } else {
+                        free(newpixels);
+                    }
+                }
+            }
         }
+        if (s->gt) {
+            // destroy texture from the GPU
+            graphicstexture_Destroy(s->gt);
+            s->gt = NULL;
+        }
+        i++;
+    }
+}
+
+void graphicstexturelist_InvalidateTextureInHW(
+struct graphicstexturemanaged* gt) {
+    int i = 0;
+    while (i < gt->scalelistcount) {
+        struct graphicstexturescaled* s = &gt->scalelist[i];
+        if (s->gt) {
+            // destroy texture from the GPU
+            graphicstexture_Destroy(s->gt);
+            s->gt = NULL;
+        }
+        i++;
+    }
+}
+
+void graphicstexturelist_TransferTexturesFromHW(void) {
+    struct graphicstexturemanaged* gt = texlist;
+    while (gt) {
+        graphicstexturelist_TransferTextureFromHW(gt);
         gt = gt->next;
     }
-    return 1;
+}
+
+void graphicstexturelist_InvalidateHWTextures(void) {
+    struct graphicstexturemanaged* gt = texlist;
+    while (gt) {
+        graphicstexturelist_InvalidateTextureInHW(gt);
+        gt = gt->next;
+    }
+}
+
+void graphicstexturelist_TransferTextureToHW(
+struct graphicstexturemanaged* gt) {
+    int i = 0;
+    while (i < gt->scalelistcount) {
+        struct graphicstexturescaled* s = &gt->scalelist[i];
+        if (!s->pixels) {  // no pixels stored in system memory
+            // if we can, download texture from GPU:
+            if (s->gt) {
+                void* newpixels = malloc(s->width * s->height * 4);
+                if (newpixels) {
+                    int r = graphicstexture_PixelsFromTexture(s->gt,
+                    newpixels);
+                    if (r) {
+                        s->pixels = newpixels;
+                    } else {
+                        free(newpixels);
+                    }
+                }
+            }
+        }
+        if (s->gt) {
+            // destroy texture from the GPU
+            graphicstexture_Destroy(s->gt);
+            s->gt = NULL;
+        }
+        i++;
+    }
 }
 
 
-struct graphicstexture* graphicstexturelist_GetPreviousTexture(struct graphicstexture* gt) {
-    struct graphicstexture* gtprev = texlist;
+struct graphicstexturemanaged* graphicstexturelist_GetPreviousTexture(
+struct graphicstexturemanaged* gt) {
+    struct graphicstexturemanaged* gtprev = texlist;
     while (gtprev && !(gtprev->next == gt)) {
         gtprev = gtprev->next;
     }
     return gtprev;
 }
 
-int graphicstexturelist_FreeAllTextures() {
-    int fullycleaned = 1;
-    struct graphicstexture* gt = texlist;
-    struct graphicstexture* gtprev = NULL;
-    while (gt) {
-        if (!graphics_FreeTexture(gt, gtprev)) {
-            fullycleaned = 0;
+void graphicstexturelist_DestroyTexture(
+struct graphicstexturemanaged* gt) {
+    int i = 0;
+    while (i < gt->scalelistcount) {
+        struct graphicstexturescaled* s = &gt->scalelist[i];
+        if (s->gt) {
+            // destroy texture from the GPU
+            graphicstexture_Destroy(s->gt);
         }
-        gtprev = gt;
-        gt = gt->next;
+        if (s->pixels) {
+            // destroy texture in memory
+            free(s->pixels);
+        }
+        if (s->diskcachepath) {
+            // destroy texture from disk cache
+            diskcache_Delete(s->diskcachepath);
+            free(s->diskcachepath);
+        }
+        i++;
     }
-    return fullycleaned;
+    free(gt->scalelist);
+    free(gt);
 }
 
-void graphicstexturelist_DoForAllTextures(int (*callback)(struct graphicstexture* texture, struct graphicstexture* previoustexture, void* userdata), void* userdata) {
-    struct graphicstexture* gt = texlist;
-    struct graphicstexture* gtprev = NULL;
+void graphicstexturelist_FreeAllTextures(void) {
+    // free all textures
+    struct graphicstexturemanaged* gt = texlist;
     while (gt) {
-        struct graphicstexture* gtnext = gt->next;
+        struct graphicstexturemanaged* gtnext = gt->next;
+        graphicstexturelist_DestroyTexture(gt);
+        gt = gtnext;
+    }
+}
+
+void graphicstexturelist_DoForAllTextures(
+int (*callback)(struct graphicstexturemanaged* texture,
+struct graphicstexturemanaged* previoustexture,
+void* userdata), void* userdata) {
+    struct graphicstexturemanaged* gt = texlist;
+    struct graphicstexturemanaged* gtprev = NULL;
+    while (gt) {
+        struct graphicstexturemanaged* gtnext = gt->next;
         if (callback(gt, gtprev, userdata)) {
             // entry is still valid (callback return 1), remember it as prev
             gtprev = gt;

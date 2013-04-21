@@ -50,7 +50,7 @@
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "graphicstexturelist.h"
-
+#include "graphicssdltexturestruct.h"
 
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
@@ -78,93 +78,99 @@ void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, 
     }
 }
 
-int graphicsrender_DrawCropped(const char* texname, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue) {
-    if (!graphics3d) {
-        struct graphicstexture* gt = graphicstexturelist_GetTextureByName(texname);
-        if (!gt || gt->threadingptr || !gt->tex.sdltex) {
-            return 0;
-        }
-
-        if (alpha <= 0) {
-            return 1;
-        }
-        if (alpha > 1) {
-            alpha = 1;
-        }
-
-        // calculate source dimensions
-        SDL_Rect src,dest;
-        src.x = sourcex;
-        src.y = sourcey;
-
-        if (sourcewidth > 0) {
-            src.w = sourcewidth;
-        }else{
-            src.w = gt->width;
-        }
-        if (sourceheight > 0) {
-            src.h = sourceheight;
-        }else{
-            src.h = gt->height;
-        }
-
-        // set target dimensinos
-        dest.x = x; dest.y = y;
-        if (drawwidth == 0 || drawheight == 0) {
-            dest.w = src.w;dest.h = src.h;
-        }else{
-            dest.w = drawwidth; dest.h = drawheight;
-        }
-
-        // render
-        int i = (int)((float)255.0f * alpha);
-        if (SDL_SetTextureAlphaMod(gt->tex.sdltex, i) < 0) {
-            printwarning("Warning: Cannot set texture alpha mod %d: %s\n",i,SDL_GetError());
-        }
-        SDL_Point p;
-        p.x = (int)((double)rotationcenterx * ((double)drawwidth / src.w));
-        p.y = (int)((double)rotationcentery * ((double)drawheight / src.h));
-        if (red > 1) {
-            red = 1;
-        }
-        if (red < 0) {
-            red = 0;
-        }
-        if (blue > 1) {
-            blue = 1;
-        }
-        if (blue < 0) {
-            blue = 0;
-        }
-        if (green > 1) {
-            green = 1;
-        }
-        if (green < 0) {
-            green = 0;
-        }
-        SDL_SetTextureColorMod(gt->tex.sdltex, (red * 255.0f), (green * 255.0f), (blue * 255.0f));
-        if (horiflipped) {
-            SDL_RenderCopyEx(mainrenderer, gt->tex.sdltex, &src, &dest, rotationangle, &p, SDL_FLIP_HORIZONTAL);
-        } else {
-            if (rotationangle > 0.001 || rotationangle < -0.001) {
-                SDL_RenderCopyEx(mainrenderer, gt->tex.sdltex, &src, &dest, rotationangle, &p, SDL_FLIP_NONE);
-            } else {
-                SDL_RenderCopy(mainrenderer, gt->tex.sdltex, &src, &dest);
-            }
-        }
+int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue) {
+    if (alpha <= 0) {
         return 1;
     }
-    return 0;
+    if (alpha > 1) {
+        alpha = 1;
+    }
+
+    // calculate source dimensions
+    SDL_Rect src,dest;
+    src.x = sourcex;
+    src.y = sourcey;
+
+    if (sourcewidth > 0) {
+        src.w = sourcewidth;
+    }else{
+        src.w = gt->width;
+    }
+    if (sourceheight > 0) {
+        src.h = sourceheight;
+    }else{
+        src.h = gt->height;
+    }
+
+    // set target dimensinos
+    dest.x = x; dest.y = y;
+    if (drawwidth == 0 || drawheight == 0) {
+        dest.w = src.w;dest.h = src.h;
+    }else{
+        dest.w = drawwidth; dest.h = drawheight;
+    }
+
+    // render
+    int i = (int)((float)255.0f * alpha);
+    if (SDL_SetTextureAlphaMod(gt->sdltex, i) < 0) {
+        printwarning("Warning: Cannot set texture alpha "
+        "mod %d: %s\n",i,SDL_GetError());
+    }
+    SDL_Point p;
+    p.x = (int)((double)rotationcenterx * ((double)drawwidth / src.w));
+    p.y = (int)((double)rotationcentery * ((double)drawheight / src.h));
+    if (red > 1) {
+        red = 1;
+    }
+    if (red < 0) {
+        red = 0;
+    }
+    if (blue > 1) {
+        blue = 1;
+    }
+    if (blue < 0) {
+        blue = 0;
+    }
+    if (green > 1) {
+        green = 1;
+    }
+    if (green < 0) {
+        green = 0;
+    }
+    SDL_SetTextureColorMod(gt->sdltex, (red * 255.0f),
+    (green * 255.0f), (blue * 255.0f));
+    if (horiflipped) {
+        // draw rotated and flipped
+        SDL_RenderCopyEx(mainrenderer, gt->sdltex, &src, &dest,
+        rotationangle, &p, SDL_FLIP_HORIZONTAL);
+    } else {
+        if (rotationangle > 0.001 || rotationangle < -0.001) {
+            // don't rotate the rendered image if it's barely rotated
+            // (this helps the software renderer)
+            SDL_RenderCopyEx(mainrenderer, gt->sdltex, &src, &dest,
+            rotationangle, &p, SDL_FLIP_NONE);
+        } else {
+            // draw rotated
+            SDL_RenderCopy(mainrenderer, gt->sdltex, &src, &dest);
+        }
+    }
+    return 1;
 }
 
 
-void graphicsrender_StartFrame() {
+void graphicssdlrender_StartFrame(void) {
     SDL_SetRenderDrawColor(mainrenderer, 0, 0, 0, 1);
     SDL_RenderClear(mainrenderer);
 }
 
-void graphicsrender_CompleteFrame() {
+void graphicssdlrender_CompleteFrame(void) {
     SDL_RenderPresent(mainrenderer);
+}
+
+void graphicsrender_Draw(void) {
+    graphicssdlrender_StartFrame();
+
+    graphicssdlrender_CompleteFrame();
 }
 
 #endif  // USE_SDL_GRAPHICS
