@@ -95,7 +95,9 @@
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object.shape_info">object.shape_info</a></td>
-	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)</td>
+	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+<p> Please note the shapes "edge list" and "triangle mesh" may only be used
+ for static collision.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:enableMovableCollision">object:enableMovableCollision&nbsp;(shape_info)</a></td>
@@ -300,6 +302,11 @@
     </dt>
     <dd>
     This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+<p> Please note the shapes "edge list" and "triangle mesh" may only be used
+ for static collision.  They don't work with movable collision objects.
+<p> Also keep in mind you can combine shapes when enabling collision,
+ by specifying multiple shapes (the final collision shape will be
+ all those shapes merged into one).
 
     <h3>Fields:</h3>
     <ul>
@@ -326,10 +333,10 @@
          required for "box" and "elliptic ball"</li>
         <li><span class="parameter">points</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-         required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. [ [ 0, 0 ], [ 1, 0 ], [ 0, 1 ] ]  (keep in mind the polygon needs to be convex!)</li>
+         required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. { { 0, 0 }, { 1, 0 }, { 0, 1 } }  (keep in mind the polygon needs to be <a href="http://en.wikipedia.org/wiki/Convex_polygon">convex!</a>)</li>
         <li><span class="parameter">edges</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-         required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Example: [ [ [ 0, 0 ], [ 1, 0 ] ], [ [ 0, 1 ], [ 1, 1 ] ] ]</li>
+         required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Both convex and concave shapes are supported. Example: { { { 0, 0 }, { 1, 0 } }, { { 0, 1 }, { 1, 1 } } }</li>
         <li><span class="parameter">triangles</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
          required for "triangle mesh": a list of triangles, whereas a triangle is itself a 3-item list of three 3d points, each 3d point being a list of three coordinates.</li>
