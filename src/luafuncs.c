@@ -590,3 +590,69 @@ int luafuncs_setstep(lua_State* l) {
     return 0;
 }
 
+
+/// Specify this function if you want to get notified
+// when your blitwizard game gets closed (close button,
+// ALT+F4, ...).
+//
+// <b>This function does not exist</b> unless you specify/override
+// it with blitwizard.onClose = ...
+//
+// This event is useful if you want to save the game
+// or do other things on shutdown.
+// @function onClose
+// @usage
+// -- specify our own close event function:
+// function blitwizard.onClose()
+//     print("Shutting down!")
+// end
+
+/// Specify this function if you want to get notified
+// when the mouse is moved over the @{blitwizard.graphics|graphics output}.
+//
+// <b>This function does not exist</b> unless you specify/override
+// it.
+// @function onMouseMove
+// @tparam number x_pos mouse X position
+// @tparam number y_pos mouse Y position
+// @usage
+// -- Listen for mouse evens:
+// function blitwizard.onMouseMove(x, y)
+//     print("Mouse position: x: " .. x .. ", y: " .. y)
+// end
+
+/// Specify this function if you want to get notified
+// when a mouse button is pressed down
+// on the @{blitwizard.graphics|graphics output}.
+//
+// <b>This function does not exist</b> unless you specify/override
+// it.
+// @function onMouseDown
+// @tparam number x_pos mouse X position
+// @tparam number y_pos mouse Y position
+// @tparam number button mouse button (1 for left, 2 for right)
+// @usage
+// -- Listen for mouse evens:
+// function blitwizard.onMouseDown(x, y, button)
+//     print("Mouse down: button: " .. button .. ", x: " .. x .. ", y: " .. y)
+// end
+
+/// Specify this function if you want to get notified
+// when a mouse button (which was previously pressed down)
+// is released
+// on the @{blitwizard.graphics|graphics output}.
+//
+// <b>This function does not exist</b> unless you specify/override
+// it.
+// @function onMouseUp
+// @tparam number x_pos mouse X position
+// @tparam number y_pos mouse Y position
+// @tparam number button mouse button (1 for left, 2 for right)
+// @usage
+// -- Listen for mouse evens:
+// function blitwizard.onMouseUp(x, y, button)
+//     print("Mouse up: button: " .. button .. ", x: " .. x .. ", y: " .. y)
+// end
+
+
+

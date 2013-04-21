@@ -74,14 +74,15 @@ char* binpath = NULL;  // path to blitwizard binary
 #include "graphicsrender.h"
 
 int TIMESTEP = 16;
-int MAXLOGICITERATIONS = 50; // 50 * 16 = 800ms
+int MAXLOGICITERATIONS = 50;  // 50 * 16 = 800ms
 
 void main_SetTimestep(int timestep) {
     if (timestep < 16) {
         timestep = 16;
     }
     TIMESTEP = timestep;
-    MAXLOGICITERATIONS = 800 / timestep; // never do logic for longer than 800ms
+    MAXLOGICITERATIONS = 800 / timestep;  // never do logic ..
+            // ... for longer than 800ms
     if (MAXLOGICITERATIONS < 2) {
         MAXLOGICITERATIONS = 2;
     }
@@ -96,7 +97,9 @@ void main_Quit(int returncode) {
     listeners_CloseAll();
     if (sdlinitialised) {
 #ifdef USE_SDL_AUDIO
-        // audio_Quit(); // FIXME: workaround for http://bugzilla.libsdl.org/show_bug.cgi?id=1396 (causes an unclean shutdown)
+        // audio_Quit(); // FIXME: workaround for
+        // http://bugzilla.libsdl.org/show_bug.cgi?id=1396
+        // (causes an unclean shutdown)
 #endif
 #ifdef USE_GRAPHICS
         graphics_Quit();
@@ -143,7 +146,7 @@ void main_InitAudio(void) {
         // try 16bit now
         s16mixmode = 1;
         if (!audio_Init(&audiomixer_GetBuffer, 0, p, 1, &error)) {
-            printwarning("Warning: Failed to initialise audio: %s",error);
+            printwarning("Warning: Failed to initialise audio: %s", error);
             if (error) {
                 free(error);
             }
@@ -171,37 +174,39 @@ void main_InitAudio(void) {
 
 static void quitevent(void) {
     char* error;
-    if (!luastate_CallFunctionInMainstate("blitwiz.on_close", 0, 1, 1, &error, NULL)) {
-        printerror("Error when calling blitwiz.on_close: %s",error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.onClose",
+    0, 1, 1, &error, NULL)) {
+        printerror("Error when calling blitwizard.onClose: %s",error);
         if (error) {
             free(error);
         }
         fatalscripterror();
         return;
     }
+    exit(0);
 }
 
 static void mousebuttonevent(int button, int release, int x, int y) {
     char* error;
-    char onmouseup[] = "blitwiz.on_mouseup";
-    const char* funcname = "blitwiz.on_mousedown";
+    char onmouseup[] = "blitwizard.onMouseUp";
+    const char* funcname = "blitwizard.onMouseDown";
     if (release) {
         funcname = onmouseup;
     }
-    if (!luastate_PushFunctionArgumentToMainstate_Double(button)) {
-        printerror("Error when pushing func args to %s",funcname);
-        fatalscripterror();
-        main_Quit(1);
-        return;
-    }
     if (!luastate_PushFunctionArgumentToMainstate_Double(x)) {
-        printerror("Error when pushing func args to %s",funcname);
+        printerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
     }
     if (!luastate_PushFunctionArgumentToMainstate_Double(y)) {
-        printerror("Error when pushing func args to %s",funcname);
+        printerror("Error when pushing func args to %s", funcname);
+        fatalscripterror();
+        main_Quit(1);
+        return;
+    }
+    if (!luastate_PushFunctionArgumentToMainstate_Double(button)) {
+        printerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
@@ -219,19 +224,20 @@ static void mousebuttonevent(int button, int release, int x, int y) {
 static void mousemoveevent(int x, int y) {
     char* error;
     if (!luastate_PushFunctionArgumentToMainstate_Double(x)) {
-        printerror("Error when pushing func args to blitwiz.on_mousemove");
+        printerror("Error when pushing func args to blitwizard.onMouseMove");
         fatalscripterror();
         main_Quit(1);
         return;
     }
     if (!luastate_PushFunctionArgumentToMainstate_Double(y)) {
-        printerror("Error when pushing func args to blitwiz.on_mousemove");
+        printerror("Error when pushing func args to blitwizard.onMouseMove");
         fatalscripterror();
         main_Quit(1);
         return;
     }
-    if (!luastate_CallFunctionInMainstate("blitwiz.on_mousemove", 2, 1, 1, &error, NULL)) {
-        printerror("Error when calling blitwiz.on_mousemove: %s", error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.onMouseMove",
+    2, 1, 1, &error, NULL)) {
+        printerror("Error when calling blitwizard.onMouseMove: %s", error);
         if (error) {
             free(error);
         }
@@ -242,8 +248,8 @@ static void mousemoveevent(int x, int y) {
 }
 static void keyboardevent(const char* button, int release) {
     char* error;
-    char onkeyup[] = "blitwiz.on_keyup";
-    const char* funcname = "blitwiz.on_keydown";
+    char onkeyup[] = "blitwizard.onKeyUp";
+    const char* funcname = "blitwizard.onKeyDown";
     if (release) {
         funcname = onkeyup;
     }
@@ -266,12 +272,13 @@ static void keyboardevent(const char* button, int release) {
 static void textevent(const char* text) {
     char* error;
     if (!luastate_PushFunctionArgumentToMainstate_String(text)) {
-        printerror("Error when pushing func args to blitwiz.on_text");
+        printerror("Error when pushing func args to blitwizard.onText");
         fatalscripterror();
         return;
     }
-    if (!luastate_CallFunctionInMainstate("blitwiz.on_text", 1, 1, 1, &error, NULL)) {
-        printerror("Error when calling blitwiz.on_text: %s", error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.onText",
+    1, 1, 1, &error, NULL)) {
+        printerror("Error when calling blitwizard.onText: %s", error);
         if (error) {
             free(error);
         }
@@ -284,7 +291,7 @@ static void putinbackground(int background) {
     if (background) {
         // remember we are in the background
         appinbackground = 1;
-    }else{
+    } else {
         // restore textures and wipe old ones
 #ifdef ANDROID
         graphics_ReopenForAndroid();
@@ -305,7 +312,8 @@ int attemptTemplateLoad(const char* path) {
     // path to init.lua:
     char* p = malloc(strlen(path) + 1 + strlen("init.lua") + 1);
     if (!p) {
-        printerror("Error: failed to allocate string when attempting to run templates init.lua");
+        printerror("Error: failed to allocate string when "
+        "attempting to run templates init.lua");
         main_Quit(1);
         return 0;
     }
@@ -334,7 +342,8 @@ int attemptTemplateLoad(const char* path) {
         if (error == NULL) {
             error = outofmem;
         }
-        printerror("Error: An error occured when running templates init.lua: %s", error);
+        printerror("Error: An error occured when running "
+        "templates init.lua: %s", error);
         if (error != outofmem) {
             free(error);
         }
@@ -356,7 +365,8 @@ int luafuncs_ProcessNetEvents(void);
 int SDL_main(int argc, char** argv) {
 #else
 #ifdef WINDOWS
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int CALLBACK WinMain(HINSTANCE hInstance,
+HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 #else
 int main(int argc, char** argv) {
 #endif
@@ -414,7 +424,8 @@ int main(int argc, char** argv) {
                 }
                 option_templatepath = strdup(argv[i]);
                 if (!option_templatepath) {
-                    printerror("Error: failed to strdup() template path argument");
+                    printerror("Error: failed to strdup() template "
+                    "path argument");
                     main_Quit(1);
                     return 1;
                 }

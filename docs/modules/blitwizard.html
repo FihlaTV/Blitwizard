@@ -147,6 +147,30 @@
 	<td class="name" ><a href="#object:setStep">object:setStep&nbsp;()</a></td>
 	<td class="summary">Set the stepping frequency of the game logic.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onClose">object:onClose&nbsp;()</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when your blitwizard game gets closed (close button,
+ ALT+F4, ...).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseMove">object:onMouseMove&nbsp;(x_pos, y_pos)</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when the mouse is moved over the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseDown">object:onMouseDown&nbsp;(x_pos, y_pos, button)</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when a mouse button is pressed down
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseUp">object:onMouseUp&nbsp;(x_pos, y_pos, button)</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when a mouse button (which was previously pressed down)
+ is released
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
+	</tr>
 </table>
 
 <br/>
@@ -694,6 +718,141 @@
 
 
 
+
+</dd>
+    <dt>
+    <a name = "object:onClose"></a>
+    <strong>object:onClose&nbsp;()</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when your blitwizard game gets closed (close button,
+ ALT+F4, ...).
+<p> <b>This function does not exist</b> unless you specify/override
+ it with blitwizard.onClose = ...
+<p> This event is useful if you want to save the game
+ or do other things on shutdown.
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- specify our own close event function:
+</span> <span class="keyword">function</span> blitwizard.onClose()
+     <span class="global">print</span>(<span class="string">"Shutting down!"</span>)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseMove"></a>
+    <strong>object:onMouseMove&nbsp;(x_pos, y_pos)</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when the mouse is moved over the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> <b>This function does not exist</b> unless you specify/override
+ it.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse X position</li>
+        <li><span class="parameter">y_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse Y position</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Listen for mouse evens:
+</span> <span class="keyword">function</span> blitwizard.onMouseMove(x, y)
+     <span class="global">print</span>(<span class="string">"Mouse position: x: "</span> .. x .. <span class="string">", y: "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseDown"></a>
+    <strong>object:onMouseDown&nbsp;(x_pos, y_pos, button)</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when a mouse button is pressed down
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> <b>This function does not exist</b> unless you specify/override
+ it.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse X position</li>
+        <li><span class="parameter">y_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse Y position</li>
+        <li><span class="parameter">button</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse button (1 for left, 2 for right)</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Listen for mouse evens:
+</span> <span class="keyword">function</span> blitwizard.onMouseDown(x, y, button)
+     <span class="global">print</span>(<span class="string">"Mouse down: button: "</span> .. button .. <span class="string">", x: "</span> .. x .. <span class="string">", y: "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseUp"></a>
+    <strong>object:onMouseUp&nbsp;(x_pos, y_pos, button)</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when a mouse button (which was previously pressed down)
+ is released
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> <b>This function does not exist</b> unless you specify/override
+ it.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse X position</li>
+        <li><span class="parameter">y_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse Y position</li>
+        <li><span class="parameter">button</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse button (1 for left, 2 for right)</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Listen for mouse evens:
+</span> <span class="keyword">function</span> blitwizard.onMouseUp(x, y, button)
+     <span class="global">print</span>(<span class="string">"Mouse up: button: "</span> .. button .. <span class="string">", x: "</span> .. x .. <span class="string">", y: "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
 
 </dd>
 </dl>
