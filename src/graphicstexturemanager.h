@@ -66,8 +66,8 @@ struct texturerequesthandle;
 // texture as soon as it is available. IT MIGHT BE OF DIFFERENT
 // DIMENSIONS THEN THE ONE YOU GOT. Also, the callback can be
 // called again any time, at which point it will provide a new
-// texture and THE OLD ONE WILL GET INVALID AS SOON AS THE
-// CALLBACK RETURNS (YOU MUST NOT USE IT FURTHER).
+// texture and THE OLD ONE WILL GET INVALID with the next call
+// of graphicstexturemanager_InvalidateTextures().
 //
 // The textureSwitch texture passed to you can be NULL aswell!
 // (you must stop using the old one and not draw anything until
@@ -75,8 +75,7 @@ struct texturerequesthandle;
 //
 // This means the texture manager can essentially provide you
 // with any chain of different texture versions and you always
-// must use the newest one and stop using the older ones
-// immediately.
+// must use the newest one and stop using the older ones.
 //
 // The texture manager will ensure the old ones are properly
 // free'd from memory, don't attempt to do that yourself.
@@ -134,6 +133,19 @@ struct texturerequesthandle* request, int visibility);
 // it's not already, then no further callbacks.
 void texturemanager_DestroyRequest(
 struct texturerequesthandle* request);
+
+// Call this as often as possible (e.g. after each frame render)
+// to allow the graphics texture manager to delete old textures
+// from memory.
+//
+// At this point, all graphicstexture* handles that were exchanged
+// through textureSwitch callbacks with new ones (or NULL) become
+// invalid.
+//
+// Hence, call this at a point where your drawing operations are
+// complete and it won't crash your drawing code when textures
+// become unavailable and new ones need to be used.
+void graphicstexture_InvalidateTextures();
 
 #endif  // USE_GRAPHICS
 

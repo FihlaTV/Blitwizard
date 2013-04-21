@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2012 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,13 +27,12 @@
 #include "os.h"
 
 struct objectgraphicsdata {
+    int geometryCallbackDone;  // set to 1 once geometry callback was fired
+    int visibilityCallbackDone;  // set to 1 once geometry callback was fired
 #ifdef USE_GRAPHICS
-#ifdef USE_SDL_GRAPHICS
-
-#endif
-#ifdef USE_OGRE_GRAPHICS
-
-#endif
+    // explicit sprite dimensions we set (or 0,0 if texture dimensions)
+    double width, height;
+    struct graphics2dsprite* sprite;
 #endif
 };
 

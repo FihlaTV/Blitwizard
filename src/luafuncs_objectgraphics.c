@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,14 +21,66 @@
 
 */
 
+#ifdef USE_GRAPHICS
+
 #include "luafuncs_objectgraphics.h"
 
 void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource) {
+    double x,y,z;
+    objectphysics_getPosition(obj, &x, &y, &z);
 
+    o->graphics->sprite = graphics2dsprites_Create(
+    resource, x, y, 0, 0, luafuncs_objectgraphics_geometryCallback,
+    luafuncs_objectgraphics_visiblityCallback);
 }
 
 void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
+    if (o->is3d) {
 
+    } else {
+        if (o->graphics->sprite) {
+            graphics2dsprite_Destroy(o->graphics->sprite);
+            o->graphics->sprite = NULL;
+        }
+    }
 }
+
+int luafuncs_objectgraphics_NeedGeometryCallback(
+struct blitwizardobject* o) {
+    if (o->graphics->geometryCallbackDone) {
+        return 0;
+    }
+
+    if (o->is3d) {
+        return 0;
+    } else {
+        size_t w,h;
+        if (graphics2dsprites_GetGeometry(o->graphics->sprite,
+        &w, &h)) {
+            o->graphics->geometryCallbackDone = 1;
+            return 1;
+        }
+        return 0;
+    }
+}
+
+int luafuncs_objectgraphics_NeedVisibleCallback(
+struct blitwizardobject* o) {
+    if (o->graphics->visibilityCallbackDone) {
+        return 0;
+    }
+    if (o->is3d) {
+        return 0;
+    } else {
+        if (graphics2dsprites_IsTextureAvailable(o->graphics->sprite
+        )) {
+            o->graphics->visibilityCallbackDone = 1;
+            return 1;
+        }
+        return 0;
+    }
+}
+
+#endif
 

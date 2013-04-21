@@ -157,7 +157,6 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
     return 1;
 }
 
-
 void graphicssdlrender_StartFrame(void) {
     SDL_SetRenderDrawColor(mainrenderer, 0, 0, 0, 1);
     SDL_RenderClear(mainrenderer);
@@ -167,8 +166,21 @@ void graphicssdlrender_CompleteFrame(void) {
     SDL_RenderPresent(mainrenderer);
 }
 
+static void graphicssdlrender_SpriteCallback(
+const char* path, struct graphicstexture* tex,
+double x, double y,
+double width, double height, double angle, int horizontalflip,
+int verticalflip, double alpha, double r, double g, double b) {
+    if (!tex) {
+        return;
+    }
+}
+
 void graphicsrender_Draw(void) {
     graphicssdlrender_StartFrame();
+
+    // render sprites:
+    graphics2dsprite_DoForAllSprites(
 
     graphicssdlrender_CompleteFrame();
 }

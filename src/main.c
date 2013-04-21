@@ -865,7 +865,7 @@ int main(int argc, char** argv) {
             if (connections_NoConnectionsOpen() && !listeners_HaveActiveListeners()) {
                 time_Sleep(deltaspan-delta);
                 connections_SleepWait(0);
-            }else{
+            } else {
                 connections_SleepWait(deltaspan-delta);
             }
         } else {
@@ -966,6 +966,9 @@ int main(int argc, char** argv) {
             // do a gc step once in a while
             luastate_GCCollect();
         }
+
+        // invalidate textures
+        graphicstexture_InvalidateTextures();
     }
     main_Quit(0);
     return 0;

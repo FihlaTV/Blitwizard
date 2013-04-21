@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -29,6 +29,16 @@
 void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource);
 void luafuncs_objectgraphics_unload(struct blitwizardobject* o);
+
+// check if a geometry callback needs to be fired.
+// returns 1 if that is the case, 0 if not.
+int luafuncs_objectgraphics_NeedGeometryCallback(
+struct blitwizardobject* o);
+
+// check if a visibility callback needs to be fired.
+// returns 1 if that is the case, 0 if not.
+int luafuncs_objectgraphics_NeedVisibleCallback(
+struct blitwizardobject* o);
 
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
 
