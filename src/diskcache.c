@@ -34,6 +34,7 @@
 #ifndef MAC
 #include <sys/file.h>
 #endif
+#include <sys/types.h>
 #endif
 
 #include "threading.h"
@@ -75,10 +76,14 @@ static char* diskcache_GenerateCacheFolderPath(void) {
 __attribute__((constructor)) static void diskcache_Init(void) {
 #ifdef UNIX
     // initialise drand48():
-    srand48(time(NULL));
+    srand48(time(NULL)+(int)getpid());
 #else
     // initialise rand():
+#ifdef WINDOWS
+    srand(time(NULL)+GetCurrentProcessId());
+#else
     srand(time(NULL));
+#endif
 #endif
 
     // create mutex and lock it instantly:
