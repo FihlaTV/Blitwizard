@@ -44,7 +44,7 @@ void* img_LoadImageThreadedFromFile(
 //         data callback parameters:
 //            - handle: the handle this function returns
 //            - imgdata: data area containing the raw 32bit rgba image data
-//               (or NULL if loading failed!) - you need to use free(
+//               (or NULL if loading failed!) - you need to use free
 //               on this yourself if not NULL!
 //            - imgdatasize: the size of the image data
 
@@ -101,8 +101,9 @@ int originalheight, char** newdata, int targetwidth, int targetheight);
 //   - imgdata: pointer to buffer which holds original (unscaled) image
 //   - originalwidth, originalheight: dimensions of original image
 //   - newdata: pointer to a pointer which will hold the target image.
-//   IMPORTANT: *newdata must be either NULL, or a valid pointer to a buffer
-//              which has the byte size targetwidth * targetheight * bytesize.
+//   IMPORTANT: *newdata must be either NULL, or a valid pointer to a
+//              buffer which has the byte size
+//              targetwidth * targetheight * bytesize.
 //              If it is uninitialised, this will most likely crash!
 //   - targetwidth, targetheight: the intended new size after scaling
 // Return value: none, but *newdata will be either altered to point at
