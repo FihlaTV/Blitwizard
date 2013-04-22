@@ -21,6 +21,13 @@
 
 */
 
-//This function will be used by the image (imgloader.c). You are advised to use the imgloader, not this function directly.
-int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize, char** imagedata, unsigned int* imagedatasize,
-int* imagewidth, int* imageheight, int maxwidth, int maxheight);
+// This function will be used by the image (imgloader.c). You are advised to use the imgloader, not this function directly.
+int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize,
+char** imagedata, unsigned int* imagedatasize,
+void (*callbackSize)(size_t imagewidth, size_t imageheight, void* userdata),
+void* userdata,
+int maxwidth, int maxheight);
+// The size callback will be called rather early (from the same thread),
+// and then lateron the function will return and you will  be
+// provided with the whole data.
+

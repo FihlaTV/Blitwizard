@@ -21,7 +21,13 @@
 
 */
 
-void* img_LoadImageThreadedFromFile(const char* path, int maxwidth, int maxheight, const char* format, void (*callbackSize)(void* handle, int imgwidth, int imgheight), void (*callbackData)(void* handle, const char* imgdata, unsigned int imgdatasize));
+void* img_LoadImageThreadedFromFile(
+  const char* path,
+  int maxwidth, int maxheight, const char* format,
+  void (*callbackSize)(void* handle, int imgwidth, int imgheight),
+  void (*callbackData)(void* handle, const char* imgdata,
+  unsigned int imgdatasize)
+);
 // Starts an asynchronous image load. You get back a job handle to
 // check on the status of the job. (It is impossible to cancel it!)
 // Parameters:
@@ -50,7 +56,8 @@ void* img_LoadImageThreadedFromFunction(
   int (*readfunc)(void* buffer, size_t bytes, void* userdata),
   void* userdata, int maxwidth, int maxheight, const char* format,
   void (*callbackSize)(void* handle, int imgwidth, int imgheight),
-  void (*callbackData)(const char* imgdata, unsigned int imgdatasize)
+  void (*callbackData)(void* handle, const char* imgdata,
+  unsigned int imgdatasize)
 );
 // Same as img_LoadImageThreadedFromFile, but takes a function that will be
 // called to load the file from disk

@@ -75,9 +75,11 @@ void pngloader_FreeLoadInfo(struct loadpnginfo* linfo) {
     }
     free(linfo);
 }
+
 int pngloader_AllocateMembers(struct loadpnginfo* linfo) {
     if (!linfo->png_ptr) {
-        linfo->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);;
+        linfo->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+        NULL, NULL, NULL);
         if (!linfo->png_ptr) {return 0;}
     }
     if (!linfo->info_ptr) {
@@ -86,24 +88,33 @@ int pngloader_AllocateMembers(struct loadpnginfo* linfo) {
     }
     return 1;
 }
-int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize, char** imagedata, unsigned int* imagedatasize, int* imagewidth, int* imageheight, int maxwidth, int maxheight) {
+
+int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize,
+char** imagedata, unsigned int* imagedatasize,
+void (*callbackSize)(size_t imagewidth, size_t imageheight, void* userdata),
+void* userdata,
+int maxwidth, int maxheight) {
     png_uint_32 width, height, channels;
     int bit_depth, color_type;
       
-    //first check
-    if (!pngloader_CheckIfPng(pngdata, pngdatasize)) {return 0;}
+    // first check
+    if (!pngloader_CheckIfPng(pngdata, pngdatasize)) {
+        return 0;
+    }
     
-    //get info structs
+    // get info structs
     struct loadpnginfo* linfo = malloc(sizeof(*linfo));
-    if (!linfo) {return 0;}
-    memset(linfo,0,sizeof(*linfo));
+    if (!linfo) {
+        return 0;
+    }
+    memset(linfo, 0, sizeof(*linfo));
     if (!pngloader_AllocateMembers(linfo)) {
         pngloader_FreeLoadInfo(linfo);
         return 0;
     }
     linfo->source = pngdata; linfo->sourcesize = pngdatasize;
     
-    //set up the very weird error handling
+    // set up the very weird error handling
     if (setjmp(png_jmpbuf(linfo->png_ptr))) {
         pngloader_FreeLoadInfo(linfo);
         return 0;
@@ -114,16 +125,24 @@ int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize, char** ima
     
     // set up a custom loader
     png_set_read_fn(linfo->png_ptr, linfo, readdata);
-    //now read info stuff
+
+    // now read info stuff
     png_read_info(linfo->png_ptr, linfo->info_ptr);
-    if (!png_get_IHDR(linfo->png_ptr, linfo->info_ptr, &width, &height, &bit_depth, &color_type, NULL, NULL, NULL)) {
+    if (!png_get_IHDR(linfo->png_ptr, linfo->info_ptr,
+    &width, &height, &bit_depth, &color_type, NULL, NULL, NULL)) {
         pngloader_FreeLoadInfo(linfo);return 0;
     }
-    //check whether there is a size limit
+
+    // do size callback:
+    if (callbackSize) {
+        callbackSize(width, height, userdata);
+    }
+
+    // check whether there is a size limit
     if (maxwidth && width > maxwidth) {pngloader_FreeLoadInfo(linfo);return 0;}
     if (maxheight && height > maxheight) {pngloader_FreeLoadInfo(linfo);return 0;}
     
-    //some conversion stuff
+    // some conversion stuff
     channels = png_get_channels(linfo->png_ptr, linfo->info_ptr);
     switch (color_type) {
         case PNG_COLOR_TYPE_PALETTE:
@@ -147,23 +166,33 @@ int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize, char** ima
         png_set_tRNS_to_alpha(linfo->png_ptr);
         channels+=1;
     }
-    if (bit_depth == 16) {png_set_strip_16(linfo->png_ptr);bit_depth = 8;}
+    if (bit_depth == 16) {
+        // strip to 8bit with libpng
+        png_set_strip_16(linfo->png_ptr);
+        bit_depth = 8;
+    }
     if (bit_depth != 8) {
-        pngloader_FreeLoadInfo(linfo);return 0; // we don't support this :( sorry
+        pngloader_FreeLoadInfo(linfo);
+        return 0; // we don't support this :( sorry
     }
     if (channels != 3 && channels != 4) {
-        pngloader_FreeLoadInfo(linfo);return 0; //we don't support this :( sorry
+        pngloader_FreeLoadInfo(linfo);
+        return 0; // we don't support this :( sorry
     }
     png_read_update_info(linfo->png_ptr, linfo->info_ptr);
     
-    //ok let's get it - preparations..
-    linfo->row_pointers = malloc(height*sizeof(void*)); //row pointers libpng wants for some odd reason
+    // ok let's get it - preparations..
+    linfo->row_pointers = malloc(height*sizeof(void*));
+    // row pointers libpng wants for some odd reason
+
     if (!linfo->row_pointers) {
-        pngloader_FreeLoadInfo(linfo);return 0;
+        pngloader_FreeLoadInfo(linfo);
+        return 0;
     }
-    linfo->imgdat = malloc(channels * width * height); //img data
+    linfo->imgdat = malloc(channels * width * height); // img data
     if (!linfo->imgdat) {
-        pngloader_FreeLoadInfo(linfo);return 0;
+        pngloader_FreeLoadInfo(linfo);
+        return 0;
     }
     int r = 0;
     while (r < height) {
@@ -171,40 +200,47 @@ int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize, char** ima
         r++;
     }
     
-    //loading the image! yeaaa...
+    // loading the image! yeaaa...
     png_read_image(linfo->png_ptr, (png_bytepp)linfo->row_pointers);
     
     free(linfo->row_pointers); linfo->row_pointers = NULL;
     
-    //if we have just 3 channels, we really want to expand to 4!
+    // if we have just 3 channels, we really want to expand to 4!
     if (channels == 3) {
         void* newimgdat = malloc(4 * width * height);
         if (!newimgdat) {
-            pngloader_FreeLoadInfo(linfo);printf("cannot allocate new info\n");return 0;
+            pngloader_FreeLoadInfo(linfo);
+            fprintf(stderr, "cannot allocate new info\n");
+            return 0;
         }
-        //ugly conversion stuff :p
+        // ugly conversion stuff :p
         r = 0;
         while (r < height) {
             int k = 0;
             while (k < width) {
-                memcpy(k*4 + r * width*4 + newimgdat, k*3 + r*width*3 + linfo->imgdat, 3); //copy the three channels we got
-                ((char*)newimgdat)[k*4+r*width*4+3] = 255; //set alpha to opaque
+                // copy three channels we got:
+                memcpy(k*4 + r * width*4 + newimgdat, k*3 +
+                r*width*3 + linfo->imgdat, 3);
+
+                // copy the three channels we got
+                ((char*)newimgdat)[k*4+r*width*4+3] = 255;
+                // set alpha to opaque
                 k++;
             }
             r++;
         }
-        //converted!
+        // converted!
         free(linfo->imgdat);
         linfo->imgdat = newimgdat;
         channels = 4;
     }
     
-    //ok cleanup and export this
+    // ok cleanup and export this
     *imagedatasize = channels * width * height;
-    *imagedata = linfo->imgdat;linfo->imgdat = NULL; //of course we want to keep that
-    *imagewidth = width;
-    *imageheight = height;
+    *imagedata = linfo->imgdat;
+    linfo->imgdat = NULL; //of course we want to keep that
     
     pngloader_FreeLoadInfo(linfo);
     return 1;
 }
+
