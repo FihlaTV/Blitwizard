@@ -36,13 +36,15 @@ struct texturerequesthandle {
 struct texturerequesthandle* texturemanager_RequestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
-size_t width, size_t height),
+size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
-struct graphicstexture* texture)) {
+struct graphicstexture* texture, void* userdata),
+void* userdata) {
     struct texturerequesthandle* request = malloc(sizeof(*request));
     if (!request) {
         return NULL;
     }
+    return request;
 }
 
 void texturemanager_UsingRequest(
@@ -52,7 +54,15 @@ struct texturerequesthandle* request, int visibility) {
 
 void texturemanager_DestroyRequest(
 struct texturerequesthandle* request) {
+    if (!request) {
+        return;
+    }
+
     free(request);
+}
+
+void texturemanager_InvalidateTextures() {
+
 }
 
 #endif  // USE_GRAPHICS

@@ -96,9 +96,10 @@ struct texturerequesthandle;
 struct texturerequesthandle* texturemanager_RequestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
-size_t width, size_t height),
+size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
-struct graphicstexture* texture));
+struct graphicstexture* texture, void* userdata),
+void* userdata);
 
 // Use texturemanager_UsingRequest to report back how much
 // you use a texture, and at which visibility (so the texture
@@ -131,6 +132,9 @@ struct texturerequesthandle* request, int visibility);
 // Destroy a texture request. You will still get a textureSwitch
 // callback setting your provided texture back to NULL if
 // it's not already, then no further callbacks.
+//
+// When this function returns, you will be guaranteed to no
+// longer receive any callbacks related to this texture request.
 void texturemanager_DestroyRequest(
 struct texturerequesthandle* request);
 
@@ -145,7 +149,7 @@ struct texturerequesthandle* request);
 // Hence, call this at a point where your drawing operations are
 // complete and it won't crash your drawing code when textures
 // become unavailable and new ones need to be used.
-void texturemanager_InvalidateTextures();
+void texturemanager_InvalidateTextures(void);
 
 #endif  // USE_GRAPHICS
 

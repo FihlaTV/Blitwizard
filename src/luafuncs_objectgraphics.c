@@ -21,7 +21,11 @@
 
 */
 
+#include "os.h"
+
 #ifdef USE_GRAPHICS
+
+#include <string.h>
 
 #include "luafuncs_objectgraphics.h"
 #include "luafuncs_objectphysics.h"
@@ -31,6 +35,20 @@ void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource) {
     double x,y,z;
     objectphysics_getPosition(o, &x, &y, &z);
+
+    if (!resource || strlen(resource) <= 0) {
+        return;
+    }
+
+    // create graphics thing if necessary:
+    if (!o->graphics) {
+        o->graphics = malloc(sizeof(*(o->graphics)));
+        if (!o->graphics) {
+            // memory allocation error
+            return;
+        }
+        memset(o->graphics, 0, sizeof(*(o->graphics)));
+    }
 
     o->graphics->sprite = graphics2dsprites_Create(
     resource, x, y, 0, 0);
@@ -44,6 +62,10 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
             graphics2dsprites_Destroy(o->graphics->sprite);
             o->graphics->sprite = NULL;
         }
+    }
+    if (o->graphics) {
+        free(o->graphics);
+        o->graphics = NULL;
     }
 }
 

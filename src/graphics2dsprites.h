@@ -39,6 +39,8 @@ struct graphics2dsprite;
 // Create a sprite at a given position (x/y specify the sprite center).
 // If you specify 0,0 for the size, it will be set automatically
 // as soon as the geometry information is available.
+// Specify a negative horizontal or vertical size for horizontal/vertical
+// mirroring.
 struct graphics2dsprite* graphics2dsprites_Create(
 const char* texturePath, double x, double y, double width, double height);
 
@@ -61,13 +63,11 @@ double x, double y, double angle);
 void graphics2dsprites_SetVisible(struct graphics2dsprite* sprite,
 int visible);
 
-// Resize a sprite.
+// Resize a sprite. Set negative sizes for mirroring,
+// and 0, 0 for width/height if you want to have the sprite
+// size determined purely by texture dimensions.
 void graphics2dsprites_Resize(struct graphics2dsprite* sprite,
 double width, double height);
-
-// Flip/mirror a sprite
-void graphics2dsprites_Flip(struct graphics2dsprite* sprite,
-int horizontalflip, int verticalflip);
 
 // Set sprite coloring. (1, 1, 1) is normal full brightness
 void graphics2dsprites_SetColor(struct graphics2dsprite* sprite,
@@ -90,7 +90,8 @@ void graphics2dsprites_Destroy(struct graphics2dsprite* sprite);
 // graphics card, you might want to use those callbacks for that.
 //
 // You won't get the callback for a sprite unless the graphics texture
-// is present. The textures can be invalid after the next call of
+// is present and the sprite is visible
+// The textures can be invalid after the next call of
 // graphicstexture_InvalidateTextures()! (You'll get that information
 // with the next call of graphics2dsprite_TriggerCallbacks of course)
 //
@@ -103,7 +104,7 @@ double x, double y,
 double width, double height, double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
-int zindex),
+int zindex, int visible),
 void (*spriteDeleted) (void* handle)
 );
 
@@ -122,8 +123,8 @@ void graphics2dsprites_TriggerCallbacks(void);
 void graphics2dsprites_DoForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
-double angle, int horizontalflip,
-int verticalflip, double alpha, double r, double g, double b));
+double angle, double alpha, double r, double g, double b,
+int visible));
 // Sprites will be returned in Z-Index order.
 // (lower index first, and for same z-index
 // with the older sprites first)
