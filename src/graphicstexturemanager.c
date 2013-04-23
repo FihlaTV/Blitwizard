@@ -23,15 +23,75 @@
 
 #include "os.h"
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef USE_GRAPHICS
 
+#include "threading.h"
 #include "graphics.h"
 #include "graphicstexturemanager.h"
+#include "logging.h"
+#include "timefuncs.h"
 
+// texture system memory budget in megabyte:
+int textureSysMemoryBudget = 10;
+
+// texture gpu memory budget in megabyte:
+int textureGpuMemoryBudget = 10;
+
+//
+
+mutex* textureReqListMutex = NULL;
 struct texturerequesthandle {
-
+    // the respective texture list entry:
+    struct graphicstexturemanaged* mg;
+    
+    // if the request was cancelled, the callbacks
+    // are gone and must not be used anymore:
+    int canceled;
 };
+struct texturerequesthandle* textureRequestList = NULL;
+
+// manager thread which unloads textures when memory budget is used up:
+void texturemanager_Watchdog(void) {
+    // this is the core decider place that makes sure
+    // things are moved in/out of caches at the right time.
+    //
+    // it runs in a separate thread so it can act any time,
+    // no matter what the main application is doing at this point.
+
+    // to ensure the disk cache is initialised, we will wait
+    // a short moment:
+    time_Sleep(500);
+
+    while (1) {
+        mutex_Lock(textureReqListMutex);
+
+        mutex_Release(textureReqListMutex);
+
+        // sleep a moment:
+        time_Sleep(100);
+    }
+}
+
+
+
+// this runs on application start:
+__attribute__((constructor)) static void texturemanager_Init(void) {
+    textureReqListMutex = mutex_Create();
+
+    threadinfo* tinfo = thread_CreateInfo();
+    if (!tinfo) {
+        printerror("Failed to allocate thread info for texture manager"
+        " watch dog");
+        exit(0);
+        return;
+    }
+
+    // spawn watch dog:
+    thread_Spawn(tinfo, texturemanager_Watchdog, NULL);
+    thread_FreeInfo(tinfo);
+}
 
 struct texturerequesthandle* texturemanager_RequestTexture(
 const char* path,
@@ -64,6 +124,7 @@ struct texturerequesthandle* request) {
 void texturemanager_InvalidateTextures() {
 
 }
+
 
 #endif  // USE_GRAPHICS
 

@@ -94,12 +94,12 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
 
     if (sourcewidth > 0) {
         src.w = sourcewidth;
-    }else{
+    } else {
         src.w = gt->width;
     }
     if (sourceheight > 0) {
         src.h = sourceheight;
-    }else{
+    } else {
         src.h = gt->height;
     }
 
@@ -107,7 +107,7 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
     dest.x = x; dest.y = y;
     if (drawwidth == 0 || drawheight == 0) {
         dest.w = src.w;dest.h = src.h;
-    }else{
+    } else {
         dest.w = drawwidth; dest.h = drawheight;
     }
 
@@ -170,11 +170,37 @@ void graphicssdlrender_CompleteFrame(void) {
 static void graphicssdlrender_SpriteCallback(
 const char* path, struct graphicstexture* tex,
 double x, double y,
-double width, double height, double angle, int horizontalflip,
-int verticalflip, double alpha, double r, double g, double b) {
+double width, double height, double angle,
+double alpha, double r, double g, double b) {
     if (!tex) {
         return;
     }
+
+    // get texture dimensions:
+    size_t texwidth, texheight;
+    graphics_GetTextureDimensions(tex, &texwidth, &texheight);
+
+    // evaluate special width/height:
+    // negative for flipping, zero'ed etc
+    int horiflip = 0;
+    if (width == 0 && height == 0) {
+        width = texwidth;
+        height = texheight;
+    }
+    if (width < 0) {
+        width = -width;
+        horiflip = 1;
+    }
+    if (height < 0) {
+        angle += 180;
+        horiflip = !horiflip;
+    }
+
+    // render:
+    graphicsrender_DrawCropped(tex, x, y, alpha,
+    0, 0, texwidth, texheight, width, height,
+    width/2, height/2, angle, horiflip,
+    r, g, b);
 }
 
 void graphicsrender_Draw(void) {

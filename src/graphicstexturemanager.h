@@ -128,6 +128,7 @@ struct texturerequesthandle* request, int visibility);
 #define USING_AT_VISIBILITY_NORMAL 2
 #define USING_AT_VISIBILITY_DISTANT 3
 #define USING_AT_VISIBILITY_INVISIBLE 4
+#define USING_AT_COUNT 4
 
 // Destroy a texture request. You will still get a textureSwitch
 // callback setting your provided texture back to NULL if

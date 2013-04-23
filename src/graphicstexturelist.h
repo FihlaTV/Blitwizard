@@ -44,6 +44,7 @@
 #ifdef USE_GRAPHICS
 
 #include "graphics.h"
+#include "graphicstexturemanager.h"
 
 // This contains the cache info for one specific size of a texture:
 struct graphicstexturescaled {
@@ -62,6 +63,9 @@ struct graphicstexturemanaged {
     struct graphicstexturescaled* scalelist;  // one dimensional array
     int scalelistcount;  // count of scalelist array items
     int origscale;  // array index of scalelist of item scaled in original size
+
+    // usage time stamps:
+    time_t lastUsage[USING_AT_COUNT];
 
     // initialise to zeros and then don't touch:
     struct graphicstexturemanaged* next;
