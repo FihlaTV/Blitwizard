@@ -63,6 +63,8 @@ struct graphicstexturemanaged {
     struct graphicstexturescaled* scalelist;  // one dimensional array
     int scalelistcount;  // count of scalelist array items
     int origscale;  // array index of scalelist of item scaled in original size
+    int beinginitiallyloaded;  // the texture is just being initiially loaded
+        // from disk (= wait until loading is complete)
 
     // usage time stamps:
     time_t lastUsage[USING_AT_COUNT];

@@ -73,6 +73,7 @@ const char* path) {
         free(m);
         return NULL;
     }
+    m->origscale = -1;
     m->next = texlist;
     texlist = m;
     return m;
