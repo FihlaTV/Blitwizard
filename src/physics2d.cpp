@@ -23,6 +23,7 @@
 
 /* TODO:
     - Actually implement offsets, not just have them sit idly in the shape struct
+    - struct init stuff
     - Look at the edge and poly functions again (linked lists done correctly?)
     - Properly refactor the object creation function
     - Look for memory leaks (lol)
@@ -813,8 +814,76 @@ void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation) {
+inline void _physics_RotateThenOffset2dShapePoint(
+ struct physicsobjectshape* shape,
+ double xoffset, double yoffset, double rotation, double* x, double* y) {
     struct physicsobjectshape2d* s = shape->sha.pe2d;
+    *x -= s->xoffset;
+    *y -= s->yoffset;
+    rotatevec(*x, *y, (s->rotation)-rotation, x, y);
+    *x += xoffset;
+    *y += yoffset;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation) {
+    /* XXX Note on this function: Since I expect the user will almost never call
+     this thing twice, but will most definitely create several objects from
+     the same shape struct at some point, all the offset application happens
+     here already, NOT during object creation. */
+    /* TODO: le fuck, given that our 2d shape struct contains rects and circles
+     in their b2 form, the whole point of which was that it'd be more efficient
+     - now it's not efficient at all, since we have to get their components,
+     apply transforms, then create a new b2 shape and all
+     UPDATE: applies to rectangles only, honestly fk rectangles */
+    /* procedure:
+        what already happened: 1.) rotate by rot_old 2.) apply x+xoffs_old, y+yoffs_old
+        so what we have to do: 1.) subtract offs_old 2.) rotate by rot_old-rot_new 3.) add offs_new
+        might be easier w/ matrices, but also more proc-time-consuming probably
+    */
+    struct physicsobjectshape2d* s = shape->sha.pe2d;
+    // effective offsets and rotation
+    /*double exoffset = xoffset-(s->xoffset);
+    double eyoffset = yoffset-(s->yoffset);
+    double erotation = rotation-(s->rotation);*/
+    
+    switch (s->type) {
+        case BW_S2D_RECT:/*
+            b2Vec2 new_center = s->b2.rectangle.m_centroid; // should copy
+            _physics_RotateThenOffset(shape, xoffset, yoffset, rotation,
+             &new_center.x, &new_center.y);
+            s->b2.rectangle.SetAsBox(FIXME data missing, reqs restructuring)*/
+        break;
+        case BW_S2D_POLY:
+            struct polygonpoint* p = s->b2.polygonpoints;
+            while (p->next != NULL) {
+                _physics_RotateThenOffset2dShapePoint(shape, xoffset, yoffset, 
+                 rotation, &(p->x), &(p->y));
+                p = p->next;
+            }
+        break;
+        case BW_S2D_CIRCLE:
+            /* Don't need rotation etc. here as it's a fricking circle and it
+             doesn't have an offset of its own (i.e. seperate from this offset
+             mechanism.
+            */
+            s->b2.circle->m_p.x = xoffset;
+            s->b2.circle->m_p.y = yoffset;
+        break;
+        case BW_S2D_EDGE:
+            struct edge* e = s->b2.edges;
+            while (e->next != NULL) {
+                _physics_RotateThenOffset2dShapePoint(shape, xoffset, yoffset, 
+                 rotation, &(e->x1), &(e->y1));
+                _physics_RotateThenOffset2dShapePoint(shape, xoffset, yoffset, 
+                 rotation, &(e->x2), &(e->y2));
+                e = e->next;
+            }
+        break;
+    
+    }
+    
     s->xoffset = xoffset;
     s->yoffset = yoffset;
     s->rotation = rotation;
