@@ -1039,9 +1039,9 @@ AS_IF([test -z "$maybeos"],[
     WRITELINE="\nEXEEXT=$EXEEXT\nluatarget=mingw\nCXX=$CXX\nCC=$CC\nAR=$AR\nHOST=$TGHOST\nUSE_LIB_FLAGS=$FINAL_USE_LIB_FLAGS\nRANLIB=$RANLIB\nSTATIC_LIBS_USE=$STATIC_LIBS_USE\nMACBUILD=no\nWINDOWSBUILD=yes\n"
     echo -e "$WRITELINE" > scripts/.buildinfo
 
-    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
-    CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
-    LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lversion"
+    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -ldbghelp -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lversion"
     FINAL_LD_FLAGS="-lmingw32 $FINAL_LD_FLAGS"
     STATICSTDCXX="-static-libstdc++"
     AC_SUBST(STATICSTDCXX)
@@ -1065,7 +1065,7 @@ Build flags:
 AC_SUBST(FINAL_INCLUDE_FLAGS)
 AC_SUBST(FINAL_USE_LIB_FLAGS)
 AC_SUBST(FINAL_LD_FLAGS)
-AS_IF([test "x$enable_debug" = xyes],
+AS_IF([test "x$enable_debug" = xyes],[
     AM_CONDITIONAL([ENABLE_DEBUG], [test 1 = 1])
 ],[
     AM_CONDITIONAL([ENABLE_DEBUG], [test 0 = 1])

@@ -1,9 +1,9 @@
 
 --[[
 
-blitwizard 2d engine - source code file
+blitwizard engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -39,60 +39,60 @@ yspacing = 1
 menufocus = 1
 
 function blitwiz.on_init()
-	print "Launching blitwizard sample browser"
-	blitwiz.graphics.setWindow(640, 480, "blitwizard 2d engine", false)
-	blitwiz.graphics.loadImage("title.png")
-	local i = 1
-	while i <= #examples do
-		blitwiz.graphics.loadImage("menu" .. i .. ".png")
-		i = i + 1
-	end
+    print "Launching blitwizard sample browser"
+    blitwiz.graphics.setWindow(640, 480, "blitwizard 2d engine", false)
+    blitwiz.graphics.loadImage("title.png")
+    local i = 1
+    while i <= #examples do
+        blitwiz.graphics.loadImage("menu" .. i .. ".png")
+        i = i + 1
+    end
     blitwiz.graphics.loadImage("return.png")
 end
 
 function getbuttonpos(index)
-	local w,h = blitwiz.graphics.getWindowSize()
-	imgw,imgh = blitwiz.graphics.getImageSize("menu" .. index .. ".png")
-	local x = w/2 - imgw/2
-	local y = yoffset + (index-1)*yspacing + (index-1)*imgh
-	return x,y
+    local w,h = blitwiz.graphics.getWindowSize()
+    imgw,imgh = blitwiz.graphics.getImageSize("menu" .. index .. ".png")
+    local x = w/2 - imgw/2
+    local y = yoffset + (index-1)*yspacing + (index-1)*imgh
+    return x,y
 end
 
 function blitwiz.on_draw()
-	local w,h = blitwiz.graphics.getWindowSize()
-	blitwiz.graphics.drawRectangle(0, 0, w, h, 1, 1, 1)
+    local w,h = blitwiz.graphics.getWindowSize()
+    blitwiz.graphics.drawRectangle(0, 0, w, h, 1, 1, 1)
 
-	local imgw,imgh = blitwiz.graphics.getImageSize("title.png")
-	blitwiz.graphics.drawImage("title.png", {x=w/2 - imgw/2, y=0})
+    local imgw,imgh = blitwiz.graphics.getImageSize("title.png")
+    blitwiz.graphics.drawImage("title.png", {x=w/2 - imgw/2, y=0})
 
-	local i = 1
-	while i <= #examples do
-		imgw,imgh = blitwiz.graphics.getImageSize("menu" .. i .. ".png")
-		local x,y = getbuttonpos(i)
-		if menufocus == i then
-			blitwiz.graphics.drawRectangle(x-2, y-1, imgw+4, imgh+2, 0,0.4,0.8)
-		end
-		blitwiz.graphics.drawImage("menu" .. i .. ".png", {x=x, y=y})
-		i = i + 1
-	end
+    local i = 1
+    while i <= #examples do
+        imgw,imgh = blitwiz.graphics.getImageSize("menu" .. i .. ".png")
+        local x,y = getbuttonpos(i)
+        if menufocus == i then
+            blitwiz.graphics.drawRectangle(x-2, y-1, imgw+4, imgh+2, 0,0.4,0.8)
+        end
+        blitwiz.graphics.drawImage("menu" .. i .. ".png", {x=x, y=y})
+        i = i + 1
+    end
 end
 
 function blitwiz.on_mousemove(mousex, mousey)
-	updatemenufocus(mousex, mousey)
+    updatemenufocus(mousex, mousey)
 end
 function updatemenufocus(mousex, mousey)
-	menufocus = 0
-	local i = 1
-	while i <= #examples do
-		imgw,imgh = blitwiz.graphics.getImageSize("menu" .. i .. ".png")
-		local x,y = getbuttonpos(i)
-		if mousex >= x and mousex < x + imgw and
-		mousey >= y and mousey < y + imgh then
-			menufocus = i
-			return
-		end
-		i = i + 1
-	end
+    menufocus = 0
+    local i = 1
+    while i <= #examples do
+        imgw,imgh = blitwiz.graphics.getImageSize("menu" .. i .. ".png")
+        local x,y = getbuttonpos(i)
+        if mousex >= x and mousex < x + imgw and
+        mousey >= y and mousey < y + imgh then
+            menufocus = i
+            return
+        end
+        i = i + 1
+    end
 end
 
 -- Find and delete all physics objects found recursively in _G
@@ -128,26 +128,26 @@ function find_and_delete_physics_objects(t)
 end
 
 function blitwiz.on_mousedown(button, mousex, mousey)
-	updatemenufocus(mousex, mousey)
-	if menufocus > 0 then
-		os.chdir("../../examples/" .. examples[menufocus] .. "/")
+    updatemenufocus(mousex, mousey)
+    if menufocus > 0 then
+        os.chdir("../../examples/" .. examples[menufocus] .. "/")
 
-		-- Remember and delete our previous event functions
+        -- Remember and delete our previous event functions
         browser_on_close = blitwiz.on_close
-		blitwiz.on_close = nil
+        blitwiz.on_close = nil
         browser_on_mousedown = blitwiz.on_mousedown
-		blitwiz.on_mousedown = nil
+        blitwiz.on_mousedown = nil
         browser_on_mousemove = blitwiz.on_mousemove
-		blitwiz.on_mousemove = nil
+        blitwiz.on_mousemove = nil
         browser_on_init = blitwiz.on_init
-		blitwiz.on_init = nil
+        blitwiz.on_init = nil
         browser_on_draw = blitwiz.on_draw
-		blitwiz.on_draw = nil
+        blitwiz.on_draw = nil
         browser_on_step = blitwiz.on_step
         blitwiz.on_step = nil
 
-		-- Load example
-		dofile("game.lua")
+        -- Load example
+        dofile("game.lua")
 
         -- Wrap blitwiz.graphics.loadImage to load an image only if not present:
         if browser_loadImage_wrapped ~= true then
@@ -216,12 +216,12 @@ function blitwiz.on_mousedown(button, mousex, mousey)
                 end
             end
         end
-		-- Run example
-		blitwiz.on_init()
-	end
+        -- Run example
+        blitwiz.on_init()
+    end
 end
 
 function blitwiz.on_close()
-	os.exit(0)
+    os.exit(0)
 end
 

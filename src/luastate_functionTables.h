@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,36 +21,11 @@
 
 */
 
-#ifndef BLITWIZARD_LUAHEADER_H_
-#define BLITWIZARD_LUAHEADER_H_
-
-#include "os.h"
-
-#ifdef LUA_5_2_HEADER
-#include "lua5.2/lua.h"
-#include "lua5.2/lauxlib.h"
-#include "lua5.2/lualib.h"
-#else
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-#endif
-
-// We don't really care about the distinction of TNIL and TNONE,
-// since unspecified parameters (=TNONE) should have the same
-// effect as if specified as nil (=TNIL).
-// Therefore, we override lua_type to map TNONE to TNIL.
-
-static int lua_wrappedtype(lua_State* l, int index) {
-    int i = lua_type(l, index);
-    if (i == LUA_TNONE) {
-        return LUA_TNIL;
-    }
-    return i;
-}
-
-#define lua_type lua_wrappedtype
-
-#endif  // BLITWIZARD_LUAHEADER_H_
-
+void luastate_CreateTimeTable(lua_State* l);
+void luastate_CreateAudioTable(lua_State* l);
+void luastate_CreateSimpleSoundTable(lua_State* l);
+void luastate_CreateObjectTable(lua_State* l);
+void luastate_CreateGraphicsTable(lua_State* l);
+void luastate_CreateNetTable(lua_State* l);
+void luastate_CreatePhysicsTable(lua_State* l);
 

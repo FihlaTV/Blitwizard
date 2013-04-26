@@ -57,23 +57,8 @@ int graphics_Init(char** error, int use3dgraphics);
 // Specify if you want to use 3d graphics with the new device (1) or not (0).
 
 #ifdef WINDOWS
-HWND graphics_GetWindowHWND(); // get win32 HWND handle for the window
+HWND graphics_GetWindowHWND(void); // get win32 HWND handle for the window
 #endif
-
-int graphics_PromptTextureLoading(const char* texture);
-// Prompt texture loading.
-// Returns 0 on fatal error (e.g. out of memory), 1 for operation in progress,
-// 2 for image already loaded.
-
-int graphics_LoadTextureInstantly(const char* texture);
-// Prompts texture loading and blocks until the texture is loaded or cancelled.
-// Returns 0 on any error (both fatal out of memory or image loading failure),
-// 1 when the image has been loaded successfully.
-
-void graphics_CheckTextureLoading(void (*callback)(int success, const char* texture));
-// Check texture loading state and get the newest callbacks.
-// For the callback, success will be 1 for images loaded successfully,
-// otherwise 0. texture will contain the texure's name.
 
 int graphics_GetNumberOfVideoModes(void);
 // Get the number of supported video modes (= the modes usable in fullscreen)
@@ -118,25 +103,13 @@ void graphics_ReopenForAndroid(void);
 // Reopen graphics and reupload textures. Required when coming back into foreground
 #endif
 
-void graphics_TextureFromHW(struct graphicstexture* gt);
-// Push texture onto 3d accelerated hardware
-
-int graphics_TextureToHW(struct graphicstexture* gt);
-// Pull texture from 3d accelerated hardware
-
-void graphics_DestroyHWTexture(struct graphicstexture* gt);
-// Destroy the 3d texture (e.g. in preparation for free'ing the texture)
-
-int graphics_FreeTexture(struct graphicstexture* gt, struct graphicstexture* prev);
-// Free a texture
-
 int graphics_HaveValidWindow(void);
 // Returns 1 if a window is open, otherwise 0
 
 
 // CAMERA HANDLING:
 
-int graphics_GetCameraCount();
+int graphics_GetCameraCount(void);
 // Get count of cameras
 
 int graphics_GetCameraX(int index);
@@ -232,7 +205,7 @@ void graphics_SetCamera3DZNearFar(int index,
 double near, double far);
 // Set 3d camera z near/far clipping values
 
-int graphics_AddCamera();
+int graphics_AddCamera(void);
 // Add a camera. Returns new camera index on success (>=0),
 // -1 on error.
 

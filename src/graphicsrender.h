@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,36 +21,12 @@
 
 */
 
-#ifndef BLITWIZARD_LUAHEADER_H_
-#define BLITWIZARD_LUAHEADER_H_
+#ifndef BLITWIZARD_GRAPHICSRENDER_H_
+#define BLITWIZARD_GRAPHICSRENDER_H_
 
-#include "os.h"
+void graphicsrender_Draw(void);
+// Draw a frame
 
-#ifdef LUA_5_2_HEADER
-#include "lua5.2/lua.h"
-#include "lua5.2/lauxlib.h"
-#include "lua5.2/lualib.h"
-#else
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-#endif
-
-// We don't really care about the distinction of TNIL and TNONE,
-// since unspecified parameters (=TNONE) should have the same
-// effect as if specified as nil (=TNIL).
-// Therefore, we override lua_type to map TNONE to TNIL.
-
-static int lua_wrappedtype(lua_State* l, int index) {
-    int i = lua_type(l, index);
-    if (i == LUA_TNONE) {
-        return LUA_TNIL;
-    }
-    return i;
-}
-
-#define lua_type lua_wrappedtype
-
-#endif  // BLITWIZARD_LUAHEADER_H_
+#endif  // BLITWIZARD_GRAPHICSRENDER_H_
 
 

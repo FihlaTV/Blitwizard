@@ -58,5 +58,9 @@ char* file_GetTempPath(const char* name);
 
 size_t file_GetSize(const char* name);
 
+int file_CreateDirectory(const char* name);
+
+int file_DeleteFile(const char* name);
+
 #endif  // BLITWIZARD_FILE_H_
 

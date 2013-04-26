@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,36 +21,40 @@
 
 */
 
-#ifndef BLITWIZARD_LUAHEADER_H_
-#define BLITWIZARD_LUAHEADER_H_
-
 #include "os.h"
+#include <stdlib.h>
 
-#ifdef LUA_5_2_HEADER
-#include "lua5.2/lua.h"
-#include "lua5.2/lauxlib.h"
-#include "lua5.2/lualib.h"
-#else
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-#endif
+#ifdef USE_GRAPHICS
 
-// We don't really care about the distinction of TNIL and TNONE,
-// since unspecified parameters (=TNONE) should have the same
-// effect as if specified as nil (=TNIL).
-// Therefore, we override lua_type to map TNONE to TNIL.
+#include "graphics.h"
+#include "graphicstexturemanager.h"
 
-static int lua_wrappedtype(lua_State* l, int index) {
-    int i = lua_type(l, index);
-    if (i == LUA_TNONE) {
-        return LUA_TNIL;
+struct texturerequesthandle {
+
+};
+
+struct texturerequesthandle* texturemanager_RequestTexture(
+const char* path,
+void (*textureDimensionInfo)(struct texturerequesthandle* request,
+size_t width, size_t height),
+void (*textureSwitch)(struct texturerequesthandle* request,
+struct graphicstexture* texture)) {
+    struct texturerequesthandle* request = malloc(sizeof(*request));
+    if (!request) {
+        return NULL;
     }
-    return i;
 }
 
-#define lua_type lua_wrappedtype
+void texturemanager_UsingRequest(
+struct texturerequesthandle* request, int visibility) {
 
-#endif  // BLITWIZARD_LUAHEADER_H_
+}
+
+void texturemanager_DestroyRequest(
+struct texturerequesthandle* request) {
+    free(request);
+}
+
+#endif  // USE_GRAPHICS
 
 

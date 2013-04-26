@@ -37,9 +37,6 @@
 
 int luafuncs_enableStaticCollision(lua_State* l);
 int luafuncs_enableMovableCollision(lua_State* l);
-int luafuncs_destroyObject(lua_State* l);
-int luafuncs_ray2d(lua_State* l);
-int luafuncs_ray3d(lua_State* l);
 int luafuncs_restrictRotation(lua_State* l);
 int luafuncs_restrictRotationAroundAxis(lua_State* l);
 int luafuncs_impulse(lua_State* l);
@@ -47,7 +44,6 @@ int luafuncs_setMass(lua_State* l);
 int luafuncs_setRestitution(lua_State* l);
 int luafuncs_setFriction(lua_State* l);
 int luafuncs_setAngularDamping(lua_State* l);
-int luafuncs_setCollisionCallback(lua_State* l);
 int luafuncs_setLinearDamping(lua_State* l);
 int luafuncs_setGravity(lua_State* l);
 

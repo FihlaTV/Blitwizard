@@ -21,18 +21,29 @@
 
 */
 
-#ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
-#define BLITWIZARD_GRAPHICSTEXTURESDL_H_
+#ifndef BLITWIZARD_DISKCACHE_H_
+#define BLITWIZARD_DISKCACHE_H_
 
-#include "os.h"
+#include <unistd.h>
 
-struct graphicstexture {
-    // basic info
-    size_t width,height;
-    int format;
-    // SDL info
-    SDL_Texture* sdltex;
-};
+// This module implements a disk cache.
 
-#endif  // BLITWIZARD_GRAPHICSTEXTURESDL_H_
+// Stores data in the disk cache and returns the path
+// which may be used to retrieve it again.
+// Please free() the path as soon as you're done with it.
+char* diskcache_Store(char* data, size_t datalength);
+
+// Retrieve a disk cache item again by path.
+// On success, the callback is called with the pointer to the
+// cached data and the data length. YOU MUST free() THE DATA!!
+// On failure, the callback will be passed NULL as data pointer.
+// The callback will happen in another thread!
+// Be sure your callback is thread-safe!
+void diskcache_Retrieve(const char* path, void (*callback)(void* data,
+size_t datalength, void* userdata), void* userdata);
+
+// Delete an item from the disk cache:
+void diskcache_Delete(const char* path);
+
+#endif  // BLITWIZARD_DISKCACHE_H_
 

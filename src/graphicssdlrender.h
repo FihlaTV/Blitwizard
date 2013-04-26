@@ -26,13 +26,13 @@
 
 void graphicsrender_DrawRectangle();
 
-int graphicsrender_DrawCropped(const char* texname, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
+int graphicssdlrender_DrawCropped(const char* texname, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
 // Draw a texture cropped. Returns 1 on success, 0 when there is no such texture.
 
-int graphicsrender_Draw(const char* texname, int x, int y, float alpha, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
+int graphicssdlrender_Draw(const char* texname, int x, int y, float alpha, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue);
 // Draw a texture. Returns 1 on success, 0 when there is no such texture.
 
-void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, float g, float b, float a);
+void graphicssdlrender_DrawRectangle(int x, int y, int width, int height, float r, float g, float b, float a);
 // Draw a colored rectangle.
 
 void graphicssdlrender_StartFrame();
@@ -41,6 +41,6 @@ void graphicssdlrender_StartFrame();
 void graphicssdlrender_CompleteFrame();
 // Complete frame & show it on the screen
 
-#endif  // USE_SDL_GRAPHICS
+#endif  // BLITWIZARD_GRAPHICSSDLRENDER_H_
 
 

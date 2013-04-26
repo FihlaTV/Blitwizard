@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Blitwizard API reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>blitwizard</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul>
+  <li><a href="../modules/blitwizard.html">blitwizard</a></li>
+  <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
+  <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
+  <li><strong>os</strong></li>
+  <li><a href="../modules/string.html">string</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>os</code></h1>
+
+<p>This is the default Lua "os" module.</p>
+<p>
+ (<a href="http://www.lua.org/manual/5.2/manual.html#6.9">Check here for its documentation</a>)
+<p> However, blitwizard extends
+ it with a few additional functions as documented here.
+ Hopefully they'll be useful with your game building!</p>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Copyright</strong>: 2011-2013</li>
+        <li><strong>License</strong>: zlib</li>
+        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@gmail.com)</li>
+    </ul>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#sysname">sysname&nbsp;()</a></td>
+	<td class="summary">Return the name of the operating system your game is
+ currently running on.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#sysversion">sysversion&nbsp;()</a></td>
+	<td class="summary">Return the detailed version of the operating system
+ your game is currently running on.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#exists">exists&nbsp;(path)</a></td>
+	<td class="summary">Check if a given path to a file or directory exists
+ (it points to a valid file or directory).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#isdir">isdir&nbsp;(path)</a></td>
+	<td class="summary">Check if the given path points to a directory or not.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#ls">ls&nbsp;(directory)</a></td>
+	<td class="summary">Returns a table array containing all the file names of the
+ files in the specified directory.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getcwd">getcwd&nbsp;()</a></td>
+	<td class="summary">Get an absolute path to the current working directory
+ (sometimes(!) this is where the blitwizard binary is located
+ - but not necessarily)</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#chdir">chdir&nbsp;(directory)</a></td>
+	<td class="summary">Change the current working directory to the specified directory</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#openConsole">openConsole&nbsp;()</a></td>
+	<td class="summary">Open a visible console window (in addition to the regular blitwizard
+ graphics output window)
+ where the standard output of blitwizard can be read.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Functions"></a>Functions</h2>
+    <dl class="function">
+    <dt>
+    <a name = "sysname"></a>
+    <strong>sysname&nbsp;()</strong>
+    </dt>
+    <dd>
+    Return the name of the operating system your game is
+ currently running on.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+        Operating system name
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "sysversion"></a>
+    <strong>sysversion&nbsp;()</strong>
+    </dt>
+    <dd>
+    Return the detailed version of the operating system
+ your game is currently running on.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+        Operating system version
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "exists"></a>
+    <strong>exists&nbsp;(path)</strong>
+    </dt>
+    <dd>
+    Check if a given path to a file or directory exists
+ (it points to a valid file or directory).
+ Returns true if that is the case, or false if not.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         file or directory path</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">boolean</span></span>
+        true if target exists, false if not
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "isdir"></a>
+    <strong>isdir&nbsp;(path)</strong>
+    </dt>
+    <dd>
+    Check if the given path points to a directory or not.
+ If it points to a file or to nothing, this function returns false.
+ If it points to a directory, it returns true.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         directory path</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">boolean</span></span>
+        true if target is directory, false if not
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "ls"></a>
+    <strong>ls&nbsp;(directory)</strong>
+    </dt>
+    <dd>
+    Returns a table array containing all the file names of the
+ files in the specified directory.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">directory</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         path, empty string ("") for current directory</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+   <span class="comment">-- list all files in current directory:
+</span>   <span class="keyword">for</span> i,file <span class="keyword">in</span> <span class="global">ipairs</span>(<span class="global">os</span>.ls(<span class="string">""</span>)) <span class="keyword">do</span>
+       <span class="global">print</span>(<span class="string">"file name: "</span> .. file)
+   <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "getcwd"></a>
+    <strong>getcwd&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get an absolute path to the current working directory
+ (sometimes(!) this is where the blitwizard binary is located
+ - but not necessarily)
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+        absolute directory path
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "chdir"></a>
+    <strong>chdir&nbsp;(directory)</strong>
+    </dt>
+    <dd>
+    Change the current working directory to the specified directory
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">directory</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         path</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "openConsole"></a>
+    <strong>openConsole&nbsp;()</strong>
+    </dt>
+    <dd>
+    Open a visible console window (in addition to the regular blitwizard
+ graphics output window)
+ where the standard output of blitwizard can be read.  This function
+ only has an effect on Windows, where applications are rarely launched
+ from a terminal.
+<p> If you write a console application on Windows, you will want to call
+ this on program startup.
+
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.11</a></i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

@@ -39,7 +39,7 @@
 
 #include "file.h"
 
-static char file_NativeSlash() {
+static char file_NativeSlash(void) {
 #ifdef WINDOWS
         return '\\';
 #else
@@ -87,6 +87,30 @@ void file_MakeSlashesCrossplatform(char* path) {
 }
 
 size_t file_GetSize(const char* name) {
+#ifdef UNIX
+    // use stat to get file size:
+    struct stat info;
+    int r = stat(name, &info);
+    if (r < 0) {
+        return 0;
+    }
+    return info.st_size;
+#else
+#ifdef WINDOWS
+    // use GetFileAttributesEx for file size:
+    // query file attributes for file:
+    WIN32_FILE_ATTRIBUTE_DATA fad;
+    if (!GetFileAttributesEx(name, GetFileExInfoStandard, &fad)) {
+        return 0;
+    }
+
+    // combine lower and higher order bytes to large int:
+    LARGE_INTEGER size;
+    size.HighPart = fad.nFileSizeHigh;
+    size.LowPart = fad.nFileSizeLow;
+    return size.QuadPart;
+#else
+    // use standard libc functions for file size:
     // open file
     FILE* r = fopen(name, "rb");
     if (!r) {
@@ -101,6 +125,8 @@ size_t file_GetSize(const char* name) {
     fclose(r);
 
     return size;
+#endif
+#endif
 }
 
 int file_Cwd(const char* path) {
@@ -153,9 +179,9 @@ char* file_GetCwd() {
 }
 
 int file_IsDirectory(const char* path) {
-#ifndef WINDOWS
+#ifdef UNIX
     struct stat info;
-    int r = stat(path,&info);
+    int r = stat(path, &info);
     if (r < 0) {
         return 0;
     }
@@ -163,12 +189,15 @@ int file_IsDirectory(const char* path) {
         return 1;
     }
     return 0;
-#endif
+#else
 #ifdef WINDOWS
     if (PathIsDirectory(path) != FALSE) {
         return 1;
     }
     return 0;
+#else
+#error "No file_IsDirectory implementation available"
+#endif
 #endif
 }
 
@@ -423,31 +452,67 @@ char* file_GetTempPath(const char* name) {
 #ifdef WINDOWS
     return NULL;
 #else
-    char* tmppath = malloc(strlen("/tmp/") + 1 + strlen(name));
+    size_t namelen = 0;
+    if (name) {
+        namelen = strlen(name);
+    }
+
+    char* tmppath = malloc(strlen("/tmp/") + 1 + namelen);
     if (!tmppath) {
         return NULL;
     }
+
     memcpy(tmppath, "/tmp/", strlen("/tmp/"));
-    memcpy(tmppath + strlen("/tmp/"), name, strlen(name));
-    tmppath[strlen("/tmp/") + strlen(name)] = 0;
+    if (namelen > 0) {
+        memcpy(tmppath + strlen("/tmp/"), name, namelen);
+    }
+    tmppath[strlen("/tmp/") + namelen] = 0;
     return tmppath;
 #endif
 }
 
 #ifdef WINDOWS
 #include <shlobj.h>
-char* file_GetUserFileDir() {
+char* file_GetUserFileDir(void) {
     char programsdirbuf[MAX_PATH+1];
     SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, programsdirbuf);
     programsdirbuf[MAX_PATH] = 0;
     return strdup(programsdirbuf);
 }
 #else
-char* filesystem_GetUserFileDir() {
+char* filesystem_GetUserFileDir(void) {
     char programsdirbuf[300];
     strncpy(programsdirbuf, getenv("HOME"), 299);
     programsdirbuf[299] = 0;
     return strdup(programsdirbuf);
 }
 #endif
+
+int file_CreateDirectory(const char* name) {
+    if (file_DoesFileExist(name)) {
+        // file or directory already present, we cannot create it!
+        return 0;
+    }
+#ifdef UNIX
+    return (mkdir(name, 0755) == 0);
+#else
+#ifdef WINDOWS
+    return (CreateDirectory(name, NULL) != 0);
+#else
+#error "No file_CreateDirectory implementation present"
+#endif
+#endif
+}
+
+int file_DeleteFile(const char* name) {
+#ifdef UNIX
+    return (unlink(name) == 0);
+#else
+#ifdef WINDOWS
+    return (DeleteFile(name) != 0);
+#else
+#error "No file_DeleteFile implementation present"
+#endif
+#endif
+}
 

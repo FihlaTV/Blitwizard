@@ -26,17 +26,6 @@
 
 #include "luaheader.h"
 
-// os:
-int luafuncs_getcwd(lua_State* l);
-int luafuncs_chdir(lua_State* l);
-int luafuncs_isdir(lua_State* l);
-int luafuncs_exists(lua_State* l);
-int luafuncs_ls(lua_State* l);
-int luafuncs_openConsole(lua_State* l);
-int luafuncs_exit(lua_State* l);
-int luafuncs_sysname(lua_State* l);
-int luafuncs_sysversion(lua_State* l);
-
 // blitwizard.*:
 int luafuncs_setstep(lua_State* l);
 int luafuncs_getTemplateDirectory(lua_State* l);
@@ -54,16 +43,9 @@ int luafuncs_sleep(lua_State* l);
 // Graphics:
 int luafuncs_getRendererName(lua_State* l);
 int luafuncs_setWindow(lua_State* l);
-int luafuncs_loadImage(lua_State* l);
-int luafuncs_loadImageAsync(lua_State* l);
-int luafuncs_getImageSize(lua_State* l);
 int luafuncs_getWindowSize(lua_State* l);
-int luafuncs_drawImage(lua_State* l);
-int luafuncs_drawRectangle(lua_State* l);
 int luafuncs_getDisplayModes(lua_State* l);
 int luafuncs_getDesktopDisplayMode(lua_State* l);
-int luafuncs_isImageLoaded(lua_State* l);
-int luafuncs_unloadImage(lua_State* l);
 
 // Sound:
 int luafuncs_getBackendName(lua_State* l);
@@ -72,13 +54,11 @@ int luafuncs_playing(lua_State* l);
 int luafuncs_stop(lua_State* l);
 int luafuncs_adjust(lua_State* l);
 
-// Strings:
-int luafuncs_startswith(lua_State* l);
-int luafuncs_endswith(lua_State* l);
-int luafuncs_split(lua_State* l);
-
 // Math:
 int luafuncs_trandom(lua_State* l);
+
+// Internal error handling:
+void luacfuncs_onError(const char* funcname, const char* error);
 
 #endif  // BLITWIZARD_LUAFUNCS_H_
 
