@@ -41,6 +41,7 @@
 // effect as if specified as nil (=TNIL).
 // Therefore, we override lua_type to map TNONE to TNIL.
 
+__attribute__ ((unused))
 static int lua_wrappedtype(lua_State* l, int index) {
     int i = lua_type(l, index);
     if (i == LUA_TNONE) {

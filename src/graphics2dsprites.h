@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -30,42 +30,48 @@
 extern "C" {
 #endif
 
+#include "graphicstexture.h"
+
 struct graphics2dsprite;
 
+// All functions of this sprite api are thread-safe.
+
 // Create a sprite at a given position (x/y specify the sprite center).
-//
-// The geometry callback will be called once as soon as the actual
-// width and height obtained by the texture loaded from texturePath
-// is known. userdata is set to the specified userdata.
-//
-// The visibility callback will be called once the texture is
-// fully loaded and the sprite will be truly visible on screen.
-//
-// userdata is a pointer that will be passed to your callbacks.
-//
-// Please note you can freely move/resize/destroy the sprite even
-// when the geometryCallback or visibilityCallback haven't been
-// called yet.
+// If you specify 0,0 for the size, it will be set automatically
+// as soon as the geometry information is available.
+// Specify a negative horizontal or vertical size for horizontal/vertical
+// mirroring.
 struct graphics2dsprite* graphics2dsprites_Create(
-const char* texturePath, double x, double y, double width, double height,
-void (*geometryCallback)(double width, double height, void* userdata),
-void (*visibilityCallback)(void* userdata),
-void* userdata);
+const char* texturePath, double x, double y, double width, double height);
+
+// Check for sprite pixel geometry dimensions.
+// If 0 is returned, the geometry isn't known yet.
+// Otherwise, 1 will be returned and width/height changed.
+int graphics2dsprites_GetGeometry(struct graphics2dsprite* sprite,
+size_t* width, size_t* height);
+// Will return 1 and a size of 0,0 in case of a texture loading error.
+
+// Check if the sprite will be possibly rendered.
+// It might not be if the texture isn't loaded yet,
+// even if it is set to visible.
+int graphics2dsprites_IsTextureAvailable(struct graphics2dsprite* sprite);
 
 // Move a sprite.
 void graphics2dsprites_Move(struct graphics2dsprite* sprite,
 double x, double y, double angle);
 
-// Resize a sprite.
+// Set sprite to invisible (visible = 0) or back to visible (1).
+void graphics2dsprites_SetVisible(struct graphics2dsprite* sprite,
+int visible);
+
+// Resize a sprite. Set negative sizes for mirroring,
+// and 0, 0 for width/height if you want to have the sprite
+// size determined purely by texture dimensions.
 void graphics2dsprites_Resize(struct graphics2dsprite* sprite,
 double width, double height);
 
-// Flip/mirror a sprite
-void graphics2dsprites_Flip(struct graphics2dsprite* sprite,
-int horizontalflip, int verticalflip);
-
 // Set sprite coloring. (1, 1, 1) is normal full brightness
-void graphics2dsprites_SetColor(struct graphics2dsprites* sprite,
+void graphics2dsprites_SetColor(struct graphics2dsprite* sprite,
 double r, double g, double b);
 
 // Set sprite alpha from 0 (invisible) to 1 (fully opaque)
@@ -73,39 +79,56 @@ void graphics2dsprites_SetAlpha(struct graphics2dsprite* sprite,
 double alpha);
 
 // Destroy the specified sprite:
-void graphics2dsprite_Destroy(struct graphics2dsprite* sprite);
+void graphics2dsprites_Destroy(struct graphics2dsprite* sprite);
 
 
 // --- internally used to draw sprites: ---
 
 // Set callback for sprite creation/deletion. modified/moved sprites
 // will end up deleted and recreated.
+//
 // If your graphics output creates and uploads meshes/geometry to the
 // graphics card, you might want to use those callbacks for that.
+//
+// You won't get the callback for a sprite unless the graphics texture
+// is present and the sprite is visible
+// The textures can be invalid after the next call of
+// graphicstexture_InvalidateTextures()! (You'll get that information
+// with the next call of graphics2dsprite_TriggerCallbacks of course)
+//
 // NOTE: The callbacks are always batched up and you can request them
 // to happen with graphics2dsprite_TriggerCallbacks.
-void graphics2dsprite_SetCreateDeleteCallbacks(
+void graphics2dsprites_SetCreateDeleteCallbacks(
 void (*spriteCreated) (void* handle,
-const char* path, double x, double y,
+const char* path, struct graphicstexture* tex,
+double x, double y,
 double width, double height, double angle, int horizontalflip,
 int verticalflip,
-double alpha, double r, double g, double b),
+double alpha, double r, double g, double b,
+int zindex, int visible),
 void (*spriteDeleted) (void* handle)
 );
 
 // Trigger the sprite callbacks you previously set.
 // As soon as the function returns, the callbacks for all
 // recent sprite changes will be completed.
-void graphics2dsprite_TriggerCallbacks(void);
+void graphics2dsprites_TriggerCallbacks(void);
 
 // Get information on all sprites in one go.
+//
 // If your graphics output simply redraws everything per frame,
 // you might want to use this function.
-void graphics2dsprite_DoForAllSprites(
-void (*spriteInformation) (const char* path, double x, double y,
-double width, double height, double angle, int horizontalflip,
-int verticalflip, double alpha, double r, double g, double b));
-
+//
+// For sprites with no texture loaded/available,
+// the tex parameter will be set to NULL.
+void graphics2dsprites_DoForAllSprites(
+void (*spriteInformation) (const char* path, struct graphicstexture* tex,
+double x, double y, double width, double height,
+double angle, double alpha, double r, double g, double b,
+int visible));
+// Sprites will be returned in Z-Index order.
+// (lower index first, and for same z-index
+// with the older sprites first)
 
 #ifdef __cplusplus
 }

@@ -238,9 +238,7 @@ AS_IF([test -e "src/ffmpeg/libavcodec/avcodec.h"],[
     FFMPEG_FEATURE_ENABLED="no, tarball not found"
 ])
 
-
-# Check for SDL2 availability:
-
+# See if we want libSDL or not:
 NEEDSDL="no"
 AS_IF([test "x$enable_sdlaudio" = xyes], [
     NEEDSDL="yes"
@@ -248,34 +246,22 @@ AS_IF([test "x$enable_sdlaudio" = xyes], [
 AS_IF([test "x$enable_sdlgraphics" = xyes], [
     NEEDSDL="yes"
 ])
-
-AS_IF([test "x$NEEDSDL" = xyes],[
-    AC_MSG_CHECKING([for static SDL2 library])
-    AS_IF([test ! -f "src/sdl/src/SDL.c"],[
-        AC_MSG_RESULT([no])
-        AC_CHECK_LIB([SDL2], [SDL_Init],[
-            #shared lib is there!
-            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  SDL2: shared"
-        ],[
-            #nothing there
-            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  SDL2: no"
-            SDL_GRAPHICS_FEATURE_ENABLED="no, need SDL2"
-			# Windows can do audio without SDL (WaveOut):
-			AS_IF([test "x$WINDOWS" = xno],[
-				AUDIO_FEATURE_ENABLED="no, need SDL2"
-			],[
-				AUDIO_FEATURE_ENABLED="yes"
-                AUDIO_FEATURE_ENABLED_TYPE="waveOut"
-			])
-        ])
+AS_IF([test "x$enable_sdlgraphics" = xno],[
+    SDL_GRAPHICS_FEATURE_ENABLED="no, disabled"
+])
+AS_IF([test "x$enable_sdlaudio" = xno],[
+    # Windows can do audio without SDL (WaveOut):
+    AS_IF([test "x$WINDOWS" = xno],[
+        AUDIO_FEATURE_ENABLED="no, disabled"
     ],[
-        AC_MSG_RESULT([yes])
-        STATIC_LIBS_USE="${STATIC_LIBS_USE} SDL2"
-        LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  SDL2: static"
+        AUDIO_FEATURE_ENABLED="yes"
+        AUDIO_FEATURE_ENABLED_TYPE="waveOut"
     ])
+])
+
+# See if we want Ogre3D:
+AS_IF([test "x$enable_ogregraphics" = xno],[
+    OGRE_GRAPHICS_FEATURE_ENABLED="no, disabled"
 ])
 
 # Check FreeType:
@@ -306,6 +292,74 @@ AS_IF([test "x$enable_ogregraphics" = xyes],[
     COMPILE_OGRE="no"
 ])
 
+# Check for various libs we need for graphics:
+AS_IF([test "x$enable_graphics" = xyes],[ # START enable_graphics block
+    # Check for libpng availability:
+
+    AC_MSG_CHECKING([for static png library])
+    AS_IF([test ! -f "src/imgloader/png/png.c"],[
+        AC_MSG_RESULT([no])
+        AC_CHECK_LIB([png], [png_create_read_struct],[
+            #shared lib is there!
+            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  libpng: shared"
+        ],[
+            #nothing there
+            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  libpng: no"
+            SDL_GRAPHICS_FEATURE_ENABLED="no, need libpng"
+            OGRE_GRAPHICS_FEATURE_ENABLED="no, need libpng"
+            NULL_GRAPHICS_FEATURE_ENABLED="no, need libpng"
+            GRAPHICS_FEATURE_ENABLED="no, need libpng"
+            COMPILE_OGRE="no"
+            NEEDSDL="no"
+        ])
+    ],[
+        AC_MSG_RESULT([yes])
+        STATIC_LIBS_USE="${STATIC_LIBS_USE} png"
+        LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  libpng: static"
+    ])
+
+
+    # Check for zlib availability:
+
+    AC_MSG_CHECKING([for static zlib library])
+    AS_IF([test ! -f "src/imgloader/zlib/gzlib.c"],[
+        AC_MSG_RESULT([no])
+        AC_CHECK_HEADERS([zlib.h],[
+            #shared lib is there!
+            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  zlib: shared"
+        ],[
+            #nothing there
+            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  zlib: no"
+            GRAPHICS_FEATURE_ENABLED="no, need zlib"
+            NULL_GRAPHICS_FEATURE_ENABLED="no, need zlib"
+            SDL_GRAPHICS_FEATURE_ENABLED="no, need zlib"
+            OGRE_GRAPHICS_FEATURE_ENABLED="no, need zlib"
+            COMPILE_OGRE="no"
+            NEEDSDL="no"
+        ])
+    ],[
+        AC_MSG_RESULT([yes])
+        STATIC_LIBS_USE="${STATIC_LIBS_USE} zlib"
+        LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
+  zlib: static"
+    ])
+
+],[ # STOP enable_graphics block
+    GRAPHICS_FEATURE_ENABLED="no, disabled"
+    SDL_GRAPHICS_FEATURE_ENABLED="no, disabled"
+    OGRE_GRAPHICS_FEATURE_ENABLED="no, disabled"
+    NULL_GRAPHICS_FEATURE_ENABLED="no, disabled"
+    COMPILE_OGRE="no"
+    NEEDSDL="no"
+])
+
+
+
 # Check OIS:
 AS_IF([test "x$COMPILE_OGRE" = xyes], [
     AC_MSG_CHECKING([for static OIS library])
@@ -332,6 +386,47 @@ AS_IF([test "x$COMPILE_OGRE" = xyes], [
     ])
 ])
 
+# Check various X headers (only on Unix):
+AS_IF([test -z "$maybeos"],[
+    # Check Xaw headers for Ogre3D:
+    AS_IF([test "x$COMPILE_OGRE" = xyes], [
+        AC_CHECK_HEADERS([X11/Xaw/Form.h],,[
+            AC_WARN([Cannot find Xaw header files required for Ogre3D. No Ogre support possible.])
+            OGRE_GRAPHICS_FEATURE_ENABLED="no, need Xaw headers"
+            COMPILE_OGRE="no"
+        ])
+    ])
+
+    # Check X11, Xext headers for Ogre3D and SDL:
+    NEED_XHEADERS="no"
+    AS_IF([test "x$COMPILE_OGRE" = xyes], [
+        NEED_XHEADERS="yes"
+    ])
+    AS_IF([test "x$NULL_GRAPHICS_FEATURE_ENABLED" = xyes],[
+        NEED_XHEADERS="yes"
+    ])
+    AC_CHECK_HEADERS([X11/Xlib.h],,[
+        AC_WARN([Cannot find Xlib header files required for Ogre3D and SDL2. No Ogre or SDL2 support possible.])
+        OGRE_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
+        SDL_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
+        AUDIO_FEATURE_ENABLED="no, need SDL2"
+        COMPILE_OGRE="no"
+        NEEDSDL="no"
+    ])
+    AS_IF([test "x$NEED_XHEADERS" = xyes], [
+        AC_CHECK_HEADERS([X11/extensions/Xext.h],,[
+            AC_MSG_ERROR([Cannot find Xext header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
+            OGRE_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
+            SDL_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
+            AUDIO_FEATURE_ENABLED="no, need SDL2"
+            COMPILE_OGRE="no"
+            NEEDSDL="no"
+        ],[
+#include <X11/Xlib.h>
+        ])
+    ])
+])
+
 # Check Ogre3D:
 AS_IF([test "x$COMPILE_OGRE" = xyes],[
     AC_MSG_CHECKING([for static Ogre3D library])
@@ -347,7 +442,6 @@ AS_IF([test "x$COMPILE_OGRE" = xyes],[
             LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
   Ogre3D: no"
             OGRE_GRAPHICS_FEATURE_ENABLED="no, need Ogre3D"
-            COMPILE_OGRE="no"
         ])
         AC_LANG_POP([C++])
     ],[
@@ -358,78 +452,34 @@ AS_IF([test "x$COMPILE_OGRE" = xyes],[
     ])
 ])
 
-
-AS_IF([test "x$enable_sdlgraphics" = xno],[
-    SDL_GRAPHICS_FEATURE_ENABLED="no, disabled"
-])
-AS_IF([test "x$enable_sdlaudio" = xno],[
-	# Windows can do audio without SDL (WaveOut):
-	AS_IF([test "x$WINDOWS" = xno],[
-		AUDIO_FEATURE_ENABLED="no, disabled"
-	],[
-		AUDIO_FEATURE_ENABLED="yes"
-        AUDIO_FEATURE_ENABLED_TYPE="waveOut"
-	])
-])
-AS_IF([test "x$enable_ogregraphics" = xno],[
-    OGRE_GRAPHICS_FEATURE_ENABLED="no, disabled"
-])
-
-AS_IF([test "x$enable_graphics" = xyes],[ # START enable_graphics block
-
-    # Check for libpng availability:
-
-    AC_MSG_CHECKING([for static png library])
-    AS_IF([test ! -f "src/imgloader/png/png.c"],[
+# Check for SDL2 availability:
+AS_IF([test "x$NEEDSDL" = xyes],[
+    AC_MSG_CHECKING([for static SDL2 library])
+    AS_IF([test ! -f "src/sdl/src/SDL.c"],[
         AC_MSG_RESULT([no])
-        AC_CHECK_LIB([png], [png_create_read_struct],[
+        AC_CHECK_LIB([SDL2], [SDL_Init],[
             #shared lib is there!
             LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  libpng: shared"
+  SDL2: shared"
         ],[
             #nothing there
             LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  libpng: no"
-            SDL_GRAPHICS_FEATURE_ENABLED="no, need libpng"
-            OGRE_GRAPHICS_FEATURE_ENABLED="no, need libpng"
-            NULL_GRAPHICS_FEATURE_ENABLED="no, need libpng"
+  SDL2: no"
+            SDL_GRAPHICS_FEATURE_ENABLED="no, need SDL2"
+            # Windows can do audio without SDL (WaveOut):
+            AS_IF([test "x$WINDOWS" = xno],[
+                AUDIO_FEATURE_ENABLED="no, need SDL2"
+            ],[
+                AUDIO_FEATURE_ENABLED="yes"
+                AUDIO_FEATURE_ENABLED_TYPE="waveOut"
+            ])
         ])
     ],[
         AC_MSG_RESULT([yes])
-        STATIC_LIBS_USE="${STATIC_LIBS_USE} png"
+        STATIC_LIBS_USE="${STATIC_LIBS_USE} SDL2"
         LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  libpng: static"
+  SDL2: static"
     ])
-
-
-    # Check for zlib availability:
-
-    AC_MSG_CHECKING([for static zlib library])
-    AS_IF([test ! -f "src/imgloader/zlib/gzlib.c"],[
-        AC_MSG_RESULT([no])
-        AC_CHECK_HEADERS([zlib.h],[
-            #shared lib is there!
-            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  zlib: shared"
-        ],[
-            #nothing there
-            LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  zlib: no"
-            GRAPHICS_FEATURE_ENABLED="no, need zlib"
-            NULL_GRAPHICS_FEATURE_ENABLED="no, need zlib"
-        ])
-    ],[
-        AC_MSG_RESULT([yes])
-        STATIC_LIBS_USE="${STATIC_LIBS_USE} zlib"
-        LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
-  zlib: static"
-    ])
-
-],[ # STOP enable_graphics block
-    GRAPHICS_FEATURE_ENABLED="no, disabled"
-    SDL_GRAPHICS_FEATURE_ENABLED="no, disabled"
-    OGRE_GRAPHICS_FEATURE_ENABLED="no, disabled"
-    NULL_GRAPHICS_FEATURE_ENABLED="no, disabled"
 ])
 
 # Check PhysFS:
@@ -715,7 +765,6 @@ AS_IF([test "x$enable_physics2d" = xyes],[
     PHYSICS2D_FEATURE_ENABLED="no, disabled"
 ])
 
-
 # Compose ld/include/define flags:
 
 FINAL_LD_FLAGS=""
@@ -851,7 +900,6 @@ AS_IF([test -z "$statictest"],[
 ])
 
 AS_IF([test "x$NULL_AUDIO_FEATURE_ENABLED" = xyes],[
-
     # Checking on FLAC status:
     AS_IF([test "x$FLAC_FEATURE_ENABLED" = xyes],[
         statictest=`echo $STATIC_LIBS_USE | grep FLAC`
@@ -940,39 +988,6 @@ AS_IF([test -z "$maybeos"],[
     AC_MSG_NOTICE([Trying to compile for a Unix target.]) 
     # >> Unix
     AM_CONDITIONAL([WIN_APP_PATHS], [test 0 = 1])
-
-    # Check Xaw headers for Ogre3D:
-    AS_IF([test "x$COMPILE_OGRE" = xyes], [
-        AC_CHECK_HEADERS([X11/Xaw/Form.h],,[
-            AC_WARN([Cannot find Xaw header files required for Ogre3D. No Ogre support possible.])
-            OGRE_GRAPHICS_FEATURE_ENABLED="no, need Xaw headers"
-        ])
-    ])
-
-    # Check X11, Xext headers for Ogre3D and SDL:
-    NEED_XHEADERS="no"
-    AS_IF([test "x$COMPILE_OGRE" = xyes], [
-        NEED_XHEADERS="yes"
-    ])
-    AS_IF([test "x$NULL_GRAPHICS_FEATURE_ENABLED" = xyes],[
-        NEED_XHEADERS="yes"
-    ])
-    AC_CHECK_HEADERS([X11/Xlib.h],,[
-        AC_WARN([Cannot find Xlib header files required for Ogre3D and SDL2. No Ogre or SDL2 support possible.])
-        OGRE_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
-        SDL_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
-        AUDIO_FEATURE_ENABLED="no, need SDL2"
-    ])
-    AS_IF([test "x$NEED_XHEADERS" = xyes], [
-        AC_CHECK_HEADERS([X11/extensions/Xext.h],,[
-            AC_MSG_ERROR([Cannot find Xext header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
-            OGRE_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
-            SDL_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
-            AUDIO_FEATURE_ENABLED="no, need SDL2"
-        ],[
-#include <X11/Xlib.h>
-        ])
-    ])
 
     MACTEST=`uname -a | grep Darwin`
     AS_IF([test -z "$MACTEST"],[

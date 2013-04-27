@@ -714,5 +714,10 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
     }
 }
 
+int graphics_GetCameraCount() {
+    // we only support one fake camera
+    return 1;
+}
+
 #endif  // USE_SDL_GRAPHICS
 

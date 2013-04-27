@@ -229,7 +229,8 @@ int luafuncs_chdir(lua_State* l) {
 // If you write a console application on Windows, you will want to call
 // this on program startup.
 // @function openConsole
-int luafuncs_openConsole(lua_State* intentionally_unused) {
+int luafuncs_openConsole(__attribute__ ((unused))
+lua_State* intentionally_unused) {
     win32console_Launch();
     return 0;
 }

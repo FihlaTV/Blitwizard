@@ -85,7 +85,11 @@ int functionalitymissing_graphics(lua_State* l) {
     return haveluaerror(l, "%s", error_nographics);
 }
 
-void luastate_register2dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
+void luastate_register2dphysics_do(lua_State* l,
+#ifndef USE_PHYSICS2D
+__attribute__ ((unused))
+#endif
+int (*func)(lua_State*), const char* name) {
     lua_pushstring(l, name);
 #ifdef USE_PHYSICS2D
     lua_pushcfunction(l, func);
@@ -95,9 +99,13 @@ void luastate_register2dphysics_do(lua_State* l, int (*func)(lua_State*), const 
     lua_settable(l, -3);
 }
 
-void luastate_register3dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
+void luastate_register3dphysics_do(lua_State* l,
+#ifndef USE_PHYSICS3D
+__attribute__ ((unused))
+#endif
+int (*func)(lua_State*), const char* name) {
     lua_pushstring(l, name);
-#ifdef USE_PHYSICS2D
+#ifdef USE_PHYSICS3D
     lua_pushcfunction(l, func);
 #else
     lua_pushcfunction(l, functionalitymissing_3dphysics);
@@ -105,7 +113,11 @@ void luastate_register3dphysics_do(lua_State* l, int (*func)(lua_State*), const 
     lua_settable(l, -3);
 }
 
-void luastate_register2d3dphysics_do(lua_State* l, int (*func)(lua_State*), const char* name) {
+void luastate_register2d3dphysics_do(lua_State* l,
+#if (!defined(USE_PHYSICS2D)) && (!defined(USE_PHYSICS3D))
+__attribute__ ((unused))
+#endif
+int (*func)(lua_State*), const char* name) {
     lua_pushstring(l, name);
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
     lua_pushcfunction(l, func);

@@ -33,6 +33,7 @@
 <h2>Contents</h2>
 <ul>
 <li><a href="#Functions">Functions</a></li>
+<li><a href="#Class_camera">Class camera </a></li>
 </ul>
 
 
@@ -68,6 +69,26 @@
 	<tr>
 	<td class="name" ><a href="#setMode">setMode&nbsp;(width, height, title, fullscreen, renderer)</a></td>
 	<td class="summary">This function sets the graphics mode.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getCameras">getCameras&nbsp;()</a></td>
+	<td class="summary">Get a table array with all currently active cameras.</td>
+	</tr>
+</table>
+<h2><a href="#Class_camera">Class camera </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#camera:destroy">camera:destroy&nbsp;()</a></td>
+	<td class="summary">Destroy the given camera.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:new">camera:new&nbsp;()</a></td>
+	<td class="summary">Add a new camera.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:gameUnitsPerPixel">camera:gameUnitsPerPixel&nbsp;()</a></td>
+	<td class="summary">Get the extend in pixels a game unit in the 2d world
+ has at the default camera zoom level of 1.</td>
 	</tr>
 </table>
 
@@ -108,6 +129,96 @@
             <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
          (optional) Specify a specific renderer you want. Available renderers are "direct3d" (Windows only), "opengl" and "software". Software rendering is slow and should only be used as a fallback. It's also only available if you compiled with SDL graphics. If you don't specify a renderer, the best one will be used</li>
     </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getCameras"></a>
+    <strong>getCameras&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get a table array with all currently active cameras.
+ (per default, this is only one)
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2><a name="Class_camera"></a>Class camera </h2>
+        Blitwizard camera object which represents a render camera.
+<p> A render camera has a rectangle on the screen which is a sort of
+ "window" that shows a view into the 2d/3d world of your
+ blitwizard game.
+<p> Per default, you have one camera that fills up the whole
+ screen with one single large view. But if you want to split
+ the screen up e.g. for split screen multiplayer games, and show
+ different world views side by side, you would want multiple
+ cameras.
+<p> IMPORTANT: If you want to show a different part of the game world,
+ this is where you want to be! Grab the first camera from
+ <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> and let's go:
+<p> Use ??? to modify the 2d world
+ position shown, and ??? to modify
+ the 3d world position shown if you use any 3d objects.
+    <dl class="function">
+    <dt>
+    <a name = "camera:destroy"></a>
+    <strong>camera:destroy&nbsp;()</strong>
+    </dt>
+    <dd>
+    Destroy the given camera.
+<p> It will be removed from the <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> list
+ and all references you still have to it will become invalid.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:new"></a>
+    <strong>camera:new&nbsp;()</strong>
+    </dt>
+    <dd>
+    Add a new camera.
+ Returns the new <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a>, and
+ it will be automatically part of the list of all followup
+ <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> calls aswell.
+<p> If you want to get rid of it again, check out
+ <a href="../modules/blitwizard.graphics.html#camera:destroy">blitwizard.graphics.camera:destroy</a>.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:gameUnitsPerPixel"></a>
+    <strong>camera:gameUnitsPerPixel&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the extend in pixels a game unit in the 2d world
+ has at the default camera zoom level of 1.
+<p> For 3d, a game unit should be roughly one meter and there
+ is no generic way to tell how this ends up in pixels due
+ to the very dynamic way objects look depending on your
+ position in the world etc.
+
+
 
 
 

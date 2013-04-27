@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2012-2013 Jonas Thiem
+  Copyright (C) 2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,24 +21,24 @@
 
 */
 
-#ifndef BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
-#define BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
+#ifndef BLItWIZARD_GRAPHICS_CAMERA_H_
+#define BLITWIZARD_GRAPHICS_CAMERA_H_
 
-#include "blitwizardobject.h"
+#if defined(USE_GRAPHICS)
 
-void luafuncs_objectgraphics_load(struct blitwizardobject* o,
-const char* resource);
-void luafuncs_objectgraphics_unload(struct blitwizardobject* o);
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <assert.h>
+#include "luaheader.h"
 
-// check if a geometry callback needs to be fired.
-// returns 1 if that is the case, 0 if not.
-int luafuncs_objectgraphics_NeedGeometryCallback(
-struct blitwizardobject* o);
+int luafuncs_getCameras(lua_State* l);
+int luafuncs_camera_new(lua_State* l);
+int luafuncs_camera_delete(lua_State* l);
+int luafuncs_camera_gameUnitsPerPixel(lua_State* l);
 
-// check if a visibility callback needs to be fired.
-// returns 1 if that is the case, 0 if not.
-int luafuncs_objectgraphics_NeedVisibleCallback(
-struct blitwizardobject* o);
+#endif  // USE_GRAPHICS
 
-#endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
+#endif  // BLITWIZARD_GRAPHICS_CAMERA_H_
 

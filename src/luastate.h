@@ -52,9 +52,11 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
 #define IDREF_MEDIA 1
 #define IDREF_NETSTREAM 2
 #define IDREF_BLITWIZARDOBJECT 3
+#define IDREF_CAMERA 4
 
 struct blitwizardobject;
 struct mediaobject;
+struct luacameralistentry;
 struct luaidref {
     int magic;
     int type;
@@ -63,6 +65,7 @@ struct luaidref {
         void* ptr;
         struct blitwizardobject* bobj;
         struct mediaobject* mobj;
+        struct luacameralistentry* camera;
     } ref;
 };
 

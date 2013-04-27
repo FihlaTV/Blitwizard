@@ -66,8 +66,8 @@ struct texturerequesthandle;
 // texture as soon as it is available. IT MIGHT BE OF DIFFERENT
 // DIMENSIONS THEN THE ONE YOU GOT. Also, the callback can be
 // called again any time, at which point it will provide a new
-// texture and THE OLD ONE WILL GET INVALID AS SOON AS THE
-// CALLBACK RETURNS (YOU MUST NOT USE IT FURTHER).
+// texture and THE OLD ONE WILL GET INVALID with the next call
+// of texturemanager_InvalidateTextures().
 //
 // The textureSwitch texture passed to you can be NULL aswell!
 // (you must stop using the old one and not draw anything until
@@ -75,8 +75,7 @@ struct texturerequesthandle;
 //
 // This means the texture manager can essentially provide you
 // with any chain of different texture versions and you always
-// must use the newest one and stop using the older ones
-// immediately.
+// must use the newest one and stop using the older ones.
 //
 // The texture manager will ensure the old ones are properly
 // free'd from memory, don't attempt to do that yourself.
@@ -94,12 +93,16 @@ struct texturerequesthandle;
 // copy provided through textureSwitch is a NULL copy and you
 // cannot actually draw things. The texture manager will
 // give your texture higher priority if usage is high.
+//
+// BEWARE OF THE CALLBACKS: Inside the callbacks, don't
+// call the texture manager api. This will break things.
 struct texturerequesthandle* texturemanager_RequestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
-size_t width, size_t height),
+size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
-struct graphicstexture* texture));
+struct graphicstexture* texture, void* userdata),
+void* userdata);
 
 // Use texturemanager_UsingRequest to report back how much
 // you use a texture, and at which visibility (so the texture
@@ -128,12 +131,29 @@ struct texturerequesthandle* request, int visibility);
 #define USING_AT_VISIBILITY_NORMAL 2
 #define USING_AT_VISIBILITY_DISTANT 3
 #define USING_AT_VISIBILITY_INVISIBLE 4
+#define USING_AT_COUNT 4
 
 // Destroy a texture request. You will still get a textureSwitch
 // callback setting your provided texture back to NULL if
 // it's not already, then no further callbacks.
+//
+// When this function returns, you will be guaranteed to no
+// longer receive any callbacks related to this texture request.
 void texturemanager_DestroyRequest(
 struct texturerequesthandle* request);
+
+// Call this as often as possible (preferrably right before rendering)
+// to allow the graphics texture manager to delete old textures
+// from memory.
+//
+// At this point, all graphicstexture* handles that were exchanged
+// through textureSwitch callbacks with new ones (or NULL) become
+// invalid.
+//
+// Hence, call this at a point where your drawing operations are
+// complete and it won't crash your drawing code when textures
+// become unavailable and new ones need to be used.
+void texturemanager_Tick(void);
 
 #endif  // USE_GRAPHICS
 

@@ -480,6 +480,13 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 }
 
 /// This is how you should submit shape info to @{object:enableStaticCollision} and @{object:enableMovableCollision} (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+//
+// Please note the shapes "edge list" and "triangle mesh" may only be used
+// for static collision. They don't work with movable collision objects.
+//
+// Also keep in mind you can combine shapes when enabling collision,
+// by specifying multiple shapes (the final collision shape will be
+// all those shapes merged into one).
 // @tfield string type The shape type, for 2d shapes: "rectangle", "circle", "oval", "polygon" (needs to be convex!), "edge list" (simply a list of lines that don't need to be necessarily connected as it is for the polygon), for 3d shapes: "decal" (= 3d rectangle), "box", "ball", "elliptic ball" (deformed ball with possibly non-uniform radius, e.g. rather a capsule), "triangle mesh" (a list of 3d triangles)
 // @tfield number width required for "rectangle", "oval" and "decal"
 // @tfield number height required for "rectangle", "oval" and "decal"
@@ -487,8 +494,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 // @tfield number x_size required for "box" and "elliptic ball"
 // @tfield number y_size required for "box" and "elliptic ball"
 // @tfield number z_size required for "box" and "elliptic ball"
-// @tfield table points required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. [ [ 0, 0 ], [ 1, 0 ], [ 0, 1 ] ]  (keep in mind the polygon needs to be convex!)
-// @tfield table edges required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Example: [ [ [ 0, 0 ], [ 1, 0 ] ], [ [ 0, 1 ], [ 1, 1 ] ] ]
+// @tfield table points required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. { { 0, 0 }, { 1, 0 }, { 0, 1 } }  (keep in mind the polygon needs to be <a href="http://en.wikipedia.org/wiki/Convex_polygon">convex!</a>)
+// @tfield table edges required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Both convex and concave shapes are supported. Example: { { { 0, 0 }, { 1, 0 } }, { { 0, 1 }, { 1, 1 } } }
 // @tfield table triangles required for "triangle mesh": a list of triangles, whereas a triangle is itself a 3-item list of three 3d points, each 3d point being a list of three coordinates.
 // @tfield number x_offset (optional) x coordinate offset for any 2d or 3d shape, defaults to 0
 // @tfield number y_offset (optional) y coordinate offset for any 2d or 3d shape, defaults to 0
@@ -510,7 +517,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 // -- Set the dimensions of the object to a 1x1 square
 // -- (find out how large that is in pixels
 // -- at the default zoom level with
-// -- @{blitwizard.graphics.getDefaultCamera}:@{blitwizard.graphics.camera:gameUnitsPerPixel|gameUnitsPerPixel}() - multiply this
+// -- @{blitwizard.graphics.getCameras}()[1]:@{blitwizard.graphics.camera:gameUnitsPerPixel|gameUnitsPerPixel}() - multiply this
 // -- with any number of game units to get their size in pixels)
 // myobject:setScale(1, 1)
 //

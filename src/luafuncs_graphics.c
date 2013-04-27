@@ -125,6 +125,5 @@ int luafuncs_setMode(lua_State* l) {
 #endif
 }
 
-
 #endif  // USE_GRAPHICS
 

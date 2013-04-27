@@ -95,7 +95,9 @@
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object.shape_info">object.shape_info</a></td>
-	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)</td>
+	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+<p> Please note the shapes "edge list" and "triangle mesh" may only be used
+ for static collision.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:enableMovableCollision">object:enableMovableCollision&nbsp;(shape_info)</a></td>
@@ -144,6 +146,30 @@
 	<tr>
 	<td class="name" ><a href="#object:setStep">object:setStep&nbsp;()</a></td>
 	<td class="summary">Set the stepping frequency of the game logic.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onClose">object:onClose&nbsp;()</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when your blitwizard game gets closed (close button,
+ ALT+F4, ...).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseMove">object:onMouseMove&nbsp;(x_pos, y_pos)</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when the mouse is moved over the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseDown">object:onMouseDown&nbsp;(x_pos, y_pos, button)</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when a mouse button is pressed down
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseUp">object:onMouseUp&nbsp;(x_pos, y_pos, button)</a></td>
+	<td class="summary">Specify this function if you want to get notified
+ when a mouse button (which was previously pressed down)
+ is released
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
 	</tr>
 </table>
 
@@ -300,6 +326,11 @@
     </dt>
     <dd>
     This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+<p> Please note the shapes "edge list" and "triangle mesh" may only be used
+ for static collision.  They don't work with movable collision objects.
+<p> Also keep in mind you can combine shapes when enabling collision,
+ by specifying multiple shapes (the final collision shape will be
+ all those shapes merged into one).
 
     <h3>Fields:</h3>
     <ul>
@@ -326,10 +357,10 @@
          required for "box" and "elliptic ball"</li>
         <li><span class="parameter">points</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-         required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. [ [ 0, 0 ], [ 1, 0 ], [ 0, 1 ] ]  (keep in mind the polygon needs to be convex!)</li>
+         required for "polygon": a list of two pair coordinates which specify the corner points of the polygon, e.g. { { 0, 0 }, { 1, 0 }, { 0, 1 } }  (keep in mind the polygon needs to be <a href="http://en.wikipedia.org/wiki/Convex_polygon">convex!</a>)</li>
         <li><span class="parameter">edges</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-         required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Example: [ [ [ 0, 0 ], [ 1, 0 ] ], [ [ 0, 1 ], [ 1, 1 ] ] ]</li>
+         required for "edge list": a list of edges, whereas an edge is itself a 2-item list of two 2d points, each 2d point being a list of two coordinates. Both convex and concave shapes are supported. Example: { { { 0, 0 }, { 1, 0 } }, { { 0, 1 }, { 1, 1 } } }</li>
         <li><span class="parameter">triangles</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
          required for "triangle mesh": a list of triangles, whereas a triangle is itself a 3-item list of three 3d points, each 3d point being a list of three coordinates.</li>
@@ -373,7 +404,7 @@
  <span class="comment">-- Set the dimensions of the object to a 1x1 square
 </span> <span class="comment">-- (find out how large that is in pixels
 </span> <span class="comment">-- at the default zoom level with
-</span> <span class="comment">-- ???:???() - multiply this
+</span> <span class="comment">-- <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a>()[1]:<a href="../modules/blitwizard.graphics.html#camera:gameUnitsPerPixel">gameUnitsPerPixel</a>() - multiply this
 </span> <span class="comment">-- with any number of game units to get their size in pixels)
 </span> myobject:setScale(<span class="number">1</span>, <span class="number">1</span>)
 
@@ -687,6 +718,141 @@
 
 
 
+
+</dd>
+    <dt>
+    <a name = "object:onClose"></a>
+    <strong>object:onClose&nbsp;()</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when your blitwizard game gets closed (close button,
+ ALT+F4, ...).
+<p> <b>This function does not exist</b> unless you specify/override
+ it with blitwizard.onClose = ...
+<p> This event is useful if you want to save the game
+ or do other things on shutdown.
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- specify our own close event function:
+</span> <span class="keyword">function</span> blitwizard.onClose()
+     <span class="global">print</span>(<span class="string">"Shutting down!"</span>)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseMove"></a>
+    <strong>object:onMouseMove&nbsp;(x_pos, y_pos)</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when the mouse is moved over the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> <b>This function does not exist</b> unless you specify/override
+ it.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse X position</li>
+        <li><span class="parameter">y_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse Y position</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Listen for mouse evens:
+</span> <span class="keyword">function</span> blitwizard.onMouseMove(x, y)
+     <span class="global">print</span>(<span class="string">"Mouse position: x: "</span> .. x .. <span class="string">", y: "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseDown"></a>
+    <strong>object:onMouseDown&nbsp;(x_pos, y_pos, button)</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when a mouse button is pressed down
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> <b>This function does not exist</b> unless you specify/override
+ it.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse X position</li>
+        <li><span class="parameter">y_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse Y position</li>
+        <li><span class="parameter">button</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse button (1 for left, 2 for right)</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Listen for mouse evens:
+</span> <span class="keyword">function</span> blitwizard.onMouseDown(x, y, button)
+     <span class="global">print</span>(<span class="string">"Mouse down: button: "</span> .. button .. <span class="string">", x: "</span> .. x .. <span class="string">", y: "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseUp"></a>
+    <strong>object:onMouseUp&nbsp;(x_pos, y_pos, button)</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to get notified
+ when a mouse button (which was previously pressed down)
+ is released
+ on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> <b>This function does not exist</b> unless you specify/override
+ it.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse X position</li>
+        <li><span class="parameter">y_pos</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse Y position</li>
+        <li><span class="parameter">button</span>
+            <span class="types"><span class="type">number</span></span>
+         mouse button (1 for left, 2 for right)</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Listen for mouse evens:
+</span> <span class="keyword">function</span> blitwizard.onMouseUp(x, y, button)
+     <span class="global">print</span>(<span class="string">"Mouse up: button: "</span> .. button .. <span class="string">", x: "</span> .. x .. <span class="string">", y: "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
 
 </dd>
 </dl>

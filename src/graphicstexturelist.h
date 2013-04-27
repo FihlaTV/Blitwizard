@@ -44,6 +44,7 @@
 #ifdef USE_GRAPHICS
 
 #include "graphics.h"
+#include "graphicstexturemanager.h"
 
 // This contains the cache info for one specific size of a texture:
 struct graphicstexturescaled {
@@ -62,10 +63,19 @@ struct graphicstexturemanaged {
     struct graphicstexturescaled* scalelist;  // one dimensional array
     int scalelistcount;  // count of scalelist array items
     int origscale;  // array index of scalelist of item scaled in original size
+    int beingInitiallyLoaded;  // the texture is just being initiially loaded
+        // from disk (= wait until loading is complete)
+    int failedToLoad;  // the texture failed to load (e.g. file not found)
+
+    // usage time stamps:
+    time_t lastUsage[USING_AT_COUNT];
 
     // initialise to zeros and then don't touch:
     struct graphicstexturemanaged* next;
     struct graphicstexturemanaged* hashbucketnext;
+
+    // original texture size if known (otherwise zero):
+    size_t width,height;
 };
 
 // Find a texture by doing a hash map lookup:
