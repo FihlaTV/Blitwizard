@@ -105,12 +105,14 @@ int luafuncs_ray(lua_State* l, int use3d) {
 
     int returnvalue;
     if (use3d) {
+#ifdef USE_PHYSICS3D
         returnvalue = physics_Ray3d(main_DefaultPhysics2dPtr(),
         startx, starty, startz,
         targetx, targety, targetz,
         &hitpointx, &hitpointy, &hitpointz,
         &obj,
         &normalx, &normaly, &normalz);
+#endif
     } else {
         returnvalue = physics_Ray2d(main_DefaultPhysics2dPtr(),
         startx, starty,
@@ -122,7 +124,7 @@ int luafuncs_ray(lua_State* l, int use3d) {
 
     if (returnvalue) {
         // create a new reference to the (existing) object the ray has hit:
-        luafuncs_pushbobjidref(l, (struct blitwizardobject*)physics_GetObjectUserdata(obj));
+        luacfuncs_pushbobjidref(l, (struct blitwizardobject*)physics_GetObjectUserdata(obj));
 
         // push the other information we also want to return:
         lua_pushnumber(l, hitpointx);

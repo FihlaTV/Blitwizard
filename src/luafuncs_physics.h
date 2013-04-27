@@ -33,10 +33,18 @@
 #include "physics.h"
 #include "objectphysicsdata.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int luafuncs_ray2d(lua_State* l);
 int luafuncs_ray3d(lua_State* l);
 int luafuncs_set2dGravity(lua_State* l);
 int luafuncs_set3dGravity(lua_State* l);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // BLITWIZARD_LUAFUNCS_PHYSICS_H_
 
