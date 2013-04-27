@@ -85,7 +85,7 @@ static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct bl
         lua_insert(l, -2);
 
         // push all args:
-        luafuncs_pushbobjidref(l, otherobj);
+        luacfuncs_pushbobjidref(l, otherobj);
         lua_pushnumber(l, x);
         lua_pushnumber(l, y);
         if (use3d) {

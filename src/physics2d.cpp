@@ -1442,7 +1442,7 @@ void physics_SetRestitution(struct physicsobject* obj, double restitution) {
 #endif
 }
 
-#ifdef USE_PHYSICS2d
+#ifdef USE_PHYSICS2D
 void physics_Get2dPosition(struct physicsobject* obj, double* x, double* y) {
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     b2Vec2 pos = obj2d->body->GetPosition();
