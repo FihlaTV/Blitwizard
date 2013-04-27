@@ -45,7 +45,8 @@ struct graphics2dsprite* graphics2dsprites_Create(
 const char* texturePath, double x, double y, double width, double height);
 
 // Check for sprite pixel geometry dimensions.
-// If 0 is returned, the geometry isn't known yet.
+// If 0 is returned, the geometry isn't known yet (texture still
+// being loaded).
 // Otherwise, 1 will be returned and width/height changed.
 int graphics2dsprites_GetGeometry(struct graphics2dsprite* sprite,
 size_t* width, size_t* height);

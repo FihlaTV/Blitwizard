@@ -111,6 +111,9 @@ static int garbagecollect_blitwizobjref(lua_State* l) {
     return 0;
 }
 
+void luacfuncs_object_obtainRegistryTable(lua_State* l,
+struct blitwizardobject* o);
+
 void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
     // create luaidref userdata struct which points to the blitwizard object
     struct luaidref* ref = lua_newuserdata(l, sizeof(*ref));
@@ -122,29 +125,15 @@ void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
     // set garbage collect callback:
     luastate_SetGCCallback(l, -1, (int (*)(void*))&garbagecollect_blitwizobjref);
 
-    // set metatable __index to blitwizard.object table
+    // set metatable __index and __newindex to registry table:
     lua_getmetatable(l, -1);
     lua_pushstring(l, "__index");
-    lua_getglobal(l, "blitwizard");
-    if (lua_type(l, -1) == LUA_TTABLE) {
-        // extract blitwizard.object:
-        lua_pushstring(l, "object");
-        lua_gettable(l, -2);
-        lua_insert(l, -2);
-        lua_pop(l, 1);  // pop blitwizard table
-
-        if (lua_type(l, -1) != LUA_TTABLE) {
-            // error: blitwizard.object isn't a table as it should be
-            lua_pop(l, 3); // blitwizard.object, "__index", metatable
-        } else {
-            lua_rawset(l, -3); // removes blitwizard.object, "__index"
-            lua_setmetatable(l, -2); // setting remaining metatable
-            // stack is now back empty, apart from new userdata!
-        }
-    } else {
-        // error: blitwizard namespace is broken. nothing we could do
-        lua_pop(l, 3);  // blitwizard, "__index", metatable
-    }
+    luacfuncs_object_obtainRegistryTable(l, o);
+    lua_settable(l, -3);
+    lua_pushstring(l, "__newindex");
+    luacfuncs_object_obtainRegistryTable(l, o);
+    lua_settable(l, -3);
+    lua_setmetatable(l, -2);
 
     o->refcount++;
 }
@@ -263,6 +252,41 @@ struct blitwizardobject* o) {
         lua_pushstring(l, s);
         lua_gettable(l, LUA_REGISTRYINDEX);
     }
+
+    // resize stack:
+    luaL_checkstack(l, 5, "insufficient stack to obtain object registry table");
+
+    // the registry table's __index should go to
+    // blitwizard.object:
+    if (!lua_getmetatable(l, -1)) {
+        // we need to create the meta table first:
+        lua_newtable(l);
+        lua_setmetatable(l, -2);
+
+        // obtain it again:
+        lua_getmetatable(l, -1);
+    }
+    lua_pushstring(l, "__index");
+    lua_getglobal(l, "blitwizard");
+    if (lua_type(l, -1) == LUA_TTABLE) {
+        // extract blitwizard.object:
+        lua_pushstring(l, "object");
+        lua_gettable(l, -2);
+        lua_insert(l, -2);
+        lua_pop(l, 1);  // pop blitwizard table
+
+        if (lua_type(l, -1) != LUA_TTABLE) {
+            // error: blitwizard.object isn't a table as it should be
+            lua_pop(l, 3); // blitwizard.object, "__index", metatable
+        } else {
+            lua_rawset(l, -3); // removes blitwizard.object, "__index"
+            lua_setmetatable(l, -2); // setting remaining metatable
+            // stack is now back empty, apart from new userdata!
+        }
+    } else {
+        // error: blitwizard namespace is broken. nothing we could do
+        lua_pop(l, 3);  // blitwizard, "__index", metatable
+    }
 }
 
 // implicitely calls luacfuncs_onError() when an error happened
@@ -279,6 +303,12 @@ int args) {
     // get event function
     lua_pushstring(l, eventName);
     lua_gettable(l, -2);
+
+    // if function is not a function, don't call:
+    if (lua_type(l, -1) != LUA_TFUNCTION) {
+        lua_pop(l, 2);  // pop function, registry table
+        return 1;
+    }
 
     // get rid of the object table again:
     lua_insert(l, -2);  // push function below table
@@ -413,4 +443,93 @@ int luafuncs_object_setZIndex(lua_State* l) {
     return 0;
 }
 
+
+static void luacfuncs_object_doStep(struct blitwizardobject* o) {
+    lua_State* l = luastate_GetStatePtr();
+    luacfuncs_object_callEvent(l, o, "doAlways", 0);
+}
+
+void luacfuncs_object_doAllSteps(void) {
+    struct blitwizardobject* o;
+
+    // mark all objects as not yet stepped:
+    o = objects;
+    while (o) {
+        o->doStepDone = 0;
+        o = o->next;
+    }
+
+    // cycle through all objects:
+    o = objects;
+    int newAllSteps = 1;
+    while (newAllSteps) {
+        newAllSteps = 0;
+        // we might need to repeat this inner loop when
+        // objects get deleted while we doStep them
+        while (o) {
+            if (o->deleted) {
+                // we ran into a deleted object (likely deleted by
+                // a DoStep() of another object).
+                // relaunch this run and start over from beginning
+                // of non-deleted objects.
+                newAllSteps = 1;
+                break;
+            }
+            if (o->doStepDone) {
+                // we already did doStep on this one.
+                o = o->next;
+                continue;
+            }
+            // call doStep on object:
+            struct blitwizardobject* onext = o->next;
+            luacfuncs_object_doStep(o);
+            o = onext;
+        }
+    }
+}
+
+/// Set this event function to a custom function
+// of yours to get notified when the geometry
+// (size/dimension and animation data etc) of your
+// object has been fully loaded.
+//
+// <b>This function does not exist</b> before you
+// set it on a particular object.
+//
+// See usage on how to define this function for an
+// object of your choice.
+// @function onGeometryLoaded
+// @usage
+//   -- create a 2d sprite and output its size:
+//   local obj = obj:new(false, "my_image.png")
+//   function obj:onGeometryLoaded()
+//     -- call @{blitwizard.object.getSize|self:getSize} to get its dimensions
+//     print("My dimensions are: " .. self:getSize()[1], self:getSize()[2])
+//   end
+
+/// Set this event function to a custom
+// function of yours to have the object do something
+// over and over again. E.g. for an elevator, you might
+// want to move the elevator one bit each time this
+// function is called.
+//
+// <b>This function does not exist</b> before you
+// set it on a particular object.
+//
+// This function is called with all objects with a
+// frequency of 60 times a second (it can be changed
+// globally with @{blitwizard.setStep} if you know
+// what you're doing.
+// @function doAlways
+// @usage
+// -- have a sprite move up the screen
+// local obj = obj:new(false, "my_image.png")
+// function obj:doAlways()
+//   -- get old position:
+//   local pos_x, pos_y = self:getPosition()
+//   -- move position up a bit:
+//   pos_y = pos_y - 1
+//   -- set position again:
+//   self:setPosition(pos_x, pos_y)
+// end
 

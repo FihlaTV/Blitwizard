@@ -90,6 +90,19 @@
 	<td class="summary">Set the z-index of the object (only for 2d objects).</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:onGeometryLoaded">object:onGeometryLoaded&nbsp;()</a></td>
+	<td class="summary">Set this event function to a custom function
+ of yours to get notified when the geometry
+ (size/dimension and animation data etc) of your
+ object has been fully loaded.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:doAlways">object:doAlways&nbsp;()</a></td>
+	<td class="summary">Set this event function to a custom
+ function of yours to have the object do something
+ over and over again.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:disableCollision">object:disableCollision&nbsp;()</a></td>
 	<td class="summary">Disable the physics simulation on an object.</td>
 	</tr>
@@ -304,6 +317,73 @@
 
 
 
+
+</dd>
+    <dt>
+    <a name = "object:onGeometryLoaded"></a>
+    <strong>object:onGeometryLoaded&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to a custom function
+ of yours to get notified when the geometry
+ (size/dimension and animation data etc) of your
+ object has been fully loaded.
+<p> <b>This function does not exist</b> before you
+ set it on a particular object.
+<p> See usage on how to define this function for an
+ object of your choice.
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+   <span class="comment">-- create a 2d sprite and output its size:
+</span>   <span class="keyword">local</span> obj = obj:new(<span class="keyword">false</span>, <span class="string">"my_image.png"</span>)
+   <span class="keyword">function</span> obj:onGeometryLoaded()
+     <span class="comment">-- call ??? to get its dimensions
+</span>     <span class="global">print</span>(<span class="string">"My dimensions are: "</span> .. self:getSize()[<span class="number">1</span>], self:getSize()[<span class="number">2</span>])
+   <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:doAlways"></a>
+    <strong>object:doAlways&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to a custom
+ function of yours to have the object do something
+ over and over again.  E.g. for an elevator, you might
+ want to move the elevator one bit each time this
+ function is called.
+<p> <b>This function does not exist</b> before you
+ set it on a particular object.
+<p> This function is called with all objects with a
+ frequency of 60 times a second (it can be changed
+ globally with ??? if you know
+ what you're doing.
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- have a sprite move up the screen
+</span> <span class="keyword">local</span> obj = obj:new(<span class="keyword">false</span>, <span class="string">"my_image.png"</span>)
+ <span class="keyword">function</span> obj:doAlways()
+   <span class="comment">-- get old position:
+</span>   <span class="keyword">local</span> pos_x, pos_y = self:getPosition()
+   <span class="comment">-- move position up a bit:
+</span>   pos_y = pos_y - <span class="number">1</span>
+   <span class="comment">-- set position again:
+</span>   self:setPosition(pos_x, pos_y)
+ <span class="keyword">end</span></pre>
+    </ul>
 
 </dd>
     <dt>

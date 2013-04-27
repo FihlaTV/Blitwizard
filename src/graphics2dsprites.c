@@ -23,6 +23,7 @@
 
 #include "os.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #ifdef USE_GRAPHICS
