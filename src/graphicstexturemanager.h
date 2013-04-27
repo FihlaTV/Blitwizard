@@ -93,6 +93,9 @@ struct texturerequesthandle;
 // copy provided through textureSwitch is a NULL copy and you
 // cannot actually draw things. The texture manager will
 // give your texture higher priority if usage is high.
+//
+// BEWARE OF THE CALLBACKS: Inside the callbacks, don't
+// call the texture manager api. This will break things.
 struct texturerequesthandle* texturemanager_RequestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
@@ -139,7 +142,7 @@ struct texturerequesthandle* request, int visibility);
 void texturemanager_DestroyRequest(
 struct texturerequesthandle* request);
 
-// Call this as often as possible (e.g. after each frame render)
+// Call this as often as possible (preferrably right before rendering)
 // to allow the graphics texture manager to delete old textures
 // from memory.
 //
@@ -150,7 +153,7 @@ struct texturerequesthandle* request);
 // Hence, call this at a point where your drawing operations are
 // complete and it won't crash your drawing code when textures
 // become unavailable and new ones need to be used.
-void texturemanager_InvalidateTextures(void);
+void texturemanager_Tick(void);
 
 #endif  // USE_GRAPHICS
 

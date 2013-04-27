@@ -21,6 +21,11 @@
 
 */
 
+#ifndef NDEBUG
+// comment this line if you don't want debug output:
+#define DEBUGTEXTUREMANAGER
+#endif
+
 #include "os.h"
 #include <stdlib.h>
 #include <stdint.h>
@@ -58,12 +63,23 @@ struct texturerequesthandle {
     struct texturerequesthandle* request,
     struct graphicstexture* texture, void* userdata);
     void* userdata;
+
+    // remember if we already handed a texture to this request:
+    struct graphicstexture* handedTexture;
  
     // if the request was cancelled, the callbacks
     // are gone and must not be used anymore:
     int canceled;
+
+    // prev, next for regular request list:
+    struct texturerequesthandle* prev, *next;
+
+    // prev, next for unhandled request list:
+    struct texturerequesthandle* unhandledPrev, *unhandledNext;
 };
+
 struct texturerequesthandle* textureRequestList = NULL;
+struct texturerequesthandle* unhandledRequestList = NULL;
 
 // manager thread which unloads textures when memory budget is used up:
 void texturemanager_Watchdog(__attribute__((unused)) void* unused) {
@@ -79,26 +95,13 @@ void texturemanager_Watchdog(__attribute__((unused)) void* unused) {
 
     while (1) {
         mutex_Lock(textureReqListMutex);
-
+        // unload textures :P (FIXME)
         mutex_Release(textureReqListMutex);
 
         // sleep a moment:
         time_Sleep(100);
     }
 }
-
-// obtain best gpu texture available right now.
-// might be NULL if none is in gpu memory.
-struct graphicstexture* texturemanager_ObtainBestGpuTexture(
-struct graphicstexturemanaged* gtm, size_t width, size_t height) {
-    return NULL;
-}
-
-static void texturemanager_InitialLoadingCallback
-(struct graphicstexturemanaged* gtm, void* userdata) {
-
-}
-
 
 // this runs on application start:
 __attribute__((constructor)) static void texturemanager_Init(void) {
@@ -117,6 +120,127 @@ __attribute__((constructor)) static void texturemanager_Init(void) {
     thread_FreeInfo(tinfo);
 }
 
+
+// obtain best gpu texture available right now.
+// might be NULL if none is in gpu memory.
+struct graphicstexture* texturemanager_ObtainBestGpuTexture(
+struct graphicstexturemanaged* gtm, size_t width, size_t height) {
+    return NULL;
+}
+
+static void texturemanager_InitialLoadingCallback
+(struct graphicstexturemanaged* gtm, int success, void* userdata);
+
+static void texturemanager_ProcessRequest(struct texturerequesthandle*
+request, int listLocked) {
+    if (!listLocked) {
+        mutex_Lock(textureReqListMutex);
+    }
+    // handle a request which has been waiting for a texture.
+    int successfullyhandled = 0;
+
+    struct graphicstexturemanaged* gtm =
+    request->gtm;
+
+    // if texture isn't loaded yet, load it:
+    if (!gtm->beingInitiallyLoaded && !gtm->failedToLoad) {
+        int donotload = 0;
+        // check if texture is available in original size:
+        if (gtm->scalelistcount > 0 && gtm->origscale >= 0) {
+            if (gtm->scalelist[gtm->scalelistcount].diskcachepath
+            || gtm->scalelist[gtm->scalelistcount].pixels
+            || gtm->scalelist[gtm->scalelistcount].gt) {
+                donotload = 1;
+            }
+        }
+        if (!donotload) {
+            printinfo("[TEXMAN] initial texture fetch for %s", gtm->path);
+            gtm->beingInitiallyLoaded = 1;
+
+            // fire up the threaded loading process which
+            // gives us the texture in the most common sizes
+            graphicstextureloader_DoInitialLoading(gtm,
+            texturemanager_InitialLoadingCallback,
+            request);
+        }
+    }
+
+    // find a texture matching the requested size:
+    size_t width = 0;
+    size_t height = 0; // FIXME, have proper size parameters
+    struct graphicstexture* gt = texturemanager_ObtainBestGpuTexture(
+    gtm, width, height);
+
+    if (gt != request->handedTexture) {
+        // remember we handed this out:
+        successfullyhandled = 1;
+        request->handedTexture = gt;
+
+        // hand out texture:
+        request->textureSwitchCallback(request, gt, request->userdata);
+    }
+
+    // if it was successfully handled, move it to the regular request list:
+    if (successfullyhandled && (request->unhandledPrev
+    || request->unhandledNext || unhandledRequestList == request)) {
+        if (!request->prev && !request->next &&
+        !(textureRequestList == request)) {
+            // add it to regular list:
+            request->next = textureRequestList;
+            if (request->next) {
+                request->next->prev = request;
+            }
+            request->prev = NULL;
+            textureRequestList = request;
+        }
+        // remove from unhandled request list:
+        if (request->unhandledPrev) {
+            request->unhandledPrev->unhandledNext = request->unhandledNext;
+        } else {
+            textureRequestList = request->unhandledNext;
+        }
+        request->unhandledNext->unhandledPrev = request->unhandledPrev;
+    }
+    if (!listLocked) {
+        mutex_Release(textureReqListMutex);
+    }
+}
+
+// callback with early dimension/size info:
+static void texturemanager_InitialLoadingDimensionsCallback
+(struct graphicstexturemanaged* gtm, size_t width, size_t height,
+int success, void* userdata) {
+    struct texturerequesthandle* request = userdata;
+    mutex_Lock(textureReqListMutex);
+    printinfo("[TEXMAN] initial loading done for %s", gtm->path);
+    if (!success) {
+        gtm->failedToLoad = 1;
+        width = 0;
+        height = 0;
+        gtm->beingInitiallyLoaded = 0;
+    }
+    request->textureDimensionInfoCallback(request,
+    width, height, request->userdata);
+    mutex_Release(textureReqListMutex);
+}
+
+// callback when texture was loaded fully:
+static void texturemanager_InitialLoadingDataCallback
+(struct graphicstexturemanaged* gtm, int success, void* userdata) {
+    mutex_Lock(textureReqListMutex);
+    struct texturerequesthandle* request = userdata;
+    if (!success) {
+        gtm->failedToLoad = 1;
+        gtm->beingInitiallyLoaded = 0;
+        request->textureDimensionInfoCallback(request,
+        0, 0, request->userdata);
+        mutex_Release(textureReqListMutex);
+        return;
+    }
+    texturemanager_ProcessRequest(request, 1);
+    mutex_Release(textureReqListMutex);
+}
+
 struct texturerequesthandle* texturemanager_RequestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
@@ -124,6 +248,10 @@ size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
 struct graphicstexture* texture, void* userdata),
 void* userdata) {
+#ifdef DEBUGTEXTUREMANAGER
+    printinfo("[TEXMAN] texture %s requested", path);
+#endif
+
     // allocate request:
     struct texturerequesthandle* request = malloc(sizeof(*request));
     if (!request) {
@@ -133,8 +261,6 @@ void* userdata) {
     request->textureSwitchCallback = textureSwitch;
     request->textureDimensionInfoCallback = textureDimensionInfo;
     request->userdata = userdata;
-
-    mutex_Lock(textureReqListMutex);
 
     // locate according texture entry:
     struct graphicstexturemanaged* gtm =
@@ -152,35 +278,13 @@ void* userdata) {
     }
     request->gtm = gtm;
 
-    // if texture isn't loaded yet, load it:
-    if (!gtm->beinginitiallyloaded) {
-        int donotload = 0;
-        // check if texture is available in original size:
-        if (gtm->scalelistcount > 0 && gtm->origscale >= 0) {
-            if (gtm->scalelist[gtm->scalelistcount].diskcachepath
-            || gtm->scalelist[gtm->scalelistcount].pixels
-            || gtm->scalelist[gtm->scalelistcount].gt) {
-                donotload = 1;
-            }
-        }
-        if (!donotload) {
-            gtm->beinginitiallyloaded = 1;
-
-            // fire up the threaded loading process which
-            // gives us the texture in the most common sizes
-            graphicstextureloader_DoInitialLoading(gtm,
-            texturemanager_InitialLoadingCallback,
-            request);
-
-            // we are done for now. loading needs to finish first
-            mutex_Release(textureReqListMutex);            
-        }
+    mutex_Lock(textureReqListMutex);
+    // add to unhandled texture request list:
+    request->unhandledNext = unhandledRequestList;
+    if (request->unhandledNext) {
+        request->unhandledNext->unhandledPrev = request;
     }
-
-    // find a texture matching the requested size:
-    size_t width = 0;
-    size_t height = 0; // FIXME, have proper size parameters
-    texturemanager_ObtainBestGpuTexture(gtm, width, height);
+    unhandledRequestList = request;
 
     mutex_Release(textureReqListMutex);
 
@@ -201,8 +305,18 @@ struct texturerequesthandle* request) {
     free(request);
 }
 
-void texturemanager_InvalidateTextures() {
+static void texturemanager_ProcessUnhandledRequests(void) {
+    struct texturerequesthandle* handle = unhandledRequestList;
+    while (handle) {
+        texturemanager_ProcessRequest(handle, 1);
+        handle = handle->unhandledNext;
+    }
+}
 
+void texturemanager_Tick(void) {
+    mutex_Lock(textureReqListMutex);
+    texturemanager_ProcessUnhandledRequests();
+    mutex_Release(textureReqListMutex);
 }
 
 

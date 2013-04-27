@@ -171,8 +171,12 @@ static void graphicssdlrender_SpriteCallback(
 const char* path, struct graphicstexture* tex,
 double x, double y,
 double width, double height, double angle,
-double alpha, double r, double g, double b) {
+double alpha, double r, double g, double b,
+int visible) {
     if (!tex) {
+        return;
+    }
+    if (!visible) {
         return;
     }
 

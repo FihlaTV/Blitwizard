@@ -63,8 +63,9 @@ struct graphicstexturemanaged {
     struct graphicstexturescaled* scalelist;  // one dimensional array
     int scalelistcount;  // count of scalelist array items
     int origscale;  // array index of scalelist of item scaled in original size
-    int beinginitiallyloaded;  // the texture is just being initiially loaded
+    int beingInitiallyLoaded;  // the texture is just being initiially loaded
         // from disk (= wait until loading is complete)
+    int failedToLoad;  // the texture failed to load (e.g. file not found)
 
     // usage time stamps:
     time_t lastUsage[USING_AT_COUNT];
@@ -72,6 +73,9 @@ struct graphicstexturemanaged {
     // initialise to zeros and then don't touch:
     struct graphicstexturemanaged* next;
     struct graphicstexturemanaged* hashbucketnext;
+
+    // original texture size if known (otherwise zero):
+    size_t width,height;
 };
 
 // Find a texture by doing a hash map lookup:

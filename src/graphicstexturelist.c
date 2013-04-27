@@ -50,12 +50,20 @@
 #ifdef NOTHREADEDSDLRW
 #include "main.h"
 #endif
+#include "threading.h"
 
 static struct graphicstexturemanaged* texlist = NULL;
 hashmap* texhashmap = NULL;
+static mutex* listMutex = NULL;
+
+// this runs on application start:
+__attribute__((constructor)) static void graphicstexturelist_Init(void) {
+    listMutex = mutex_Create();
+}
 
 void graphicstexturelist_InitializeHashmap(void) {
     if (texhashmap) {
+        mutex_Release(listMutex);
         return;
     }
     texhashmap = hashmap_New(1024 * 1024);
@@ -74,22 +82,27 @@ const char* path) {
         return NULL;
     }
     m->origscale = -1;
+    mutex_Lock(listMutex);
     m->next = texlist;
     texlist = m;
+    mutex_Release(listMutex);
     return m;
 }
 
 void graphicstexturelist_RemoveTextureFromList(
 struct graphicstexturemanaged* li, struct graphicstexturemanaged* prev) {
+    mutex_Lock(listMutex);
     if (prev) {
         prev->next = li->next;
     } else {
         texlist = li->next;
     }
+    mutex_Release(listMutex);
 }
 
 struct graphicstexturemanaged* graphicstexturelist_GetTextureByName(
 const char* name) {
+    mutex_Lock(listMutex);
     graphicstexturelist_InitializeHashmap();
     uint32_t i = hashmap_GetIndex(texhashmap, name, strlen(name), 1);
     struct graphicstexturemanaged* m =
@@ -97,20 +110,24 @@ const char* name) {
     while (m && !(strcasecmp(m->path, name) == 0)) {
         m = m->hashbucketnext;
     }
+    mutex_Release(listMutex);
     return m;
 }
 
 void graphicstexturelist_AddTextureToHashmap(
 struct graphicstexturemanaged* m) {
+    mutex_Lock(listMutex);
     graphicstexturelist_InitializeHashmap();
     uint32_t i = hashmap_GetIndex(texhashmap, m->path, strlen(m->path), 1);
     
     m->hashbucketnext = (struct graphicstexturemanaged*)(texhashmap->items[i]);
     texhashmap->items[i] = m;
+    mutex_Release(listMutex);
 }
 
 void graphicstexturelist_RemoveTextureFromHashmap(
 struct graphicstexturemanaged* gt) {
+    mutex_Lock(listMutex);
     graphicstexturelist_InitializeHashmap();
     uint32_t i = hashmap_GetIndex(texhashmap, gt->path, strlen(gt->path), 1);
     struct graphicstexturemanaged* gt2 =
@@ -120,19 +137,21 @@ struct graphicstexturemanaged* gt) {
         if (gt2 == gt) {
             if (gtprev) {
                 gtprev->next = gt->hashbucketnext;
-            }else{
+            } else {
                 texhashmap->items[i] = gt->hashbucketnext;
             }
             gt->hashbucketnext = NULL;
+            mutex_Release(listMutex);
             return;
         }
 
         gtprev = gt2;
         gt2 = gt2->hashbucketnext;
     }
+    mutex_Release(listMutex);
 }
 
-void graphicstexturelist_TransferTextureFromHW(
+void graphicstexturelist_TransferTextureFromHW_internal(
 struct graphicstexturemanaged* gt) {
     int i = 0;
     while (i < gt->scalelistcount) {
@@ -152,6 +171,27 @@ struct graphicstexturemanaged* gt) {
                 }
             }
         }
+        if (s->gt) {
+            // destroy texture from the GPU
+            graphicstexture_Destroy(s->gt);
+            s->gt = NULL;
+        }
+        i++;
+    }
+}
+
+void graphicstexturelist_TransferTextureFromHW(
+struct graphicstexturemanaged* gt) {
+    mutex_Lock(listMutex);
+    graphicstexturelist_TransferTextureFromHW_internal(gt);
+    mutex_Release(listMutex);
+}
+
+static void graphicstexturelist_InvalidateTextureInHW_internal(
+struct graphicstexturemanaged* gt) {
+    int i = 0;
+    while (i < gt->scalelistcount) {
+        struct graphicstexturescaled* s = &gt->scalelist[i];
         if (s->gt) {
             // destroy texture from the GPU
             graphicstexture_Destroy(s->gt);
@@ -163,36 +203,35 @@ struct graphicstexturemanaged* gt) {
 
 void graphicstexturelist_InvalidateTextureInHW(
 struct graphicstexturemanaged* gt) {
-    int i = 0;
-    while (i < gt->scalelistcount) {
-        struct graphicstexturescaled* s = &gt->scalelist[i];
-        if (s->gt) {
-            // destroy texture from the GPU
-            graphicstexture_Destroy(s->gt);
-            s->gt = NULL;
-        }
-        i++;
-    }
+    mutex_Lock(listMutex);
+    graphicstexturelist_InvalidateTextureInHW_internal(
+    gt);
+    mutex_Release(listMutex);
 }
 
 void graphicstexturelist_TransferTexturesFromHW(void) {
+    mutex_Lock(listMutex);
     struct graphicstexturemanaged* gt = texlist;
     while (gt) {
-        graphicstexturelist_TransferTextureFromHW(gt);
+        graphicstexturelist_TransferTextureFromHW_internal(gt);
         gt = gt->next;
     }
+    mutex_Release(listMutex);
 }
 
 void graphicstexturelist_InvalidateHWTextures(void) {
+    mutex_Lock(listMutex);
     struct graphicstexturemanaged* gt = texlist;
     while (gt) {
-        graphicstexturelist_InvalidateTextureInHW(gt);
+        graphicstexturelist_InvalidateTextureInHW_internal(gt);
         gt = gt->next;
     }
+    mutex_Release(listMutex);
 }
 
 void graphicstexturelist_TransferTextureToHW(
 struct graphicstexturemanaged* gt) {
+    mutex_Lock(listMutex);
     int i = 0;
     while (i < gt->scalelistcount) {
         struct graphicstexturescaled* s = &gt->scalelist[i];
@@ -218,15 +257,18 @@ struct graphicstexturemanaged* gt) {
         }
         i++;
     }
+    mutex_Release(listMutex);
 }
 
 
 struct graphicstexturemanaged* graphicstexturelist_GetPreviousTexture(
 struct graphicstexturemanaged* gt) {
+    mutex_Lock(listMutex);
     struct graphicstexturemanaged* gtprev = texlist;
     while (gtprev && !(gtprev->next == gt)) {
         gtprev = gtprev->next;
     }
+    mutex_Release(listMutex);
     return gtprev;
 }
 
@@ -256,18 +298,21 @@ struct graphicstexturemanaged* gt) {
 
 void graphicstexturelist_FreeAllTextures(void) {
     // free all textures
+    mutex_Lock(listMutex);
     struct graphicstexturemanaged* gt = texlist;
     while (gt) {
         struct graphicstexturemanaged* gtnext = gt->next;
         graphicstexturelist_DestroyTexture(gt);
         gt = gtnext;
     }
+    mutex_Release(listMutex);
 }
 
-void graphicstexturelist_DoForAllTextures(
+/*void graphicstexturelist_DoForAllTextures(
 int (*callback)(struct graphicstexturemanaged* texture,
 struct graphicstexturemanaged* previoustexture,
 void* userdata), void* userdata) {
+    mutex_Lock(listMutex);
     struct graphicstexturemanaged* gt = texlist;
     struct graphicstexturemanaged* gtprev = NULL;
     while (gt) {
@@ -278,7 +323,8 @@ void* userdata), void* userdata) {
         }
         gt = gtnext;
     }
-}
+    mutex_Release(listMutex);
+}*/
 
 #endif // ifdef USE_GRAPHICS
 

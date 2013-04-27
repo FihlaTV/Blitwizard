@@ -928,6 +928,9 @@ int main(int argc, char** argv) {
             }
         }
 
+        // texture manager tick:
+        texturemanager_Tick();
+
 #ifdef USE_GRAPHICS
         if (graphics_AreGraphicsRunning()) {
 #ifdef ANDROID
@@ -967,9 +970,6 @@ int main(int argc, char** argv) {
             // do a gc step once in a while
             luastate_GCCollect();
         }
-
-        // invalidate textures
-        texturemanager_InvalidateTextures();
     }
     main_Quit(0);
     return 0;

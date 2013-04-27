@@ -45,6 +45,9 @@ struct graphics2dsprite {
     // texture path:
     char* path;
 
+    // set to 1 if there was an error loading things:
+    int loadingError;
+
     // texture dimensions (initially 0, 0 if not known):
     size_t texwidth, texheight;
 
@@ -86,6 +89,10 @@ void* userdata) {
 
     s->texwidth = width;
     s->texheight = height;
+    if (s->texwidth == 0 && s->texheight == 0) {
+        // texture failed to load.
+        s->loadingError = 1;
+    }
     mutex_Release(m);
 }
 
@@ -113,7 +120,7 @@ size_t* width, size_t* height) {
         return 0;
     }
     mutex_Lock(m);
-    if (sprite->texwidth && sprite->texheight) {
+    if ((sprite->texwidth && sprite->texheight) || sprite->loadingError) {
         *width = sprite->texwidth;
         *height = sprite->texheight;
         mutex_Release(m);

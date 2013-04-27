@@ -49,6 +49,7 @@ const char* texturePath, double x, double y, double width, double height);
 // Otherwise, 1 will be returned and width/height changed.
 int graphics2dsprites_GetGeometry(struct graphics2dsprite* sprite,
 size_t* width, size_t* height);
+// Will return 1 and a size of 0,0 in case of a texture loading error.
 
 // Check if the sprite will be possibly rendered.
 // It might not be if the texture isn't loaded yet,
