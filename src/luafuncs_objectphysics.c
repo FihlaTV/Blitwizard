@@ -529,7 +529,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 // roughly of sizes between 0.1 and 10 to avoid instability.
 // @function enableMovableCollision
 // @tparam table shape_info a @{object.shape_info|shape_info} table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes
-int luafuncs_enableMovableCollision(lua_State* l) {
+int luafuncs_object_enableMovableCollision(lua_State* l) {
     return luafuncs_enableCollision(l, 1);
 }
 
@@ -540,7 +540,7 @@ int luafuncs_enableMovableCollision(lua_State* l) {
 // of the object (not necessarily similar to its visual appearance).
 // @function enableStaticCollision
 // @tparam table shape_info a @{object.shape_info|shape_info} table with info for a given physics shape. Note: you can add more shape info tables as additional parameters following this one - the final collision shape will consist of all overlapping shapes
-int luafuncs_enableStaticCollision(lua_State* l) {
+int luafuncs_object_enableStaticCollision(lua_State* l) {
     return luafuncs_enableCollision(l, 0);
 }
 
@@ -611,7 +611,7 @@ static void applyobjectsettings(struct blitwizardobject* obj) {
 // @tparam number force_x the x coordinate of the force vector applied through the impulse
 // @tparam number force_y the y coordinate of the force vector
 // @tparam number force_z (parameter only present for 3d objects) the z coordinate of the force vector
-int luafuncs_impulse(lua_State* l) {
+int luafuncs_object_impulse(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:impulse");
     char funcname[] = "blitwizard.object.impulse";
@@ -696,7 +696,7 @@ int luafuncs_impulse(lua_State* l) {
 // @tparam number axis_point_x (optional) If you want to specify a point the axis goes through, specify its x coordinate here
 // @tparam number axis_point_y (optional) y coordinate
 // @tparam number axis_point_z (optional) z coordinate
-int luafuncs_restrictRotation(lua_State* l) {
+int luafuncs_object_restrictRotation(lua_State* l) {
     char func[] = "blitwizard.object:restrictRotation";
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:restrictRotation");
@@ -755,7 +755,7 @@ int luafuncs_restrictRotation(lua_State* l) {
 // enabled.
 // @function setAngularDamping
 // @tparam number damping Angular damping factor from 0 (none) to 1 (full)
-int luafuncs_setAngularDamping(lua_State* l) {
+int luafuncs_object_setAngularDamping(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setAngularDamping");
     if (obj->deleted) {
@@ -780,7 +780,7 @@ int luafuncs_setAngularDamping(lua_State* l) {
 // Only useful on objects with collision enabled.
 // @function setFriction
 // @tparam number friction Friction value from 0 to 1 (0 is no friction, 1 is full friction)
-int luafuncs_setFriction(lua_State* l) {
+int luafuncs_object_setFriction(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setFriction");
     if (obj->deleted) {
@@ -809,7 +809,7 @@ int luafuncs_setFriction(lua_State* l) {
 // @tparam number gravity_x x coordinate of gravity vector
 // @tparam number gravity_y y coordinate of gravity vector
 // @tparam number gravity_z (only for 3d objects) z coordinate of gravity vector
-int luafuncs_setGravity(lua_State* l) {
+int luafuncs_object_setGravity(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:restrictRotation");
     if (obj->deleted) {
@@ -870,7 +870,7 @@ int luafuncs_setGravity(lua_State* l) {
 // enabled.
 // @function setLinearDamping
 // @tparam number damping Linear damping factor from 0 (none) to 1 (full). Default: 0
-int luafuncs_setLinearDamping(lua_State* l) {
+int luafuncs_object_setLinearDamping(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setLinearDamping");
     if (obj->deleted) {
@@ -899,7 +899,7 @@ int luafuncs_setLinearDamping(lua_State* l) {
 // @tparam number mass_center_x (optional) Set the x coordinate of the mass center (default: 0)
 // @tparam number mass_center_y (optional) Set the y coordinate of the mass center (default: 0)
 // @tparam number mass_center_z (optional) Set the z coordinate of the mass center (default: 0)
-int luafuncs_setMass(lua_State* l) {
+int luafuncs_object_setMass(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setMass");
     if (obj->deleted) {
@@ -953,7 +953,7 @@ int luafuncs_setMass(lua_State* l) {
     return 0;
 }
 
-int luafuncs_setRestitution(lua_State* l) {
+int luafuncs_object_setRestitution(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setRestitution");
     if (obj->deleted) {

@@ -35,17 +35,17 @@
 #include "physics.h"
 #include "objectphysicsdata.h"
 
-int luafuncs_enableStaticCollision(lua_State* l);
-int luafuncs_enableMovableCollision(lua_State* l);
-int luafuncs_restrictRotation(lua_State* l);
-int luafuncs_restrictRotationAroundAxis(lua_State* l);
-int luafuncs_impulse(lua_State* l);
-int luafuncs_setMass(lua_State* l);
-int luafuncs_setRestitution(lua_State* l);
-int luafuncs_setFriction(lua_State* l);
-int luafuncs_setAngularDamping(lua_State* l);
-int luafuncs_setLinearDamping(lua_State* l);
-int luafuncs_setGravity(lua_State* l);
+int luafuncs_object_enableStaticCollision(lua_State* l);
+int luafuncs_object_enableMovableCollision(lua_State* l);
+int luafuncs_object_restrictRotation(lua_State* l);
+int luafuncs_object_restrictRotationAroundAxis(lua_State* l);
+int luafuncs_object_impulse(lua_State* l);
+int luafuncs_object_setMass(lua_State* l);
+int luafuncs_object_setRestitution(lua_State* l);
+int luafuncs_object_setFriction(lua_State* l);
+int luafuncs_object_setAngularDamping(lua_State* l);
+int luafuncs_object_setLinearDamping(lua_State* l);
+int luafuncs_object_setGravity(lua_State* l);
 
 int luafuncs_freeObjectPhysicsData(struct objectphysicsdata* d);
 
