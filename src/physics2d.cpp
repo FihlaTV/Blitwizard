@@ -376,7 +376,7 @@ struct physicsworld* physics_CreateWorld(int use3dphysics) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not use3dphysics) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     struct physicsworld2d* world2d = (struct physicsworld2d*)malloc(sizeof(*world2d));
     if (!world2d) {
         return NULL;
@@ -415,7 +415,7 @@ void physics_DestroyWorld(struct physicsworld* world) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not world->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     delete world->wor.ld2d->listener;
     delete world->wor.ld2d->w;
     free(world->wor.ld2d);
@@ -1168,7 +1168,7 @@ void physics_DestroyObject(struct physicsobject* obj) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     if (!obj->obj.ect2d || obj->obj.ect2d->deleted == 1) {
         return;
     }
@@ -1205,7 +1205,7 @@ void* physics_GetObjectUserdata(struct physicsobject* object) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not object->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     return ((struct bodyuserdata*)object->obj.ect2d->body->GetUserData())->userdata;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
@@ -1227,7 +1227,7 @@ void physics_SetMass(struct physicsobject* obj, double mass) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     if (!obj2d->movable) {return;}
     if (!obj2d->body) {return;}
@@ -1261,7 +1261,7 @@ double physics_GetMass(struct physicsobject* obj) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     b2MassData mdata;
     obj2d->body->GetMassData(&mdata);
@@ -1315,7 +1315,7 @@ void physics_UnsetGravity(struct physicsobject* obj) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     obj->obj.ect2d->gravityset = 0;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
@@ -1346,7 +1346,7 @@ void physics_SetFriction(struct physicsobject* obj, double friction) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     if (!obj2d->body) {return;}
     b2Fixture* f = obj2d->body->GetFixtureList();
@@ -1375,7 +1375,7 @@ void physics_SetAngularDamping(struct physicsobject* obj, double damping) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     if (!obj2d->body) {return;}
     obj2d->body->SetAngularDamping(damping);
@@ -1395,7 +1395,7 @@ void physics_SetLinearDamping(struct physicsobject* obj, double damping) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     if (!obj2d->body) {return;}
     obj2d->body->SetLinearDamping(damping);
@@ -1415,7 +1415,7 @@ void physics_SetRestitution(struct physicsobject* obj, double restitution) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
-#ifdef USE_PHYSIC2D
+#ifdef USE_PHYSICS2D
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     if (restitution > 1) {restitution = 1;}
     if (restitution < 0) {restitution = 0;}
