@@ -24,8 +24,12 @@
 #ifndef BLITWIZARD_OBJECT_H_
 #define BLITWIZARD_OBJECT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int luafuncs_object_new(lua_State* l);
-void luafuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o);
+void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o);
 struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, const char* func);
 
 int luafuncs_object_getPosition(lua_State* l);
@@ -59,6 +63,10 @@ struct blitwizardobject* o);
 
 // do all onStep events and other event things:
 void luacfuncs_object_doAllSteps(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // BLITWIZARD_OBJECT_H_
 
