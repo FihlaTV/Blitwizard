@@ -122,29 +122,15 @@ void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
     // set garbage collect callback:
     luastate_SetGCCallback(l, -1, (int (*)(void*))&garbagecollect_blitwizobjref);
 
-    // set metatable __index to blitwizard.object table
+    // set metatable __index and __newindex to registry table:
     lua_getmetatable(l, -1);
     lua_pushstring(l, "__index");
-    lua_getglobal(l, "blitwizard");
-    if (lua_type(l, -1) == LUA_TTABLE) {
-        // extract blitwizard.object:
-        lua_pushstring(l, "object");
-        lua_gettable(l, -2);
-        lua_insert(l, -2);
-        lua_pop(l, 1);  // pop blitwizard table
-
-        if (lua_type(l, -1) != LUA_TTABLE) {
-            // error: blitwizard.object isn't a table as it should be
-            lua_pop(l, 3); // blitwizard.object, "__index", metatable
-        } else {
-            lua_rawset(l, -3); // removes blitwizard.object, "__index"
-            lua_setmetatable(l, -2); // setting remaining metatable
-            // stack is now back empty, apart from new userdata!
-        }
-    } else {
-        // error: blitwizard namespace is broken. nothing we could do
-        lua_pop(l, 3);  // blitwizard, "__index", metatable
-    }
+    luacfuncs_object_obtainRegistryTable(l, o);
+    lua_settable(l, -3);
+    lua_pushstring(l, "__newindex");
+    luacfuncs_object_obtainRegistryTable(l, o);
+    lua_settable(l, -3);
+    lua_setmetatable(l, -2);
 
     o->refcount++;
 }
@@ -262,6 +248,31 @@ struct blitwizardobject* o) {
         // obtain it again:
         lua_pushstring(l, s);
         lua_gettable(l, LUA_REGISTRYINDEX);
+    }
+
+    // the registry table's __index should go to
+    // blitwizard.object:
+    lua_getmetatable(l, -1);
+    lua_pushstring(l, "__index");
+    lua_getglobal(l, "blitwizard");
+    if (lua_type(l, -1) == LUA_TTABLE) {
+        // extract blitwizard.object:
+        lua_pushstring(l, "object");
+        lua_gettable(l, -2);
+        lua_insert(l, -2);
+        lua_pop(l, 1);  // pop blitwizard table
+
+        if (lua_type(l, -1) != LUA_TTABLE) {
+            // error: blitwizard.object isn't a table as it should be
+            lua_pop(l, 3); // blitwizard.object, "__index", metatable
+        } else {
+            lua_rawset(l, -3); // removes blitwizard.object, "__index"
+            lua_setmetatable(l, -2); // setting remaining metatable
+            // stack is now back empty, apart from new userdata!
+        }
+    } else {
+        // error: blitwizard namespace is broken. nothing we could do
+        lua_pop(l, 3);  // blitwizard, "__index", metatable
     }
 }
 
