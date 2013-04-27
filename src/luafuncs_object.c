@@ -111,6 +111,9 @@ static int garbagecollect_blitwizobjref(lua_State* l) {
     return 0;
 }
 
+void luacfuncs_object_obtainRegistryTable(lua_State* l,
+struct blitwizardobject* o);
+
 void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
     // create luaidref userdata struct which points to the blitwizard object
     struct luaidref* ref = lua_newuserdata(l, sizeof(*ref));
@@ -250,9 +253,19 @@ struct blitwizardobject* o) {
         lua_gettable(l, LUA_REGISTRYINDEX);
     }
 
+    // resize stack:
+    luaL_checkstack(l, 5, "insufficient stack to obtain object registry table");
+
     // the registry table's __index should go to
     // blitwizard.object:
-    lua_getmetatable(l, -1);
+    if (!lua_getmetatable(l, -1)) {
+        // we need to create the meta table first:
+        lua_newtable(l);
+        lua_setmetatable(l, -2);
+
+        // obtain it again:
+        lua_getmetatable(l, -1);
+    }
     lua_pushstring(l, "__index");
     lua_getglobal(l, "blitwizard");
     if (lua_type(l, -1) == LUA_TTABLE) {
