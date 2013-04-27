@@ -24,6 +24,10 @@
 /* TODO:
     - Currently, specifying offset/rotation before setting up the shape will
      result in undefined behaviour. Change this?
+    - Did some work to remedy the previous point - problem: if you change
+     offsets/rotation in between the addition of polygons or edges, it's
+     undefined behaviour again.
+    - Another problem: It's terribly inefficient for 0 offsets/rotation.
     - Actually implement offsets, not just have them sit idly in the shape
      struct - DONE?
     - struct init stuff
@@ -95,6 +99,9 @@ struct physicsobjectshape3d;
 void _physics_Destroy2dShape(struct physicsobjectshape2d* shape);
 int _physics_Check2dEdgeLoop(struct edge* edge, struct edge* target);
 void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
+inline void _physics_RotateThenOffset2dShapePoint(
+ struct physicsobjectshape* shape,
+ double xoffset, double yoffset, double rotation, double* x, double* y);
 static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, struct physicsobject* object, void* userdata, int movable);
 void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object);
 void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object);
@@ -756,25 +763,33 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
 
     //construct oval shape - by manually calculating the vertices
     struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*vertices)*OVALVERTICES);
-    int i = 0;
-    double angle = 0;
     
-    // TODO: do it like with the rectangle thing maybe
-    /*b2Vec2 center(0, 0);
+    // cf. rectangle code
+    double xoffset = 0;
+    double yoffset = 0;
     double rotation = 0;
     if (_physics_ShapeType(shape) == 1) {
-        center.x = shape->sha.pe2d->xoffset;
-        center.y = shape->sha.pe2d->yoffset;
+        xoffset = shape->sha.pe2d->xoffset;
+        yoffset = shape->sha.pe2d->yoffset;
         rotation = shape->sha.pe2d->rotation;
-    }else{*/
-    shape->sha.pe2d = _physics_CreateEmpty2dShape();
-    //}
+    }else{
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
+    
     
     //go around with the angle in one full circle:
+    int i = 0;
+    double angle = 0;
     while (angle < 2*M_PI && i < OVALVERTICES) {
         //calculate and set vertex point
         double x,y;
         ovalpoint(angle, width, height, &x, &y);
+        
+        // Rotation/offset according to data present in shape struct
+        rotatevec(x, y, rotation, &x, &y);
+        x += xoffset;
+        y += yoffset;
+        
         vertices[i].x = x;
         vertices[i].y = -y;
         vertices[i].next = &vertices[i+i];
@@ -799,16 +814,14 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
     double radius = diameter/2;
     circle->m_radius = radius - 0.01;
     
-    // TODO: do it like with the rectangle thing maybe
-    /*b2Vec2 center(0, 0);
-    double rotation = 0;
+    // cf. rectangle code
+    // rotation doesn't matter as it's a circle anyway
     if (_physics_ShapeType(shape) == 1) {
-        center.x = shape->sha.pe2d->xoffset;
-        center.y = shape->sha.pe2d->yoffset;
-        rotation = shape->sha.pe2d->rotation;
-    }else{*/
-    shape->sha.pe2d = _physics_CreateEmpty2dShape();
-    //}
+        circle->m_p.x = shape->sha.pe2d->xoffset;
+        circle->m_p.y = shape->sha.pe2d->yoffset;
+    }else{
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
     
     shape->sha.pe2d->b2.circle = circle;
     shape->sha.pe2d->type = BW_S2D_CIRCLE;
@@ -820,21 +833,27 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
-    // TODO: do it like with the rectangle thing
-    /*b2Vec2 center(0, 0);
-    double rotation = 0;*/
+    // cf. rectangle code
+    double shape_xoffset = 0;
+    double shape_yoffset = 0;
+    double shape_rotation = 0;
     if (_physics_ShapeType(shape) == 1) {
-        /*center.x = shape->sha.pe2d->xoffset;
-        center.y = shape->sha.pe2d->yoffset;
-        rotation = shape->sha.pe2d->rotation;*/
+        shape_xoffset = shape->sha.pe2d->xoffset;
+        shape_yoffset = shape->sha.pe2d->yoffset;
+        shape_rotation = shape->sha.pe2d->rotation;
     }else{
-    shape->sha.pe2d = _physics_CreateEmpty2dShape();
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
     }
     
     if (not shape->sha.pe2d->type == BW_S2D_POLY) {
         shape->sha.pe2d->b2.polygonpoints = NULL;
     }
     struct polygonpoint* p = shape->sha.pe2d->b2.polygonpoints;
+    
+    // Rotation/offset according to data present in shape struct
+    rotatevec(xoffset, yoffset, shape_rotation, &xoffset, &yoffset);
+    xoffset += shape_xoffset;
+    yoffset += shape_yoffset;
     
     struct polygonpoint* new_point = (struct polygonpoint*)malloc(sizeof(*new_point));
     new_point->x = xoffset;
@@ -951,16 +970,25 @@ void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
-    // TODO: do it like with the rectangle thing
-    /*b2Vec2 center(0, 0);
-    double rotation = 0;*/
+    // cf. rectangle code
+    double shape_xoffset = 0;
+    double shape_yoffset = 0;
+    double shape_rotation = 0;
     if (_physics_ShapeType(shape) == 1) {
-        /*center.x = shape->sha.pe2d->xoffset;
-        center.y = shape->sha.pe2d->yoffset;
-        rotation = shape->sha.pe2d->rotation;*/
+        shape_xoffset = shape->sha.pe2d->xoffset;
+        shape_yoffset = shape->sha.pe2d->yoffset;
+        shape_rotation = shape->sha.pe2d->rotation;
     }else{
-    shape->sha.pe2d = _physics_CreateEmpty2dShape();
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
     }
+    
+    // Rotation/offset according to data present in shape struct
+    rotatevec(x1, y1, shape_rotation, &x1, &y1);
+    rotatevec(x2, y2, shape_rotation, &x2, &y2);
+    x1 += shape_xoffset;
+    y1 += shape_yoffset;
+    x2 += shape_xoffset;
+    y2 += shape_yoffset;
     
     // FIXME FIXME FIXME this function might be complete bollocks, reconsider pls
     if (not shape->sha.pe2d->type == BW_S2D_EDGE) {
