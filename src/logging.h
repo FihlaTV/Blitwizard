@@ -24,14 +24,18 @@
 #ifndef BLITWIZARD_LOGGING_H_
 #define BLITWIZARD_LOGGING_H_
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 
 extern char* memorylogbuf;
 void printerror(const char* fmt, ...);
 void printwarning(const char* fmt, ...);
 void printinfo(const char* fmt, ...);
 
+#ifdef __cplusplus
 }
+#endif
 
 #endif  // BLITWIZARD_LOGGING_H_
 
