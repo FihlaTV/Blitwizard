@@ -304,6 +304,12 @@ int args) {
     lua_pushstring(l, eventName);
     lua_gettable(l, -2);
 
+    // if function is not a function, don't call:
+    if (lua_type(l, -1) != LUA_TFUNCTION) {
+        lua_pop(l, 2);  // pop function, registry table
+        return 1;
+    }
+
     // get rid of the object table again:
     lua_insert(l, -2);  // push function below table
     lua_pop(l, 1);  // remove table
@@ -440,7 +446,7 @@ int luafuncs_object_setZIndex(lua_State* l) {
 
 static void luacfuncs_object_doStep(struct blitwizardobject* o) {
     lua_State* l = luastate_GetStatePtr();
-    luacfuncs_object_callEvent(l, o, "onDoStep", 0);
+    luacfuncs_object_callEvent(l, o, "doAlways", 0);
 }
 
 void luacfuncs_object_doAllSteps(void) {
@@ -481,4 +487,49 @@ void luacfuncs_object_doAllSteps(void) {
         }
     }
 }
+
+/// Set this event function to a custom function
+// of yours to get notified when the geometry
+// (size/dimension and animation data etc) of your
+// object has been fully loaded.
+//
+// <b>This function does not exist</b> before you
+// set it on a particular object.
+//
+// See usage on how to define this function for an
+// object of your choice.
+// @function onGeometryLoaded
+// @usage
+//   -- create a 2d sprite and output its size:
+//   local obj = obj:new(false, "my_image.png")
+//   function obj:onGeometryLoaded()
+//     -- call @{blitwizard.object.getSize|self:getSize} to get its dimensions
+//     print("My dimensions are: " .. self:getSize()[1], self:getSize()[2])
+//   end
+
+/// Set this event function to a custom
+// function of yours to have the object do something
+// over and over again. E.g. for an elevator, you might
+// want to move the elevator one bit each time this
+// function is called.
+//
+// <b>This function does not exist</b> before you
+// set it on a particular object.
+//
+// This function is called with all objects with a
+// frequency of 60 times a second (it can be changed
+// globally with @{blitwizard.setStep} if you know
+// what you're doing.
+// @function doAlways
+// @usage
+// -- have a sprite move up the screen
+// local obj = obj:new(false, "my_image.png")
+// function obj:doAlways()
+//   -- get old position:
+//   local pos_x, pos_y = self:getPosition()
+//   -- move position up a bit:
+//   pos_y = pos_y - 1
+//   -- set position again:
+//   self:setPosition(pos_x, pos_y)
+// end
 

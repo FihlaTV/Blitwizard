@@ -61,7 +61,7 @@ int args);
 void luacfuncs_object_clearRegistryTable(lua_State* l,
 struct blitwizardobject* o);
 
-// do all onStep events and other event things:
+// do all doAlways events and other event things:
 void luacfuncs_object_doAllSteps(void);
 
 #ifdef __cplusplus
