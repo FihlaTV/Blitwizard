@@ -464,10 +464,10 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
     // prepare physics data:
     if (!obj->physics) {
         obj->physics = malloc(sizeof(struct objectphysicsdata));
-        memset(obj->physics, 0, sizeof(obj->physics));
+        memset(obj->physics, 0, sizeof(*(obj->physics)));
     }
 
-    // remember the old representation if any::
+    // remember the old representation if any:
     struct physicsobject* old = obj->physics->object;
 
     // create a physics object from the shapes:
