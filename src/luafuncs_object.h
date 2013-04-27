@@ -25,7 +25,7 @@
 #define BLITWIZARD_OBJECT_H_
 
 int luafuncs_object_new(lua_State* l);
-void luafuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o);
+void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o);
 struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, const char* func);
 
 int luafuncs_object_getPosition(lua_State* l);
