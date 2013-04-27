@@ -224,6 +224,65 @@ struct physicsobject2dedgecontext {
     struct edge* edgelist;
 };
 
+class mycontactlistener : public b2ContactListener {
+public:
+    mycontactlistener();
+    ~mycontactlistener();
+private:
+    void PreSolve(b2Contact *contact, const b2Manifold *oldManifold);
+};
+
+mycontactlistener::mycontactlistener() {return;}
+mycontactlistener::~mycontactlistener() {return;}
+
+void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifold) {
+    struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()->GetBody()->GetUserData())->pobj;
+    struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()->GetBody()->GetUserData())->pobj;
+    if (obj1->obj.ect2d->deleted || obj2->obj.ect2d->deleted) {
+        // one of the objects should be deleted already, ignore collision
+        contact->SetEnabled(false);
+        return;
+    }
+
+    // get collision point (this is never really accurate, but mostly sufficient)
+    int n = contact->GetManifold()->pointCount;
+    b2WorldManifold wmanifold;
+    contact->GetWorldManifold(&wmanifold);
+    float collidex = wmanifold.points[0].x;
+    float collidey = wmanifold.points[0].y;
+    float divisor = 1;
+    int i = 1;
+    while (i < n) {
+        collidex += wmanifold.points[i].x;
+        collidey += wmanifold.points[i].y;
+        divisor += 1;
+        i++;
+    }
+    collidex /= divisor;
+    collidey /= divisor;
+
+    // get collision normal ("push out" direction)
+    float normalx = wmanifold.normal.x;
+    float normaly = wmanifold.normal.y;
+
+    // impact force:
+    float impact = contact->GetManifold()->points[0].normalImpulse; //oldManifold->points[0].normalImpulse; //impulse->normalImpulses[0];
+
+    // find our current world
+    struct physicsworld* w = obj1->pworld;
+
+    // return the information through the callback
+    if (w->callback) {
+        if (!w->callback(w->callbackuserdata, obj1, obj2, collidex, collidey, normalx, normaly, impact)) {
+            // contact should be disabled:
+            contact->SetEnabled(false);
+        }else{
+            // contact should remain enabled:
+            contact->SetEnabled(true);
+        }
+    }
+}
+
 /*
     Struct helper functions
 */
