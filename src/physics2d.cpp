@@ -48,10 +48,7 @@
 
 #include "physics.h"
 #include "mathhelpers.h"
-#ifndef NDEBUG
 #include "logging.h"
-#endif
-
 
 #ifndef NDEBUG
 #define BW_E_NO3DYET "Error: 3D is not yet implemented."
