@@ -42,6 +42,9 @@
 struct physicsobject2d;
 int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force);
 
+// lua funcs doStep processing function:
+void luacfuncs_object_doAllSteps(void);
+
 // media cleanup callback:
 void checkAllMediaObjectsForCleanup(void);
 
@@ -890,7 +893,7 @@ int main(int argc, char** argv) {
         while ((logictimestamp < time || physicstimestamp < time) && iterations < MAXLOGICITERATIONS) {
             if (logictimestamp < time && logictimestamp <= physicstimestamp) {
                 // call logic functions of all objects:
-                
+                luacfuncs_object_doAllSteps();
                 logictimestamp += TIMESTEP;
             }
 #ifdef USE_PHYSICS2D

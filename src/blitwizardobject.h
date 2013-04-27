@@ -32,6 +32,7 @@ struct blitwizardobject {
     double x,y;  // 2d: x,y, 3d: x,y,z with z pointing up
     int deleted;  // 1: deleted (deletedobjects), 0: regular (objects)
     int refcount;  // refcount of luaidref references
+    int doStepDone;  // used by luacfuncs_object_doAllSteps()
     union {
         double z;
         int zindex;

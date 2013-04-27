@@ -438,3 +438,47 @@ int luafuncs_object_setZIndex(lua_State* l) {
 }
 
 
+static void luacfuncs_object_doStep(struct blitwizardobject* o) {
+    lua_State* l = luastate_GetStatePtr();
+    luacfuncs_object_callEvent(l, o, "onDoStep", 0);
+}
+
+void luacfuncs_object_doAllSteps(void) {
+    struct blitwizardobject* o;
+
+    // mark all objects as not yet stepped:
+    o = objects;
+    while (o) {
+        o->doStepDone = 0;
+        o = o->next;
+    }
+
+    // cycle through all objects:
+    o = objects;
+    int newAllSteps = 1;
+    while (newAllSteps) {
+        newAllSteps = 0;
+        // we might need to repeat this inner loop when
+        // objects get deleted while we doStep them
+        while (o) {
+            if (o->deleted) {
+                // we ran into a deleted object (likely deleted by
+                // a DoStep() of another object).
+                // relaunch this run and start over from beginning
+                // of non-deleted objects.
+                newAllSteps = 1;
+                break;
+            }
+            if (o->doStepDone) {
+                // we already did doStep on this one.
+                o = o->next;
+                continue;
+            }
+            // call doStep on object:
+            struct blitwizardobject* onext = o->next;
+            luacfuncs_object_doStep(o);
+            o = onext;
+        }
+    }
+}
+
