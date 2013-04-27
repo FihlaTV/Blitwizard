@@ -251,6 +251,12 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
     physics_CreateEmptyShapes(argcount);
     int i = 0;
     while (i < argcount) {
+        if (lua_type(l, 2+i) != LUA_TTABLE) {
+            physics_DestroyShapes(shapes, argcount);
+            return haveluaerror(l, badargument2, 2+i,
+            "blitwizard.object:enableCollision",
+            "shape parameter invalid: expected table");
+        }
         lua_pushstring(l, "type");
         lua_gettable(l, 2+i);
         if (lua_type(l, -1) != LUA_TSTRING) {
