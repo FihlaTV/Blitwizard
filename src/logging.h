@@ -21,8 +21,18 @@
 
 */
 
+#ifndef BLITWIZARD_LOGGING_H_
+#define BLITWIZARD_LOGGING_H_
+
+extern "C" {
+
 extern char* memorylogbuf;
 void printerror(const char* fmt, ...);
 void printwarning(const char* fmt, ...);
 void printinfo(const char* fmt, ...);
+
+}
+
+#endif  // BLITWIZARD_LOGGING_H_
+
 
