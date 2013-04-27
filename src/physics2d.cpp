@@ -22,7 +22,10 @@
 */
 
 /* TODO:
-    - Actually implement offsets, not just have them sit idly in the shape struct
+    - Currently, specifying offset/rotation before setting up the shape will
+     result in undefined behaviour. Change this?
+    - Actually implement offsets, not just have them sit idly in the shape
+     struct - DONE?
     - struct init stuff
     - Look at the edge and poly functions again (linked lists done correctly?)
     - Properly refactor the object creation function
@@ -176,7 +179,7 @@ struct physicsobject2d {
 
 struct physicsobjectshape2d {
     union specific_type_of_shape {
-        b2PolygonShape* rectangle;
+        struct rectangle2d* rectangle;
         struct polygonpoint* polygonpoints;
         b2CircleShape* circle;
         struct edge* edges;
@@ -197,6 +200,11 @@ struct deletedphysicsobject2d* deletedlist = NULL;
 struct bodyuserdata {
     void* userdata;
     struct physicsobject* pobj;
+};
+
+struct rectangle2d {
+    double width, height;
+    b2PolygonShape* b2polygon;
 };
 
 struct edge {
@@ -534,6 +542,7 @@ struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
 void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
     switch ((int)(shape->type)) {
         case BW_S2D_RECT:
+            free(shape->b2.rectangle->b2polygon);
             free(shape->b2.rectangle);
         break;
         case BW_S2D_POLY:
@@ -603,12 +612,24 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
  it is of critical importance for all of this shit (i.e. functions below as well) that the object is absolutely uninitialised
    or had its former shape data deleted when this function (or functions below) is called. otherwise:
    XXX MEMORY LEAKS XXX
+  checks needed?
 */
+    /* Reasoning for storing w,h and a b2PolygonShape as well:
+     Having the shape "cached" should make rapid creation of objects from this
+     shape faster, whereas w,h are needed for offset/rotation stuff (not likely
+     to be executed a lot).
+    */
+    struct rectangle2d* rectangle = (struct rectangle*)malloc(
+     sizeof(*rectangle));
+    rectangle->width = width;
+    rectangle->height = height;
     struct b2PolygonShape* box = (struct b2PolygonShape*)malloc(sizeof(*box));
     box->SetAsBox((width/2) - box->m_radius*2, (height/2) - box->m_radius*2);
+    rectangle->b2polygon = box;
     
-    shape->sha.pe2d->b2.rectangle = box;
+    shape->sha.pe2d->b2.rectangle = rectangle;
     shape->sha.pe2d->type = BW_S2D_RECT;
+    
 #ifdef USE_PHYSICS3D
     shape->is3d = 0;
 #endif
@@ -849,11 +870,13 @@ void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double x
     double erotation = rotation-(s->rotation);*/
     
     switch (s->type) {
-        case BW_S2D_RECT:/*
-            b2Vec2 new_center = s->b2.rectangle.m_centroid; // should copy
+        case BW_S2D_RECT:
+            b2PolygonShape* b2polygon = s->b2.rectangle->b2polygon;
+            b2Vec2 new_center = b2polygon->m_centroid; // copy
             _physics_RotateThenOffset(shape, xoffset, yoffset, rotation,
              &new_center.x, &new_center.y);
-            s->b2.rectangle.SetAsBox(FIXME data missing, reqs restructuring)*/
+            b2polygon->SetAsBox(s->b2.rectangle->width,
+             s->b2.rectangle->height, &new_center, rotation);
         break;
         case BW_S2D_POLY:
             struct polygonpoint* p = s->b2.polygonpoints;
@@ -1084,7 +1107,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
         b2FixtureDef fixtureDef;
         switch ((int)(s->sha.pe2d->type)) {
             case BW_S2D_RECT:
-                fixtureDef.shape = s->sha.pe2d->b2.rectangle;
+                fixtureDef.shape = s->sha.pe2d->b2.rectangle->b2polygon;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
                 obj2d->body->SetFixedRotation(false);
