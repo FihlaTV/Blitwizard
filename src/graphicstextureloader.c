@@ -63,19 +63,19 @@ void graphicstextureloader_InitialLoaderThread(void* userdata) {
 #ifdef DEBUGTEXTURELOADER
         printinfo("[TEXLOAD] resource not found: %s", info->path);
 #endif
-        info->callback(info->gtm, 0, info->userdata);
+        info->callbackDimensions(info->gtm, 0, 0, 0, info->userdata);
         free(info->path);
         free(info);
         return;
     }
 
-    if (loc->type == LOCATION_TYPE_DISK) {
+    if (loc.type == LOCATION_TYPE_DISK) {
         
-    } else if (loc->type == LOCATION_TYPE_ZIP) {
+    } else if (loc.type == LOCATION_TYPE_ZIP) {
 
     } else {
         printwarning("[TEXLOAD] unsupported resource location");
-        info->callback(info->gtm, 0, info->userdata);
+        info->callbackDimensions(info->gtm, 0, 0, 0, info->userdata);
         free(info->path);
         free(info);
         return;
@@ -107,7 +107,8 @@ void* userdata) {
 
     // store various info:
     info->gtm = gtm;
-    info->callback = callback;
+    info->callbackDimensions = callbackDimensions;
+    info->callbackData = callbackData;
     info->userdata = userdata;
 
     // spawn our loader thread:
@@ -115,7 +116,7 @@ void* userdata) {
     if (!ti) {
         free(info->path);
         free(info);
-        callback(gtm, 0, userdata);
+        callbackDimensions(gtm, 0, 0, 0, userdata);
         return;
     }
     thread_Spawn(ti, graphicstextureloader_InitialLoaderThread, info);

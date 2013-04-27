@@ -128,7 +128,11 @@ struct graphicstexturemanaged* gtm, size_t width, size_t height) {
     return NULL;
 }
 
-static void texturemanager_InitialLoadingCallback
+static void texturemanager_InitialLoadingDimensionsCallback
+(struct graphicstexturemanaged* gtm, size_t width, size_t height,
+int success, void* userdata);
+
+static void texturemanager_InitialLoadingDataCallback
 (struct graphicstexturemanaged* gtm, int success, void* userdata);
 
 static void texturemanager_ProcessRequest(struct texturerequesthandle*
@@ -160,7 +164,8 @@ request, int listLocked) {
             // fire up the threaded loading process which
             // gives us the texture in the most common sizes
             graphicstextureloader_DoInitialLoading(gtm,
-            texturemanager_InitialLoadingCallback,
+            texturemanager_InitialLoadingDimensionsCallback,
+            texturemanager_InitialLoadingDataCallback,
             request);
         }
     }
