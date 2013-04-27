@@ -70,7 +70,8 @@ static int insidecollisioncallback = 0;
     Enums, ...
 */
 #ifdef USE_PHYSICS2D
-enum shape_types_2d { BW_S2D_RECT=0, BW_S2D_POLY, BW_S2D_CIRCLE, BW_S2D_EDGE };
+enum shape_types_2d { BW_S2D_RECT=0, BW_S2D_POLY, BW_S2D_CIRCLE, BW_S2D_EDGE,
+ BW_S2D_UNINITIALISED };
 #endif
 
 
@@ -675,12 +676,51 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
      shape faster, whereas w,h are needed for offset/rotation stuff (not likely
      to be executed a lot).
     */
+    
+#ifndef NDEBUG
+    if (shape == NULL) {
+        printerror("Trying to apply physics_Set2dShapeRectangle() to NULL "\
+         "shape.");
+        return;
+    }
+    switch (_physics_ShapeType(shape)) {
+        case 1:
+            if (shape->sha.pe2d->type != BW_S2D_UNINITIALISED) {
+                printerror("Trying to apply physics_Set2dShapeRectangle() to "
+                 "already initialised shape.");
+                return;
+            }
+        break;
+        case 2:
+            printerror("Trying to apply physics_Set2dShapeRectangle() to 2D "\
+             "shape.");
+            return;
+        break;
+    }
+#endif
+    
     struct rectangle2d* rectangle = (struct rectangle2d*)malloc(
      sizeof(*rectangle));
+    if (!rectangle)
+        return;
+    
+    /* Get offset/rotation from shape only if present (that is, if shape is a
+     2D shape, though does not necessarily include actual b2 shapes, just the
+     physicsobjectshape2d struct itself)
+    */
+    b2Vec2 center(0, 0);
+    double rotation = 0;
+    if (_physics_ShapeType(shape) == 1) {
+        center.x = shape->sha.pe2d->xoffset;
+        center.y = shape->sha.pe2d->yoffset;
+        rotation = shape->sha.pe2d->rotation;
+    }
+    
     rectangle->width = width;
     rectangle->height = height;
     struct b2PolygonShape* box = (struct b2PolygonShape*)malloc(sizeof(*box));
-    box->SetAsBox((width/2) - box->m_radius*2, (height/2) - box->m_radius*2);
+    box->SetAsBox((width/2) - box->m_radius*2, (height/2) - box->m_radius*2,
+     center, rotation);
     rectangle->b2polygon = box;
     
     shape->sha.pe2d->b2.rectangle = rectangle;
