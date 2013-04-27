@@ -599,7 +599,7 @@ struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
 void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
     switch ((int)(shape->type)) {
         case BW_S2D_RECT:
-            free(shape->b2.rectangle->b2polygon);
+            delete shape->b2.rectangle->b2polygon;
             free(shape->b2.rectangle);
         break;
         case BW_S2D_POLY:
@@ -613,7 +613,7 @@ void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
             free(p2);
         break;
         case BW_S2D_CIRCLE:
-            free(shape->b2.circle);
+            delete shape->b2.circle;
         break;
         case BW_S2D_EDGE:
             struct edge* e,* e2;
@@ -732,7 +732,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
     
     rectangle->width = width;
     rectangle->height = height;
-    struct b2PolygonShape* box = (struct b2PolygonShape*)malloc(sizeof(*box));
+    struct b2PolygonShape* box = new b2PolygonShape;
     box->SetAsBox((width/2) - box->m_radius*2, (height/2) - box->m_radius*2,
      center, rotation);
     rectangle->b2polygon = box;;
@@ -795,7 +795,7 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
 
 #ifdef USE_PHYSICS2D
 void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter) {
-    b2CircleShape* circle = (b2CircleShape*)malloc(sizeof(*circle));
+    b2CircleShape* circle = new b2CircleShape;
     double radius = diameter/2;
     circle->m_radius = radius - 0.01;
     
@@ -1250,7 +1250,9 @@ void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct 
 }
 #endif
 
-struct physicsobject* physics_CreateObject(struct physicsworld* world, void* userdata, int movable, struct physicsobjectshape* shapelist) {
+struct physicsobject* physics_CreateObject(struct physicsworld* world,
+ void* userdata, int movable, struct physicsobjectshape* shapelist,
+ int shapecount) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (!world->is3d) {
 #endif
@@ -1262,7 +1264,8 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
     }
     
     struct physicsobjectshape* s = shapelist;
-    while (s != NULL) {
+    int i = 0;
+    while (i < shapecount) {
         if (_physics_ShapeType(s) != 0) {
             // TODO: error msg?
             break;
@@ -1291,6 +1294,7 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
             break;
         }
         s += 1;
+        ++i;
     }
     obj->obj.ect2d = obj2d;
 #ifdef USE_PHYSICS3D
