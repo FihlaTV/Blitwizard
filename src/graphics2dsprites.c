@@ -93,7 +93,6 @@ void* userdata) {
     if (s->texwidth == 0 && s->texheight == 0) {
         // texture failed to load.
         s->loadingError = 1;
-        printf("SPRITE LOADING ERROR\n");
     }
     mutex_Release(m);
 }
