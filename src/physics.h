@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard games engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -96,8 +96,10 @@ double* xoffset, double* yoffset, double* zoffset, double* rotation);
 #endif
 void physics_DestroyShapes(struct physicsobjectshape* shape, int count);
 
-// Create an object with a given pointer list to shape structs (ended with a NULL pointer):
-struct physicsobject* physics_CreateObject(struct physicsworld* world, void* userdata, int movable, struct physicsobjectshape* shapelist);
+// Create an object with a given pointer to a shapes array:
+struct physicsobject* physics_CreateObject(struct physicsworld* world,
+void* userdata, int movable, struct physicsobjectshape* shapelist,
+int shapecount);
 
 // Destroy objects or obtain their userdata:
 void physics_DestroyObject(struct physicsobject* object);
