@@ -692,7 +692,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
             }
         break;
         case 2:
-            printerror("Trying to apply physics_Set2dShapeRectangle() to 2D "\
+            printerror("Trying to apply physics_Set2dShapeRectangle() to 3D "\
              "shape.");
             return;
         break;
