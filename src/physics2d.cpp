@@ -664,6 +664,18 @@ size_t physics_GetShapeSize(void) {
 
 
 #ifdef USE_PHYSICS2D
+struct physicsobjectshape2d* _physics_CreateEmpty2dShape() {
+    struct physicsobjectshape2d* shape2d = (struct physicsobjectshape2d*)\
+     malloc(sizeof(*shape2d));
+    shape2d->type = BW_S2D_UNINITIALISED;
+    shape2d->xoffset = 0;
+    shape2d->yoffset = 0;
+    shape2d->rotation = 0;
+    return shape2d;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
 void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width, double height) {
 /*
  it is of critical importance for all of this shit (i.e. functions below as well) that the object is absolutely uninitialised
@@ -714,6 +726,8 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
         center.x = shape->sha.pe2d->xoffset;
         center.y = shape->sha.pe2d->yoffset;
         rotation = shape->sha.pe2d->rotation;
+    }else{
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
     }
     
     rectangle->width = width;
@@ -721,8 +735,7 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
     struct b2PolygonShape* box = (struct b2PolygonShape*)malloc(sizeof(*box));
     box->SetAsBox((width/2) - box->m_radius*2, (height/2) - box->m_radius*2,
      center, rotation);
-    rectangle->b2polygon = box;
-    
+    rectangle->b2polygon = box;;
     shape->sha.pe2d->b2.rectangle = rectangle;
     shape->sha.pe2d->type = BW_S2D_RECT;
     
@@ -745,7 +758,18 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
     struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*vertices)*OVALVERTICES);
     int i = 0;
     double angle = 0;
-
+    
+    // TODO: do it like with the rectangle thing maybe
+    /*b2Vec2 center(0, 0);
+    double rotation = 0;
+    if (_physics_ShapeType(shape) == 1) {
+        center.x = shape->sha.pe2d->xoffset;
+        center.y = shape->sha.pe2d->yoffset;
+        rotation = shape->sha.pe2d->rotation;
+    }else{*/
+    shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    //}
+    
     //go around with the angle in one full circle:
     while (angle < 2*M_PI && i < OVALVERTICES) {
         //calculate and set vertex point
@@ -775,6 +799,17 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
     double radius = diameter/2;
     circle->m_radius = radius - 0.01;
     
+    // TODO: do it like with the rectangle thing maybe
+    /*b2Vec2 center(0, 0);
+    double rotation = 0;
+    if (_physics_ShapeType(shape) == 1) {
+        center.x = shape->sha.pe2d->xoffset;
+        center.y = shape->sha.pe2d->yoffset;
+        rotation = shape->sha.pe2d->rotation;
+    }else{*/
+    shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    //}
+    
     shape->sha.pe2d->b2.circle = circle;
     shape->sha.pe2d->type = BW_S2D_CIRCLE;
 #ifdef USE_PHYSICS3D
@@ -785,6 +820,17 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
+    // TODO: do it like with the rectangle thing
+    /*b2Vec2 center(0, 0);
+    double rotation = 0;*/
+    if (_physics_ShapeType(shape) == 1) {
+        /*center.x = shape->sha.pe2d->xoffset;
+        center.y = shape->sha.pe2d->yoffset;
+        rotation = shape->sha.pe2d->rotation;*/
+    }else{
+    shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
+    
     if (not shape->sha.pe2d->type == BW_S2D_POLY) {
         shape->sha.pe2d->b2.polygonpoints = NULL;
     }
@@ -905,6 +951,17 @@ void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
+    // TODO: do it like with the rectangle thing
+    /*b2Vec2 center(0, 0);
+    double rotation = 0;*/
+    if (_physics_ShapeType(shape) == 1) {
+        /*center.x = shape->sha.pe2d->xoffset;
+        center.y = shape->sha.pe2d->yoffset;
+        rotation = shape->sha.pe2d->rotation;*/
+    }else{
+    shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
+    
     // FIXME FIXME FIXME this function might be complete bollocks, reconsider pls
     if (not shape->sha.pe2d->type == BW_S2D_EDGE) {
         shape->sha.pe2d->b2.edges = NULL;
