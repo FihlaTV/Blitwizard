@@ -464,7 +464,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 
     // create a physics object from the shapes:
     obj->physics->object = physics_CreateObject(main_DefaultPhysics3dPtr(),
-    obj, movable, shapes);
+    obj, movable, shapes, argcount);
     physics_DestroyShapes(shapes, argcount);
 
     // destroy old representation after transferring settings:
