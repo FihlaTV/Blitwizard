@@ -170,6 +170,7 @@ int index, int arg, const char* func) {
 // @function getCameras
 // @treturn table a table list array containing @{blitwizard.graphics.camera|camera} items
 int luafuncs_getCameras(lua_State* l) {
+    lua_newtable(l);
     int c = graphics_GetCameraCount();
     int i = 0;
     while (i < c) {
@@ -185,11 +186,12 @@ int luafuncs_getCameras(lua_State* l) {
             e->next->prev = e;
         }
         luacameralist = e;
-
+        lua_pushnumber(l, i+1);
         luacfuncs_pushcameraidref(l, e);
+        lua_settable(l, -3);
         i++;
     }
-    return c;
+    return 1;
 }
 
 /// Blitwizard camera object which represents a render camera.
@@ -231,6 +233,7 @@ struct luacameralist {
 // It will be removed from the @{blitwizard.graphics.getCameras} list
 // and all references you still have to it will become invalid.
 // @function destroy
+// @tparam userdata camera the @{blitwizard.graphics.camera|camera} to be destroyed
 int luafuncs_camera_destroy(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
     return haveluaerror(l, "the SDL renderer backend doesn't support destroying or adding cameras");

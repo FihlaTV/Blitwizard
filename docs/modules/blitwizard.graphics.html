@@ -78,7 +78,7 @@
 <h2><a href="#Class_camera">Class camera </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#camera:destroy">camera:destroy&nbsp;()</a></td>
+	<td class="name" ><a href="#camera:destroy">camera:destroy&nbsp;(camera)</a></td>
 	<td class="summary">Destroy the given camera.</td>
 	</tr>
 	<tr>
@@ -199,13 +199,19 @@
     <dl class="function">
     <dt>
     <a name = "camera:destroy"></a>
-    <strong>camera:destroy&nbsp;()</strong>
+    <strong>camera:destroy&nbsp;(camera)</strong>
     </dt>
     <dd>
     Destroy the given camera.
 <p> It will be removed from the <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> list
  and all references you still have to it will become invalid.
 
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">camera</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to be destroyed</li>
+    </ul>
 
 
 
