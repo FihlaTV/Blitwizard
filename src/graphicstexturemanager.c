@@ -23,7 +23,7 @@
 
 #ifndef NDEBUG
 // comment this line if you don't want debug output:
-#define DEBUGTEXTUREMANAGER
+//#define DEBUGTEXTUREMANAGER
 #endif
 
 #include "os.h"

@@ -23,7 +23,7 @@
 
 #ifndef _NDEBUG
 // uncomment if you want debug output:
-#define DEBUGTEXTURELOADER
+//#define DEBUGTEXTURELOADER
 #endif
 
 #include "os.h"

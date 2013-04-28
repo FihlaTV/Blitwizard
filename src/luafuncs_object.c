@@ -380,6 +380,7 @@ int luafuncs_object_destroy(lua_State* l) {
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
+    // remove from old list:
     if (o->prev) {
       o->prev->next = o->next;
     } else {
@@ -388,8 +389,11 @@ int luafuncs_object_destroy(lua_State* l) {
     if (o->next) {
       o->next->prev = o->prev;
     }
+    // add to deleted list:
     o->next = deletedobjects;
-    deletedobjects->prev = o;
+    if (o->next) {
+        o->next->prev = o;
+    }
     deletedobjects = o;
     o->prev = NULL;
 
@@ -602,7 +606,6 @@ int luafuncs_object_setZIndex(lua_State* l) {
 static void luacfuncs_object_doStep(struct blitwizardobject* o) {
     lua_State* l = luastate_GetStatePtr();
     luacfuncs_object_callEvent(l, o, "doAlways", 0);
-    luafuncs_objectgraphics_updatePosition(o);
 }
 
 void luacfuncs_object_doAllSteps(void) {
@@ -641,6 +644,13 @@ void luacfuncs_object_doAllSteps(void) {
             luacfuncs_object_doStep(o);
             o = onext;
         }
+    }
+
+    // update visual representations of objects:
+    o = objects;
+    while (o) {
+        luafuncs_objectgraphics_updatePosition(o);
+        o = o->next;
     }
 }
 

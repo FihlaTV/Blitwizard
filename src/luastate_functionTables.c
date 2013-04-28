@@ -212,6 +212,7 @@ void luastate_CreateObjectTable(lua_State* l) {
 
     // "regular" functions:
     luastate_registerfunc(l, &luafuncs_object_new, "new");
+    luastate_registerfunc(l, &luafuncs_object_destroy, "destroy");
     luastate_registerfunc(l, &luafuncs_object_getPosition, "getPosition");
     luastate_registerfunc(l, &luafuncs_object_setPosition, "setPosition");
     luastate_registerfunc(l, &luafuncs_object_setZIndex, "setZIndex");

@@ -89,7 +89,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
     if (o->is3d) {
 
     } else {
-        if (o->graphics->sprite) {
+        if (o->graphics && o->graphics->sprite) {
             graphics2dsprites_Destroy(o->graphics->sprite);
             o->graphics->sprite = NULL;
         }
