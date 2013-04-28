@@ -82,6 +82,9 @@ double alpha);
 // Destroy the specified sprite:
 void graphics2dsprites_Destroy(struct graphics2dsprite* sprite);
 
+// Set the Z index of the sprite (Defaults to 0):
+void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
+int zindex);
 
 // --- internally used to draw sprites: ---
 

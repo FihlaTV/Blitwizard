@@ -47,6 +47,7 @@
 #include "luafuncs_object.h"
 #include "luafuncs_objectgraphics.h"
 #include "luafuncs_objectphysics.h"
+#include "graphics2dsprites.h"
 
 struct blitwizardobject* objects = NULL;
 struct blitwizardobject* deletedobjects = NULL;
@@ -562,10 +563,28 @@ int luafuncs_object_setScale(lua_State* l) {
 // z index, the newer object will be drawn on top.
 //
 // The z index will be internally set to an integer,
-// so use numbers like 1, 2, 3, 99, ...
+// so use numbers like -25, 0, 1, 2, 3, 99, ...
+//
+// The default z index is 0.
 // @function setZIndex
 // @tparam number z_index New z index
 int luafuncs_object_setZIndex(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setZIndex");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setZIndex", "number", lua_strtype(l, 2));
+    }
+    if (!obj->is3d) {
+        return haveluaerror(l, "z index can only be set for 2d objects");
+    } else {
+        if (obj->graphics && obj->graphics->sprite) {
+            graphics2dsprites_setZIndex(obj->graphics->sprite, lua_tointeger(l, 2));
+        }
+    }
     return 0;
 }
 

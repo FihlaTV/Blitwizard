@@ -36,7 +36,6 @@ void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource) {
     double x,y,z;
     objectphysics_getPosition(o, &x, &y, &z);
-    printf("got position: %f, %f\n", x, y);
 
     if (!resource || strlen(resource) <= 0) {
         return;
