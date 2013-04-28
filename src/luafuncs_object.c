@@ -422,7 +422,17 @@ int luafuncs_object_getPosition(lua_State* l) {
     return 2;
 }
 
-/// Set the object to a new position.
+/// Set the object to a new position. Specify two coordinates for 2d
+// objects (x, y) and three for 3d objects (x, y, z).
+//
+// Please note this game position is in <b>game units</b>, not pixels.
+//
+// To find out how much pixels 1 game unit is in the 2d world with
+// a default zoom of 1, check @{blitwizard.graphics.camera:gameUnitsPerPixel}.
+//
+// For the 3d world, one game unit should roughly equal one meter
+// if your game plays in a normal human-scale environment
+// (this works best for the physics).
 // @function setPosition
 // @tparam number pos_x x coordinate
 // @tparam number pos_y y coordinate

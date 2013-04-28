@@ -204,13 +204,16 @@ int luafuncs_getCameras(lua_State* l) {
 // different world views side by side, you would want multiple
 // cameras.
 //
-// IMPORTANT: If you want to show a different part of the game world,
+// <b>IMPORTANT:</b> If you want to show a different part of the game world,
 // this is where you want to be! Grab the first camera from
 // @{blitwizard.graphics.getCameras} and let's go:
 //
 // Use @{blitwizard.graphics.camera:set2dCenter} to modify the 2d world
 // position shown, and @{blitwizard.graphics.camera:set3dCenter} to modify
 // the 3d world position shown if you use any 3d objects.
+//
+// <i>Please note the SDL 2d renderer doesn't support more than one camera.
+// The OGRE 3d renderer supports multiple cameras.</i>
 // @type camera
 
 struct luacameralist {
@@ -258,8 +261,13 @@ int luafuncs_camera_new(lua_State* l) {
 // centered by the camera. This allows you to move the camera's shown
 // part of the 2d world around, focussing on other places.
 //
+// The position is specified in <b>game units</b> (the same units used
+// for specifying the @{blitwizard.object:setPosition|position of objects}).
+// The camera initially looks at position 0, 0.
+//
 // If you want the camera to follow a 2d object, simply use this function
-// to set the 2d function to the coordinates of the object.
+// to set the 2d center to the coordinates of the object (you can do this
+// in the object's @{blitwizard.object:doAlways|doAlways} function).
 // @function set2dCenter
 // @tparam number x_position X position of the 2d point to look at
 // @tparam number y_position Y position of the 2d point to look at
@@ -344,6 +352,10 @@ int luafuncs_camera_setZoomFactor(lua_State* l) {
 // position in the world etc.
 //
 // @function gameUnitsPerPixel
+// @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
+// @usage
+// -- Get the amount of pixels for one game unit for the first (=default) camera:
+// local pixels = blitwizard.graphics.getCameras()[1]:gameUnitsPerPixel()
 int luafuncs_camera_gameUnitsPerPixel(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
     l, 1, 0, "blitwizard.graphics.camera:gameUnitsPerPixel");
