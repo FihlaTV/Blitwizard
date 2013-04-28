@@ -317,11 +317,11 @@ int luafuncs_camera_setScreenDimensions(lua_State* l) {
 }
 
 /// Get the 2d zoom factor (defaults to 1).
-// @function getZoomFactor
+// @function get2dZoomFactor
 // @treturn number zoom_factor the zoom factor of the camera
-int luafuncs_camera_getZoomFactor(lua_State* l) {
+int luafuncs_camera_get2dZoomFactor(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:setZoomFactor");
+    l, 1, 0, "blitwizard.graphics.camera:get2dZoomFactor");
     lua_pushnumber(l, graphics_GetCamera2DZoom(0));
     return 1;
 }
@@ -329,18 +329,20 @@ int luafuncs_camera_getZoomFactor(lua_State* l) {
 /// Set the 2d zoom factor. Only the 2d layer will be affected.
 // A large zoom factor will zoom into the details of the scene,
 // a small zoom factor will show more surroundings from a larger distance.
-// @function setZoomFactor
+// @function set2dZoomFactor
 // @tparam number zoom_factor the new zoom factor
-int luafuncs_camera_setZoomFactor(lua_State* l) {
+int luafuncs_camera_set2dZoomFactor(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:getZoomFactor");
+    l, 1, 0, "blitwizard.graphics.camera:set2dZoomFactor");
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.graphics.camera:setZoomFactor", "number", lua_strtype(l, 2));
+        "blitwizard.graphics.camera:set2dZoomFactor",
+        "number", lua_strtype(l, 2));
     }
     if (lua_tonumber(l, 2) <= 0) {
         return haveluaerror(l, badargument2,
-        "blitwizard.graphics.camera:setZoomFactor", "zoom factor is zero or negative");
+        "blitwizard.graphics.camera:set2dZoomFactor",
+        "zoom factor is zero or negative");
     }
     graphics_SetCamera2DZoom(e->cameraslot, lua_tonumber(l, 2));
     return 0;

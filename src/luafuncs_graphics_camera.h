@@ -41,8 +41,8 @@ int luafuncs_camera_getScreenDimensions(lua_State* l);
 int luafuncs_camera_setScreenDimensions(lua_State* l);
 int luafuncs_camera_get2dCenter(lua_State* l);
 int luafuncs_camera_set2dCenter(lua_State* l);
-int luafuncs_camera_setZoomFactor(lua_State* l);
-int luafuncs_camera_getZoomFactor(lua_State* l);
+int luafuncs_camera_set2dZoomFactor(lua_State* l);
+int luafuncs_camera_get2dZoomFactor(lua_State* l);
 
 #endif  // USE_GRAPHICS
 
