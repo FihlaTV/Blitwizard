@@ -260,6 +260,9 @@ int luafuncs_camera_new(lua_State* l) {
 //
 // If you want the camera to follow a 2d object, simply use this function
 // to set the 2d function to the coordinates of the object.
+// @function set2dCenter
+// @tparam number x_position X position of the 2d point to look at
+// @tparam number y_position Y position of the 2d point to look at
 int luafuncs_camera_set2dCenter(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
     l, 1, 0, "blitwizard.graphics.camera:set2dCenter");

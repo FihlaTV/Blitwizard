@@ -86,6 +86,11 @@
 	<td class="summary">Add a new camera.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#camera:set2dCenter">camera:set2dCenter&nbsp;(x_position, y_position)</a></td>
+	<td class="summary">Set the camera's 2d center which is the position in the 2d world
+ centered by the camera.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#camera:getScreenDimensions">camera:getScreenDimensions&nbsp;()</a></td>
 	<td class="summary">Get the dimensions of a camera on the actual
  screen.</td>
@@ -93,6 +98,14 @@
 	<tr>
 	<td class="name" ><a href="#camera:setScreenDimensions">camera:setScreenDimensions&nbsp;(width, height)</a></td>
 	<td class="summary">Set the dimensions of a camera on the screen.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:getZoomFactor">camera:getZoomFactor&nbsp;()</a></td>
+	<td class="summary">Get the 2d zoom factor (defaults to 1).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:setZoomFactor">camera:setZoomFactor&nbsp;(zoom_factor)</a></td>
+	<td class="summary">Set the 2d zoom factor.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#camera:gameUnitsPerPixel">camera:gameUnitsPerPixel&nbsp;()</a></td>
@@ -178,7 +191,7 @@
 <p> IMPORTANT: If you want to show a different part of the game world,
  this is where you want to be! Grab the first camera from
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> and let's go:
-<p> Use ??? to modify the 2d world
+<p> Use <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">blitwizard.graphics.camera:set2dCenter</a> to modify the 2d world
  position shown, and ??? to modify
  the 3d world position shown if you use any 3d objects.
     <dl class="function">
@@ -209,6 +222,32 @@
 <p> If you want to get rid of it again, check out
  <a href="../modules/blitwizard.graphics.html#camera:destroy">blitwizard.graphics.camera:destroy</a>.
 
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:set2dCenter"></a>
+    <strong>camera:set2dCenter&nbsp;(x_position, y_position)</strong>
+    </dt>
+    <dd>
+    Set the camera's 2d center which is the position in the 2d world
+ centered by the camera.  This allows you to move the camera's shown
+ part of the 2d world around, focussing on other places.
+<p> If you want the camera to follow a 2d object, simply use this function
+ to set the 2d function to the coordinates of the object.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_position</span>
+            <span class="types"><span class="type">number</span></span>
+         X position of the 2d point to look at</li>
+        <li><span class="parameter">y_position</span>
+            <span class="types"><span class="type">number</span></span>
+         Y position of the 2d point to look at</li>
+    </ul>
 
 
 
@@ -254,6 +293,46 @@
         <li><span class="parameter">height</span>
             <span class="types"><span class="type">number</span></span>
          Height of the camera on the screen in pixels</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:getZoomFactor"></a>
+    <strong>camera:getZoomFactor&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the 2d zoom factor (defaults to 1).
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        zoom_factor the zoom factor of the camera
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:setZoomFactor"></a>
+    <strong>camera:setZoomFactor&nbsp;(zoom_factor)</strong>
+    </dt>
+    <dd>
+    Set the 2d zoom factor.  Only the 2d layer will be affected.
+ A large zoom factor will zoom into the details of the scene,
+ a small zoom factor will show more surroundings from a larger distance.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">zoom_factor</span>
+            <span class="types"><span class="type">number</span></span>
+         the new zoom factor</li>
     </ul>
 
 
