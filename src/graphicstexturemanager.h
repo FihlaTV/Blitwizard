@@ -127,11 +127,24 @@ void* userdata);
 // visible again in close range :-)
 void texturemanager_UsingRequest(
 struct texturerequesthandle* request, int visibility);
-#define USING_AT_VISIBILITY_DETAIL 1
-#define USING_AT_VISIBILITY_NORMAL 2
-#define USING_AT_VISIBILITY_DISTANT 3
-#define USING_AT_VISIBILITY_INVISIBLE 4
+#define USING_AT_VISIBILITY_DETAIL 0
+#define USING_AT_VISIBILITY_NORMAL 1
+#define USING_AT_VISIBILITY_DISTANT 2
+#define USING_AT_VISIBILITY_INVISIBLE 3
 #define USING_AT_COUNT 4
+
+// for normal use:
+#define TEXSIZE_HIGH 1024
+// for previously normal, now distant use:
+#define TEXSIZE_MEDIUM 512
+// for longer distant use (SCALEDOWNSECONDSLONG):
+#define TEXSIZE_LOW 128
+// when not used for a longer time:
+#define TEXSIZE_TINY 32
+
+#define SCALEDOWNSECONDSLONG 20
+#define SCALEDOWNSECONDS 5
+
 
 // Destroy a texture request. You will still get a textureSwitch
 // callback setting your provided texture back to NULL if
@@ -154,6 +167,12 @@ struct texturerequesthandle* request);
 // complete and it won't crash your drawing code when textures
 // become unavailable and new ones need to be used.
 void texturemanager_Tick(void);
+
+// Use those if you need to access a graphicstexturemanaged directly
+// and you need to be sure the texture manager is not messing around
+// with it while you're doing that:
+void texturemanager_LockForTextureAccess(void);
+void texturemanager_ReleaseFromTextureAccess(void);
 
 #endif  // USE_GRAPHICS
 

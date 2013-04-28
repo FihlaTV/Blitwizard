@@ -50,9 +50,11 @@ struct loaderthreadinfo {
     unsigned int datasize;
     int imagewidth,imageheight;
     int maxsizex,maxsizey;
-    void (*callbackSize)(void* handle, int imgwidth, int imgheight);
-    void (*callbackData)(void* handle, const char* imgdata,
-    unsigned int imgdatasize);
+    void (*callbackSize)(void* handle, int imgwidth, int imgheight,
+    void* userdata);
+    void (*callbackData)(void* handle, char* imgdata,
+    unsigned int imgdatasize, void* userdata);
+    void* userdata;
 #ifdef WIN
     //windows threads stuff
     HANDLE threadhandle;
@@ -71,7 +73,7 @@ size_t imageheight, void* data) {
     i->imagewidth = imagewidth;
     i->imageheight = imageheight;
     if (i->callbackSize) {
-        i->callbackSize(i, imagewidth, imageheight);
+        i->callbackSize(i, imagewidth, imageheight, i->userdata);
     }
 }
 
@@ -157,7 +159,7 @@ void* loaderthreadfunction(void* data) {
 
     // enter callback if we got one
     if (i->callbackData) {
-        i->callbackData(data, i->data, i->datasize);
+        i->callbackData(data, i->data, i->datasize, i->userdata);
     }
     
 #ifdef WIN
@@ -186,9 +188,11 @@ void startthread(struct loaderthreadinfo* i) {
 
 void* img_LoadImageThreadedFromFile(const char* path, int maxwidth,
 int maxheight, const char* format,
-void (*callbackSize)(void* handle, int imgwidth, int imgheight),
-void (*callbackData)(void* handle, const char* imgdata,
-unsigned int imgdatasize)) {
+void (*callbackSize)(void* handle, int imgwidth, int imgheight,
+void* userdata),
+void (*callbackData)(void* handle, char* imgdata,
+unsigned int imgdatasize, void* userdata),
+void* userdata) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
     memset(t, 0, sizeof(*t));
@@ -208,22 +212,27 @@ unsigned int imgdatasize)) {
     t->maxsizey = maxheight;
     t->callbackSize = callbackSize;
     t->callbackData = callbackData;
+    t->userdata = userdata;
     startthread(t);
     return t;
 }
 
 void* img_LoadImageThreadedFromFunction(
-  int (*readfunc)(void* buffer, size_t bytes, void* userdata),
-  void* userdata, int maxwidth, int maxheight, const char* format,
-  void (*callbackSize)(void* handle, int imgwidth, int imgheight),
-  void (*callbackData)(void* handle, const char* imgdata,
-  unsigned int imgdatasize)
+    int (*readfunc)(void* buffer, size_t bytes, void* userdata),
+    void* readfuncuserdata, int maxwidth, int maxheight,
+    const char* format,
+    void (*callbackSize)(void* handle, int imgwidth, int imgheight,
+    void* userdata),
+    void (*callbackData)(void* handle, char* imgdata,
+    unsigned int imgdatasize, void* userdata),
+    void* callbackuserdata
 ) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
     memset(t, 0, sizeof(*t));
     t->readfunc = readfunc;
-    t->readfuncptr = userdata;
+    t->readfuncptr = readfuncuserdata;
+    t->userdata = callbackuserdata;
     t->format = malloc(strlen(format)+1);
     if (!t->format) {
         free(t->memdata);free(t);
@@ -240,12 +249,15 @@ void* img_LoadImageThreadedFromFunction(
 
 void* img_LoadImageThreadedFromMemory(const void* memdata,
 unsigned int memdatasize, int maxwidth, int maxheight, const char* format,
-void (*callbackSize)(void* handle, int imgwidth, int imgheight),
-void (*callbackData)(void* handle, const char* imgdata,
-unsigned int imgdatasize)) {
+void (*callbackSize)(void* handle, int imgwidth, int imgheight,
+void* userdata),
+void (*callbackData)(void* handle, char* imgdata,
+unsigned int imgdatasize, void* userdata),
+void* userdata) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
     memset(t, 0, sizeof(*t));
+    t->userdata = userdata;
     t->memdata = malloc(memdatasize);
     if (!t->memdata) {
         free(t);
