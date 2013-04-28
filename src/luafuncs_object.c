@@ -195,10 +195,17 @@ int luafuncs_object_new(lua_State* l) {
     struct blitwizardobject* o = malloc(sizeof(*o));
     if (!o) {
         luacfuncs_object_clearRegistryTable(l, o);
-        return haveluaerror(l, "Failed to allocate new object");
+        return haveluaerror(l, "failed to allocate new object");
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
+    o->respath = strdup(resource);
+    if (!o->respath) {
+        luacfuncs_object_clearRegistryTable(l, o);
+        free(o);
+        return haveluaerror(l, "failed to allocate resource path for new "
+        "object");
+    }
 
     // add us to the object list:
     o->next = objects;
@@ -208,7 +215,7 @@ int luafuncs_object_new(lua_State* l) {
     objects = o;
 
     // if resource is present, start loading it:
-    luafuncs_objectgraphics_load(o, resource);
+    luafuncs_objectgraphics_load(o, o->respath);
 
     // push idref to object onto stack as return value:
     luacfuncs_pushbobjidref(l, o);
@@ -606,6 +613,9 @@ int luafuncs_object_setZIndex(lua_State* l) {
 static void luacfuncs_object_doStep(struct blitwizardobject* o) {
     lua_State* l = luastate_GetStatePtr();
     luacfuncs_object_callEvent(l, o, "doAlways", 0);
+
+    // attempt to load graphics if not done yet:
+    luafuncs_objectgraphics_load(o, o->respath);
 }
 
 void luacfuncs_object_doAllSteps(void) {

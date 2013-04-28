@@ -28,6 +28,7 @@
 #include "objectgraphicsdata.h"
 
 struct blitwizardobject {
+    char* respath;  // resource path
     int is3d;  // 0: 2d sprite with z-order value, 1: 3d mesh or sprite
     double x,y;  // 2d: x,y, 3d: x,y,z with z pointing up
     int deleted;  // 1: deleted (deletedobjects), 0: regular (objects)

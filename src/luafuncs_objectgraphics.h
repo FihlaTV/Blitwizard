@@ -26,8 +26,12 @@
 
 #include "blitwizardobject.h"
 
+// load object graphics. might fail, hence call this each frame.
+// (you can safely call this when graphics are already loaded)
 void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource);
+
+// unload object graphics. use on object destruction.
 void luafuncs_objectgraphics_unload(struct blitwizardobject* o);
 
 // check if a geometry callback needs to be fired.
@@ -48,6 +52,9 @@ int luacfuncs_objectgraphics_getDimensions(
 struct blitwizardobject* o, double *x, double *y, double *z);
 // returns 1 on success and 0 on failure.
 // for 2d objects, the z component won't be altered.
+
+// inform lua graphics code of new frame:
+void luacfuncs_objectgraphics_newFrame(void);
 
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
 

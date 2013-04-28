@@ -45,6 +45,9 @@ int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physic
 // lua funcs doStep processing function:
 void luacfuncs_object_doAllSteps(void);
 
+// informing lua graphics code of new frame:
+void luacfuncs_objectgraphics_newFrame(void);
+
 // media cleanup callback:
 void checkAllMediaObjectsForCleanup(void);
 
@@ -969,12 +972,15 @@ int main(int argc, char** argv) {
         }
 #endif
 
-        // do some garbage collection:
+        /*// do some garbage collection:
         gcframecount++;
         if (gcframecount > 100) {
             // do a gc step once in a while
             luastate_GCCollect();
-        }
+        }*/
+
+        // new frame:
+        luacfuncs_objectgraphics_newFrame();
     }
     main_Quit(0);
     return 0;

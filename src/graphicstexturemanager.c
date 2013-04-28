@@ -244,6 +244,7 @@ size_t datalength, void* userdata) {
 
 static void texturemanager_DiskCacheRetrieval(void* data,
 size_t datalength, void* userdata) {
+    // obtained scaled texture from disk cache:
     struct graphicstexturescaled* s = userdata;
     texturemanager_LockForTextureAccess();
     if (data) {
@@ -407,16 +408,26 @@ request, int listLocked) {
     struct graphicstexturemanaged* gtm =
     request->gtm;
 
+    if (!gtm) {
+        // request has no texture.
+        if (!listLocked) {
+            mutex_Release(textureReqListMutex);
+        }
+        return;
+    }
+
     // if texture isn't loaded yet, load it:
     if (!gtm->beingInitiallyLoaded && !gtm->failedToLoad) {
         int donotload = 0;
         // check if texture is available in original size:
         if (gtm->scalelistcount > 0 && gtm->origscale >= 0 &&
         gtm->origscale < gtm->scalelistcount) {
-            if (gtm->scalelist[gtm->origscale].diskcachepath
-            || gtm->scalelist[gtm->origscale].pixels
-            || gtm->scalelist[gtm->origscale].gt) {
-                donotload = 1;
+            if (gtm->scalelist[gtm->origscale].locked == 0) {
+                if (gtm->scalelist[gtm->origscale].diskcachepath
+                || gtm->scalelist[gtm->origscale].pixels
+                || gtm->scalelist[gtm->origscale].gt) {
+                    donotload = 1;
+                }
             }
         }
         if (!donotload) {
