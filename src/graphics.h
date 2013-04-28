@@ -137,7 +137,7 @@ double graphics_GetCamera2DZoom(int index);
 // A 2d unit on screen equals (UNIT_TO_PIXELS * factor)
 // pixels.
 
-void graphics_Set2DCameraZoom(int index, double zoom);
+void graphics_SetCamera2DZoom(int index, double zoom);
 // Set 2d camera zoom factor
 
 double graphics_GetCamera3DFov(int index);

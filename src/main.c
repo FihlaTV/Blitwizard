@@ -802,8 +802,8 @@ int main(int argc, char** argv) {
 #endif
 
     // call init
-    if (!luastate_CallFunctionInMainstate("blitwizard.on_init", 0, 1, 1, &error, NULL)) {
-        printerror("Error: An error occured when calling blitwizard.on_init: %s",error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1, &error, NULL)) {
+        printerror("Error: An error occured when calling blitwizard.onInit: %s",error);
         if (error != outofmem) {
             free(error);
         }

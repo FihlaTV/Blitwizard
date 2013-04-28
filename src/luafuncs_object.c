@@ -427,6 +427,132 @@ int luafuncs_object_getPosition(lua_State* l) {
 // @tparam number pos_y y coordinate
 // @tparam number pos_z (only for 3d objects) z coordinate
 int luafuncs_object_setPosition(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setPosition");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 3));
+    }
+    if (obj->is3d && lua_type(l, 4) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 4));
+    }
+    double x,y,z;
+    x = lua_tonumber(l, 2);
+    y = lua_tonumber(l, 3);
+    if (obj->is3d) {
+        z = lua_tonumber(l, 4);
+    }
+    objectphysics_setPosition(obj, x, y, z);
+    return 0;
+}
+
+/// Get the dimensions of an object in game units (with
+// @{blitwizard.object:setScale|scaling} taking into account).
+//
+// For a 2d sprite, this returns two components (x, y) which
+// match the sprite's width and height, for a 3d object,
+// this returns a 3d box which would encapsulate the 3d mesh
+// in its first initial animation frame.
+//
+// If you call this function before getting the
+// @{blitwizard.object:onGeometryLoaded|geometry callback},
+// an error will be thrown that the information is not available
+// yet.
+// @function getDimensions
+// @treturn number x_size X dimension value
+// @treturn number y_size Y dimension value
+// @treturn number z_size (only for 3d objects) Z dimension value
+int luafuncs_object_getDimensions(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setPosition");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    double x, y, z;
+    if (!luacfuncs_objectgraphics_getDimensions(obj, &x, &y, &z)) {
+        return haveluaerror(l, "Object dimensions not known");
+    }
+    lua_pushnumber(l, x);
+    lua_pushnumber(l, y);
+    if (obj->is3d) {
+        lua_pushnumber(l, z);
+    }
+    return 2+(obj->is3d);
+}
+
+/// Get the object's scale, which per default is 1,1 for 2d objects
+// and 1,1,1 for 3d objects. The scale is a factor applied to the
+// dimensions of an object to stretch or shrink it.
+//
+// Returns 2 values for 2d objects, 3 values for 3d objects.
+// @function getScale
+// @treturn number x_scale X scale factor
+// @treturn number y_scale Y scale factor
+// @treturn number z_scale (optional) Z scale factor
+int luafuncs_object_getScale(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getScale");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (obj->is3d) {
+        lua_pushnumber(l, obj->scale3d.x);
+        lua_pushnumber(l, obj->scale3d.y);
+        lua_pushnumber(l, obj->scale3d.z);
+        return 3;
+    } else {
+        lua_pushnumber(l, obj->scale2d.x);
+        lua_pushnumber(l, obj->scale2d.y);
+        return 2;
+    }
+}
+
+/// Change an object's scale, also see @{blitwizard.object:getScale}.
+// This allows to stretch/shrink an object.
+//
+// Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
+// @function setScale
+// @tparam number x_scale X scale factor
+// @tparam number y_scale Y scale factor
+// @tparam number z_scale (optional) Z scale factor
+int luafuncs_object_setScale(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setScale");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setScale", "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.object.setScale", "number", lua_strtype(l, 3));
+    }
+    if (obj->is3d && lua_type(l, 4) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 4));
+    }
+    double x,y,z;
+    x = lua_tonumber(l, 2);
+    y = lua_tonumber(l, 3);
+    if (obj->is3d) {
+        z = lua_tonumber(l, 4);
+        obj->scale3d.x = x;
+        obj->scale3d.y = y;
+        obj->scale3d.z = z;
+    } else {
+        obj->scale2d.x = x;
+        obj->scale2d.y = y;
+    }
     return 0;
 }
 
@@ -447,6 +573,7 @@ int luafuncs_object_setZIndex(lua_State* l) {
 static void luacfuncs_object_doStep(struct blitwizardobject* o) {
     lua_State* l = luastate_GetStatePtr();
     luacfuncs_object_callEvent(l, o, "doAlways", 0);
+    luafuncs_objectgraphics_updatePosition(o);
 }
 
 void luacfuncs_object_doAllSteps(void) {
@@ -503,8 +630,10 @@ void luacfuncs_object_doAllSteps(void) {
 //   -- create a 2d sprite and output its size:
 //   local obj = obj:new(false, "my_image.png")
 //   function obj:onGeometryLoaded()
-//     -- call @{blitwizard.object.getSize|self:getSize} to get its dimensions
-//     print("My dimensions are: " .. self:getSize()[1], self:getSize()[2])
+//     -- call @{blitwizard.object.getDimensions|self:getDimensions} to get
+//     -- its dimensions
+//     print("My dimensions are: " .. self:getDimensions()[1],
+//     self:getDimensions()[2])
 //   end
 
 /// Set this event function to a custom
@@ -518,7 +647,7 @@ void luacfuncs_object_doAllSteps(void) {
 //
 // This function is called with all objects with a
 // frequency of 60 times a second (it can be changed
-// globally with @{blitwizard.setStep} if you know
+// globally with @{blitwizard:setStep} if you know
 // what you're doing.
 // @function doAlways
 // @usage

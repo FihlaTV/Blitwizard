@@ -86,6 +86,15 @@
 	<td class="summary">Add a new camera.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#camera:getScreenDimensions">camera:getScreenDimensions&nbsp;()</a></td>
+	<td class="summary">Get the dimensions of a camera on the actual
+ screen.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:setScreenDimensions">camera:setScreenDimensions&nbsp;(width, height)</a></td>
+	<td class="summary">Set the dimensions of a camera on the screen.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#camera:gameUnitsPerPixel">camera:gameUnitsPerPixel&nbsp;()</a></td>
 	<td class="summary">Get the extend in pixels a game unit in the 2d world
  has at the default camera zoom level of 1.</td>
@@ -200,6 +209,52 @@
 <p> If you want to get rid of it again, check out
  <a href="../modules/blitwizard.graphics.html#camera:destroy">blitwizard.graphics.camera:destroy</a>.
 
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:getScreenDimensions"></a>
+    <strong>camera:getScreenDimensions&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the dimensions of a camera on the actual
+ screen.  It usually fills the whole window per default,
+ but not necessarily.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        width Width of the camera on the screen in pixels</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        height Height of the camera on the screen in pixels</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:setScreenDimensions"></a>
+    <strong>camera:setScreenDimensions&nbsp;(width, height)</strong>
+    </dt>
+    <dd>
+    Set the dimensions of a camera on the screen.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         Width of the camera on the screen in pixels</li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         Height of the camera on the screen in pixels</li>
+    </ul>
 
 
 

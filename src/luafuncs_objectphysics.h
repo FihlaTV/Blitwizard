@@ -68,6 +68,8 @@ void objectphysics_get3dRotation(struct blitwizardobject* obj,
 double* qx, double* qy, double* qz, double* qrot);
 void objectphysics_getPosition(struct blitwizardobject* obj,
 double* x, double* y, double* z);
+void objectphysics_setPosition(struct blitwizardobject* obj,
+double x, double y, double z);
 void objectphysics_warp2d(struct blitwizardobject* obj, double x, double y,
 double angle, int anglespecified);
 void objectphysics_warp3d(struct blitwizardobject* obj, double x, double y,

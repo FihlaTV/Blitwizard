@@ -77,6 +77,8 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
 
     if (imgdata) {
         texturemanager_LockForTextureAccess();
+        info->gtm->width = info->width;
+        info->gtm->height = info->height;
         if (!info->gtm->scalelist) {
             int scalecount = 1;
 
@@ -126,8 +128,9 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                     info->gtm->scalelist[i].height = info->height;
                     info->gtm->origscale = i;
 #ifdef DEBUGTEXTURELOADER
-                    printinfo("[TEXLOAD] texture has now been loaded: %s",
-                    info->path);
+                    printinfo("[TEXLOAD] texture has now been loaded: %s "
+                    "(%d, %d)",
+                    info->path, info->width, info->height);
 #endif
                 } else {
                     // see what would be the intended side size:

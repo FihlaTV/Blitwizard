@@ -195,8 +195,11 @@ void luastate_CreateObjectTable(lua_State* l) {
     // "regular" functions:
     luastate_registerfunc(l, &luafuncs_object_new, "new");
     luastate_registerfunc(l, &luafuncs_object_getPosition, "getPosition");
-    luastate_registerfunc(l, &luafuncs_object_getPosition, "setPosition");
+    luastate_registerfunc(l, &luafuncs_object_setPosition, "setPosition");
     luastate_registerfunc(l, &luafuncs_object_setZIndex, "setZIndex");
+    luastate_registerfunc(l, &luafuncs_object_getDimensions, "getDimensions");
+    luastate_registerfunc(l, &luafuncs_object_getScale, "getScale");
+    luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
 
     // physics functions:
     luastate_register2d3dphysics(l, &luafuncs_object_enableStaticCollision,

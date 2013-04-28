@@ -149,6 +149,7 @@ int graphics2dsprites_IsTextureAvailable(struct graphics2dsprite* sprite) {
 void graphics2dsprites_DoForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
+double texwidth, double texheight,
 double angle, double alpha, double r, double g, double b, int visible)) {
     if (!spriteInformation) {
         return;
@@ -161,12 +162,19 @@ double angle, double alpha, double r, double g, double b, int visible)) {
     while (s) {
         // call sprite information callback:
         spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
-        s->angle, s->alpha, s->r, s->g, s->b, s->visible);
+        s->texwidth, s->texheight, s->angle, s->alpha, s->r, s->g, s->b,
+        s->visible);
 
         s = s->next;
     }
 
     mutex_Release(m);
+}
+
+void graphics2dsprites_Resize(struct graphics2dsprite* sprite,
+double width, double height) {
+    sprite->width = width;
+    sprite->height = height;
 }
 
 void graphics2dsprites_Destroy(struct graphics2dsprite* sprite) {
@@ -203,6 +211,13 @@ void graphics2dsprites_Destroy(struct graphics2dsprite* sprite) {
     mutex_Release(m);
 }
 
+void graphics2dsprites_Move(struct graphics2dsprite* sprite,
+double x, double y, double angle) {
+    sprite->x = x;
+    sprite->y = y;
+    sprite->angle = angle;
+}
+
 struct graphics2dsprite* graphics2dsprites_Create(
 const char* texturePath, double x, double y, double width, double height) {
     if (!texturePath) {
@@ -222,6 +237,10 @@ const char* texturePath, double x, double y, double width, double height) {
     // set position and size info to sprite:
     s->x = x;
     s->y = y;
+    s->r = 1;
+    s->g = 1;
+    s->b = 1;
+    s->alpha = 1;
     s->width = width;
     s->height = height;
     s->path = strdup(texturePath);

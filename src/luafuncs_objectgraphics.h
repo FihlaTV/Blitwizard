@@ -40,5 +40,14 @@ struct blitwizardobject* o);
 int luafuncs_objectgraphics_NeedVisibleCallback(
 struct blitwizardobject* o);
 
+// Move graphical representation of object to correct position:
+void luafuncs_objectgraphics_updatePosition(struct blitwizardobject* o);
+
+// get dimensions of object:
+int luacfuncs_objectgraphics_getDimensions(
+struct blitwizardobject* o, double *x, double *y, double *z);
+// returns 1 on success and 0 on failure.
+// for 2d objects, the z component won't be altered.
+
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
 

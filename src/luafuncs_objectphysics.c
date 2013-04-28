@@ -1052,6 +1052,39 @@ double* x, double* y, double* z) {
 #endif
 }
 
+void objectphysics_setPosition(struct blitwizardobject* obj,
+double x, double y, double z) {
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (!obj->physics || !obj->physics->object) {
+#else
+    if (1) {
+#endif
+        obj->x = x;
+        obj->y = y;
+        if (obj->is3d) {
+            obj->vpos.z = z;
+        }
+        return;
+    }
+#if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
+    if (obj->is3d) {
+#ifdef USE_PHYSICS3D
+        double qx,qy,qz,qrot;
+        physics_Get3dRotationQuaternion(obj->physics->object,
+        &qx, &qy, &qz, &qrot);
+        physics_Warp3d(obj->physics->object, x, y, z,
+        qx, qy, qz, qrot);
+#endif
+    } else {
+#ifdef USE_PHYSICS2D
+        double angle;
+        physics_Get2dRotation(obj->physics->object, &angle);
+        physics_Warp2d(obj->physics->object, x, y, angle);
+#endif
+    }
+#endif
+}
+
 void objectphysics_get2dRotation(struct blitwizardobject* obj,
 double* angle) {
 #ifdef USE_PHYSICS2D

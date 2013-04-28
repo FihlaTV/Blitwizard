@@ -43,6 +43,14 @@ struct blitwizardobject {
         } quaternion;
         double angle;
     } rotation;
+    union {
+        struct {
+            double x,y;
+        } scale2d;
+        struct {
+            double x,y,z;
+        } scale3d;
+    };
 #ifdef USE_GRAPHICS
     struct objectgraphicsdata* graphics;
 #endif

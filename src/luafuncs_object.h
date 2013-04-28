@@ -36,6 +36,9 @@ int luafuncs_object_getPosition(lua_State* l);
 int luafuncs_object_setPosition(lua_State* l);
 int luafuncs_object_setZIndex(lua_State* l);
 int luafuncs_object_destroy(lua_State* l);
+int luafuncs_object_getDimensions(lua_State* l);
+int luafuncs_object_getScale(lua_State* l);
+int luafuncs_object_setScale(lua_State* l);
 
 // set the function on top of the stack as event function:
 // (put nil on top of the stack if you want to clear the event)
