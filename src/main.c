@@ -57,6 +57,7 @@ char* templatepath = NULL; // global template directory path as determined at ru
 
 char* binpath = NULL;  // path to blitwizard binary
 
+#include "threading.h"
 #include "luastate.h"
 #include "file.h"
 #include "timefuncs.h"
@@ -375,6 +376,7 @@ HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 int main(int argc, char** argv) {
 #endif
 #endif
+    thread_MarkAsMainThread();
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard %s starting", VERSION);
@@ -800,8 +802,8 @@ int main(int argc, char** argv) {
 #endif
 
     // call init
-    if (!luastate_CallFunctionInMainstate("blitwizard.on_init", 0, 1, 1, &error, NULL)) {
-        printerror("Error: An error occured when calling blitwizard.on_init: %s",error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1, &error, NULL)) {
+        printerror("Error: An error occured when calling blitwizard.onInit: %s",error);
         if (error != outofmem) {
             free(error);
         }

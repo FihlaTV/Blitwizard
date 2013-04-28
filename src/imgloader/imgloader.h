@@ -22,11 +22,13 @@
 */
 
 void* img_LoadImageThreadedFromFile(
-  const char* path,
-  int maxwidth, int maxheight, const char* format,
-  void (*callbackSize)(void* handle, int imgwidth, int imgheight),
-  void (*callbackData)(void* handle, const char* imgdata,
-  unsigned int imgdatasize)
+    const char* path,
+    int maxwidth, int maxheight, const char* format,
+    void (*callbackSize)(void* handle, int imgwidth, int imgheight,
+      void* userdata),
+    void (*callbackData)(void* handle, char* imgdata,
+    unsigned int imgdatasize, void* userdata),
+    void* userdata
 );
 // Starts an asynchronous image load. You get back a job handle to
 // check on the status of the job. (It is impossible to cancel it!)
@@ -36,28 +38,36 @@ void* img_LoadImageThreadedFromFile(
 //   - format: "rgba", "bgra" are valid parameters for now
 //   - callback: if you want to be called (in a separate thread!) when stuff is done, specify a function here. otherwise NULL
 //         size callback parameters:
-//            - handle: the same thing this function also returns:
-//               the job handle. before returning from the callback, you
-//               might want to use img_FreeHandle() on it (if you don't
-//               want to use the handle somewhere else afterwards)
+//            - handle: the same thing this function also returns.
 //            - imgwidth, imgheight: dimensions of the loaded image
 //         data callback parameters:
-//            - handle: the handle this function returns
+//            - handle: the handle this function returns.
+//               you might want to img_FreeHandle() it.
 //            - imgdata: data area containing the raw 32bit rgba image data
 //               (or NULL if loading failed!) - you need to use free
 //               on this yourself if not NULL!
 //            - imgdatasize: the size of the image data
 
-void* img_LoadImageThreadedFromMemory(const void* memdata, unsigned int memdatasize, int maxwidth, int maxheight, const char* format, void (*callbackSize)(void* handle, int imgwidth, int imgheight), void (*callbackData)(void* handle, const char* imgdata, unsigned int imgdatasize));
+void* img_LoadImageThreadedFromMemory(
+    const void* memdata, unsigned int memdatasize,
+    int maxwidth, int maxheight, const char* format,
+    void (*callbackSize)(void* handle, int imgwidth, int imgheight,
+    void* userdata),
+    void (*callbackData)(void* handle, char* imgdata,
+    unsigned int imgdatasize, void* userdata),
+    void* userdata
+);
 // Same as img_LoadImageThreadedFromFile, but takes a memory pointer & size
 // instead of a path to a file on disk
 
 void* img_LoadImageThreadedFromFunction(
   int (*readfunc)(void* buffer, size_t bytes, void* userdata),
-  void* userdata, int maxwidth, int maxheight, const char* format,
-  void (*callbackSize)(void* handle, int imgwidth, int imgheight),
-  void (*callbackData)(void* handle, const char* imgdata,
-  unsigned int imgdatasize)
+  void* readfuncuserdata, int maxwidth, int maxheight, const char* format,
+  void (*callbackSize)(void* handle, int imgwidth, int imgheight,
+  void* userdata),
+  void (*callbackData)(void* handle, char* imgdata,
+  unsigned int imgdatasize, void* userdata),
+  void* userdata
 );
 // Same as img_LoadImageThreadedFromFile, but takes a function that will be
 // called to load the file from disk

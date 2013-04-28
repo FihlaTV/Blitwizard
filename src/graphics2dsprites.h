@@ -82,6 +82,9 @@ double alpha);
 // Destroy the specified sprite:
 void graphics2dsprites_Destroy(struct graphics2dsprite* sprite);
 
+// Set the Z index of the sprite (Defaults to 0):
+void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
+int zindex);
 
 // --- internally used to draw sprites: ---
 
@@ -103,7 +106,8 @@ void graphics2dsprites_SetCreateDeleteCallbacks(
 void (*spriteCreated) (void* handle,
 const char* path, struct graphicstexture* tex,
 double x, double y,
-double width, double height, double angle, int horizontalflip,
+double width, double height, double texwidth, double texheight,
+double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
 int zindex, int visible),
@@ -125,6 +129,7 @@ void graphics2dsprites_TriggerCallbacks(void);
 void graphics2dsprites_DoForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
+double texwidth, double texheight,
 double angle, double alpha, double r, double g, double b,
 int visible));
 // Sprites will be returned in Z-Index order.

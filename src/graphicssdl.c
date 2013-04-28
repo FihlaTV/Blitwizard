@@ -61,6 +61,10 @@ int inbackground = 0;  // whether program has focus (1) or not (0)
 int graphics3d = 0;  // 1: Ogre graphics, 0: SDL graphics
 int mainwindowfullscreen; // whether fullscreen (1) or not (0)
 
+double centerx = 0;
+double centery = 0;
+double zoom = 1;
+
 int graphics_HaveValidWindow() {
     if (mainwindow) {
         return 1;
@@ -717,6 +721,25 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
 int graphics_GetCameraCount() {
     // we only support one fake camera
     return 1;
+}
+
+int graphics_GetCameraWidth(int index) {
+    unsigned int w = 0;
+    unsigned int h = 0;
+    graphics_GetWindowDimensions(&w, &h);    
+    return w;
+}
+
+int graphics_GetCameraHeight(int index) {
+    unsigned int w = 0;
+    unsigned int h = 0;
+    graphics_GetWindowDimensions(&w, &h);
+    return w;
+}
+
+void graphics_SetCamera2DCenterXY(int index, double x, double y) {
+    centerx = x;
+    centery = y;
 }
 
 #endif  // USE_SDL_GRAPHICS

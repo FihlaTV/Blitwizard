@@ -38,16 +38,21 @@ yoffset = 150
 yspacing = 1
 menufocus = 1
 
-function blitwiz.on_init()
+function blitwizard.onInit()
     print "Launching blitwizard sample browser"
-    blitwiz.graphics.setWindow(640, 480, "blitwizard 2d engine", false)
-    blitwiz.graphics.loadImage("title.png")
+    blitwizard.graphics.setMode(640, 480, "blitwizard game engine", false)
+    local white = blitwizard.object:new(false, "white.png")
+    white:setPosition(0, 0)
+    white:setScale(50, 50)
+    local title = blitwizard.object:new(false, "title.png")
+    title:setPosition(0, -2.5)
+    --[[blitwiz.graphics.loadImage("title.png")
     local i = 1
     while i <= #examples do
         blitwiz.graphics.loadImage("menu" .. i .. ".png")
         i = i + 1
     end
-    blitwiz.graphics.loadImage("return.png")
+    blitwiz.graphics.loadImage("return.png")]]
 end
 
 function getbuttonpos(index)
@@ -58,7 +63,7 @@ function getbuttonpos(index)
     return x,y
 end
 
-function blitwiz.on_draw()
+--[[function blitwiz.()
     local w,h = blitwiz.graphics.getWindowSize()
     blitwiz.graphics.drawRectangle(0, 0, w, h, 1, 1, 1)
 
@@ -75,16 +80,16 @@ function blitwiz.on_draw()
         blitwiz.graphics.drawImage("menu" .. i .. ".png", {x=x, y=y})
         i = i + 1
     end
-end
+end]]
 
-function blitwiz.on_mousemove(mousex, mousey)
+function blitwizard.onMouseMove(mousex, mousey)
     updatemenufocus(mousex, mousey)
 end
 function updatemenufocus(mousex, mousey)
     menufocus = 0
-    local i = 1
+    --[[local i = 1
     while i <= #examples do
-        imgw,imgh = blitwiz.graphics.getImageSize("menu" .. i .. ".png")
+        imgw,imgh = blitwizard.graphics.getImageSize("menu" .. i .. ".png")
         local x,y = getbuttonpos(i)
         if mousex >= x and mousex < x + imgw and
         mousey >= y and mousey < y + imgh then
@@ -92,7 +97,7 @@ function updatemenufocus(mousex, mousey)
             return
         end
         i = i + 1
-    end
+    end]]
 end
 
 -- Find and delete all physics objects found recursively in _G
@@ -127,24 +132,20 @@ function find_and_delete_physics_objects(t)
     end
 end
 
-function blitwiz.on_mousedown(button, mousex, mousey)
+function blitwizard.onMouseDown(button, mousex, mousey)
     updatemenufocus(mousex, mousey)
     if menufocus > 0 then
         os.chdir("../../examples/" .. examples[menufocus] .. "/")
 
         -- Remember and delete our previous event functions
-        browser_on_close = blitwiz.on_close
+        browser_onClose = blitwiz.on_close
         blitwiz.on_close = nil
-        browser_on_mousedown = blitwiz.on_mousedown
+        browser_onMouseDown = blitwiz.on_mousedown
         blitwiz.on_mousedown = nil
-        browser_on_mousemove = blitwiz.on_mousemove
+        browser_onMouseMove = blitwiz.on_mousemove
         blitwiz.on_mousemove = nil
-        browser_on_init = blitwiz.on_init
+        browser_onInit = blitwiz.on_init
         blitwiz.on_init = nil
-        browser_on_draw = blitwiz.on_draw
-        blitwiz.on_draw = nil
-        browser_on_step = blitwiz.on_step
-        blitwiz.on_step = nil
 
         -- Load example
         dofile("game.lua")
@@ -221,7 +222,7 @@ function blitwiz.on_mousedown(button, mousex, mousey)
     end
 end
 
-function blitwiz.on_close()
+function blitwizard.onClose()
     os.exit(0)
 end
 

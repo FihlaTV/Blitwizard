@@ -23,13 +23,15 @@
 
 #ifndef NDEBUG
 // comment this line if you don't want debug output:
-#define DEBUGTEXTUREMANAGER
+//#define DEBUGTEXTUREMANAGER
 #endif
 
 #include "os.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef USE_GRAPHICS
 
@@ -41,6 +43,8 @@
 #include "timefuncs.h"
 #include "graphicstexturelist.h"
 #include "graphicstextureloader.h"
+#include "imgloader/imgloader.h"
+#include "diskcache.h"
 
 // texture system memory budget in megabyte:
 int textureSysMemoryBudget = 10;
@@ -81,50 +85,307 @@ struct texturerequesthandle {
 struct texturerequesthandle* textureRequestList = NULL;
 struct texturerequesthandle* unhandledRequestList = NULL;
 
-// manager thread which unloads textures when memory budget is used up:
-void texturemanager_Watchdog(__attribute__((unused)) void* unused) {
-    // this is the core decider place that makes sure
-    // things are moved in/out of caches at the right time.
-    //
-    // it runs in a separate thread so it can act any time,
-    // no matter what the main application is doing at this point.
+void texturemanager_LockForTextureAccess() {
+    mutex_Lock(textureReqListMutex);
+}
 
-    // to ensure the disk cache is initialised, we will wait
-    // a short moment:
-    time_Sleep(500);
+void texturemanager_ReleaseFromTextureAccess() {
+    mutex_Release(textureReqListMutex);
+}
 
-    while (1) {
-        mutex_Lock(textureReqListMutex);
-        // unload textures :P (FIXME)
-        mutex_Release(textureReqListMutex);
+int texturemanager_SaveGPUMemory(void) {
+    return 1;
+}
 
-        // sleep a moment:
-        time_Sleep(100);
+// This returns a scaled texture slot which is to be used
+// preferrably right now.
+// The use is decided based on the graphicstexturemanaged's
+// lastUsed time stamps.
+// If you want to save memory and get stuff out, specify savememory = 1.
+// If you anxiously want more memory, specify savememory = 2.
+int texturemanager_DecideOnPrefferedSize(struct graphicstexturemanaged* gtm,
+time_t now, int savememory) {
+    return 0;
+    int wantsize = 0;  // 0 = full, 1 = tiny, 2 = low, 3 = medium, 4 = high
+    // downscaling based on distance:
+    if (gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + SCALEDOWNSECONDS
+    < now || savememory == 2) {
+        // it hasn't been in detail closeup for a few seconds,
+        // go down to high scaling:
+        wantsize = 4;  // high
+        if (gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] + SCALEDOWNSECONDS
+        < now ||
+            (savememory &&  // previous detail use is long ago:
+            gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
+            SCALEDOWNSECONDSLONG < now)) {
+            // it hasn't been used at normal distance for a few seconds
+            // (or detail distance for quite a while and we want memory),
+            // go down to medium scaling:
+            wantsize = 3;  // medium
+            if (gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] +
+            SCALEDOWNSECONDSLONG < now &&
+            gtm->lastUsage[USING_AT_VISIBILITY_DETAIL]
+            < SCALEDOWNSECONDSLONG &&
+                // require memory saving plans or
+                // recent invisible use:
+                (savememory ||
+                (gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE] +
+                SCALEDOWNSECONDSLONG > now &&
+                gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE] >
+                gtm->lastUsage[USING_AT_VISIBILITY_NORMAL]
+                )
+            )) {
+                // both normal and distant use are quite a while in the past,
+                // go down to low scaling:
+                wantsize = 2;  // low
+            }
+        }
     }
+    // going down to tiny scaling in some rare cases:
+    if (
+    // invisible and not recently close up:
+    (
+        gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE] +
+        SCALEDOWNSECONDS > now &&
+        gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
+        SCALEDOWNSECONDSLONG < now &&
+        gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] +
+        SCALEDOWNSECONDSLONG < now &&
+        gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] <
+        gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE]
+    )
+    ||
+    // all uses including distant use are quite in the past:
+    (
+        gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
+        SCALEDOWNSECONDSLONG < now &&
+        gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] + 
+        SCALEDOWNSECONDSLONG < now &&
+        (
+            gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
+            SCALEDOWNSECONDSLONG < now ||
+            (gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
+            SCALEDOWNSECONDS && savememory)
+        )
+    )
+    ) {
+        wantsize = 1;  // tiny
+        if (savememory == 2) {
+            // we anxiously want memory.
+            // suggest unloading:
+            wantsize = -1;
+        }
+    }
+    return wantsize;
 }
 
 // this runs on application start:
 __attribute__((constructor)) static void texturemanager_Init(void) {
     textureReqListMutex = mutex_Create();
-
-    threadinfo* tinfo = thread_CreateInfo();
-    if (!tinfo) {
-        printerror("Failed to allocate thread info for texture manager"
-        " watch dog");
-        exit(0);
-        return;
-    }
-
-    // spawn watch dog:
-    thread_Spawn(tinfo, texturemanager_Watchdog, NULL);
-    thread_FreeInfo(tinfo);
 }
 
+// return just any GPU texture:
+struct graphicstexture* texturemanager_GetRandomGPUTexture(
+struct graphicstexturemanaged* gtm) {
+    int i = 0;
+    while (i < gtm->scalelistcount) {
+        if (!gtm->scalelist[i].locked) {
+            if (gtm->scalelist[i].gt) {
+                // this one shall do for now.
+                return gtm->scalelist[i].gt;
+            }
+        }
+        i++;
+    }
+    return NULL;
+}
+
+struct scaleonretrievalinfo {
+    struct graphicstexturescaled* scaletarget;
+    struct graphicstexturescaled* obtainedscale;
+};
+
+static void texturemanager_ScaleTextureThread(void* userdata) {
+    struct scaleonretrievalinfo* info = userdata;
+
+    // let's do some scaling!
+    texturemanager_LockForTextureAccess();
+    if (info->obtainedscale->pixels) {
+        // allocate new pixel data:
+        info->scaletarget->pixels =
+        malloc(info->scaletarget->width * info->scaletarget->height * 4);
+        if (info->scaletarget->pixels) {
+            // scale it:
+            img_Scale(4, info->obtainedscale->pixels,
+            info->obtainedscale->width,
+            info->obtainedscale->height, (char**)&(info->scaletarget->pixels),
+            info->scaletarget->width, info->scaletarget->height);
+        } else {
+            // free so we don't have uninitialised data as texture:
+            free(info->scaletarget->pixels);
+            info->scaletarget->pixels = NULL;
+        }
+    }
+    // unlock both textures:
+    info->scaletarget->locked = 0;
+    info->obtainedscale->locked = 0;
+    texturemanager_ReleaseFromTextureAccess();
+    // done!
+    free(info);  // free scale info
+}
+
+static void texturemanager_ScaleOnRetrieval(void* data,
+size_t datalength, void* userdata) {
+    // stuff came out of the disk cache. scale it!
+    struct scaleonretrievalinfo* info = userdata;
+    info->obtainedscale->pixels = data;
+    texturemanager_ScaleTextureThread(info);
+}
+
+static void texturemanager_DiskCacheRetrieval(void* data,
+size_t datalength, void* userdata) {
+    struct graphicstexturescaled* s = userdata;
+    texturemanager_LockForTextureAccess();
+    if (data) {
+        s->pixels = data;
+    }
+    s->locked = 0;
+    texturemanager_ReleaseFromTextureAccess();
+}
 
 // obtain best gpu texture available right now.
 // might be NULL if none is in gpu memory.
-struct graphicstexture* texturemanager_ObtainBestGpuTexture(
+// texture manager texture access needs to be locked!
+// (textureReqListMutex)
+static struct graphicstexture* texturemanager_ObtainBestGpuTexture(
 struct graphicstexturemanaged* gtm, size_t width, size_t height) {
+    if (gtm->beingInitiallyLoaded) {
+        // texture is being loaded, don't touch.
+#ifdef DEBUGTEXTUREMANAGER
+        printinfo("[TEXMAN/GPU request] texture still being loaded: %s",
+        gtm->path);
+#endif
+        return NULL;
+    }
+
+    int i = texturemanager_DecideOnPrefferedSize(gtm,
+    time(NULL), texturemanager_SaveGPUMemory());
+
+    if (i < 0 || i >= gtm->scalelistcount) {
+#ifdef DEBUGTEXTUREMANAGER
+        printinfo("[TEXMAN/GPU request] preferred size %d invalid for %s",
+        i, gtm->path);
+#endif
+        // it suggests an invisible or nonexistant texture.
+        // that is odd.
+        return texturemanager_GetRandomGPUTexture(gtm);
+    }
+
+    if (gtm->scalelist[i].locked) {
+        // we cannot currently use this entry.
+        // check if we can find another one that is not locked:
+#ifdef DEBUGTEXTUREMANAGER
+        printinfo("[TEXMAN/GPU request] texture locked: %s", gtm->path);
+#endif
+        return texturemanager_GetRandomGPUTexture(gtm);
+    } else {
+#ifdef DEBUGTEXTUREMANAGER
+        printinfo("[TEXMAN] obtaining size %d of %s", i, gtm->path);
+#endif
+        if (gtm->scalelist[i].gt) {
+            return gtm->scalelist[i].gt;
+        } else {
+            if (gtm->scalelist[i].pixels) {
+                // we need to upload this to the gpu.
+                // let's do it right now:
+                if (!thread_IsMainThread()) {
+                    // impossible from this thread.
+                    return texturemanager_GetRandomGPUTexture(gtm);
+                }
+                gtm->scalelist[i].gt = graphicstexture_Create(
+                gtm->scalelist[i].pixels, gtm->scalelist[i].width,
+                gtm->scalelist[i].height, PIXELFORMAT_32RGBA);
+                if (!gtm->scalelist[i].gt) {
+                    // creaton failed, return random other size:
+                    return texturemanager_GetRandomGPUTexture(gtm);
+                }
+                return gtm->scalelist[i].gt;
+            } else {
+                if (gtm->scalelist[i].diskcachepath) {
+                    // we need to retrieve this from the disk cache:
+                    gtm->scalelist[i].locked = 1;
+                    diskcache_Retrieve(gtm->scalelist[i].diskcachepath,
+                    texturemanager_DiskCacheRetrieval,
+                    (void*)&gtm->scalelist[i]);
+                    // for now, return a random size:
+                    return texturemanager_GetRandomGPUTexture(gtm);
+                } else {
+                    // see if we got the texture in original size:
+                    if (gtm->origscale >= 0 &&
+                    !gtm->scalelist[gtm->origscale].locked) {
+                        if (gtm->scalelist[gtm->origscale].pixels) {
+                            // it is right there! we only need to scale!
+                            // so... let's do this.. LEEROOOOOY - okok
+                            struct scaleonretrievalinfo* scaleinfo =
+                            malloc(sizeof(*scaleinfo));
+                            if (!scaleinfo) {
+                                // yow. that sucks.
+                                return texturemanager_GetRandomGPUTexture(
+                                gtm);
+                            }
+                            // prepare scale info:
+                            scaleinfo->scaletarget = &gtm->scalelist[i];
+                            scaleinfo->obtainedscale =
+                            &gtm->scalelist[gtm->origscale];
+                            // lock textures and prepare thread:
+                            scaleinfo->scaletarget->locked = 1;
+                            scaleinfo->obtainedscale->locked = 1;
+                            threadinfo* t = thread_CreateInfo();
+                            if (!t) {
+                                // unlock stuff and cancel:
+                                scaleinfo->scaletarget->locked = 0;
+                                scaleinfo->obtainedscale->locked = 0;
+                                free(scaleinfo);
+                                return texturemanager_GetRandomGPUTexture(
+                                gtm);
+                            }
+                            thread_Spawn(t,
+                            &texturemanager_ScaleTextureThread,
+                            scaleinfo);
+                            thread_FreeInfo(t);
+                        } else if (gtm->scalelist[gtm->origscale].
+                        diskcachepath) {
+                            // urghs, we need to get it back into memory
+                            // first.
+                            struct scaleonretrievalinfo* scaleinfo =
+                            malloc(sizeof(*scaleinfo));
+                            if (!scaleinfo) {
+                                // whoops. well, just return anything:
+                                return texturemanager_GetRandomGPUTexture(
+                                gtm);
+                            }
+                            // prepare scale info:
+                            scaleinfo->scaletarget = &gtm->scalelist[i];
+                            scaleinfo->obtainedscale =
+                            &gtm->scalelist[gtm->origscale];
+                            // lock scale target aswell:
+                            scaleinfo->scaletarget->locked = 1;
+                            // get original texture from disk cache:
+                            gtm->scalelist[gtm->origscale].locked = 1;
+                            diskcache_Retrieve(gtm->scalelist[gtm->origscale].
+                            diskcachepath, texturemanager_ScaleOnRetrieval,
+                            scaleinfo);
+                            // for now, return random texture:
+                            return texturemanager_GetRandomGPUTexture(gtm);
+                        } else {
+                            // nothing we could sensefully do here.
+                            return texturemanager_GetRandomGPUTexture(gtm);
+                        }
+                    }
+                }
+            }
+        }
+    }
     return NULL;
 }
 
@@ -150,15 +411,18 @@ request, int listLocked) {
     if (!gtm->beingInitiallyLoaded && !gtm->failedToLoad) {
         int donotload = 0;
         // check if texture is available in original size:
-        if (gtm->scalelistcount > 0 && gtm->origscale >= 0) {
-            if (gtm->scalelist[gtm->scalelistcount].diskcachepath
-            || gtm->scalelist[gtm->scalelistcount].pixels
-            || gtm->scalelist[gtm->scalelistcount].gt) {
+        if (gtm->scalelistcount > 0 && gtm->origscale >= 0 &&
+        gtm->origscale < gtm->scalelistcount) {
+            if (gtm->scalelist[gtm->origscale].diskcachepath
+            || gtm->scalelist[gtm->origscale].pixels
+            || gtm->scalelist[gtm->origscale].gt) {
                 donotload = 1;
             }
         }
         if (!donotload) {
+#ifdef DEBUGTEXTUREMANAGER
             printinfo("[TEXMAN] initial texture fetch for %s", gtm->path);
+#endif
             gtm->beingInitiallyLoaded = 1;
 
             // fire up the threaded loading process which
@@ -175,13 +439,20 @@ request, int listLocked) {
     size_t height = 0; // FIXME, have proper size parameters
     struct graphicstexture* gt = texturemanager_ObtainBestGpuTexture(
     gtm, width, height);
+    if (!gt) {
+#ifdef DEBUGTEXTUREMANAGER
+        printinfo("[TEXMAN] No GPU texture found for %s", gtm->path);
+#endif
+    }
 
-    if (gt != request->handedTexture) {
+    if (gt != request->handedTexture && gt) {
         // remember we handed this out:
         successfullyhandled = 1;
         request->handedTexture = gt;
 
         // hand out texture:
+        request->textureDimensionInfoCallback(request,
+        gtm->width, gtm->height, request->userdata);
         request->textureSwitchCallback(request, gt, request->userdata);
     }
 
@@ -202,9 +473,12 @@ request, int listLocked) {
         if (request->unhandledPrev) {
             request->unhandledPrev->unhandledNext = request->unhandledNext;
         } else {
-            textureRequestList = request->unhandledNext;
+            unhandledRequestList = request->unhandledNext;
         }
-        request->unhandledNext->unhandledPrev = request->unhandledPrev;
+        request->unhandledNext = unhandledRequestList;
+        if (request->unhandledNext) {
+            request->unhandledNext->unhandledPrev = request->unhandledPrev;
+        }
     }
     if (!listLocked) {
         mutex_Release(textureReqListMutex);
@@ -217,7 +491,9 @@ static void texturemanager_InitialLoadingDimensionsCallback
 int success, void* userdata) {
     struct texturerequesthandle* request = userdata;
     mutex_Lock(textureReqListMutex);
-    printinfo("[TEXMAN] initial loading done for %s", gtm->path);
+#ifdef DEBUGTEXTUREMANAGER
+    printinfo("[TEXMAN] dimensions reported for %s", gtm->path);
+#endif
     if (!success) {
         gtm->failedToLoad = 1;
         width = 0;
@@ -234,15 +510,14 @@ static void texturemanager_InitialLoadingDataCallback
 (struct graphicstexturemanaged* gtm, int success, void* userdata) {
     mutex_Lock(textureReqListMutex);
     struct texturerequesthandle* request = userdata;
+    gtm->beingInitiallyLoaded = 0;
     if (!success) {
         gtm->failedToLoad = 1;
-        gtm->beingInitiallyLoaded = 0;
         request->textureDimensionInfoCallback(request,
         0, 0, request->userdata);
         mutex_Release(textureReqListMutex);
         return;
     }
-    texturemanager_ProcessRequest(request, 1);
     mutex_Release(textureReqListMutex);
 }
 
