@@ -977,6 +977,12 @@ void _physics_Apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
 
 #ifdef USE_PHYSICS2D
 void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation) {
+    if (_physics_ShapeType(shape) != 1) {
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+        printerror("Shouldn't be doing this: Set2dShapeOffsetRotation before "\
+         "having assigned any shape data.");
+    }
+    
     struct physicsobjectshape2d* s = shape->sha.pe2d;
     s->xoffset = xoffset;
     s->yoffset = yoffset;
