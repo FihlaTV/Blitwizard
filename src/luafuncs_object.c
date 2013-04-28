@@ -25,7 +25,7 @@
 // @{blitwizard.object|blitwizard game entity object} and various sub
 // namespaces for @{blitwizard.physics|physics},
 // @{blitwizard.graphics|graphics} and more.
-// @author Jonas Thiem  (jonas.thiem@gmail.com)
+// @author Jonas Thiem (jonas.thiem@gmail.com) et al
 // @copyright 2011-2013
 // @license zlib
 // @module blitwizard
