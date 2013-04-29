@@ -485,11 +485,15 @@ request, int listLocked) {
             request->unhandledPrev->unhandledNext = request->unhandledNext;
         } else {
             unhandledRequestList = request->unhandledNext;
+            if (unhandledRequestList) {
+                unhandledRequestList->unhandledPrev = NULL;
+            }
         }
-        request->unhandledNext = unhandledRequestList;
         if (request->unhandledNext) {
             request->unhandledNext->unhandledPrev = request->unhandledPrev;
-        }
+        } 
+        request->unhandledNext = NULL;
+        request->unhandledPrev = NULL;
     }
     if (!listLocked) {
         mutex_Release(textureReqListMutex);
@@ -593,7 +597,38 @@ struct texturerequesthandle* request) {
         return;
     }
 
+    mutex_Lock(textureReqListMutex);
+
+    // remove request from regular list
+    if (request->prev || request->next) {
+        if (request->prev) {
+            request->prev->next = request->next;
+        } else {
+            textureRequestList = request->next;
+            textureRequestList->prev = NULL;
+        }
+        if (request->next) {
+            request->next->prev = request->prev;
+        }
+    }
+
+    // remove from unhandled request list:
+    if (request->unhandledPrev || request->unhandledNext) {
+        if (request->unhandledPrev) {
+            request->unhandledPrev->unhandledNext = request->unhandledNext;
+        } else {
+            unhandledRequestList = request->unhandledNext;
+            unhandledRequestList->unhandledPrev = NULL;
+        }
+        if (request->unhandledNext) {
+            request->unhandledNext->unhandledPrev = request->unhandledPrev;
+        }
+    }
+
+    // free request:
     free(request);
+
+    mutex_Release(textureReqListMutex);
 }
 
 static void texturemanager_ProcessUnhandledRequests(void) {

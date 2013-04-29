@@ -40,7 +40,10 @@ int requestsperframe = 0;
 // loaded this frame!
 void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource) {
-    if (requestsperframe >= MAXREQUESTSPERFRAME) {
+    if (1 == 2 && requestsperframe >= MAXREQUESTSPERFRAME) {
+        return;
+    }
+    if (o->deleted == 1) {
         return;
     }
 
