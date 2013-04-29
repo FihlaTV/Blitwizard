@@ -32,8 +32,21 @@
 #include "luafuncs_objectphysics.h"
 #include "graphics2dsprites.h"
 
+
+#define MAXREQUESTSPERFRAME 20
+int requestsperframe = 0;
+
+// load object graphics. might do nothing if too many have been 
+// loaded this frame!
 void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource) {
+    if (1 == 2 && requestsperframe >= MAXREQUESTSPERFRAME) {
+        return;
+    }
+    if (o->deleted == 1) {
+        return;
+    }
+
     double x,y,z;
     objectphysics_getPosition(o, &x, &y, &z);
 
@@ -51,11 +64,12 @@ const char* resource) {
         memset(o->graphics, 0, sizeof(*(o->graphics)));
     }
 
-    if (!o->is3d) {
+    if (!o->is3d && !o->graphics->sprite) {
         o->graphics->sprite = graphics2dsprites_Create(
         resource, x, y, 0, 0);
         o->scale2d.x = 1;
         o->scale2d.y = 1;
+        requestsperframe++;
     }
 }
 
@@ -165,6 +179,10 @@ struct blitwizardobject* o, double *x, double *y, double *z) {
         }
         return 0;
     }
+}
+
+void luacfuncs_objectgraphics_newFrame() {
+    requestsperframe = 0;
 }
 
 #endif

@@ -67,6 +67,9 @@ struct blitwizardobject* o);
 // do all doAlways events and other event things:
 void luacfuncs_object_doAllSteps(void);
 
+// update the object's graphics:
+void luacfuncs_object_updateGraphics(void);
+
 #ifdef __cplusplus
 }
 #endif
