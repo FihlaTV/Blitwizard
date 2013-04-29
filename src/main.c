@@ -902,6 +902,12 @@ int main(int argc, char** argv) {
             if (logictimestamp < time && logictimestamp <= physicstimestamp) {
                 // call logic functions of all objects:
                 luacfuncs_object_doAllSteps();
+
+                // also process resource loading:
+                //texturemanager_Tick();
+                //luacfuncs_object_updateGraphics();
+
+                // advance time step:
                 logictimestamp += TIMESTEP;
             }
 #ifdef USE_PHYSICS2D
@@ -974,7 +980,7 @@ int main(int argc, char** argv) {
 #ifdef USE_GRAPHICS
         // be very sleepy if in background
         if (appinbackground) {
-            time_Sleep(20);
+            time_Sleep(200);
         }
 #endif
 

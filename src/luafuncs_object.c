@@ -616,6 +616,10 @@ static void luacfuncs_object_doStep(struct blitwizardobject* o) {
 
     // attempt to load graphics if not done yet:
     luafuncs_objectgraphics_load(o, o->respath);
+
+    if (luafuncs_objectgraphics_NeedGeometryCallback(o)) {
+        luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0);
+    }
 }
 
 void luacfuncs_object_doAllSteps(void) {
@@ -656,6 +660,7 @@ void luacfuncs_object_doAllSteps(void) {
         }
     }
 }
+
 void luacfuncs_object_updateGraphics() {
     // update visual representations of objects:
     struct blitwizardobject* o = objects;

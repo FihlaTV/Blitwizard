@@ -116,7 +116,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
 
 int luafuncs_objectgraphics_NeedGeometryCallback(
 struct blitwizardobject* o) {
-    if (o->graphics->geometryCallbackDone) {
+    if (!o->graphics || o->graphics->geometryCallbackDone) {
         return 0;
     }
 
