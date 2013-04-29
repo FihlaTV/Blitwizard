@@ -23,7 +23,7 @@
 
 #ifndef NDEBUG
 // comment this line if you don't want debug output:
-//#define DEBUGTEXTUREMANAGER
+#define DEBUGTEXTUREMANAGER
 #endif
 
 #include "os.h"
@@ -527,11 +527,18 @@ static void texturemanager_InitialLoadingDataCallback
     struct texturerequesthandle* request = userdata;
     gtm->beingInitiallyLoaded = 0;
     if (!success) {
+#ifdef DEBUGTEXTUREMANAGER
+    printinfo("[TEXMAN] texture loading fail: %s", gtm->path);
+#endif
         gtm->failedToLoad = 1;
         request->textureDimensionInfoCallback(request,
         0, 0, request->userdata);
         mutex_Release(textureReqListMutex);
         return;
+    } else {
+#ifdef DEBUGTEXTUREMANAGER
+        printinfo("[TEXMAN] successful loading for: %s", gtm->path);
+#endif
     }
     mutex_Release(textureReqListMutex);
 }

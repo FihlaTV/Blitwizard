@@ -105,7 +105,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
 
             // allocate scaled texture list:
             info->gtm->scalelist = malloc(
-            sizeof(struct graphicstexturescaled)*scalecount);
+            sizeof(struct graphicstexturescaled) * scalecount);
             if (!info->gtm->scalelist) {
                 // allocation failed.
                 free(imgdata);
@@ -116,7 +116,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
             // initialise list:
             info->gtm->scalelistcount = scalecount;
             memset(info->gtm->scalelist, 0,
-            sizeof(struct graphicstexturescaled)*scalecount);
+            sizeof(struct graphicstexturescaled) * scalecount);
 
             // fill scaled texture list:
             int i = 0;
@@ -172,6 +172,11 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
             imgdata = NULL;
         }
         texturemanager_ReleaseFromTextureAccess();
+    } else {
+#ifdef DEBUGTEXTURELOADER
+        printinfo("[TEXLOAD] imgloader reported failure for: %s",
+        info->path);
+#endif
     }
 
     info->callbackData(info->gtm, (imgdata != NULL), info->userdata);
