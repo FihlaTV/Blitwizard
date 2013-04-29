@@ -45,6 +45,9 @@ int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physic
 // lua funcs doStep processing function:
 void luacfuncs_object_doAllSteps(void);
 
+// update all object graphics:
+void luacfuncs_object_updateGraphics(void);
+
 // informing lua graphics code of new frame:
 void luacfuncs_objectgraphics_newFrame(void);
 
@@ -938,6 +941,9 @@ int main(int argc, char** argv) {
 
         // texture manager tick:
         texturemanager_Tick();
+
+        // update object graphics:
+        luacfuncs_object_updateGraphics();
 
 #ifdef USE_GRAPHICS
         if (graphics_AreGraphicsRunning()) {

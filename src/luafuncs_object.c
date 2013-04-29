@@ -655,9 +655,10 @@ void luacfuncs_object_doAllSteps(void) {
             o = onext;
         }
     }
-
+}
+void luacfuncs_object_updateGraphics() {
     // update visual representations of objects:
-    o = objects;
+    struct blitwizardobject* o = objects;
     while (o) {
         luafuncs_objectgraphics_updatePosition(o);
         o = o->next;
