@@ -611,6 +611,10 @@ int luafuncs_object_setZIndex(lua_State* l) {
 
 
 static void luacfuncs_object_doStep(struct blitwizardobject* o) {
+    if (o->deleted) {
+        return;
+    }
+
     lua_State* l = luastate_GetStatePtr();
     luacfuncs_object_callEvent(l, o, "doAlways", 0);
 

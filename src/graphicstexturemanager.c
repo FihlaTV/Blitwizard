@@ -600,12 +600,11 @@ struct texturerequesthandle* request) {
     mutex_Lock(textureReqListMutex);
 
     // remove request from regular list
-    if (request->prev || request->next) {
+    if (request->prev || request->next || request == textureRequestList) {
         if (request->prev) {
             request->prev->next = request->next;
         } else {
             textureRequestList = request->next;
-            textureRequestList->prev = NULL;
         }
         if (request->next) {
             request->next->prev = request->prev;
@@ -613,12 +612,12 @@ struct texturerequesthandle* request) {
     }
 
     // remove from unhandled request list:
-    if (request->unhandledPrev || request->unhandledNext) {
+    if (request->unhandledPrev || request->unhandledNext ||
+    unhandledRequestList == request) {
         if (request->unhandledPrev) {
             request->unhandledPrev->unhandledNext = request->unhandledNext;
         } else {
             unhandledRequestList = request->unhandledNext;
-            unhandledRequestList->unhandledPrev = NULL;
         }
         if (request->unhandledNext) {
             request->unhandledNext->unhandledPrev = request->unhandledPrev;
