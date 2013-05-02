@@ -199,17 +199,20 @@ int luafuncs_object_new(lua_State* l) {
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
-    o->respath = strdup(resource);
-    if (!o->respath) {
-        luacfuncs_object_clearRegistryTable(l, o);
-        free(o);
-        return haveluaerror(l, "failed to allocate resource path for new "
-        "object");
-    }
-
     // compose object registry entry string
     snprintf(o->regTableName, sizeof(o->regTableName),
-    "bobj_table_%p", o);
+   "bobj_table_%p", o);
+
+    // remember resource path:
+    if (resource) {
+        o->respath = strdup(resource);
+        if (!o->respath) {
+            luacfuncs_object_clearRegistryTable(l, o);
+            free(o);
+            return haveluaerror(l, "failed to allocate resource path for new "
+            "object");
+        }
+    }
 
     // add us to the object list:
     o->next = objects;
