@@ -234,8 +234,8 @@ double x, double y, double angle) {
 static void graphics2dsprites_AddToList(struct graphics2dsprite* s) {
     // seek the earliest sprite (from the back)
     // which has a lower or equal zindex, and add us behind
-    struct graphics2dsprite* s2 = spritelistEnd;
-    while (s2 && s2->zindex > s->zindex) {
+    struct graphics2dsprite* s2 = spritelist;
+    while (s2 && s2->zindex < s->zindex) {
         s2 = s2->prev;
     }
     if (s2) {
