@@ -494,7 +494,9 @@ int luafuncs_object_setTransparency(lua_State* l) {
     if (a > 1) {
         a = 1;
     }
+#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_setAlpha(obj, a);
+#endif
     return 0;
 }
 
@@ -507,7 +509,11 @@ int luafuncs_object_getTransparency(lua_State* l) {
     if (obj->deleted) {
         return haveluaerror(l, "Object was deleted");
     }
+#ifdef USE_GRAPHICS
     return 1-luacfuncs_objectgraphics_getAlpha(obj);
+#else
+    return 1;
+#endif
 }
 
 /// Get the dimensions of an object in game units (with

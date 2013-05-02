@@ -220,6 +220,10 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_object_getScale, "getScale");
     luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
 
+    // graphics/visual stuff:
+    luastate_registergraphics(l, &luafuncs_object_setTransparency, "setTransparency");
+    luastate_registergraphics(l, &luafuncs_object_getTransparency, "getTransparency");
+
     // physics functions:
     luastate_register2d3dphysics(l, &luafuncs_object_enableStaticCollision,
     "enableStaticCollision");

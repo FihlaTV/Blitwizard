@@ -74,6 +74,10 @@ int luacfuncs_object_doAllSteps(int count);
 // update the object's graphics:
 void luacfuncs_object_updateGraphics(void);
 
+// get/set object transparency (0 solid, 1 invisible):
+int luafuncs_object_getTransparency(lua_State* l);
+int luafuncs_object_setTransparency(lua_State* l);
+
 #ifdef __cplusplus
 }
 #endif
