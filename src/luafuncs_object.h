@@ -64,8 +64,12 @@ int args);
 void luacfuncs_object_clearRegistryTable(lua_State* l,
 struct blitwizardobject* o);
 
-// do all doAlways events and other event things:
-void luacfuncs_object_doAllSteps(void);
+// do all doAlways events and other event things.
+// Specify a higher count than 1 if you want to do
+// more logic events than 1 at once.
+// The function will return the amount of events
+// it has done (not necessarily as much as you advised!).
+int luacfuncs_object_doAllSteps(int count);
 
 // update the object's graphics:
 void luacfuncs_object_updateGraphics(void);

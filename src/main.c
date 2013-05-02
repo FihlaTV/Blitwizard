@@ -43,7 +43,7 @@ struct physicsobject2d;
 int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force);
 
 // lua funcs doStep processing function:
-void luacfuncs_object_doAllSteps(void);
+int luacfuncs_object_doAllSteps(int count);
 
 // update all object graphics:
 void luacfuncs_object_updateGraphics(void);
@@ -86,6 +86,8 @@ char* binpath = NULL;  // path to blitwizard binary
 
 int TIMESTEP = 16;
 int MAXLOGICITERATIONS = 50;  // 50 * 16 = 800ms
+int MAXBATCHEDLOGIC = 50/3;
+int MAXPHYSICSITERATIONS = 50;
 
 void main_SetTimestep(int timestep) {
     if (timestep < 16) {
@@ -96,6 +98,10 @@ void main_SetTimestep(int timestep) {
             // ... for longer than 800ms
     if (MAXLOGICITERATIONS < 2) {
         MAXLOGICITERATIONS = 2;
+    }
+    MAXBATCHEDLOGIC = MAXLOGICITERATIONS/3;
+    if (MAXBATCHEDLOGIC < 2) {
+        MAXBATCHEDLOGIC = 2;
     }
 }
 
@@ -897,21 +903,33 @@ int main(int argc, char** argv) {
 #endif
 
         // call the step function and advance physics
-        int iterations = 0;
-        while ((logictimestamp < time || physicstimestamp < time) && iterations < MAXLOGICITERATIONS) {
-            if (logictimestamp < time && logictimestamp <= physicstimestamp) {
+        int physicsiterations = 0;
+        int logiciterations = 0;
+        while ((logictimestamp < time || physicstimestamp < time) &&
+        (logiciterations < MAXLOGICITERATIONS
+#if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
+ ||  physicsiterations < MAXPHYSICSITERATIONS
+#endif
+)) {
+            if (logiciterations < MAXLOGICITERATIONS &&
+            logictimestamp < time && (logictimestamp <= physicstimestamp
+            || physicsiterations >= MAXPHYSICSITERATIONS)) {
+                // check how much logic we might want to do in a batch:
+                int k = (time-logictimestamp)/TIMESTEP;
+                if (k > MAXBATCHEDLOGIC) {
+                    k = MAXBATCHEDLOGIC;
+                }
                 // call logic functions of all objects:
-                luacfuncs_object_doAllSteps();
-
-                // also process resource loading:
-                //texturemanager_Tick();
-                //luacfuncs_object_updateGraphics();
+                int i = luacfuncs_object_doAllSteps(k);
 
                 // advance time step:
-                logictimestamp += TIMESTEP;
+                logictimestamp += i * TIMESTEP;
+                logiciterations += i;
             }
 #ifdef USE_PHYSICS2D
-            if (physicstimestamp < time && physicstimestamp <= logictimestamp) {
+            if (physicsiterations < MAXPHYSICSITERATIONS &&
+            physicstimestamp < time && (physicstimestamp <= logictimestamp
+            || logiciterations >= MAXLOGICITERATIONS)) {
                 int psteps = ((float)TIMESTEP/(float)physics2d_GetStepSize(physics2ddefaultworld));
                 if (psteps < 1) {psteps = 1;}
                 while (psteps > 0) {
@@ -919,27 +937,26 @@ int main(int argc, char** argv) {
                     physicstimestamp += physics2d_GetStepSize(physics2ddefaultworld);
                     psteps--;
                 }
+                physicsiterations++;
             }
 #else
             physicstimestamp = time + 2000;
 #endif
-            iterations++;
         }
 
         // check if we ran out of iterations:
-        if (iterations >= MAXLOGICITERATIONS) {
+        if (logiciterations >= MAXLOGICITERATIONS ||
+        physicsiterations >= MAXPHYSICSITERATIONS) {
             if (
-#ifdef USE_PHYSICS2D
+#if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
                     physicstimestamp < time ||
 #endif
                  logictimestamp < time) {
                 // we got a problem: we aren't finished,
                 // but we hit the iteration limit
-                if (physicstimestamp < time || logictimestamp < time) {
-                    physicstimestamp = time_GetMilliseconds();
-                    logictimestamp = time_GetMilliseconds();
-                    printwarning("Warning: logic is too slow, maximum logic iterations have been reached (%d)", (int)MAXLOGICITERATIONS);
-                }
+                physicstimestamp = time_GetMilliseconds();
+                logictimestamp = time_GetMilliseconds();
+                printwarning("Warning: logic is too slow, maximum logic iterations have been reached (%d)", (int)MAXLOGICITERATIONS);
             } else {
                 // we don't need to iterate anymore -> everything is fine
             }
@@ -984,12 +1001,12 @@ int main(int argc, char** argv) {
         }
 #endif
 
-        /*// do some garbage collection:
+        // do some garbage collection:
         gcframecount++;
         if (gcframecount > 100) {
             // do a gc step once in a while
             luastate_GCCollect();
-        }*/
+        }
 
         // new frame:
         luacfuncs_objectgraphics_newFrame();

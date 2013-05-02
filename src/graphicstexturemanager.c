@@ -24,6 +24,7 @@
 #ifndef NDEBUG
 // comment this line if you don't want debug output:
 //#define DEBUGTEXTUREMANAGER
+//#define DEBUGTEXTUREMANAGERTHREADS
 #endif
 
 #include "os.h"
@@ -350,6 +351,9 @@ struct graphicstexturemanaged* gtm, size_t width, size_t height) {
                                 return texturemanager_GetRandomGPUTexture(
                                 gtm);
                             }
+#ifdef DEBUGTEXTUREMANAGERTHREADS
+                            printinfo("[TEXMAN-THREADS] spawn");
+#endif
                             thread_Spawn(t,
                             &texturemanager_ScaleTextureThread,
                             scaleinfo);
@@ -433,6 +437,9 @@ request, int listLocked) {
         if (!donotload) {
 #ifdef DEBUGTEXTUREMANAGER
             printinfo("[TEXMAN] initial texture fetch for %s", gtm->path);
+#endif
+#ifdef DEBUGTEXTUREMANAGERTHREADS
+            printinfo("[TEXMAN-THREADS] spawn");
 #endif
             gtm->beingInitiallyLoaded = 1;
 
@@ -640,8 +647,9 @@ struct texturerequesthandle* request) {
 static void texturemanager_ProcessUnhandledRequests(void) {
     struct texturerequesthandle* handle = unhandledRequestList;
     while (handle) {
+        struct texturerequesthandle* handlenext = handle->unhandledNext;
         texturemanager_ProcessRequest(handle, 1);
-        handle = handle->unhandledNext;
+        handle = handlenext;
     }
 }
 
