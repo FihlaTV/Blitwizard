@@ -119,7 +119,11 @@ void* loaderthreadfunction(void* data) {
             currentsize += k;
             void* pnew = realloc(p, currentsize);
             if (!pnew) {
-                while (k > 0) {k = i->readfunc(buf, sizeof(buf), i->readfuncptr);}
+                // allocation failed, simply finish reading
+                // and don't do anything with it:
+                while (k > 0) {
+                    k = i->readfunc(buf, sizeof(buf), i->readfuncptr);
+                }
                 k = -1;
                 break;
             }

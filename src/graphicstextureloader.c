@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "zipfile.h"
 #include "graphicstexture.h"
 #include "graphicstextureloader.h"
 #include "graphicstexturelist.h"
@@ -182,6 +183,32 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
     info->callbackData(info->gtm, (imgdata != NULL), info->userdata);
 }
 
+struct loaderfuncinfo {
+    struct graphicstextureloader_initialLoadingThreadInfo* info;
+    struct zipfilereader* file;
+    struct zipfile* archive;
+};
+
+static int graphicstextureloader_ImageReadFunc(void* buffer,
+size_t bytes, void* userdata) {
+    struct loaderfuncinfo* lfi = userdata;
+    
+    if (!lfi->file) {
+        lfi->file = zipfile_FileOpen(lfi->archive, lfi->info->path);
+        if (!lfi->file) {
+            free(lfi);
+            return -1;  // error: cannot open file
+        }
+    }
+    int i = zipfile_FileRead(lfi->file, buffer, bytes);
+    if (i <= 0) {
+        zipfile_FileClose(lfi->file);
+        free(lfi);
+        return 0;
+    }
+    return i;
+}
+
 void graphicstextureloader_InitialLoaderThread(void* userdata) {
     struct graphicstextureloader_initialLoadingThreadInfo* info =
     userdata;
@@ -201,11 +228,28 @@ void graphicstextureloader_InitialLoaderThread(void* userdata) {
     }
 
     if (loc.type == LOCATION_TYPE_DISK) {
+        // use standard disk file image loader:
         void* handle = img_LoadImageThreadedFromFile(info->path,
         4096, 4096, "rgba", graphicstextureloader_callbackSize,
         graphicstextureloader_callbackData, info);
-//    } else if (loc.type == LOCATION_TYPE_ZIP) {
+    } else if (loc.type == LOCATION_TYPE_ZIP) {
+        // prepare image reader info struct:
+        struct loaderfuncinfo* lfi = malloc(sizeof(*lfi));
+        if (!lfi) {
+            printwarning("[TEXLOAD] memory allocation failed (1)");
+            free(info->path);
+            free(info);
+            return;
+        }
+        memset(lfi, 0, sizeof(*lfi));
+        lfi->info = info;
+        lfi->archive = loc.location.ziplocation.archive;
 
+        // prompt image loader with our own image reader:
+        void* handle = img_LoadImageThreadedFromFunction(
+        graphicstextureloader_ImageReadFunc, lfi,
+        4096, 4096, "rgba", graphicstextureloader_callbackSize,
+        graphicstextureloader_callbackData, info);
     } else {
         printwarning("[TEXLOAD] unsupported resource location");
         info->callbackDimensions(info->gtm, 0, 0, 0, info->userdata);

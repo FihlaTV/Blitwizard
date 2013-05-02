@@ -86,6 +86,14 @@
 	<td class="summary">Set the object to a new position.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:setTransparency">object:setTransparency&nbsp;(transparency)</a></td>
+	<td class="summary">Set the transparency of the visual representation of this object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:getTransparency">object:getTransparency&nbsp;()</a></td>
+	<td class="summary">Get the transparency of the visual representation of this object.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:getDimensions">object:getDimensions&nbsp;()</a></td>
 	<td class="summary">Get the dimensions of an object in game units (with
  <a href="../modules/blitwizard.html#object:setScale">scaling</a> taking into account).</td>
@@ -311,6 +319,45 @@
          (only for 3d objects) z coordinate</li>
     </ul>
 
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setTransparency"></a>
+    <strong>object:setTransparency&nbsp;(transparency)</strong>
+    </dt>
+    <dd>
+    Set the transparency of the visual representation of this object.
+ Defaults to 0 (solid).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">transparency</span>
+            <span class="types"><span class="type">number</span></span>
+         transparency from 0 (solid) to 1 (invisible)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getTransparency"></a>
+    <strong>object:getTransparency&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the transparency of the visual representation of this object.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        transparency from 0 (solid) to 1 (invisible)
+    </ol>
 
 
 
