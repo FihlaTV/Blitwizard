@@ -473,6 +473,43 @@ int luafuncs_object_setPosition(lua_State* l) {
     return 0;
 }
 
+/// Set the transparency of the visual representation of this object.
+// Defaults to 0 (solid).
+// @function setTransparency
+// @tparam number transparency transparency from 0 (solid) to 1 (invisible)
+int luafuncs_object_setTransparency(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setTransparency");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setTransparency", "number", lua_strtype(l, 2));
+    }
+    double a = 1 - lua_tonumber(l, 2);
+    if (a < 0) {
+        a = 0;
+    }
+    if (a > 1) {
+        a = 1;
+    }
+    luacfuncs_objectgraphics_setAlpha(obj, a);
+    return 0;
+}
+
+/// Get the transparency of the visual representation of this object.
+// @function getTransparency
+// @treturn number transparency from 0 (solid) to 1 (invisible)
+int luafuncs_object_getTransparency(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setTransparency");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    return 1-luacfuncs_objectgraphics_getAlpha(obj);
+}
+
 /// Get the dimensions of an object in game units (with
 // @{blitwizard.object:setScale|scaling} taking into account).
 //
@@ -675,7 +712,7 @@ void luacfuncs_object_updateGraphics() {
             luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0);
         }
 
-        luafuncs_objectgraphics_updatePosition(o);
+        luacfuncs_objectgraphics_updatePosition(o);
         o = o->next;
     }
 }

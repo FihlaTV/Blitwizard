@@ -45,7 +45,7 @@ int luafuncs_objectgraphics_NeedVisibleCallback(
 struct blitwizardobject* o);
 
 // Move graphical representation of object to correct position:
-void luafuncs_objectgraphics_updatePosition(struct blitwizardobject* o);
+void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o);
 
 // get dimensions of object:
 int luacfuncs_objectgraphics_getDimensions(
@@ -55,6 +55,13 @@ struct blitwizardobject* o, double *x, double *y, double *z);
 
 // inform lua graphics code of new frame:
 void luacfuncs_objectgraphics_newFrame(void);
+
+// set the object alpha (0 invisible, 1 solid)
+void luacfuncs_objectgraphics_setAlpha(struct blitwizardobject* o,
+double alpha);
+
+// get the object alpha (0 invisible, 1 solid)
+double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o);
 
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
 

@@ -27,6 +27,7 @@
 #include "os.h"
 
 struct objectgraphicsdata {
+    double alpha;  // object alpha (0 invisible, 1 solid)
     int geometryCallbackDone;  // set to 1 once geometry callback was fired
     int visibilityCallbackDone;  // set to 1 once geometry callback was fired
 #ifdef USE_GRAPHICS
