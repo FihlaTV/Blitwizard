@@ -428,7 +428,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                 if (strcmp(shapetype, "circle") == 0) {
                     isok = 1;
                     // rectangle or oval with width and height
-                    int diameter;
+                    double diameter;
                     lua_pushstring(l, "diameter");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
