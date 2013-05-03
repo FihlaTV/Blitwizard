@@ -40,7 +40,7 @@
 
 // physics2d callback we will need later when setting up the physics simulation
 struct physicsobject2d;
-int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force);
+int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
 
 // lua funcs doStep processing function:
 int luacfuncs_object_doAllSteps(int count);
