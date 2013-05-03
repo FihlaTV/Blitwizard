@@ -244,3 +244,19 @@ int luafuncs_exit(lua_State* l) {
     return 0;
 }
 
+/// Get the absolute folder path of the template directory.
+// Returns nil if no template directory was found.
+//
+// The template directory contains common Lua extensions
+// for blitwizard which offer font rendering and more.
+// @function templatedir
+// @treturn string absolute folder path of template directory (or nil if none)
+extern char* templatepath;
+int luafuncs_templatedir(lua_State* l) {
+    if (!templatepath) {
+        lua_pushnil(l);
+    } else {
+        lua_pushstring(l, templatepath);
+    }
+    return 1;
+}

@@ -350,7 +350,7 @@ int attemptTemplateLoad(const char* path) {
     if (templatepath) {
         free(templatepath);
     }
-    templatepath = strdup(path);
+    templatepath = file_GetAbsolutePathFromRelativePath(path);
 
     // run file:
     char outofmem[] = "Out of memory";
