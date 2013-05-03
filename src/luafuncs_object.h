@@ -78,6 +78,9 @@ void luacfuncs_object_updateGraphics(void);
 int luafuncs_object_getTransparency(lua_State* l);
 int luafuncs_object_setTransparency(lua_State* l);
 
+// set 2d texture clipping window:
+int luafuncs_set2dTextureClipping(lua_State* l);
+
 #ifdef __cplusplus
 }
 #endif
