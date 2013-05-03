@@ -183,9 +183,11 @@ static void graphicssdlrender_SpriteCallback(
 const char* path, struct graphicstexture* tex,
 double x, double y,
 double width, double height,
-double texwidth, double texheight,
+size_t texwidth, size_t texheight,
 double angle,
 double alpha, double r, double g, double b,
+size_t sourceX, size_t sourceY,
+size_t sourceWidth, size_t sourceHeight,
 int visible) {
     if (!tex) {
         return;
@@ -232,7 +234,7 @@ int visible) {
 
     // render:
     graphicsrender_DrawCropped(tex, x, y, alpha,
-    0, 0, texwidth, texheight, width, height,
+    sourceX, sourceY, sourceWidth, sourceHeight, width, height,
     width/2, height/2, angle, horiflip,
     r, g, b);
 }

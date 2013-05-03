@@ -48,9 +48,17 @@ const char* texturePath, double x, double y, double width, double height);
 // If 0 is returned, the geometry isn't known yet (texture still
 // being loaded).
 // Otherwise, 1 will be returned and width/height changed.
+// Returns -1 in case of a fatal loading error.
 int graphics2dsprites_GetGeometry(struct graphics2dsprite* sprite,
 size_t* width, size_t* height);
-// Will return 1 and a size of 0,0 in case of a texture loading error.
+
+// Set a clipping window so only a part of the sprite's basic texture
+// will be shown.
+void graphics2dsprites_setClippingWindow(struct graphics2dsprite* sprite,
+size_t x, size_t y, size_t w, size_t h);
+
+// Unset the clipping window:
+void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite);
 
 // Check if the sprite will be possibly rendered.
 // It might not be if the texture isn't loaded yet,
@@ -88,8 +96,9 @@ int zindex);
 
 // --- internally used to draw sprites: ---
 
-// Set callback for sprite creation/deletion. modified/moved sprites
-// will end up deleted and recreated.
+// Set callback for sprite creation/deletion and modification.
+// The modified callback will be used for moved, scaled and in other
+// ways altered sprites.
 //
 // If your graphics output creates and uploads meshes/geometry to the
 // graphics card, you might want to use those callbacks for that.
@@ -101,16 +110,23 @@ int zindex);
 // with the next call of graphics2dsprite_TriggerCallbacks of course)
 //
 // NOTE: The callbacks are always batched up and you can request them
-// to happen with graphics2dsprite_TriggerCallbacks.
-void graphics2dsprites_SetCreateDeleteCallbacks(
+// to happen with graphics2dsprites_TriggerCallbacks.
+void graphics2dsprites_SetCreatedModifiedDeletedCallbacks(
 void (*spriteCreated) (void* handle,
 const char* path, struct graphicstexture* tex,
 double x, double y,
-double width, double height, double texwidth, double texheight,
+double width, double height, size_t texWidth, size_t texHeight,
 double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
+size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
 int zindex, int visible),
+void (*spriteModified) (void* handle,
+double x, double y,
+double width, double height, double angle, int horizontalflip,
+int verticalflip,
+double alpha, double r, double g, double b,
+size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight),
 void (*spriteDeleted) (void* handle)
 );
 
@@ -129,8 +145,9 @@ void graphics2dsprites_TriggerCallbacks(void);
 void graphics2dsprites_DoForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
-double texwidth, double texheight,
+size_t texwidth, size_t texheight,
 double angle, double alpha, double r, double g, double b,
+size_t sourceX, size_t sizeY, size_t sizeWidth, size_t sizeHeight,
 int visible));
 // Sprites will be returned in Z-Index order.
 // (lower index first, and for same z-index

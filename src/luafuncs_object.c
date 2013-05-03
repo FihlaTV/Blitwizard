@@ -658,6 +658,61 @@ int luafuncs_object_setZIndex(lua_State* l) {
 }
 
 
+/// For 2d sprite objects, set a clipping window inside the
+// original texture used for the sprite which allows you to
+// specify a sub-rectangle of the texture to be used as
+// image source.
+//
+// This means you can make your sprite show just a part of the
+// texture, not all of it.
+//
+// The clipping window defaults to full texture size. Changing
+// it will also affect the size reported by
+// @{blitwizard.object:getDimensions|object:getDimensions}.
+//
+// You can omit all parameters which will reset the clipping window
+// to the full texture dimensions.
+// @function set2dTextureClipping
+// @tparam number x the x offset in the texture, in pixels (default: 0)
+// @tparam number y the y offset in the texture, in pixels (default: 0)
+// @tparam number width the clipping window width in the texture in pixels (defaults to full texture width)
+// @tparam number height the clipping window height in the texture in pixels 8defaults to full texture height)
+int luafuncs_set2dTextureClipping(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:set2dTextureClipping");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (!obj->is3d) {
+        // FIXME: support 3d decals here
+        return haveluaerror(l, "Not a 2d object");
+    }
+    if (lua_gettop(l) == 1) {
+        // no further args.
+        // the user wants to unset the texture clipping.
+        luacfuncs_objectgraphics_unsetTextureClipping(obj);
+        return 0;
+    }
+
+    // check all for args for being a number:
+    int i = 2;
+    while (i <= 5) {
+        if (lua_type(l, i) != LUA_TNUMBER) {
+            return haveluaerror(l, badargument1, i-1,
+            "blitwizard.object:set2dTextureClipping", "number",
+            lua_strtype(l, i));
+        }
+        i++;
+    }
+     
+    // set texture clipping:
+    luacfuncs_objectgraphics_setTextureClipping(obj,
+    lua_tosize_t(l, 2), lua_tosize_t(l, 3), lua_tosize_t(l, 4),
+    lua_tosize_t(l, 5));
+    return 0;
+}
+
+
 static void luacfuncs_object_doStep(lua_State* l,
 struct blitwizardobject* o) {
     if (o->deleted) {

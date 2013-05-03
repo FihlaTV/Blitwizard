@@ -172,8 +172,22 @@ int luafuncs_ray3d(lua_State* l) {
 
 /// Set the world gravity for all 2d objects.
 // @function set2dGravity
+// @tparam number x gravity force on x axis
+// @tparam number y gravity force on y axis
 int luafuncs_set2dGravity(lua_State* l) {
+#ifdef USE_PHYSICS2D
+    if (lua_type(l, 1) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.physics.set2dGravity", "number", lua_strtype(l, 1));
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.physics.set2dGravity", "number", lua_strtype(l, 2));
+    }
+    physics_Set2dWorldGravity(main_DefaultPhysics2dPtr(),
+    lua_tonumber(l, 1), lua_tonumber(l, 2));
     return 0;
+#endif
 }
 
 /// Set the world gravity for all 3d objects.

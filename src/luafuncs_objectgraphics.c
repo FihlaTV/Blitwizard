@@ -216,5 +216,16 @@ void luacfuncs_objectgraphics_newFrame() {
     requestsperframe = 0;
 }
 
+void luacfuncs_objectgraphics_unsetTextureClipping(
+struct blitwizardobject* o) {
+
+}
+
+
+void luacfuncs_objectgraphics_setTextureClipping(struct blitwizardobject* o,
+size_t x, size_t y, size_t width, size_t height) {
+
+}
+
 #endif
 
