@@ -62,7 +62,7 @@ struct physicsobjectshape* physics_createEmptyShapes(int count);
 void physics_destroyShapes(struct physicsobjectshape* shapes, int count);
 size_t physics_getShapeSize(void);  // get size of one shape struct
 #define GET_SHAPE(shapes,x) (struct physicsobjectshape*) \
-      (((char*)shapes)+physics_GetShapeSize()*x)
+      (((char*)shapes)+physics_getShapeSize()*x)
 #ifdef USE_PHYSICS2D
 // Set the given shape to one of those specified shapes:
 void physics_set2dShapeRectangle(struct physicsobjectshape* shape, double width, double height);

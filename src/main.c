@@ -722,14 +722,14 @@ int main(int argc, char** argv) {
 
 #ifdef USE_PHYSICS2D
     // initialise physics
-    physics2ddefaultworld = physics_CreateWorld(0);
+    physics2ddefaultworld = physics_createWorld(0);
     if (!physics2ddefaultworld) {
         printerror("Error: Failed to initialise Box2D physics");
         fatalscripterror();
         main_Quit(1);
         return 1;
     }
-    physics_Set2dCollisionCallback(physics2ddefaultworld, &luafuncs_globalcollision2dcallback_unprotected, NULL);
+    physics_set2dCollisionCallback(physics2ddefaultworld, &luafuncs_globalcollision2dcallback_unprotected, NULL);
 #endif
 
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -934,11 +934,11 @@ int main(int argc, char** argv) {
             if (physicsiterations < MAXPHYSICSITERATIONS &&
             physicstimestamp < time && (physicstimestamp <= logictimestamp
             || logiciterations >= MAXLOGICITERATIONS)) {
-                int psteps = ((float)TIMESTEP/(float)physics_GetStepSize(physics2ddefaultworld));
+                int psteps = ((float)TIMESTEP/(float)physics_getStepSize(physics2ddefaultworld));
                 if (psteps < 1) {psteps = 1;}
                 while (psteps > 0) {
-                    physics_Step(physics2ddefaultworld);
-                    physicstimestamp += physics_GetStepSize(physics2ddefaultworld);
+                    physics_step(physics2ddefaultworld);
+                    physicstimestamp += physics_getStepSize(physics2ddefaultworld);
                     psteps--;
                 }
                 physicsiterations++;
