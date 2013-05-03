@@ -50,7 +50,7 @@ struct graphics2dsprite {
     int loadingError;
 
     // texture dimensions (initially 0, 0 if not known):
-    size_t texwidth, texheight;
+    size_t texWidth, texHeight;
 
     // texture info:
     struct graphicstexture* tex;
@@ -59,6 +59,11 @@ struct graphics2dsprite {
     // position, size info:
     double x, y, width, height, angle;
     // width, height = 0 means height should match texture geometry
+
+    // texture clipping window:
+    int clippingEnabled;
+    size_t clippingX, clippingY;
+    size_t clippingWidth, clippingHeight;
 
     // alpha, color and visibility:
     double alpha;
@@ -80,6 +85,30 @@ __attribute__((constructor)) static void graphics2dsprites_Init(void) {
     m = mutex_Create();
 }
 
+static void graphics2dsprites_fixClippingWindow(struct
+graphics2dsprite* sprite) {
+    if (!sprite->texWidth || !sprite->texHeight
+    || !sprite->clippingEnabled) {
+        // size not known yet, we cannot fix cliping window.
+        // (or no clipping active)
+        return;
+    }
+    // X, Y offset shouldn't be out of boundaries:
+    if (sprite->clippingX > sprite->texWidth
+    && sprite->clippingY > sprite->texHeight) {
+        sprite->clippingX = sprite->texWidth;
+        sprite->clippingY = sprite->texHeight;
+        return;
+    }
+    // limit width, height to texture boundaries:
+    if (sprite->clippingX + sprite->clippingWidth >= sprite->texWidth) {
+        sprite->clippingWidth = sprite->texWidth - sprite->clippingX;
+    }
+    if (sprite->clippingY + sprite->clippingHeight >= sprite->texHeight) {
+        sprite->clippingY = sprite->texHeight - sprite->clippingY;
+    }
+}
+
 // this callback will be called by the texture manager:
 static void graphics2dsprites_dimensionInfoCallback(
 struct texturerequesthandle* request, size_t width, size_t height,
@@ -92,11 +121,13 @@ void* userdata) {
         return;
     }
 
-    s->texwidth = width;
-    s->texheight = height;
-    if (s->texwidth == 0 && s->texheight == 0) {
+    s->texWidth = width;
+    s->texHeight = height;
+    if (s->texWidth == 0 && s->texHeight == 0) {
         // texture failed to load.
         s->loadingError = 1;
+    } else {
+        graphics2dsprites_fixClippingWindow(s);
     }
     mutex_Release(m);
 }
@@ -141,12 +172,26 @@ size_t* width, size_t* height) {
         return 0;
     }
     mutex_Lock(m);
-    if ((sprite->texwidth && sprite->texheight) || sprite->loadingError) {
-        *width = sprite->texwidth;
-        *height = sprite->texheight;
+    if (sprite->loadingError) {
+        // sprite failed to load
         mutex_Release(m);
         return 1;
     }
+    // if a clipping window is set and final texture size is known,
+    // report clipping window:
+    if (sprite->texWidth && sprite->texHeight) {
+        if (sprite->clippingWidth && sprite->clippingHeight) {
+            *width = sprite->clippingWidth;
+            *height = sprite->clippingHeight;
+            return 1;
+        }
+        // otherwise, report texture size if known:
+        *width = sprite->texWidth;
+        *height = sprite->texHeight;
+        mutex_Release(m);
+        return 1;
+    }
+    // no texture size known:
     mutex_Release(m);
     return 0;
 }
@@ -166,11 +211,36 @@ int graphics2dsprites_IsTextureAvailable(struct graphics2dsprite* sprite) {
     return 0;
 }
 
+void graphics2dsprites_setClippingWindow(struct graphics2dsprite* sprite,
+size_t x, size_t y, size_t w, size_t h) {
+    if (!sprite) {
+        return;
+    }
+    mutex_Lock(m);
+    sprite->clippingX = x;
+    sprite->clippingY = y;
+    sprite->clippingWidth = w;
+    sprite->clippingHeight = h;
+    graphics2dsprites_fixClippingWindow(sprite);
+    mutex_Release(m);
+}
+
+void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite) {
+    if (!sprite) {
+        return;
+    }
+    mutex_Lock(m);
+    sprite->clippingEnabled = 0;
+    mutex_Release(m);
+}
+
 void graphics2dsprites_DoForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
-double texwidth, double texheight,
-double angle, double alpha, double r, double g, double b, int visible)) {
+size_t texWidth, size_t texHeight,
+double angle, double alpha, double r, double g, double b,
+size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
+int visible)) {
     if (!spriteInformation) {
         return;
     }
@@ -181,9 +251,31 @@ double angle, double alpha, double r, double g, double b, int visible)) {
     struct graphics2dsprite* s = spritelist;
     while (s) {
         // call sprite information callback:
-        spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
-        s->texwidth, s->texheight, s->angle, s->alpha, s->r, s->g, s->b,
-        s->visible);
+        if ((s->clippingWidth > 0 && s->clippingHeight > 0) ||
+        !s->clippingEnabled) {
+            size_t sx,sy,sw,sh;
+            sx = s->clippingX;
+            sy = s->clippingY;
+            sw = s->clippingWidth;
+            sh = s->clippingHeight;
+            if (!s->clippingEnabled && s->texWidth && s->texHeight) {
+                // reset to full texture size:
+                sx = 0;
+                sy = 0;
+                sw = s->texWidth;
+                sh = s->texHeight;
+            }
+            spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
+            s->texWidth, s->texHeight, s->angle, s->alpha, s->r, s->g, s->b,
+            sx, sy, sw, sh,
+            s->visible);
+        } else {
+            // report sprite as invisible:
+            spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
+            s->texWidth, s->texHeight, s->angle, s->alpha, s->r, s->g, s->b,
+            s->clippingX, s->clippingY, s->clippingWidth, s->clippingHeight,
+            0);
+        }
 
         s = s->next;
     }
