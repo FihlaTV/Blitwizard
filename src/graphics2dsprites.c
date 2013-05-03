@@ -81,7 +81,7 @@ static struct graphics2dsprite* spritelist = NULL;
 static struct graphics2dsprite* spritelistEnd = NULL;
 
 // initialise threading mutex:
-__attribute__((constructor)) static void graphics2dsprites_Init(void) {
+__attribute__((constructor)) static void graphics2dsprites_init(void) {
     m = mutex_Create();
 }
 
@@ -166,7 +166,7 @@ struct graphicstexture* texture, void* userdata) {
 }
 
 // Get texture dimensions if known:
-int graphics2dsprites_GetGeometry(struct graphics2dsprite* sprite,
+int graphics2dsprites_getGeometry(struct graphics2dsprite* sprite,
 size_t* width, size_t* height) {
     if (!sprite) {
         return 0;
@@ -197,7 +197,7 @@ size_t* width, size_t* height) {
 }
 
 // Check if actual texture is available:
-int graphics2dsprites_IsTextureAvailable(struct graphics2dsprite* sprite) {
+int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite) {
     if (!sprite) {
         return 0;
     }
@@ -234,7 +234,7 @@ void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite) {
     mutex_Release(m);
 }
 
-void graphics2dsprites_DoForAllSprites(
+void graphics2dsprites_doForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
 size_t texWidth, size_t texHeight,
@@ -283,13 +283,13 @@ int visible)) {
     mutex_Release(m);
 }
 
-void graphics2dsprites_Resize(struct graphics2dsprite* sprite,
+void graphics2dsprites_resize(struct graphics2dsprite* sprite,
 double width, double height) {
     sprite->width = width;
     sprite->height = height;
 }
 
-static void graphics2dsprites_RemoveFromList(struct graphics2dsprite* sprite) {
+static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
     // remove sprite from list:
     if (sprite->prev) {
         sprite->prev->next = sprite->next;
@@ -303,7 +303,7 @@ static void graphics2dsprites_RemoveFromList(struct graphics2dsprite* sprite) {
     }
 }
 
-void graphics2dsprites_Destroy(struct graphics2dsprite* sprite) {
+void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     if (!sprite) {
         return;
     }
@@ -321,7 +321,7 @@ void graphics2dsprites_Destroy(struct graphics2dsprite* sprite) {
     sprite->tex = NULL;
 
     // remove sprite from list:
-    graphics2dsprites_RemoveFromList(sprite);
+    graphics2dsprites_removeFromList(sprite);
  
     // free sprite:
     free(sprite);
@@ -330,7 +330,7 @@ void graphics2dsprites_Destroy(struct graphics2dsprite* sprite) {
     mutex_Release(m);
 }
 
-void graphics2dsprites_Move(struct graphics2dsprite* sprite,
+void graphics2dsprites_move(struct graphics2dsprite* sprite,
 double x, double y, double angle) {
     mutex_Lock(m);
     sprite->x = x;
@@ -339,7 +339,7 @@ double x, double y, double angle) {
     mutex_Release(m);
 }
 
-static void graphics2dsprites_AddToList(struct graphics2dsprite* s) {
+static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     // seek the earliest sprite (from the back)
     // which has a lower or equal zindex, and add us behind
     struct graphics2dsprite* s2 = spritelist;
@@ -364,7 +364,7 @@ static void graphics2dsprites_AddToList(struct graphics2dsprite* s) {
     }
 }
 
-struct graphics2dsprite* graphics2dsprites_Create(
+struct graphics2dsprite* graphics2dsprites_create(
 const char* texturePath, double x, double y, double width, double height) {
     if (!texturePath) {
         return NULL;
@@ -399,7 +399,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->visible = 1;
 
     // add us to the list:
-    graphics2dsprites_AddToList(s);
+    graphics2dsprites_addToList(s);
 
     // get a texture request:
     s->request = texturemanager_RequestTexture(
@@ -422,13 +422,13 @@ int zindex) {
     }
 
     // remove us from the list:
-    graphics2dsprites_RemoveFromList(sprite);
+    graphics2dsprites_removeFromList(sprite);
 
     // update zindex:
     sprite->zindex = zindex;
 
     // add us back to the list:
-    graphics2dsprites_AddToList(sprite);
+    graphics2dsprites_addToList(sprite);
 
     mutex_Release(m);
 }

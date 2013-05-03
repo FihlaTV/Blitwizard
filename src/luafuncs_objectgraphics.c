@@ -65,7 +65,7 @@ const char* resource) {
     }
 
     if (!o->is3d && !o->graphics->sprite) {
-        o->graphics->sprite = graphics2dsprites_Create(
+        o->graphics->sprite = graphics2dsprites_create(
         resource, x, y, 0, 0);
         o->scale2d.x = 1;
         o->scale2d.y = 1;
@@ -117,13 +117,13 @@ void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
         objectphysics_get2dRotation(o, &angle);
         // update sprite position
         if (o->graphics->sprite) {
-            graphics2dsprites_Move(o->graphics->sprite, x, y, angle);
+            graphics2dsprites_move(o->graphics->sprite, x, y, angle);
         }
         // update sprite scale if geometry is known
         size_t w,h;
-        if (graphics2dsprites_GetGeometry(o->graphics->sprite,
+        if (graphics2dsprites_getGeometry(o->graphics->sprite,
         &w, &h)) {
-            graphics2dsprites_Resize(o->graphics->sprite,
+            graphics2dsprites_resize(o->graphics->sprite,
             ((double)w) * o->scale2d.x / ((double)UNIT_TO_PIXELS),
             ((double)h) * o->scale2d.y / ((double)UNIT_TO_PIXELS));
         }
@@ -135,7 +135,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
 
     } else {
         if (o->graphics && o->graphics->sprite) {
-            graphics2dsprites_Destroy(o->graphics->sprite);
+            graphics2dsprites_destroy(o->graphics->sprite);
             o->graphics->sprite = NULL;
         }
     }
@@ -158,7 +158,7 @@ struct blitwizardobject* o) {
             return 0;
         }
         size_t w,h;
-        if (graphics2dsprites_GetGeometry(o->graphics->sprite,
+        if (graphics2dsprites_getGeometry(o->graphics->sprite,
         &w, &h)) {
             o->graphics->geometryCallbackDone = 1;
             return 1;
@@ -178,7 +178,7 @@ struct blitwizardobject* o) {
         if (!o->graphics->sprite) {
             return 0;
         }
-        if (graphics2dsprites_IsTextureAvailable(o->graphics->sprite
+        if (graphics2dsprites_isTextureAvailable(o->graphics->sprite
         )) {
             o->graphics->visibilityCallbackDone = 1;
             return 1;
@@ -199,7 +199,7 @@ struct blitwizardobject* o, double *x, double *y, double *z) {
             return 1;
         }
         size_t w,h;
-        if (graphics2dsprites_GetGeometry(o->graphics->sprite,
+        if (graphics2dsprites_getGeometry(o->graphics->sprite,
         &w, &h)) {
             if (w || h) {
                 *x = (double)w / ((double)UNIT_TO_PIXELS);
@@ -218,13 +218,26 @@ void luacfuncs_objectgraphics_newFrame() {
 
 void luacfuncs_objectgraphics_unsetTextureClipping(
 struct blitwizardobject* o) {
-
+    if (o->is3d) {
+        // FIXME: handle 3d decals
+    } else {
+        if (o->graphics->sprite) {
+            graphics2dsprites_unsetClippingWindow(o->graphics->sprite);
+        }
+    }
 }
 
 
 void luacfuncs_objectgraphics_setTextureClipping(struct blitwizardobject* o,
 size_t x, size_t y, size_t width, size_t height) {
-
+    if (o->is3d) {
+        // FIXME: 3d decals
+    } else {
+        if (!o->graphics->sprite) {
+            graphics2dsprites_setClippingWindow(o->graphics->sprite,
+            x, y, width, height);
+        }
+    }
 }
 
 #endif

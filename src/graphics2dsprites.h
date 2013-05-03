@@ -41,7 +41,7 @@ struct graphics2dsprite;
 // as soon as the geometry information is available.
 // Specify a negative horizontal or vertical size for horizontal/vertical
 // mirroring.
-struct graphics2dsprite* graphics2dsprites_Create(
+struct graphics2dsprite* graphics2dsprites_create(
 const char* texturePath, double x, double y, double width, double height);
 
 // Check for sprite pixel geometry dimensions.
@@ -49,7 +49,7 @@ const char* texturePath, double x, double y, double width, double height);
 // being loaded).
 // Otherwise, 1 will be returned and width/height changed.
 // Returns -1 in case of a fatal loading error.
-int graphics2dsprites_GetGeometry(struct graphics2dsprite* sprite,
+int graphics2dsprites_getGeometry(struct graphics2dsprite* sprite,
 size_t* width, size_t* height);
 
 // Set a clipping window so only a part of the sprite's basic texture
@@ -63,32 +63,32 @@ void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite);
 // Check if the sprite will be possibly rendered.
 // It might not be if the texture isn't loaded yet,
 // even if it is set to visible.
-int graphics2dsprites_IsTextureAvailable(struct graphics2dsprite* sprite);
+int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite);
 
 // Move a sprite.
-void graphics2dsprites_Move(struct graphics2dsprite* sprite,
+void graphics2dsprites_move(struct graphics2dsprite* sprite,
 double x, double y, double angle);
 
 // Set sprite to invisible (visible = 0) or back to visible (1).
-void graphics2dsprites_SetVisible(struct graphics2dsprite* sprite,
+void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
 int visible);
 
 // Resize a sprite. Set negative sizes for mirroring,
 // and 0, 0 for width/height if you want to have the sprite
 // size determined purely by texture dimensions.
-void graphics2dsprites_Resize(struct graphics2dsprite* sprite,
+void graphics2dsprites_resize(struct graphics2dsprite* sprite,
 double width, double height);
 
 // Set sprite coloring. (1, 1, 1) is normal full brightness
-void graphics2dsprites_SetColor(struct graphics2dsprite* sprite,
+void graphics2dsprites_setColor(struct graphics2dsprite* sprite,
 double r, double g, double b);
 
 // Set sprite alpha from 0 (invisible) to 1 (fully opaque)
-void graphics2dsprites_SetAlpha(struct graphics2dsprite* sprite,
+void graphics2dsprites_setAlpha(struct graphics2dsprite* sprite,
 double alpha);
 
 // Destroy the specified sprite:
-void graphics2dsprites_Destroy(struct graphics2dsprite* sprite);
+void graphics2dsprites_destroy(struct graphics2dsprite* sprite);
 
 // Set the Z index of the sprite (Defaults to 0):
 void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
@@ -107,11 +107,11 @@ int zindex);
 // is present and the sprite is visible
 // The textures can be invalid after the next call of
 // graphicstexture_InvalidateTextures()! (You'll get that information
-// with the next call of graphics2dsprite_TriggerCallbacks of course)
+// with the next call of graphics2dsprite_triggerCallbacks of course)
 //
 // NOTE: The callbacks are always batched up and you can request them
-// to happen with graphics2dsprites_TriggerCallbacks.
-void graphics2dsprites_SetCreatedModifiedDeletedCallbacks(
+// to happen with graphics2dsprites_triggerCallbacks.
+void graphics2dsprites_setCreatedModifiedDeletedCallbacks(
 void (*spriteCreated) (void* handle,
 const char* path, struct graphicstexture* tex,
 double x, double y,
@@ -133,7 +133,7 @@ void (*spriteDeleted) (void* handle)
 // Trigger the sprite callbacks you previously set.
 // As soon as the function returns, the callbacks for all
 // recent sprite changes will be completed.
-void graphics2dsprites_TriggerCallbacks(void);
+void graphics2dsprites_triggerCallbacks(void);
 
 // Get information on all sprites in one go.
 //
@@ -142,7 +142,7 @@ void graphics2dsprites_TriggerCallbacks(void);
 //
 // For sprites with no texture loaded/available,
 // the tex parameter will be set to NULL.
-void graphics2dsprites_DoForAllSprites(
+void graphics2dsprites_doForAllSprites(
 void (*spriteInformation) (const char* path, struct graphicstexture* tex,
 double x, double y, double width, double height,
 size_t texwidth, size_t texheight,

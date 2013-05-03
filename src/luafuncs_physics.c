@@ -124,7 +124,8 @@ int luafuncs_ray(lua_State* l, int use3d) {
 
     if (returnvalue) {
         // create a new reference to the (existing) object the ray has hit:
-        luacfuncs_pushbobjidref(l, (struct blitwizardobject*)physics_getObjectUserdata(obj));
+        luacfuncs_pushbobjidref(l, (struct blitwizardobject*)
+        physics_getObjectUserdata(obj));
 
         // push the other information we also want to return:
         lua_pushnumber(l, hitpointx);
