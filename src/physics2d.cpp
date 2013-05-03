@@ -440,6 +440,7 @@ struct physicsworld* physics_createWorld(int use3dphysics) {
     if (!world) {
         return NULL;
     }
+    memset(world, 0, sizeof(*world));
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not use3dphysics) {
 #endif
@@ -1235,12 +1236,7 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
 #ifdef USE_PHYSICS3D
     obj->is3d = 0;
 #endif
-    // FOR SOME FUCKING REASON
-    if (movable)
-        physics_setMass(obj, 1);
-    else
-        physics_setMass(obj, 0);
-    return obj;
+
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     }else{
@@ -1251,7 +1247,14 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     }
 #endif
-
+    // Dimension-independent
+    // FOR SOME FUCKING REASON
+    if (movable)
+        physics_setMass(obj, 1);
+    else
+        physics_setMass(obj, 0);
+    obj->pworld = world;
+    return obj;
 }
 
 
