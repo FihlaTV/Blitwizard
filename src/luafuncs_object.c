@@ -25,6 +25,8 @@
 // @{blitwizard.object|blitwizard game entity object} and various sub
 // namespaces for @{blitwizard.physics|physics},
 // @{blitwizard.graphics|graphics} and more.
+//
+// <b>Please note 3d graphics are currently <span style="color:#ff0000">not supported.</span></b>
 // @author Jonas Thiem (jonas.thiem@gmail.com) et al
 // @copyright 2011-2013
 // @license zlib
@@ -168,6 +170,9 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 // @tparam boolean 3d specify true if you wish this object to be a 3d object, or false if you want it to be a flat 2d object
 // @tparam string resource (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.
 // @treturn userdata Returns a @{blitwizard.object|blitwizard object}
+// @usage
+// -- Create a new 2d sprite object from the image file myimage.png
+// local obj = blitwizard.object:new(false, "myimage.png")
 int luafuncs_object_new(lua_State* l) {
     // technical first argument is the object table,
     // which we don't care about in the :new function.
