@@ -36,6 +36,7 @@ int luafuncs_openConsole(lua_State* l);
 int luafuncs_exit(lua_State* l);
 int luafuncs_sysname(lua_State* l);
 int luafuncs_sysversion(lua_State* l);
+int luafuncs_templatedir(lua_State* l);
 
 #endif  // BLITWIZARD_LUAFUNCS_OS_H_
 

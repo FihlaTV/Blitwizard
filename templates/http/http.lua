@@ -1,8 +1,8 @@
 --[[-----
-blitwiz.net.http
+blitwizard.net.http
 Under the zlib license:
 
-Copyright (c) 2012 Jonas Thiem
+Copyright (c) 2012-2013 Jonas Thiem
 
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 
@@ -16,14 +16,14 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 --]]-----
 
-blitwiz.net.http = {}
+blitwizard.net.http = {}
 
-blitwiz.net.http.get = function(url, callback, headers)
+blitwizard.net.http.get = function(url, callback, headers)
     --   *** Blitwizard HTTP interface ***
     --
     -- The blitwizard http interface consists of this function.
     -- Use it as follows:
-    --     blitwiz.net.http.get("http://some/url/",
+    --     blitwizard.net.http.get("http://some/url/",
     --         function(response)
     --             --[[ do something here ]]
     --         end
@@ -53,7 +53,7 @@ blitwiz.net.http.get = function(url, callback, headers)
     -- when the request failed completely (network error or similar).
     --
     -- As an example, print the HTML code of a website like this:
-    --     blitwiz.net.http.get("http://www.blitwizard.de/",
+    --     blitwizard.net.http.get("http://www.blitwizard.de/",
     --         function(r)
     --             print r.content
     --         end
@@ -66,12 +66,14 @@ blitwiz.net.http.get = function(url, callback, headers)
     --   "User-agent: blubb\nX-Hello: bla"
 
     if type(url) ~= "string" then
-        error("bad argument #1 to `blitwiz.net.http.get` (string expected, got " .. type(url) .. ")")
+        error("bad argument #1 to `blitwizard.net.http.get` " ..
+        "(string expected, got " .. type(url) .. ")")
     end
 
     -- first, check and remove http://
     if not string.starts(url, "http://") then
-        error "bad argument #1 to `blitwiz.net.http.get`: not a http link (please remember https is not supported)"
+        error("bad argument #1 to `blitwizard.net.http.get`: " ..
+        "not a http link (please remember https is not supported)")
     end
     url = string.sub(url, #"http://"+1)
 
@@ -79,7 +81,8 @@ blitwiz.net.http.get = function(url, callback, headers)
     local server_name = string.split(url, ":", 1)
     server_name = string.split(server_name, "/", 1)
     if #server_name <= 0 then
-        error("bad argument #1 to `blitwiz.net.http.get`: url has empty target server name")
+        error("bad argument #1 to `blitwizard.net.http.get`: " ..
+        "url has empty target server name")
     end
 
     local portspecified = false
@@ -97,11 +100,13 @@ blitwiz.net.http.get = function(url, callback, headers)
 
     -- validate port
     if tostring(tonumber(port)) ~= port then
-        error("bad argument #1 to `blitwiz.net.http.get`: port not a number")
+        error("bad argument #1 to `blitwizard.net.http.get`: " ..
+        "port not a number")
     end
     port = tonumber(port)
     if port < 1 or port > 65535 then
-        error("bad argument #1 to `blitwiz.net.http.get`: port number exceeds valid port range")
+        error("bad argument #1 to `blitwizard.net.http.get`: " ..
+        "port number exceeds valid port range")
     end
 
     -- obtain resource
@@ -118,7 +123,7 @@ blitwiz.net.http.get = function(url, callback, headers)
         headers = ""
     end
 
-    local final_headers = blitwiz.net.http._merge_headers(
+    local final_headers = blitwizard.net.http._merge_headers(
         "GET " .. resource .. " HTTP/1.1\n" ..
         "Connection: Close\n" ..
         "Accept-Encoding: identity;q=1 *;q=0\n" ..
@@ -127,14 +132,16 @@ blitwiz.net.http.get = function(url, callback, headers)
     headers
     )
 
-    if not blitwiz.net.http._header_present(final_headers, "User-agent: ") then
-        final_headers = final_headers .. "User-agent: " .. blitwiz.net.http._default_user_agent .. "\n"
+    if not blitwizard.net.http._header_present(final_headers,
+    "User-agent: ") then
+        final_headers = final_headers .. "User-agent: " .. 
+        blitwizard.net.http._default_user_agent .. "\n"
     end
 
     local streamdata = {}
-    local stream = blitwiz.net.open({server=server_name, port=port},
+    local stream = blitwizard.net.open({server=server_name, port=port},
     function(stream)
-        blitwiz.net.send(stream, final_headers .. "\n")
+        blitwizard.net.send(stream, final_headers .. "\n")
     end,
     function(stream, data)
         if streamdata["data"] == nil then
@@ -144,7 +151,6 @@ blitwiz.net.http.get = function(url, callback, headers)
         --print("stream data: " .. data)
     end,
     function(stream, errormsg)
-        --print("Closed with errormsg: " .. errormsg)
         if streamdata["data"] ~= nil then
             --print("blib")
             if #streamdata["data"] > 0 then
@@ -201,21 +207,27 @@ blitwiz.net.http.get = function(url, callback, headers)
                     headerstable[i] = string.gsub(headerstable[i], ": ", ":")
                     
                     -- chunked transfer encoding
-                    if string.starts(string.lower(headerstable[i]), "transfer-encoding:") then
-                        local v = ({string.split(string.lower(headerstable[i]), ":", 1)})[2]
+                    if string.starts(string.lower(headerstable[i]),
+                    "transfer-encoding:") then
+                        local v = ({string.split(string.lower(headerstable[i]),
+                        ":", 1)})[2]
                         if v == "chunked" then
                             chunked = true
                         end
                     end
  
                     -- mime type
-                    if string.starts(string.lower(headerstable[i]), "content-type:") then
-                        data.mime_type = ({string.split(string.lower(headerstable[i]), ":", 1)})[2]
+                    if string.starts(string.lower(headerstable[i]),
+                    "content-type:") then
+                        data.mime_type = ({string.split(
+                        string.lower(headerstable[i]), ":", 1)})[2]
                     end
 
                     -- server name
-                    if string.starts(string.lower(headerstable[i]), "server:") then
-                        data.server_name = ({string.split(string.lower(headerstable[i]), ":", 1)})[2]
+                    if string.starts(string.lower(headerstable[i]),
+                    "server:") then
+                        data.server_name = ({string.split(
+                        string.lower(headerstable[i]), ":", 1)})[2]
                     end
 
                     i = i + 1
@@ -244,7 +256,8 @@ blitwiz.net.http.get = function(url, callback, headers)
                             break
                         end
 
-                        local chunklengthstr,newdata = string.split(data.content, "\r\n", 1)
+                        local chunklengthstr,newdata = string.split(
+                        data.content, "\r\n", 1)
                         data.content = newdata
                         local chunklength = tonumber("0x" .. chunklengthstr)
                         
@@ -272,9 +285,10 @@ blitwiz.net.http.get = function(url, callback, headers)
                         end
 
                         -- Cut off chunk
-                        dechunkeddata = dechunkeddata .. string.sub(data.content, 1, chunklength)
-                        data.content = string.sub(data.content, chunklength + 1)
-                        
+                        dechunkeddata = dechunkeddata ..
+                        string.sub(data.content, 1, chunklength)
+                        data.content = string.sub(data.content,
+                        chunklength + 1)
                     end
                 end              
   
@@ -282,14 +296,15 @@ blitwiz.net.http.get = function(url, callback, headers)
                 return
             end
         end
-        callback({response_code=999, headers="", mime_type="text/plain", content=errormsg})
+        callback({response_code=999, headers="", mime_type="text/plain",
+        content=errormsg})
     end
 ) 
 end
 
 
-blitwiz.net.http._default_user_agent = "blitwiz.net.http/1.0"
-blitwiz.net.http._header_present = function(headerblock, header)
+blitwizard.net.http._default_user_agent = "blitwizard.net.http/1.0"
+blitwizard.net.http._header_present = function(headerblock, header)
     while string.find(header, " :") ~= nil do
         string.gsub(header, " :", ":")
     end
@@ -306,7 +321,7 @@ blitwiz.net.http._header_present = function(headerblock, header)
     return false
 end
 
-blitwiz.net.http._merge_headers = function(headerblock1, headerblock2)
+blitwizard.net.http._merge_headers = function(headerblock1, headerblock2)
     -- Merge headers and remove duplicated entries
     local lines = {string.split(headerblock2, "\n")}
     for number,line in ipairs(lines) do
@@ -318,15 +333,12 @@ blitwiz.net.http._merge_headers = function(headerblock1, headerblock2)
             end
         end
         if string.find(line, ":") ~= nil then
-            if not blitwiz.net.http._header_present(headerblock1, line) then
+            if not blitwizard.net.http._header_present(headerblock1,
+            line) then
                 headerblock1 = headerblock1 .. line .. "\n"
             end
         end
     end
     return headerblock1
 end
-
-
-
-
 

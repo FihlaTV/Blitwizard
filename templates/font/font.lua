@@ -1,8 +1,8 @@
 --[[-----
-blitwiz.font
+blitwizard.font
 Under the zlib license:
 
-Copyright (c) 2012 Jonas Thiem
+Copyright (c) 2012-2013 Jonas Thiem
 
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 
@@ -16,10 +16,10 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 --]]-----
 
-blitwiz.font = {}
-blitwiz.font.fonts = {}
+blitwizard.font = {}
+blitwizard.font.fonts = {}
 
-function loadfontimage(path)
+--[[function loadfontimage(path)
     if blitwiz.graphics.isImageLoaded(path) ~= true then
         blitwiz.graphics.loadImageAsync(path)
     end
@@ -165,4 +165,5 @@ function blitwiz.font.addToString(str, line, maxlinelength, maxlinecount)
 end
 
 blitwiz.font.register("font/default.png", "default", 7, 14, 32, "iso-8859-15")
+]]
 
