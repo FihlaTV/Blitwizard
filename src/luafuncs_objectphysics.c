@@ -191,7 +191,7 @@ int luafuncs_globalcollision3dcallback_unprotected(void* userdata, struct physic
 /// Disable the physics simulation on an object. It will no longer collide
 // with anything.
 // @function disableCollision
-int luafuncs_disableCollision(lua_State* l) {
+int luafuncs_object_disableCollision(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:disableCollision");
     assert(obj->refcount > 0);
@@ -504,17 +504,15 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
         // if no old representation, transfer over the current position:
         if (obj->is3d) {
 #ifdef USE_PHYSICS3D
-            physics_set3dPosition(obj->physics->object,
-            obj->x, obj->y, obj->z);
-            physics_set3dRotation(obj->physics->object,
+            physics_warp3d(obj->physics->object,
+            obj->x, obj->y, obj->z,
             obj->rotation.quaternion.x, obj->rotation.quaternion.y,
             obj->rotation.quaternion.z, obj->rotation.quaternion.r);
 #endif
         } else {
 #ifdef USE_PHYSICS2D
-            physics_set2dPosition(obj->physics->object,
-            obj->x, obj->y);
-            physics_set2dRotation(obj->physics->object, obj->rotation.angle);
+            physics_warp2d(obj->physics->object,
+            obj->x, obj->y, obj->rotation.angle);
 #endif
         }
     }
