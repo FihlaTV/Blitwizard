@@ -863,7 +863,7 @@ int main(int argc, char** argv) {
         checkAllMediaObjectsForCleanup();
 
         // slow sleep: check if we can safe some cpu by waiting longer
-        unsigned int deltaspan = 16;
+        unsigned int deltaspan = TIMESTEP;
 #ifndef USE_GRAPHICS
         int nodraw = 1;
 #else
@@ -872,22 +872,26 @@ int main(int argc, char** argv) {
             nodraw = 0;
         }
 #endif
+        // see how much time as already passed since the last frame:
         uint64_t delta = time_GetMilliseconds()-lastdrawingtime;
-        if (nodraw) {
-            // we can sleep as long as our timeste allows us to
-            deltaspan = ((double)TIMESTEP)/2.1f;
-        }
 
         // sleep/limit FPS as much as we can
         if (delta < deltaspan) {
-            if (connections_NoConnectionsOpen() && !listeners_HaveActiveListeners()) {
+            // the time passed is smaller than the optimal waiting time
+            // -> sleep
+            if (connections_NoConnectionsOpen() &&
+            !listeners_HaveActiveListeners()) {
+                // no connections, use regular sleep
                 time_Sleep(deltaspan-delta);
                 connections_SleepWait(0);
             } else {
+                // use connection select wait to get connection events
                 connections_SleepWait(deltaspan-delta);
             }
         } else {
-            connections_SleepWait(0);
+            // the time passed exceeds the optimal waiting time already
+            // -> don't slow down at all
+            connections_SleepWait(0);  // check on connections
         }
 
         // Remember drawing time and process net events
