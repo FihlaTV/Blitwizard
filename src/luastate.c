@@ -534,7 +534,9 @@ int luastate_PushFunctionArgumentToMainstate_Double(double i) {
     return 1;
 }
 
-int luastate_CallFunctionInMainstate(const char* function, int args, int recursivetables, int allownil, char** error, int* functiondidnotexist) {
+int luastate_CallFunctionInMainstate(const char* function,
+int args, int recursivetables, int allownil, char** error,
+int* functiondidnotexist, int *returnedbool) {
     // push error function
     lua_pushcfunction(scriptstate, &gettraceback);
     if (args > 0) {
@@ -559,7 +561,8 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
                         // remove recursive table
                         lua_pop(scriptstate, 1);
 
-                        *error = strdup("part of recursive call path is not a table");
+                        *error = strdup("part of recursive call path "
+                        "is not a table");
                         return 0;
                     }
                 }
@@ -576,7 +579,8 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
                         // clean up recursive table left on stack
                         lua_pop(scriptstate, 1);
                     }
-                    *error = strdup("failed to allocate memory for component string");
+                    *error = strdup("failed to allocate memory "
+                    "for component string");
                     return 0;
                 }
                 memcpy(fp, function, r);
@@ -605,7 +609,7 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
         }
         if (recursed) {
             tablerecursion++;
-        }else{
+        } else {
             break;
         }
     }
@@ -668,10 +672,11 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
         lua_insert(scriptstate, -(args+1));
     }
 
-    int previoustop = lua_gettop(scriptstate)-(args+2); // 2 = 1 (error func) + 1 (called func)
+    int previoustop = lua_gettop(scriptstate)-(args+2);
+    // 2 = 1 (error func) + 1 (called func)
 
     // call function
-    int i = lua_pcall(scriptstate, args, 0, -(args+2));
+    int i = lua_pcall(scriptstate, args, (returnedbool != NULL)*1, -(args+2));
 
     // process errors
     int returnvalue = 1;
@@ -683,14 +688,20 @@ int luastate_CallFunctionInMainstate(const char* function, int args, int recursi
             if (e) {
                 *error = strdup(e);
             }
-        }else{
+        } else {
             if (i == LUA_ERRMEM) {
                 *error = strdup("Out of memory");
-            }else{
+            } else {
                 *error = strdup("Unknown error");
             }
         }
         returnvalue = 0;
+    } else {
+        // process return value:
+        if (returnedbool) {
+            *returnedbool = lua_toboolean(scriptstate, -1);
+            lua_pop(scriptstate, 1);
+        }
     }
 
     // clean up stack

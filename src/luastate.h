@@ -42,10 +42,24 @@ int luastate_PushFunctionArgumentToMainstate_Bool(int yesno); // 1: success, 0: 
 int luastate_PushFunctionArgumentToMainstate_String(const char* string); // 1: success, 0: failure (out of memory)
 int luastate_PushFunctionArgumentToMainstate_Double(double i); // 1: success, 0: failure (out of memory)
 // Function call:
-int luastate_CallFunctionInMainstate(const char* function, int args, int recursivetablelookup, int allownil, char** error, int* functiondidnotexist); // 1: success, 0: failure
-// *error will be either changed to NULL or to an error string - NULL means most likely out of memory)
-// allownil set to 1 will only report failure when the function existed and ran into an error, if it simply didn't exist at all it will report sucess.
-// If allownil is 1 and functiondidnotexist is not NULL, *functiondidnotexist will be set to 1 if the function did not exist (and success was reported). If the function actually existed (no matter whether the call succeeded or not), it will be left untouched
+int luastate_CallFunctionInMainstate(const char* function, int args,
+int recursivetablelookup, int allownil, char** error,
+int* functiondidnotexist, int* returnedboolean); // 1: success, 0: failure
+// *error will be either changed to NULL or to an error string -
+//   NULL means most likely out of memory)
+// recursivetablelookup: 1 to allow recursive table lookup, 0 for no.
+// allownil set to 1 will only report failure when the function
+//   existed and ran into an error, if it simply didn't exist at all
+//   it will report sucess.
+// If allownil is 1 and functiondidnotexist is not NULL,
+//   *functiondidnotexist will be set to 1 if the function did not exist
+//   (and success was reported).
+//   If the function actually existed (no matter whether the call succeeded
+//   or not), it will be left untouched
+// If returnedboolean is not NULL, its target will be changed to
+//   a boolean return value if there was any returned by the function.
+//   If the function couldn't be called or didn't exist, it will be left
+//   untouched.
 
 #define IDREF_MAGIC 373482
 

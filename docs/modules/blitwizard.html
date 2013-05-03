@@ -113,6 +113,13 @@
 	<td class="summary">Set the z-index of the object (only for 2d objects).</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:set2dTextureClipping">object:set2dTextureClipping&nbsp;(x, y, width, height)</a></td>
+	<td class="summary">For 2d sprite objects, set a clipping window inside the
+ original texture used for the sprite which allows you to
+ specify a sub-rectangle of the texture to be used as
+ image source.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:onGeometryLoaded">object:onGeometryLoaded&nbsp;()</a></td>
 	<td class="summary">Set this event function to a custom function
  of yours to get notified when the geometry
@@ -385,6 +392,9 @@
  <a href="../modules/blitwizard.html#object:onGeometryLoaded">geometry callback</a>,
  an error will be thrown that the information is not available
  yet.
+<p> Note with use of <a href="../modules/blitwizard.html#object:set2dTextureClipping">blitwizard.object:set2dTextureClipping</a> the dimensions
+ change and they might no longer reflect the initial size of the
+ texture.
 
 
     <h3>Returns:</h3>
@@ -477,6 +487,44 @@
         <li><span class="parameter">z_index</span>
             <span class="types"><span class="type">number</span></span>
          New z index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:set2dTextureClipping"></a>
+    <strong>object:set2dTextureClipping&nbsp;(x, y, width, height)</strong>
+    </dt>
+    <dd>
+    For 2d sprite objects, set a clipping window inside the
+ original texture used for the sprite which allows you to
+ specify a sub-rectangle of the texture to be used as
+ image source.
+<p> This means you can make your sprite show just a part of the
+ texture, not all of it.
+<p> The clipping window defaults to full texture size. Changing
+ it will also affect the size reported by
+ <a href="../modules/blitwizard.html#object:getDimensions">object:getDimensions</a>.
+<p> You can omit all parameters which will reset the clipping window
+ to the full texture dimensions.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x</span>
+            <span class="types"><span class="type">number</span></span>
+         the x offset in the texture, in pixels (default: 0)</li>
+        <li><span class="parameter">y</span>
+            <span class="types"><span class="type">number</span></span>
+         the y offset in the texture, in pixels (default: 0)</li>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         the clipping window width in the texture in pixels (defaults to full texture width)</li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         the clipping window height in the texture in pixels 8defaults to full texture height)</li>
     </ul>
 
 

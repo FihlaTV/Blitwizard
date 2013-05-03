@@ -537,7 +537,7 @@ int luafuncs_object_getTransparency(lua_State* l) {
 // an error will be thrown that the information is not available
 // yet.
 //
-// Note on @{blitwizard.object:set2dTextureClipping} the dimensions
+// Note with use of @{blitwizard.object:set2dTextureClipping} the dimensions
 // change and they might no longer reflect the initial size of the
 // texture.
 // @function getDimensions

@@ -191,7 +191,7 @@ int luafuncs_globalcollision3dcallback_unprotected(void* userdata, struct physic
 /// Disable the physics simulation on an object. It will no longer collide
 // with anything.
 // @function disableCollision
-int luafuncs_disableCollision(lua_State* l) {
+int luafuncs_object_disableCollision(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:disableCollision");
     assert(obj->refcount > 0);
@@ -206,6 +206,27 @@ int luafuncs_disableCollision(lua_State* l) {
     }
 
     if (obj->physics->object) {
+        // transfer position/rotation first:
+        if (obj->is3d) {
+#ifdef USE_PHYSICS3D
+            physics_get3dRotationQuaternion(obj->physics->object,
+            &(obj->rotation.quaternion.x),
+            &(obj->rotation.quaternion.y),
+            &(obj->rotation.quaternion.z),
+            &(obj->rotation.quaternion.r));
+            physics_get3dPosition(obj->physics->object,
+            &(obj->x), &(obj->y), &(obj->z));
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_get2dRotation(obj->physics->object, &(
+            obj->rotation.angle));
+            physics_get2dPosition(obj->physics->object, &(obj->x),
+            &(obj->y));
+#endif
+        }
+            
+        // delete object:
         physics_destroyObject(obj->physics->object);
         obj->physics->object = NULL;
     }
@@ -268,6 +289,9 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
             // check the shape type being valid:
             const char* shapetype = lua_tostring(l, -1);
             if (obj->is3d) {
+#ifndef USE_PHYSICS3D
+                return haveluaerror(l, error_nophysics3d);
+#else
                 // see if this is a usable 3d shape:
                 int isok = 0;
                 if (strcmp(shapetype, "decal") == 0) {
@@ -296,10 +320,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     }
                     height = lua_tonumber(l, -1);
                     lua_pop(l, 1);
-#ifdef USE_PHYSICS3D
                     physics_set3dShapeDecal(GET_SHAPE(shapes, i),
                     width, height);
-#endif
                 }
                 if (strcmp(shapetype, "ball") == 0) {
                     isok = 1;
@@ -316,10 +338,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     }
                     diameter = lua_tonumber(l, -1);
                     lua_pop(l, 1);
-#ifdef USE_PHYSICS3D
                     physics_set3dShapeBall(GET_SHAPE(shapes, i),
                     diameter);
-#endif
                 }
                 if (strcmp(shapetype, "box") == 0 ||
                 strcmp(shapetype, "elliptic ball") == 0) {
@@ -363,15 +383,11 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pop(l, 1);
 
                     if (strcmp(shapetype, "box") == 0) {
-#ifdef USE_PHYSICS3D
                         physics_set3dShapeBox(GET_SHAPE(shapes, i),
                         x_size, y_size, z_size);
-#endif
                     } else {
-#ifdef USE_PHYSICS3D
                         physics_set3dShapeBox(GET_SHAPE(shapes, i),
                         x_size, y_size, z_size);
-#endif
                     }
                 }
                 if (!isok) {
@@ -385,7 +401,11 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     "blitwizard.object:enableCollision",
                     invalidshape);
                 }
+#endif
             } else {
+#ifndef USE_PHYSICS2D
+                return haveluaerror(l, error_nophysics2d);
+#else
                 // see if this is a usable 2d shape:
                 int isok = 0;
                 if (strcmp(shapetype, "rectangle") == 0 ||
@@ -455,6 +475,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     "blitwizard.object:enableCollision",
                     invalidshape);
                 }
+#endif
             }
             lua_pop(l, 1);  // pop shapetype string
         }
@@ -479,8 +500,22 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
     if (old) {
         transferbodysettings(old, obj->physics->object);
         physics_destroyObject(old);
+    } else {
+        // if no old representation, transfer over the current position:
+        if (obj->is3d) {
+#ifdef USE_PHYSICS3D
+            physics_warp3d(obj->physics->object,
+            obj->x, obj->y, obj->z,
+            obj->rotation.quaternion.x, obj->rotation.quaternion.y,
+            obj->rotation.quaternion.z, obj->rotation.quaternion.r);
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_warp2d(obj->physics->object,
+            obj->x, obj->y, obj->rotation.angle);
+#endif
+        }
     }
-
     obj->physics->movable = 1;
     return 1;
 }
