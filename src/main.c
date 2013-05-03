@@ -939,7 +939,9 @@ int main(int argc, char** argv) {
             || logiciterations >= MAXLOGICITERATIONS)) {
                 int psteps = ((float)TIMESTEP/
                 (float)physics_getStepSize(physics2ddefaultworld));
-                if (psteps < 1) {psteps = 1;}
+                if (psteps < 1) {
+                    psteps = 1;
+                }
                 while (psteps > 0) {
                     physics_step(physics2ddefaultworld);
                     physicstimestamp += physics_getStepSize(

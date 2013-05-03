@@ -461,15 +461,15 @@ int luafuncs_object_setPosition(lua_State* l) {
     }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.object.setPosition", "number", lua_strtype(l, 2));
+        "blitwizard.object:setPosition", "number", lua_strtype(l, 2));
     }
     if (lua_type(l, 3) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 2,
-        "blitwizard.object.setPosition", "number", lua_strtype(l, 3));
+        "blitwizard.object:setPosition", "number", lua_strtype(l, 3));
     }
     if (obj->is3d && lua_type(l, 4) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 3,
-        "blitwizard.object.setPosition", "number", lua_strtype(l, 4));
+        "blitwizard.object:setPosition", "number", lua_strtype(l, 4));
     }
     double x,y,z;
     x = lua_tonumber(l, 2);
@@ -493,7 +493,7 @@ int luafuncs_object_setTransparency(lua_State* l) {
     }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.object.setTransparency", "number", lua_strtype(l, 2));
+        "blitwizard.object:setTransparency", "number", lua_strtype(l, 2));
     }
     double a = 1 - lua_tonumber(l, 2);
     if (a < 0) {
@@ -601,15 +601,15 @@ int luafuncs_object_setScale(lua_State* l) {
     }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.object.setScale", "number", lua_strtype(l, 2));
+        "blitwizard.object:setScale", "number", lua_strtype(l, 2));
     }
     if (lua_type(l, 3) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 2,
-        "blitwizard.object.setScale", "number", lua_strtype(l, 3));
+        "blitwizard.object:setScale", "number", lua_strtype(l, 3));
     }
     if (obj->is3d && lua_type(l, 4) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 3,
-        "blitwizard.object.setPosition", "number", lua_strtype(l, 4));
+        "blitwizard.object:setScale", "number", lua_strtype(l, 4));
     }
     double x,y,z;
     x = lua_tonumber(l, 2);
@@ -645,7 +645,7 @@ int luafuncs_object_setZIndex(lua_State* l) {
     }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.object.setZIndex", "number", lua_strtype(l, 2));
+        "blitwizard.object:setZIndex", "number", lua_strtype(l, 2));
     }
     if (!obj->is3d) {
         return haveluaerror(l, "z index can only be set for 2d objects");
