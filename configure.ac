@@ -176,6 +176,22 @@ AC_ARG_ENABLE([speex],
  esac],
 [enable_speex=yes])
 
+# Auto-disable Ogre3d, 3d physics:
+
+AS_IF([test xyes = "x$enable_ogregraphics"],[
+    echo "**************************************************"
+    echo "  AUTO-DISABLING 3D GRAPHICS (not supported yet)  "
+    echo "**************************************************"
+    enable_ogregraphics="no"
+])
+AS_IF([test xyes = "x$enable_physics3d"],[
+    echo "*************************************************"
+    echo "  AUTO-DISABLING 3D PHYSICS (not supported yet)  "
+    echo "*************************************************"
+    enable_physics3d="no"
+])
+
+
 # Remember which libs we want to build ourselves for static use:
 
 STATIC_LIBS_USE=""

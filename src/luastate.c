@@ -256,6 +256,50 @@ static void luastate_VoidDebug(lua_State* l) {
     // should we void binary loaders to avoid loading a debug.so?
 }
 
+static char* whitelist[] = { "string", "os", "math", "blitwizard",
+"io", "_G", "_VERSION", "pairs", "ipairs", "coroutine", "next",
+"tostring", "tonumber", "type", "setmetatable", "getmetatable", NULL };
+
+static void luastate_ApplyWhitelist(lua_State* l) {
+    int repeat = 1;
+    while (repeat) {
+        repeat = 0;
+
+        // get global table and iterate:
+        lua_getglobal(l, "_G");
+        lua_pushnil(l);
+        while (lua_next(l, -2) != 0) {
+            // on stack are now key, value.
+            // we don't care about the value:
+            lua_pop(l, 1);
+
+            // see if this key is whitelisted:
+            int i = 0;
+            int whitelisted = 0;
+            while (whitelist[i]) {
+                if (strcmp(lua_tostring(l, -1), whitelist[i]) == 0) {
+                    whitelisted = 1;
+                    break;
+                }
+                i++;
+            }
+
+            // if not whitelisted, remove it and restart checking _G:
+            if (!whitelisted) {
+                lua_pushnil(l);
+                lua_settable(l, -3);
+                // now only _G is left on the stack. push a fake key:
+                lua_pushnil(l);
+                // make sure to repeat:
+                repeat = 1;
+                // stop _G loop and restart from beginning:
+                break;
+            }
+        }
+        lua_pop(l, 2);  // pop key, _G
+    }
+}
+
 static lua_State* luastate_New(void) {
     lua_State* l = luaL_newstate();
 
@@ -267,6 +311,9 @@ static lua_State* luastate_New(void) {
     luastate_RememberTracebackFunc(l);
     luastate_VoidDebug(l);
     luastate_AddBlitwizFuncs(l);
+
+    // clean up global namespace apart from whitelist:
+    luastate_ApplyWhitelist(l);
 
     // own dofile/loadfile/print
     lua_pushcfunction(l, &luafuncs_loadfile);
@@ -350,6 +397,9 @@ static lua_State* luastate_New(void) {
     lua_settable(l, -3);
     lua_pushstring(l, "chdir");
     lua_pushcfunction(l, &luafuncs_chdir);
+    lua_settable(l, -3);
+    lua_pushstring(l, "templatedir");
+    lua_pushcfunction(l, &luafuncs_templatedir);
     lua_settable(l, -3);
     lua_pushstring(l, "openConsole");
     lua_pushcfunction(l, &luafuncs_openConsole);

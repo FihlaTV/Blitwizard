@@ -108,6 +108,10 @@
  graphics output window)
  where the standard output of blitwizard can be read.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#templatedir">templatedir&nbsp;()</a></td>
+	<td class="summary">Get the absolute folder path of the template directory.</td>
+	</tr>
 </table>
 
 <br/>
@@ -292,6 +296,28 @@
  this on program startup.
 
 
+
+
+
+
+</dd>
+    <dt>
+    <a name = "templatedir"></a>
+    <strong>templatedir&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the absolute folder path of the template directory.
+ Returns nil if no template directory was found.
+<p> The template directory contains common Lua extensions
+ for blitwizard which offer font rendering and more.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+        absolute folder path of template directory (or nil if none)
+    </ol>
 
 
 
