@@ -453,7 +453,7 @@ struct physicsworld* physics_CreateWorld(int use3dphysics) {
     world2d->w = new b2World(gravity);
     world2d->w->SetAllowSleeping(true);
     world2d->gravityx = 0;
-    world2d->gravityy = 10;
+    world2d->gravityy = 9.81;
     world2d->listener = new mycontactlistener();
     world2d->w->SetContactListener(world2d->listener);
     world->wor.ld2d = world2d;
@@ -512,6 +512,7 @@ void physics_Step(struct physicsworld* world) {
         double forcefactor = (1.0/(1000.0f/physics_GetStepSize(world)))*2;
         b2Body* b = world2d->w->GetBodyList();
         while (b) {
+            b2Vec2 dbgp = b->GetPosition();
             // obtain physics object struct from body
             struct physicsobject* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
             struct physicsobject2d* obj2d = obj->obj.ect2d;
@@ -1235,7 +1236,11 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world,
 #ifdef USE_PHYSICS3D
     obj->is3d = 0;
 #endif
-    physics_SetMass(obj, 0);
+    // FOR SOME FUCKING REASON
+    if (movable)
+        physics_SetMass(obj, 1);
+    else
+        physics_SetMass(obj, 0);
     return obj;
 #endif
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
@@ -1402,6 +1407,15 @@ void physics_Set2dGravity(struct physicsobject* obj, double x, double y) {
     obj2d->gravityset = 1;
     obj2d->gravityx = x;
     obj2d->gravityy = y;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_Set2dWorldGravity(struct physicsworld* world, double x, double y) {
+    if (!world) return;
+    struct physicsworld2d* world2d = world->wor.ld2d;
+    world2d->gravityx = x;
+    world2d->gravityy = y;
 }
 #endif
 

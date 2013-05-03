@@ -118,9 +118,12 @@ void physics_Get3dMassCenterOffset(struct physicsobject* obj, double* offsetx, d
 #endif
 #ifdef USE_PHYSICS2D
 void physics_Set2dGravity(struct physicsobject* obj, double x, double y);
+void physics_Set2dWorldGravity(struct physicsworld* world, double x, double y);
 #endif
 #ifdef USE_PHYSICS3D
 void physics_Set3dGravity(struct physicsobject* obj, double x, double y, double z);
+void physics_Set3dWorldGravity(struct physicsworld* world, double x, double y,
+ double z);
 #endif
 void physics_UnsetGravity(struct physicsobject* obj);
 #ifdef USE_PHYSICS2D
