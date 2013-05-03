@@ -199,12 +199,19 @@ int luafuncs_object_new(lua_State* l) {
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
-    o->respath = strdup(resource);
-    if (!o->respath) {
-        luacfuncs_object_clearRegistryTable(l, o);
-        free(o);
-        return haveluaerror(l, "failed to allocate resource path for new "
-        "object");
+    // compose object registry entry string
+    snprintf(o->regTableName, sizeof(o->regTableName),
+   "bobj_table_%p", o);
+
+    // remember resource path:
+    if (resource) {
+        o->respath = strdup(resource);
+        if (!o->respath) {
+            luacfuncs_object_clearRegistryTable(l, o);
+            free(o);
+            return haveluaerror(l, "failed to allocate resource path for new "
+            "object");
+        }
     }
 
     // add us to the object list:
@@ -224,12 +231,8 @@ int luafuncs_object_new(lua_State* l) {
 
 void luacfuncs_object_clearRegistryTable(lua_State* l,
 struct blitwizardobject* o) {
-    char s[128];
-    // compose object registry entry string
-    snprintf(s, sizeof(s), "bobj_userdata_table_%p", o);
-
     // clear entry:
-    lua_pushstring(l, s);
+    lua_pushstring(l, o->regTableName);
     lua_pushnil(l);
     lua_settable(l, LUA_REGISTRYINDEX);
 }
@@ -239,12 +242,8 @@ struct blitwizardobject* o) {
     // obtain the hidden table that makes the blitwizard
     // object userdata behave like a table.
 
-    char s[128];
-    // compose object registry entry string
-    snprintf(s, sizeof(s), "bobj_userdata_table_%p", o);
-
     // obtain registry entry:
-    lua_pushstring(l, s);
+    lua_pushstring(l, o->regTableName);
     lua_gettable(l, LUA_REGISTRYINDEX);
 
     // if table is not present yet, create it:
@@ -252,48 +251,49 @@ struct blitwizardobject* o) {
         lua_pop(l, 1);  // pop whatever value this is
 
         // create a proper table:
-        lua_pushstring(l, s);
+        lua_pushstring(l, o->regTableName);
         lua_newtable(l);
+
+        // resize stack:
+        luaL_checkstack(l, 5,
+        "insufficient stack to obtain object registry table");
+
+        // the registry table's __index should go to
+        // blitwizard.object:
+        if (!lua_getmetatable(l, -1)) {
+            // we need to create the meta table first:
+            lua_newtable(l);
+            lua_setmetatable(l, -2);
+
+            // obtain it again:
+            lua_getmetatable(l, -1);
+        }
+        lua_pushstring(l, "__index");
+        lua_getglobal(l, "blitwizard");
+        if (lua_type(l, -1) == LUA_TTABLE) {
+            // extract blitwizard.object:
+            lua_pushstring(l, "object");
+            lua_gettable(l, -2);
+            lua_insert(l, -2);
+            lua_pop(l, 1);  // pop blitwizard table
+
+            if (lua_type(l, -1) != LUA_TTABLE) {
+                // error: blitwizard.object isn't a table as it should be
+                lua_pop(l, 3); // blitwizard.object, "__index", metatable
+            } else {
+                lua_rawset(l, -3); // removes blitwizard.object, "__index"
+                lua_setmetatable(l, -2); // setting remaining metatable
+                // stack is now back empty, apart from new userdata!
+            }
+        } else {
+            // error: blitwizard namespace is broken. nothing we could do
+            lua_pop(l, 3);  // blitwizard, "__index", metatable
+        }
         lua_settable(l, LUA_REGISTRYINDEX);
 
         // obtain it again:
-        lua_pushstring(l, s);
+        lua_pushstring(l, o->regTableName);
         lua_gettable(l, LUA_REGISTRYINDEX);
-    }
-
-    // resize stack:
-    luaL_checkstack(l, 5, "insufficient stack to obtain object registry table");
-
-    // the registry table's __index should go to
-    // blitwizard.object:
-    if (!lua_getmetatable(l, -1)) {
-        // we need to create the meta table first:
-        lua_newtable(l);
-        lua_setmetatable(l, -2);
-
-        // obtain it again:
-        lua_getmetatable(l, -1);
-    }
-    lua_pushstring(l, "__index");
-    lua_getglobal(l, "blitwizard");
-    if (lua_type(l, -1) == LUA_TTABLE) {
-        // extract blitwizard.object:
-        lua_pushstring(l, "object");
-        lua_gettable(l, -2);
-        lua_insert(l, -2);
-        lua_pop(l, 1);  // pop blitwizard table
-
-        if (lua_type(l, -1) != LUA_TTABLE) {
-            // error: blitwizard.object isn't a table as it should be
-            lua_pop(l, 3); // blitwizard.object, "__index", metatable
-        } else {
-            lua_rawset(l, -3); // removes blitwizard.object, "__index"
-            lua_setmetatable(l, -2); // setting remaining metatable
-            // stack is now back empty, apart from new userdata!
-        }
-    } else {
-        // error: blitwizard namespace is broken. nothing we could do
-        lua_pop(l, 3);  // blitwizard, "__index", metatable
     }
 }
 
@@ -301,10 +301,6 @@ struct blitwizardobject* o) {
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
 int args) {
-    char funcName[64];
-    snprintf(funcName, sizeof(funcName),
-    "blitwizard.object event function \"%s\"", eventName);
-
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
 
@@ -345,6 +341,10 @@ int args) {
     // process errors:
     if (ret != 0) {
         const char* e = lua_tostring(l, -1);
+
+        char funcName[64];
+        snprintf(funcName, sizeof(funcName),
+        "blitwizard.object event function \"%s\"", eventName);
         luacfuncs_onError(funcName, e);
     }
 
@@ -474,6 +474,49 @@ int luafuncs_object_setPosition(lua_State* l) {
     }
     objectphysics_setPosition(obj, x, y, z);
     return 0;
+}
+
+/// Set the transparency of the visual representation of this object.
+// Defaults to 0 (solid).
+// @function setTransparency
+// @tparam number transparency transparency from 0 (solid) to 1 (invisible)
+int luafuncs_object_setTransparency(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setTransparency");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setTransparency", "number", lua_strtype(l, 2));
+    }
+    double a = 1 - lua_tonumber(l, 2);
+    if (a < 0) {
+        a = 0;
+    }
+    if (a > 1) {
+        a = 1;
+    }
+#ifdef USE_GRAPHICS
+    luacfuncs_objectgraphics_setAlpha(obj, a);
+#endif
+    return 0;
+}
+
+/// Get the transparency of the visual representation of this object.
+// @function getTransparency
+// @treturn number transparency from 0 (solid) to 1 (invisible)
+int luafuncs_object_getTransparency(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setTransparency");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+#ifdef USE_GRAPHICS
+    return 1-luacfuncs_objectgraphics_getAlpha(obj);
+#else
+    return 1;
+#endif
 }
 
 /// Get the dimensions of an object in game units (with
@@ -610,16 +653,19 @@ int luafuncs_object_setZIndex(lua_State* l) {
 }
 
 
-static void luacfuncs_object_doStep(struct blitwizardobject* o) {
-    lua_State* l = luastate_GetStatePtr();
-    luacfuncs_object_callEvent(l, o, "doAlways", 0);
+static void luacfuncs_object_doStep(lua_State* l,
+struct blitwizardobject* o) {
+    if (o->deleted) {
+        return;
+    }
 
-    // attempt to load graphics if not done yet:
-    luafuncs_objectgraphics_load(o, o->respath);
+    luacfuncs_object_callEvent(l, o, "doAlways", 0);
 }
 
-void luacfuncs_object_doAllSteps(void) {
+int luacfuncs_object_doAllSteps(int count) {
+    if (count < 1) {count = 1;}
     struct blitwizardobject* o;
+    lua_State* l = luastate_GetStatePtr();
 
     // mark all objects as not yet stepped:
     o = objects;
@@ -637,6 +683,7 @@ void luacfuncs_object_doAllSteps(void) {
         // objects get deleted while we doStep them
         while (o) {
             if (o->deleted) {
+                printf("deleted object, restarting loop\n");
                 // we ran into a deleted object (likely deleted by
                 // a DoStep() of another object).
                 // relaunch this run and start over from beginning
@@ -651,16 +698,30 @@ void luacfuncs_object_doAllSteps(void) {
             }
             // call doStep on object:
             struct blitwizardobject* onext = o->next;
-            luacfuncs_object_doStep(o);
+            int i = 0;
+            while (i < count && !o->deleted) {
+                luacfuncs_object_doStep(l, o);
+                i++;
+            }
             o = onext;
         }
     }
+    return count;
 }
+
 void luacfuncs_object_updateGraphics() {
+    lua_State* l = luastate_GetStatePtr();
     // update visual representations of objects:
     struct blitwizardobject* o = objects;
     while (o) {
-        luafuncs_objectgraphics_updatePosition(o);
+        // attempt to load graphics if not done yet:
+        luafuncs_objectgraphics_load(o, o->respath);
+
+        if (luafuncs_objectgraphics_NeedGeometryCallback(o)) {
+            luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0);
+        }
+
+        luacfuncs_objectgraphics_updatePosition(o);
         o = o->next;
     }
 }

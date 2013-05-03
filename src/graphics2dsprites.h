@@ -136,6 +136,15 @@ int visible));
 // (lower index first, and for same z-index
 // with the older sprites first)
 
+// Get alpha transparency for sprites (defaults to 1):
+double graphics2dsprites_getAlpha(
+struct graphics2dsprite* sprite);
+
+// Set alpha for sprites from 0 (invisible)
+// to 1 (solid).
+void graphics2dsprites_setAlpha(
+struct graphics2dsprite* sprite, double alpha);
+
 #ifdef __cplusplus
 }
 #endif

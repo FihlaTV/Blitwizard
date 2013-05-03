@@ -24,6 +24,7 @@
 #ifndef NDEBUG
 // comment this line if you don't want debug output:
 //#define DEBUGTEXTUREMANAGER
+//#define DEBUGTEXTUREMANAGERTHREADS
 #endif
 
 #include "os.h"
@@ -350,6 +351,9 @@ struct graphicstexturemanaged* gtm, size_t width, size_t height) {
                                 return texturemanager_GetRandomGPUTexture(
                                 gtm);
                             }
+#ifdef DEBUGTEXTUREMANAGERTHREADS
+                            printinfo("[TEXMAN-THREADS] spawn");
+#endif
                             thread_Spawn(t,
                             &texturemanager_ScaleTextureThread,
                             scaleinfo);
@@ -433,6 +437,9 @@ request, int listLocked) {
         if (!donotload) {
 #ifdef DEBUGTEXTUREMANAGER
             printinfo("[TEXMAN] initial texture fetch for %s", gtm->path);
+#endif
+#ifdef DEBUGTEXTUREMANAGERTHREADS
+            printinfo("[TEXMAN-THREADS] spawn");
 #endif
             gtm->beingInitiallyLoaded = 1;
 
@@ -527,11 +534,18 @@ static void texturemanager_InitialLoadingDataCallback
     struct texturerequesthandle* request = userdata;
     gtm->beingInitiallyLoaded = 0;
     if (!success) {
+#ifdef DEBUGTEXTUREMANAGER
+    printinfo("[TEXMAN] texture loading fail: %s", gtm->path);
+#endif
         gtm->failedToLoad = 1;
         request->textureDimensionInfoCallback(request,
         0, 0, request->userdata);
         mutex_Release(textureReqListMutex);
         return;
+    } else {
+#ifdef DEBUGTEXTUREMANAGER
+        printinfo("[TEXMAN] successful loading for: %s", gtm->path);
+#endif
     }
     mutex_Release(textureReqListMutex);
 }
@@ -600,12 +614,11 @@ struct texturerequesthandle* request) {
     mutex_Lock(textureReqListMutex);
 
     // remove request from regular list
-    if (request->prev || request->next) {
+    if (request->prev || request->next || request == textureRequestList) {
         if (request->prev) {
             request->prev->next = request->next;
         } else {
             textureRequestList = request->next;
-            textureRequestList->prev = NULL;
         }
         if (request->next) {
             request->next->prev = request->prev;
@@ -613,12 +626,12 @@ struct texturerequesthandle* request) {
     }
 
     // remove from unhandled request list:
-    if (request->unhandledPrev || request->unhandledNext) {
+    if (request->unhandledPrev || request->unhandledNext ||
+    unhandledRequestList == request) {
         if (request->unhandledPrev) {
             request->unhandledPrev->unhandledNext = request->unhandledNext;
         } else {
             unhandledRequestList = request->unhandledNext;
-            unhandledRequestList->unhandledPrev = NULL;
         }
         if (request->unhandledNext) {
             request->unhandledNext->unhandledPrev = request->unhandledPrev;
@@ -634,8 +647,9 @@ struct texturerequesthandle* request) {
 static void texturemanager_ProcessUnhandledRequests(void) {
     struct texturerequesthandle* handle = unhandledRequestList;
     while (handle) {
+        struct texturerequesthandle* handlenext = handle->unhandledNext;
         texturemanager_ProcessRequest(handle, 1);
-        handle = handle->unhandledNext;
+        handle = handlenext;
     }
 }
 

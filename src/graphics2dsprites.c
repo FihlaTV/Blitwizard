@@ -101,6 +101,22 @@ void* userdata) {
     mutex_Release(m);
 }
 
+double graphics2dsprites_getAlpha(
+struct graphics2dsprite* sprite) {
+    return sprite->alpha;
+}
+
+void graphics2dsprites_setAlpha(
+struct graphics2dsprite* sprite, double alpha) {
+    if (alpha > 1) {
+        alpha = 1;
+    }
+    if (alpha < 0) {
+        alpha = 0;
+    }
+    sprite->alpha = alpha;
+}
+
 // this callback will be called by the texture manager:
 static void graphics2dsprites_textureSwitchCallback(
 struct texturerequesthandle* request,
@@ -234,8 +250,8 @@ double x, double y, double angle) {
 static void graphics2dsprites_AddToList(struct graphics2dsprite* s) {
     // seek the earliest sprite (from the back)
     // which has a lower or equal zindex, and add us behind
-    struct graphics2dsprite* s2 = spritelistEnd;
-    while (s2 && s2->zindex > s->zindex) {
+    struct graphics2dsprite* s2 = spritelist;
+    while (s2 && s2->zindex < s->zindex) {
         s2 = s2->prev;
     }
     if (s2) {

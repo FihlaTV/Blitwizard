@@ -73,7 +73,38 @@ const char* resource) {
     }
 }
 
-void luafuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
+void luacfuncs_objectgraphics_setAlpha(struct blitwizardobject* o,
+double alpha) {
+    if (!o->graphics) {
+        return;
+    }
+    if (o->is3d) {
+        // update 3d mesh alpha
+    } else {
+        // update sprite alpha
+        o->graphics->alpha = alpha;
+        if (o->graphics->sprite) {
+            graphics2dsprites_setAlpha(o->graphics->sprite, alpha);
+        }
+    }
+}
+
+double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o) {
+    if (!o->graphics) {
+        return 1;
+    }
+    if (o->is3d) {
+        // get 3d mesh alpha
+    } else {
+        // get 2d sprite alpha
+        if (o->graphics->sprite) {
+            return graphics2dsprites_getAlpha(o->graphics->sprite);
+        }
+    }
+    return o->graphics->alpha;
+}
+
+void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
     if (!o->graphics) {
         return;
     }
@@ -116,7 +147,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
 
 int luafuncs_objectgraphics_NeedGeometryCallback(
 struct blitwizardobject* o) {
-    if (o->graphics->geometryCallbackDone) {
+    if (!o->graphics || o->graphics->geometryCallbackDone) {
         return 0;
     }
 
