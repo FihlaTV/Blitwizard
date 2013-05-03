@@ -179,7 +179,7 @@ void graphicssdlrender_CompleteFrame(void) {
     SDL_RenderPresent(mainrenderer);
 }
 
-static void graphicssdlrender_SpriteCallback(
+static void graphicssdlrender_spriteCallback(
 const char* path, struct graphicstexture* tex,
 double x, double y,
 double width, double height,
@@ -243,8 +243,8 @@ void graphicsrender_Draw(void) {
     graphicssdlrender_StartFrame();
 
     // render sprites:
-    graphics2dsprites_DoForAllSprites(
-    &graphicssdlrender_SpriteCallback);
+    graphics2dsprites_doForAllSprites(
+    &graphicssdlrender_spriteCallback);
 
     graphicssdlrender_CompleteFrame();
 }
