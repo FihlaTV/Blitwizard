@@ -194,7 +194,7 @@ void main_InitAudio(void) {
 static void quitevent(void) {
     char* error;
     if (!luastate_CallFunctionInMainstate("blitwizard.onClose",
-    0, 1, 1, &error, NULL)) {
+    0, 1, 1, &error, NULL, NULL)) {
         printerror("Error when calling blitwizard.onClose: %s",error);
         if (error) {
             free(error);
@@ -230,7 +230,8 @@ static void mousebuttonevent(int button, int release, int x, int y) {
         main_Quit(1);
         return;
     }
-    if (!luastate_CallFunctionInMainstate(funcname, 3, 1, 1, &error, NULL)) {
+    if (!luastate_CallFunctionInMainstate(funcname, 3, 1, 1, &error, NULL,
+    NULL)) {
         printerror("Error when calling %s: %s", funcname, error);
         if (error) {
             free(error);
@@ -255,7 +256,7 @@ static void mousemoveevent(int x, int y) {
         return;
     }
     if (!luastate_CallFunctionInMainstate("blitwizard.onMouseMove",
-    2, 1, 1, &error, NULL)) {
+    2, 1, 1, &error, NULL, NULL)) {
         printerror("Error when calling blitwizard.onMouseMove: %s", error);
         if (error) {
             free(error);
@@ -265,20 +266,59 @@ static void mousemoveevent(int x, int y) {
         return;
     }
 }
-static void keyboardevent(const char* button, int release) {
+
+static void keyboardevent(const char* key, int release) {
     char* error;
-    char onkeyup[] = "blitwizard.onKeyUp";
+
+    // We handle key up and key down,
+    // and for both we ask a hidden (undocumented)
+    // event function for the templates whether they
+    // want to have the key event.
+    //
+    // (This will allow for a neat transparent
+    // addition of an ingame developer console)
+    const char onkeyup[] = "blitwizard.onKeyUp";
+    const  char onkeyup_templates[] = "blitwizard._onKeyUp_Templates";
     const char* funcname = "blitwizard.onKeyDown";
+    const char* funcname_templates = "blitwizard._onKeyDown_Templates";
     if (release) {
         funcname = onkeyup;
+        funcname_templates = onkeyup_templates;
     }
-    if (!luastate_PushFunctionArgumentToMainstate_String(button)) {
+
+    // Call function template function first:
+    int returnboolean = 0;
+    if (!luastate_PushFunctionArgumentToMainstate_String(key)) {
+        printerror("Error when pushing func args to %s", funcname_templates);
+        fatalscripterror();
+        main_Quit(1);
+    }
+    if (!luastate_CallFunctionInMainstate(funcname_templates, 1, 1, 1, &error,
+    NULL, &returnboolean)) {
+        printerror("Error when calling %s: %s", funcname_templates, error);
+        if (error) {
+            free(error);
+        }
+        fatalscripterror();
+        main_Quit(1);
+        return;
+    }
+
+    // if the templates event function has returned true, it handles
+    // the event and we don't propagate it further:
+    if (returnboolean) {
+        return;
+    }
+
+    // otherwise, call the regular event function now:
+    if (!luastate_PushFunctionArgumentToMainstate_String(key)) {
         printerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
     }
-    if (!luastate_CallFunctionInMainstate(funcname, 1, 1, 1, &error, NULL)) {
+    if (!luastate_CallFunctionInMainstate(funcname, 1, 1, 1, &error, NULL,
+    NULL)) {
         printerror("Error when calling %s: %s", funcname, error);
         if (error) {
             free(error);
@@ -290,13 +330,41 @@ static void keyboardevent(const char* button, int release) {
 }
 static void textevent(const char* text) {
     char* error;
+
+    // first, call the undocumented template pre-event function:
+    int returnboolean = 0;
+    if (!luastate_PushFunctionArgumentToMainstate_String(text)) {
+        printerror("Error when pushing func args to "
+        "blitwizard._onText_Templates");
+        fatalscripterror();
+        return;
+    }
+    if (!luastate_CallFunctionInMainstate("blitwizard._onText_Templates",
+    1, 1, 1, &error, NULL, &returnboolean)) {
+        printerror("Error when calling blitwizard._onText_Templates: "
+        "%s", error);
+        if (error) {
+            free(error);
+        }
+        fatalscripterror();
+        return;
+    }
+
+    // now if the template event function returned true,
+    // it handles the event and we don't propagate it further:
+    if (returnboolean) {
+        return;
+    }
+
+    // since the template event function didn't object, continue with
+    // regular event function:
     if (!luastate_PushFunctionArgumentToMainstate_String(text)) {
         printerror("Error when pushing func args to blitwizard.onText");
         fatalscripterror();
         return;
     }
     if (!luastate_CallFunctionInMainstate("blitwizard.onText",
-    1, 1, 1, &error, NULL)) {
+    1, 1, 1, &error, NULL, NULL)) {
         printerror("Error when calling blitwizard.onText: %s", error);
         if (error) {
             free(error);
@@ -817,7 +885,8 @@ int main(int argc, char** argv) {
 #endif
 
     // call init
-    if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1, &error, NULL)) {
+    if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1,
+    &error, NULL, NULL)) {
         printerror("Error: An error occured when calling blitwizard.onInit: %s",error);
         if (error != outofmem) {
             free(error);

@@ -37,6 +37,7 @@
 
 int luafuncs_object_enableStaticCollision(lua_State* l);
 int luafuncs_object_enableMovableCollision(lua_State* l);
+int luafuncs_object_disableCollision(lua_State* l);
 int luafuncs_object_restrictRotation(lua_State* l);
 int luafuncs_object_restrictRotationAroundAxis(lua_State* l);
 int luafuncs_object_impulse(lua_State* l);
