@@ -60,5 +60,8 @@ int luafuncs_trandom(lua_State* l);
 // Internal error handling:
 void luacfuncs_onError(const char* funcname, const char* error);
 
+// Misc:
+size_t lua_tosize_t(lua_State* l, int index);
+
 #endif  // BLITWIZARD_LUAFUNCS_H_
 

@@ -63,5 +63,10 @@ double alpha);
 // get the object alpha (0 invisible, 1 solid)
 double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o);
 
+// set and unset texture clipping window:
+void luacfuncs_objectgraphics_unsetTextureClipping(struct blitwizardobject* o);
+void luacfuncs_objectgraphics_setTextureClipping(struct blitwizardobject* o,
+size_t x, size_t y, size_t width, size_t height);
+
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
 

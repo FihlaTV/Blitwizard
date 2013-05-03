@@ -654,5 +654,13 @@ int luafuncs_setstep(lua_State* l) {
 //     print("Mouse up: button: " .. button .. ", x: " .. x .. ", y: " .. y)
 // end
 
+// an additional helper function:
+size_t lua_tosize_t(lua_State* l, int index) {
+    int i = lua_tonumber(l, index);
+    if (i < 0) {
+        i = 0;
+    }
+    return i;
+}
 
 
