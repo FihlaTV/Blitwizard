@@ -229,6 +229,8 @@ void luastate_CreateObjectTable(lua_State* l) {
     "enableStaticCollision");
     luastate_register2d3dphysics(l, &luafuncs_object_enableMovableCollision,
     "enableMovableCollision");
+    luastate_register2d3dphysics(l, &luafuncs_object_disableCollision,
+    "disableCollision");
     luastate_register2d3dphysics(l, &luafuncs_object_restrictRotation,
     "restrictRotation");
     luastate_register3dphysics(l, &luafuncs_object_restrictRotationAroundAxis,
