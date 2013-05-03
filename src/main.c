@@ -43,7 +43,13 @@ struct physicsobject2d;
 int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force);
 
 // lua funcs doStep processing function:
-void luacfuncs_object_doAllSteps(void);
+int luacfuncs_object_doAllSteps(int count);
+
+// update all object graphics:
+void luacfuncs_object_updateGraphics(void);
+
+// informing lua graphics code of new frame:
+void luacfuncs_objectgraphics_newFrame(void);
 
 // media cleanup callback:
 void checkAllMediaObjectsForCleanup(void);
@@ -57,6 +63,7 @@ char* templatepath = NULL; // global template directory path as determined at ru
 
 char* binpath = NULL;  // path to blitwizard binary
 
+#include "threading.h"
 #include "luastate.h"
 #include "file.h"
 #include "timefuncs.h"
@@ -79,6 +86,8 @@ char* binpath = NULL;  // path to blitwizard binary
 
 int TIMESTEP = 16;
 int MAXLOGICITERATIONS = 50;  // 50 * 16 = 800ms
+int MAXBATCHEDLOGIC = 50/3;
+int MAXPHYSICSITERATIONS = 50;
 
 void main_SetTimestep(int timestep) {
     if (timestep < 16) {
@@ -89,6 +98,10 @@ void main_SetTimestep(int timestep) {
             // ... for longer than 800ms
     if (MAXLOGICITERATIONS < 2) {
         MAXLOGICITERATIONS = 2;
+    }
+    MAXBATCHEDLOGIC = MAXLOGICITERATIONS/3;
+    if (MAXBATCHEDLOGIC < 2) {
+        MAXBATCHEDLOGIC = 2;
     }
 }
 
@@ -375,6 +388,7 @@ HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 int main(int argc, char** argv) {
 #endif
 #endif
+    thread_MarkAsMainThread();
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard %s starting", VERSION);
@@ -800,8 +814,8 @@ int main(int argc, char** argv) {
 #endif
 
     // call init
-    if (!luastate_CallFunctionInMainstate("blitwizard.on_init", 0, 1, 1, &error, NULL)) {
-        printerror("Error: An error occured when calling blitwizard.on_init: %s",error);
+    if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1, &error, NULL)) {
+        printerror("Error: An error occured when calling blitwizard.onInit: %s",error);
         if (error != outofmem) {
             free(error);
         }
@@ -889,43 +903,60 @@ int main(int argc, char** argv) {
 #endif
 
         // call the step function and advance physics
-        int iterations = 0;
-        while ((logictimestamp < time || physicstimestamp < time) && iterations < MAXLOGICITERATIONS) {
-            if (logictimestamp < time && logictimestamp <= physicstimestamp) {
+        int physicsiterations = 0;
+        int logiciterations = 0;
+        while ((logictimestamp < time || physicstimestamp < time) &&
+        (logiciterations < MAXLOGICITERATIONS
+#if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
+ ||  physicsiterations < MAXPHYSICSITERATIONS
+#endif
+)) {
+            if (logiciterations < MAXLOGICITERATIONS &&
+            logictimestamp < time && (logictimestamp <= physicstimestamp
+            || physicsiterations >= MAXPHYSICSITERATIONS)) {
+                // check how much logic we might want to do in a batch:
+                int k = (time-logictimestamp)/TIMESTEP;
+                if (k > MAXBATCHEDLOGIC) {
+                    k = MAXBATCHEDLOGIC;
+                }
                 // call logic functions of all objects:
-                luacfuncs_object_doAllSteps();
-                logictimestamp += TIMESTEP;
+                int i = luacfuncs_object_doAllSteps(k);
+
+                // advance time step:
+                logictimestamp += i * TIMESTEP;
+                logiciterations += i;
             }
 #ifdef USE_PHYSICS2D
-            if (physicstimestamp < time && physicstimestamp <= logictimestamp) {
-                int psteps = ((float)TIMESTEP/(float)physics_GetStepSize(physics2ddefaultworld));
+            if (physicsiterations < MAXPHYSICSITERATIONS &&
+            physicstimestamp < time && (physicstimestamp <= logictimestamp
+            || logiciterations >= MAXLOGICITERATIONS)) {
+                int psteps = ((float)TIMESTEP/(float)physics2d_GetStepSize(physics2ddefaultworld));
                 if (psteps < 1) {psteps = 1;}
                 while (psteps > 0) {
                     physics_Step(physics2ddefaultworld);
                     physicstimestamp += physics_GetStepSize(physics2ddefaultworld);
                     psteps--;
                 }
+                physicsiterations++;
             }
 #else
             physicstimestamp = time + 2000;
 #endif
-            iterations++;
         }
 
         // check if we ran out of iterations:
-        if (iterations >= MAXLOGICITERATIONS) {
+        if (logiciterations >= MAXLOGICITERATIONS ||
+        physicsiterations >= MAXPHYSICSITERATIONS) {
             if (
-#ifdef USE_PHYSICS2D
+#if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
                     physicstimestamp < time ||
 #endif
                  logictimestamp < time) {
                 // we got a problem: we aren't finished,
                 // but we hit the iteration limit
-                if (physicstimestamp < time || logictimestamp < time) {
-                    physicstimestamp = time_GetMilliseconds();
-                    logictimestamp = time_GetMilliseconds();
-                    printwarning("Warning: logic is too slow, maximum logic iterations have been reached (%d)", (int)MAXLOGICITERATIONS);
-                }
+                physicstimestamp = time_GetMilliseconds();
+                logictimestamp = time_GetMilliseconds();
+                printwarning("Warning: logic is too slow, maximum logic iterations have been reached (%d)", (int)MAXLOGICITERATIONS);
             } else {
                 // we don't need to iterate anymore -> everything is fine
             }
@@ -933,6 +964,9 @@ int main(int argc, char** argv) {
 
         // texture manager tick:
         texturemanager_Tick();
+
+        // update object graphics:
+        luacfuncs_object_updateGraphics();
 
 #ifdef USE_GRAPHICS
         if (graphics_AreGraphicsRunning()) {
@@ -963,7 +997,7 @@ int main(int argc, char** argv) {
 #ifdef USE_GRAPHICS
         // be very sleepy if in background
         if (appinbackground) {
-            time_Sleep(20);
+            time_Sleep(80);
         }
 #endif
 
@@ -973,6 +1007,9 @@ int main(int argc, char** argv) {
             // do a gc step once in a while
             luastate_GCCollect();
         }
+
+        // new frame:
+        luacfuncs_objectgraphics_newFrame();
     }
     main_Quit(0);
     return 0;

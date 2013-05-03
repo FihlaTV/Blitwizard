@@ -50,13 +50,16 @@
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "graphicssdltexturestruct.h"
-
+#include "threading.h"
 
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
 
 
 void graphicstexture_Destroy(struct graphicstexture* gt) {
+    if (!thread_IsMainThread()) {
+        return;
+    }
     if (gt->sdltex) {
         SDL_DestroyTexture(gt->sdltex);
     }
@@ -66,6 +69,9 @@ void graphicstexture_Destroy(struct graphicstexture* gt) {
 
 struct graphicstexture* graphicstexture_Create(void* data,
 size_t width, size_t height, int format) {
+    if (!thread_IsMainThread()) {
+        return NULL;
+    }
     // create basic texture struct:
     struct graphicstexture* gt = malloc(sizeof(*gt));
     if (!gt) {
@@ -128,6 +134,9 @@ int graphics_GetTextureFormat(struct graphicstexture* gt) {
 
 int graphicstexture_PixelsFromTexture(
 struct graphicstexture* gt, void* pixels) {
+    if (!thread_IsMainThread()) {
+        return 0;
+    }
     // Lock SDL Texture
     void* pixelsptr;int pitch;
     if (SDL_LockTexture(gt->sdltex, NULL, &pixelsptr, &pitch) != 0) {
@@ -142,6 +151,7 @@ struct graphicstexture* gt, void* pixels) {
         return 1;
     }
 }
+
 
 #endif  // USE_SDL_GRAPHICS
 

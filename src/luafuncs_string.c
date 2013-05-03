@@ -21,10 +21,11 @@
 
 */
 
-/// This is the standard "string" module of Lua. (<a href="http://www.lua.org/manual/5.2/manual.html#6.4">Check here for its documentation</a>)
+/// This is the Lua "string" standard module, as extended by blitwizard.
+//(<a href="http://www.lua.org/manual/5.2/manual.html#6.4">Check here for the documentation of the Lua "string" standard functions</a>)
 //
-// However, it contains a few additional functions
-// provided by blitwizard, as documented here.
+// In blitwizard, the "string" module contains
+// a few additional functions as documented here.
 // May they be useful to your game building!
 // @author Jonas Thiem  (jonas.thiem@gmail.com)
 // @copyright 2011-2013

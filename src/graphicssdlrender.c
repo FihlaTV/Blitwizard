@@ -52,6 +52,8 @@
 #include "graphicstexturelist.h"
 #include "graphicssdltexturestruct.h"
 #include "graphics2dsprites.h"
+#include "graphicssdl.h"
+#include "graphicssdlrender.h"
 
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
@@ -62,9 +64,19 @@ extern int inbackground;
 extern int graphics3d;
 extern int mainwindowfullscreen;
 
+void graphics_SetCamera2DZoom(int index, double newzoom) {
+    if (index == 0) {
+        zoom = newzoom;
+    }
+}
 
+double graphics_GetCamera2DZoom(int index) {
+    if (index != 0) {return 0;}
+    return zoom;
+}
 
-void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, float g, float b, float a) {
+void graphicsrender_DrawRectangle(int x, int y, int width, int height,
+float r, float g, float b, float a) {
     if (!graphics3d) {
         SDL_SetRenderDrawColor(mainrenderer, (int)((float)r * 255.0f),
         (int)((float)g * 255.0f), (int)((float)b * 255.0f), (int)((float)a * 255.0f));
@@ -115,7 +127,7 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
     int i = (int)((float)255.0f * alpha);
     if (SDL_SetTextureAlphaMod(gt->sdltex, i) < 0) {
         printwarning("Warning: Cannot set texture alpha "
-        "mod %d: %s\n",i,SDL_GetError());
+        "mod %d: %s\n", i, SDL_GetError());
     }
     SDL_Point p;
     p.x = (int)((double)rotationcenterx * ((double)drawwidth / src.w));
@@ -170,7 +182,9 @@ void graphicssdlrender_CompleteFrame(void) {
 static void graphicssdlrender_SpriteCallback(
 const char* path, struct graphicstexture* tex,
 double x, double y,
-double width, double height, double angle,
+double width, double height,
+double texwidth, double texheight,
+double angle,
 double alpha, double r, double g, double b,
 int visible) {
     if (!tex) {
@@ -180,16 +194,12 @@ int visible) {
         return;
     }
 
-    // get texture dimensions:
-    size_t texwidth, texheight;
-    graphics_GetTextureDimensions(tex, &texwidth, &texheight);
-
     // evaluate special width/height:
     // negative for flipping, zero'ed etc
     int horiflip = 0;
     if (width == 0 && height == 0) {
-        width = texwidth;
-        height = texheight;
+        width = ((double)texwidth) / UNIT_TO_PIXELS;
+        height = ((double)texheight) / UNIT_TO_PIXELS;
     }
     if (width < 0) {
         width = -width;
@@ -199,6 +209,26 @@ int visible) {
         angle += 180;
         horiflip = !horiflip;
     }
+
+    // scale position according to zoom:
+    x *= UNIT_TO_PIXELS * zoom;
+    y *= UNIT_TO_PIXELS * zoom;
+
+    // image center offset:
+    x -= (width/2.0) * UNIT_TO_PIXELS * zoom;
+    y -= (height/2.0) * UNIT_TO_PIXELS * zoom;
+
+    // screen center offset:
+    unsigned int winw,winh;
+    graphics_GetWindowDimensions(&winw, &winh);
+    x += (winw/2.0);
+    y += (winh/2.0);
+
+    // move according to zoom etc:
+    width *= UNIT_TO_PIXELS * zoom;
+    height *= UNIT_TO_PIXELS * zoom;
+    x -= centerx * UNIT_TO_PIXELS * zoom;
+    y -= centery * UNIT_TO_PIXELS * zoom;
 
     // render:
     graphicsrender_DrawCropped(tex, x, y, alpha,

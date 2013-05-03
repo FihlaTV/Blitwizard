@@ -27,6 +27,7 @@
 #include "luafuncs.h"
 #include "physics.h"
 #include "luafuncs_graphics.h"
+#include "luafuncs_graphics_camera.h"
 #include "luafuncs_object.h"
 #include "luafuncs_objectphysics.h"
 #include "luafuncs_physics.h"
@@ -171,21 +172,38 @@ void luastate_CreateNetTable(lua_State* l) {
     lua_settable(l, -3);
 }
 
+#ifdef USE_GRAPHICS
+void luastate_CreateCameraTable(lua_State* l) {
+    lua_newtable(l);
+    luastate_registerfunc(l, &luafuncs_camera_new, "new");
+    luastate_registerfunc(l, &luafuncs_camera_destroy, "destroy");
+    luastate_registerfunc(l, &luafuncs_camera_set2dCenter,
+    "set2dCenter");
+    luastate_registerfunc(l, &luafuncs_camera_getScreenDimensions,
+    "getScreenDimensions");
+    luastate_registerfunc(l, &luafuncs_camera_setScreenDimensions,
+    "setScreenDimensions");
+    luastate_registerfunc(l, &luafuncs_camera_get2dZoomFactor,
+    "get2dZoomFactor");
+    luastate_registerfunc(l, &luafuncs_camera_set2dZoomFactor,
+    "set2dZoomFactor");
+}
+#endif
+
 void luastate_CreateGraphicsTable(lua_State* l) {
     lua_newtable(l);
-    lua_pushstring(l, "getRendererName");
-    lua_pushcfunction(l, &luafuncs_getRendererName);
-    lua_settable(l, -3);
+    luastate_registergraphics(l, &luafuncs_getRendererName, "getRendererName");
     luastate_registergraphics(l, &luafuncs_setMode, "setMode");
-    lua_pushstring(l, "getWindowSize");
-    lua_pushcfunction(l, &luafuncs_getWindowSize);
+    luastate_registergraphics(l, &luafuncs_getWindowSize, "getWindowSize");
+    luastate_registergraphics(l, &luafuncs_getDisplayModes, "getDisplayModes");
+    luastate_registergraphics(l, &luafuncs_getDesktopDisplayMode,
+    "getDesktopDisplayMode");
+    luastate_registergraphics(l, &luafuncs_getCameras, "getCameras");
+#ifdef USE_GRAPHICS
+    lua_pushstring(l, "camera");
+    luastate_CreateCameraTable(l);
     lua_settable(l, -3);
-    lua_pushstring(l, "getDisplayModes");
-    lua_pushcfunction(l, &luafuncs_getDisplayModes);
-    lua_settable(l, -3);
-    lua_pushstring(l, "getDesktopDisplayMode");
-    lua_pushcfunction(l, &luafuncs_getDesktopDisplayMode);
-    lua_settable(l, -3);
+#endif
 }
 
 void luastate_CreateObjectTable(lua_State* l) {
@@ -194,9 +212,17 @@ void luastate_CreateObjectTable(lua_State* l) {
 
     // "regular" functions:
     luastate_registerfunc(l, &luafuncs_object_new, "new");
+    luastate_registerfunc(l, &luafuncs_object_destroy, "destroy");
     luastate_registerfunc(l, &luafuncs_object_getPosition, "getPosition");
-    luastate_registerfunc(l, &luafuncs_object_getPosition, "setPosition");
+    luastate_registerfunc(l, &luafuncs_object_setPosition, "setPosition");
     luastate_registerfunc(l, &luafuncs_object_setZIndex, "setZIndex");
+    luastate_registerfunc(l, &luafuncs_object_getDimensions, "getDimensions");
+    luastate_registerfunc(l, &luafuncs_object_getScale, "getScale");
+    luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
+
+    // graphics/visual stuff:
+    luastate_registergraphics(l, &luafuncs_object_setTransparency, "setTransparency");
+    luastate_registergraphics(l, &luafuncs_object_getTransparency, "getTransparency");
 
     // physics functions:
     luastate_register2d3dphysics(l, &luafuncs_object_enableStaticCollision,

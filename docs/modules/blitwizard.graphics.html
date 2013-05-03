@@ -60,7 +60,7 @@
     <ul>
         <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@gmail.com)</li>
+        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
     </ul>
 
 
@@ -78,12 +78,34 @@
 <h2><a href="#Class_camera">Class camera </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#camera:destroy">camera:destroy&nbsp;()</a></td>
+	<td class="name" ><a href="#camera:destroy">camera:destroy&nbsp;(camera)</a></td>
 	<td class="summary">Destroy the given camera.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#camera:new">camera:new&nbsp;()</a></td>
 	<td class="summary">Add a new camera.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:set2dCenter">camera:set2dCenter&nbsp;(x_position, y_position)</a></td>
+	<td class="summary">Set the camera's 2d center which is the position in the 2d world
+ centered by the camera.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:getScreenDimensions">camera:getScreenDimensions&nbsp;()</a></td>
+	<td class="summary">Get the dimensions of a camera on the actual
+ screen.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:setScreenDimensions">camera:setScreenDimensions&nbsp;(width, height)</a></td>
+	<td class="summary">Set the dimensions of a camera on the screen.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:get2dZoomFactor">camera:get2dZoomFactor&nbsp;()</a></td>
+	<td class="summary">Get the 2d zoom factor (defaults to 1).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:set2dZoomFactor">camera:set2dZoomFactor&nbsp;(zoom_factor)</a></td>
+	<td class="summary">Set the 2d zoom factor.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#camera:gameUnitsPerPixel">camera:gameUnitsPerPixel&nbsp;()</a></td>
@@ -166,22 +188,30 @@
  the screen up e.g. for split screen multiplayer games, and show
  different world views side by side, you would want multiple
  cameras.
-<p> IMPORTANT: If you want to show a different part of the game world,
+<p> <b>IMPORTANT:</b> If you want to show a different part of the game world,
  this is where you want to be! Grab the first camera from
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> and let's go:
-<p> Use ??? to modify the 2d world
+<p> Use <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">blitwizard.graphics.camera:set2dCenter</a> to modify the 2d world
  position shown, and ??? to modify
  the 3d world position shown if you use any 3d objects.
+<p> <i>Please note the SDL 2d renderer doesn't support more than one camera.
+ The OGRE 3d renderer supports multiple cameras.</i>
     <dl class="function">
     <dt>
     <a name = "camera:destroy"></a>
-    <strong>camera:destroy&nbsp;()</strong>
+    <strong>camera:destroy&nbsp;(camera)</strong>
     </dt>
     <dd>
     Destroy the given camera.
 <p> It will be removed from the <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> list
  and all references you still have to it will become invalid.
 
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">camera</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to be destroyed</li>
+    </ul>
 
 
 
@@ -207,6 +237,122 @@
 
 </dd>
     <dt>
+    <a name = "camera:set2dCenter"></a>
+    <strong>camera:set2dCenter&nbsp;(x_position, y_position)</strong>
+    </dt>
+    <dd>
+    Set the camera's 2d center which is the position in the 2d world
+ centered by the camera.  This allows you to move the camera's shown
+ part of the 2d world around, focussing on other places.
+<p> The position is specified in <b>game units</b> (the same units used
+ for specifying the <a href="../modules/blitwizard.html#object:setPosition">position of objects</a>).
+ The camera initially looks at position 0, 0.
+<p> If you want the camera to follow a 2d object, simply use this function
+ to set the 2d center to the coordinates of the object (you can do this
+ in the object's <a href="../modules/blitwizard.html#object:doAlways">doAlways</a> function).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_position</span>
+            <span class="types"><span class="type">number</span></span>
+         X position of the 2d point to look at</li>
+        <li><span class="parameter">y_position</span>
+            <span class="types"><span class="type">number</span></span>
+         Y position of the 2d point to look at</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:getScreenDimensions"></a>
+    <strong>camera:getScreenDimensions&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the dimensions of a camera on the actual
+ screen.  It usually fills the whole window per default,
+ but not necessarily.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        width Width of the camera on the screen in pixels</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        height Height of the camera on the screen in pixels</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:setScreenDimensions"></a>
+    <strong>camera:setScreenDimensions&nbsp;(width, height)</strong>
+    </dt>
+    <dd>
+    Set the dimensions of a camera on the screen.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         Width of the camera on the screen in pixels</li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         Height of the camera on the screen in pixels</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:get2dZoomFactor"></a>
+    <strong>camera:get2dZoomFactor&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the 2d zoom factor (defaults to 1).
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        zoom_factor the zoom factor of the camera
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:set2dZoomFactor"></a>
+    <strong>camera:set2dZoomFactor&nbsp;(zoom_factor)</strong>
+    </dt>
+    <dd>
+    Set the 2d zoom factor.  Only the 2d layer will be affected.
+ A large zoom factor will zoom into the details of the scene,
+ a small zoom factor will show more surroundings from a larger distance.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">zoom_factor</span>
+            <span class="types"><span class="type">number</span></span>
+         the new zoom factor</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "camera:gameUnitsPerPixel"></a>
     <strong>camera:gameUnitsPerPixel&nbsp;()</strong>
     </dt>
@@ -220,9 +366,21 @@
 
 
 
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        pixels The amount of pixels that equals one game unit at default zoom of 1
+    </ol>
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Get the amount of pixels for one game unit for the first (=default) camera:
+</span> <span class="keyword">local</span> pixels = blitwizard.graphics.getCameras()[<span class="number">1</span>]:gameUnitsPerPixel()</pre>
+    </ul>
 
 </dd>
 </dl>

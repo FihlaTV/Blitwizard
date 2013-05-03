@@ -25,7 +25,7 @@
 // for collision tests and the like. You would handle most physics
 // functionality by using functions of the
 // @{blitwizard.object|blitwizard object} though.
-// @author Jonas Thiem  (jonas.thiem@gmail.com)
+// @author Jonas Thiem (jonas.thiem@gmail.com) et al
 // @copyright 2011-2013
 // @license zlib
 // @module blitwizard.physics

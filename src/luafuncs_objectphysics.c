@@ -464,17 +464,15 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
     // prepare physics data:
     if (!obj->physics) {
         obj->physics = malloc(sizeof(struct objectphysicsdata));
-        memset(obj->physics, 0, sizeof(obj->physics));
+        memset(obj->physics, 0, sizeof(*(obj->physics)));
     }
 
-    // remember the old representation if any::
+    // remember the old representation if any:
     struct physicsobject* old = obj->physics->object;
 
     // create a physics object from the shapes:
-#ifdef USE_PHYSICS3D
-    obj->physics->object = physics_CreateObject(main_DefaultPhysics3dPtr(),
-    obj, movable, shapes);
-#endif
+    obj->physics->object = physics_CreateObject(main_DefaultPhysics2dPtr(),
+    obj, movable, shapes, argcount);
     physics_DestroyShapes(shapes, argcount);
 
     // destroy old representation after transferring settings:
@@ -1073,6 +1071,39 @@ double* x, double* y, double* z) {
     } else {
 #ifdef USE_PHYSICS2D
         physics_Get2dPosition(obj->physics->object, x, y);
+#endif
+    }
+#endif
+}
+
+void objectphysics_setPosition(struct blitwizardobject* obj,
+double x, double y, double z) {
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (!obj->physics || !obj->physics->object) {
+#else
+    if (1) {
+#endif
+        obj->x = x;
+        obj->y = y;
+        if (obj->is3d) {
+            obj->vpos.z = z;
+        }
+        return;
+    }
+#if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
+    if (obj->is3d) {
+#ifdef USE_PHYSICS3D
+        double qx,qy,qz,qrot;
+        physics_Get3dRotationQuaternion(obj->physics->object,
+        &qx, &qy, &qz, &qrot);
+        physics_Warp3d(obj->physics->object, x, y, z,
+        qx, qy, qz, qrot);
+#endif
+    } else {
+#ifdef USE_PHYSICS2D
+        double angle;
+        physics_Get2dRotation(obj->physics->object, &angle);
+        physics_Warp2d(obj->physics->object, x, y, angle);
 #endif
     }
 #endif

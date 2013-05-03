@@ -36,6 +36,9 @@ int luafuncs_object_getPosition(lua_State* l);
 int luafuncs_object_setPosition(lua_State* l);
 int luafuncs_object_setZIndex(lua_State* l);
 int luafuncs_object_destroy(lua_State* l);
+int luafuncs_object_getDimensions(lua_State* l);
+int luafuncs_object_getScale(lua_State* l);
+int luafuncs_object_setScale(lua_State* l);
 
 // set the function on top of the stack as event function:
 // (put nil on top of the stack if you want to clear the event)
@@ -61,8 +64,19 @@ int args);
 void luacfuncs_object_clearRegistryTable(lua_State* l,
 struct blitwizardobject* o);
 
-// do all doAlways events and other event things:
-void luacfuncs_object_doAllSteps(void);
+// do all doAlways events and other event things.
+// Specify a higher count than 1 if you want to do
+// more logic events than 1 at once.
+// The function will return the amount of events
+// it has done (not necessarily as much as you advised!).
+int luacfuncs_object_doAllSteps(int count);
+
+// update the object's graphics:
+void luacfuncs_object_updateGraphics(void);
+
+// get/set object transparency (0 solid, 1 invisible):
+int luafuncs_object_getTransparency(lua_State* l);
+int luafuncs_object_setTransparency(lua_State* l);
 
 #ifdef __cplusplus
 }

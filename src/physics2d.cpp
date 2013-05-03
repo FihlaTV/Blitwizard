@@ -24,6 +24,10 @@
 /* TODO:
     - Currently, specifying offset/rotation before setting up the shape will
      result in undefined behaviour. Change this?
+    - Did some work to remedy the previous point - problem: if you change
+     offsets/rotation in between the addition of polygons or edges, it's
+     undefined behaviour again.
+    - Another problem: It's terribly inefficient for 0 offsets/rotation.
     - Actually implement offsets, not just have them sit idly in the shape
      struct - DONE?
     - struct init stuff
@@ -95,9 +99,13 @@ struct physicsobjectshape3d;
 void _physics_Destroy2dShape(struct physicsobjectshape2d* shape);
 int _physics_Check2dEdgeLoop(struct edge* edge, struct edge* target);
 void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
+inline void _physics_RotateThenOffset2dPoint(double xoffset, double yoffset,
+ double rotation, double* x, double* y);
+void _physics_Apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
+ b2Vec2* targets, int count);
 static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world, struct physicsobject* object, void* userdata, int movable);
-void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object);
-void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object);
+void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
+void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
 static void _physics_Destroy2dObjectDo(struct physicsobject2d* obj);
 
 /*
@@ -202,7 +210,6 @@ struct bodyuserdata {
 
 struct rectangle2d {
     double width, height;
-    b2PolygonShape* b2polygon;
 };
 
 struct edge {
@@ -599,7 +606,6 @@ struct physicsobjectshape* physics_CreateEmptyShapes(int count) {
 void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
     switch ((int)(shape->type)) {
         case BW_S2D_RECT:
-            free(shape->b2.rectangle->b2polygon);
             free(shape->b2.rectangle);
         break;
         case BW_S2D_POLY:
@@ -613,7 +619,7 @@ void _physics_Destroy2dShape(struct physicsobjectshape2d* shape) {
             free(p2);
         break;
         case BW_S2D_CIRCLE:
-            free(shape->b2.circle);
+            delete shape->b2.circle;
         break;
         case BW_S2D_EDGE:
             struct edge* e,* e2;
@@ -664,6 +670,18 @@ size_t physics_GetShapeSize(void) {
 
 
 #ifdef USE_PHYSICS2D
+struct physicsobjectshape2d* _physics_CreateEmpty2dShape() {
+    struct physicsobjectshape2d* shape2d = (struct physicsobjectshape2d*)\
+     malloc(sizeof(*shape2d));
+    shape2d->type = BW_S2D_UNINITIALISED;
+    shape2d->xoffset = 0;
+    shape2d->yoffset = 0;
+    shape2d->rotation = 0;
+    return shape2d;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
 void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width, double height) {
 /*
  it is of critical importance for all of this shit (i.e. functions below as well) that the object is absolutely uninitialised
@@ -671,11 +689,6 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
    XXX MEMORY LEAKS XXX
   checks needed?
 */
-    /* Reasoning for storing w,h and a b2PolygonShape as well:
-     Having the shape "cached" should make rapid creation of objects from this
-     shape faster, whereas w,h are needed for offset/rotation stuff (not likely
-     to be executed a lot).
-    */
     
 #ifndef NDEBUG
     if (shape == NULL) {
@@ -704,25 +717,12 @@ void physics_Set2dShapeRectangle(struct physicsobjectshape* shape, double width,
     if (!rectangle)
         return;
     
-    /* Get offset/rotation from shape only if present (that is, if shape is a
-     2D shape, though does not necessarily include actual b2 shapes, just the
-     physicsobjectshape2d struct itself)
-    */
-    b2Vec2 center(0, 0);
-    double rotation = 0;
-    if (_physics_ShapeType(shape) == 1) {
-        center.x = shape->sha.pe2d->xoffset;
-        center.y = shape->sha.pe2d->yoffset;
-        rotation = shape->sha.pe2d->rotation;
+    if (_physics_ShapeType(shape) != 1) {
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
     }
     
     rectangle->width = width;
     rectangle->height = height;
-    struct b2PolygonShape* box = (struct b2PolygonShape*)malloc(sizeof(*box));
-    box->SetAsBox((width/2) - box->m_radius*2, (height/2) - box->m_radius*2,
-     center, rotation);
-    rectangle->b2polygon = box;
-    
     shape->sha.pe2d->b2.rectangle = rectangle;
     shape->sha.pe2d->type = BW_S2D_RECT;
     
@@ -743,14 +743,20 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
 
     //construct oval shape - by manually calculating the vertices
     struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*vertices)*OVALVERTICES);
+    
+    if (_physics_ShapeType(shape) != 1) {
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
+    
+    
+    //go around with the angle in one full circle:
     int i = 0;
     double angle = 0;
-
-    //go around with the angle in one full circle:
     while (angle < 2*M_PI && i < OVALVERTICES) {
         //calculate and set vertex point
         double x,y;
         ovalpoint(angle, width, height, &x, &y);
+        
         vertices[i].x = x;
         vertices[i].y = -y;
         vertices[i].next = &vertices[i+i];
@@ -771,9 +777,13 @@ void physics_Set2dShapeOval(struct physicsobjectshape* shape, double width, doub
 
 #ifdef USE_PHYSICS2D
 void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter) {
-    b2CircleShape* circle = (b2CircleShape*)malloc(sizeof(*circle));
+    b2CircleShape* circle = new b2CircleShape;
     double radius = diameter/2;
     circle->m_radius = radius - 0.01;
+    
+    if (_physics_ShapeType(shape) != 1) {
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
     
     shape->sha.pe2d->b2.circle = circle;
     shape->sha.pe2d->type = BW_S2D_CIRCLE;
@@ -785,6 +795,10 @@ void physics_Set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
+    if (_physics_ShapeType(shape) != 1) {
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
+    
     if (not shape->sha.pe2d->type == BW_S2D_POLY) {
         shape->sha.pe2d->b2.polygonpoints = NULL;
     }
@@ -905,6 +919,10 @@ void _physics_Add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
 
 #ifdef USE_PHYSICS2D
 void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
+    if (_physics_ShapeType(shape) != 1) {
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+    }
+    
     // FIXME FIXME FIXME this function might be complete bollocks, reconsider pls
     if (not shape->sha.pe2d->type == BW_S2D_EDGE) {
         shape->sha.pe2d->b2.edges = NULL;
@@ -931,88 +949,41 @@ void physics_Add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
 #endif
 
 #ifdef USE_PHYSICS2D
-inline void _physics_RotateThenOffset2dShapePoint(
- struct physicsobjectshape* shape,
- double xoffset, double yoffset, double rotation, double* x, double* y) {
-    struct physicsobjectshape2d* s = shape->sha.pe2d;
-    *x -= s->xoffset;
-    *y -= s->yoffset;
-    rotatevec(*x, *y, (s->rotation)-rotation, x, y);
+inline void _physics_RotateThenOffset2dPoint(double xoffset, double yoffset,
+ double rotation, double* x, double* y) {
+    rotatevec(*x, *y, rotation, x, y);
     *x += xoffset;
     *y += yoffset;
 }
 #endif
 
 #ifdef USE_PHYSICS2D
+void _physics_Apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
+ b2Vec2* targets, int count) {
+    int i = 0;
+    double x,y;
+    while (i < count) {
+        x = targets[i].x;
+        y = targets[i].y;
+        _physics_RotateThenOffset2dPoint(shape2d->xoffset, shape2d->yoffset,
+         shape2d->rotation, &x, &y);
+        targets[i].x = x;
+        targets[i].y = y;
+        
+        ++i;
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
 void physics_Set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation) {
-    /* XXX Note on this function: Since I expect the user will almost never call
-     this thing twice, but will most definitely create several objects from
-     the same shape struct at some point, all the offset application happens
-     here already, NOT during object creation. */
-    /* TODO: le fuck, given that our 2d shape struct contains rects and circles
-     in their b2 form, the whole point of which was that it'd be more efficient
-     - now it's not efficient at all, since we have to get their components,
-     apply transforms, then create a new b2 shape and all
-     UPDATE: applies to rectangles only, honestly fk rectangles */
-    /* procedure:
-        what already happened: 1.) rotate by rot_old 2.) apply x+xoffs_old, y+yoffs_old
-        so what we have to do: 1.) subtract offs_old 2.) rotate by rot_old-rot_new 3.) add offs_new
-        might be easier w/ matrices, but also more proc-time-consuming probably
-    */
-    struct physicsobjectshape2d* s = shape->sha.pe2d;
-    // effective offsets and rotation
-    /*double exoffset = xoffset-(s->xoffset);
-    double eyoffset = yoffset-(s->yoffset);
-    double erotation = rotation-(s->rotation);*/
-    
-    // stupid compiler
-    b2PolygonShape* b2polygon = NULL;
-    double new_x=0, new_y=0;
-    b2Vec2 new_center;
-    struct polygonpoint* p = NULL;
-    struct edge* e = NULL;
-    
-    switch (s->type) {
-        case BW_S2D_RECT:
-            b2polygon = s->b2.rectangle->b2polygon;
-            new_x = b2polygon->m_centroid.x;
-            new_y = b2polygon->m_centroid.y;
-            //new_center = b2polygon->m_centroid; // copy
-            _physics_RotateThenOffset2dShapePoint(shape, xoffset, yoffset,
-             rotation, &new_x, &new_y);
-            new_center = b2Vec2(new_x, new_y);
-            b2polygon->SetAsBox(s->b2.rectangle->width,
-             s->b2.rectangle->height, new_center, rotation);
-        break;
-        case BW_S2D_POLY:
-            p = s->b2.polygonpoints;
-            while (p->next != NULL) {
-                _physics_RotateThenOffset2dShapePoint(shape, xoffset, yoffset, 
-                 rotation, &(p->x), &(p->y));
-                p = p->next;
-            }
-        break;
-        case BW_S2D_CIRCLE:
-            /* Don't need rotation etc. here as it's a fricking circle and it
-             doesn't have an offset of its own (i.e. seperate from this offset
-             mechanism.
-            */
-            s->b2.circle->m_p.x = xoffset;
-            s->b2.circle->m_p.y = yoffset;
-        break;
-        case BW_S2D_EDGE:
-            e = s->b2.edges;
-            while (e->next != NULL) {
-                _physics_RotateThenOffset2dShapePoint(shape, xoffset, yoffset, 
-                 rotation, &(e->x1), &(e->y1));
-                _physics_RotateThenOffset2dShapePoint(shape, xoffset, yoffset, 
-                 rotation, &(e->x2), &(e->y2));
-                e = e->next;
-            }
-        break;
-    
+    if (_physics_ShapeType(shape) != 1) {
+        shape->sha.pe2d = _physics_CreateEmpty2dShape();
+        printerror("Shouldn't be doing this: Set2dShapeOffsetRotation before "\
+         "having assigned any shape data.");
     }
     
+    struct physicsobjectshape2d* s = shape->sha.pe2d;
     s->xoffset = xoffset;
     s->yoffset = yoffset;
     s->rotation = rotation;
@@ -1068,7 +1039,8 @@ static struct physicsobject2d* _physics_Create2dObj(struct physicsworld2d* world
 // TODO: Weaken coupling, i.e. no direct reference to physicsobject2d, instead take edges and return b2 chains
 // (goal: common code for fixture etc. in outer function)
 // problem: memory mgmt., variable number of returned edge shapes
-void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object) {
+void _physics_Create2dObjectEdges_End(struct edge* edges,
+ struct physicsobject2d* object, struct physicsobjectshape2d* shape2d) {
     /* not sure if this is needed anymore, probably not
     if (!context->edgelist) {
         physics2d_DestroyObject(context->obj);
@@ -1142,6 +1114,9 @@ void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d
             printf("Chain vertex: %f, %f\n", varray[u].x, varray[u].y);
             u++;
         }*/
+        
+        // Rotate and offset every vector in varray
+        _physics_Apply2dOffsetRotation(shape2d, varray, varraysize);
     
         //construct an edge shape from this
         if (e->inaloop) {
@@ -1164,7 +1139,8 @@ void _physics_Create2dObjectEdges_End(struct edge* edges, struct physicsobject2d
 
 #ifdef USE_PHYSICS2D
 // TODO: cf. function above
-void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object) {
+void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints,
+ struct physicsobject2d* object, struct physicsobjectshape2d* shape2d) {
     struct polygonpoint* p = polygonpoints;
     // TODO: cache this instead?
     int i = 0;
@@ -1180,6 +1156,8 @@ void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct 
         ++i;
         p = p->next;
     }
+    _physics_Apply2dOffsetRotation(shape2d, varray, i);
+    
     b2PolygonShape shape;
     shape.Set(varray, i);
     
@@ -1193,7 +1171,9 @@ void _physics_Create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct 
 }
 #endif
 
-struct physicsobject* physics_CreateObject(struct physicsworld* world, void* userdata, int movable, struct physicsobjectshape* shapelist) {
+struct physicsobject* physics_CreateObject(struct physicsworld* world,
+ void* userdata, int movable, struct physicsobjectshape* shapelist,
+ int shapecount) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (!world->is3d) {
 #endif
@@ -1205,7 +1185,8 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
     }
     
     struct physicsobjectshape* s = shapelist;
-    while (s != NULL) {
+    int i = 0;
+    while (i < shapecount) {
         if (_physics_ShapeType(s) != 0) {
             // TODO: error msg?
             break;
@@ -1213,27 +1194,42 @@ struct physicsobject* physics_CreateObject(struct physicsworld* world, void* use
         b2FixtureDef fixtureDef;
         switch ((int)(s->sha.pe2d->type)) {
             case BW_S2D_RECT:
-                fixtureDef.shape = s->sha.pe2d->b2.rectangle->b2polygon;
+                // TODO: bit messy (no memory avail. check)
+                fixtureDef.shape = new b2PolygonShape;
+                ((b2PolygonShape*)(fixtureDef.shape))->SetAsBox(
+                 s->sha.pe2d->b2.rectangle->width,
+                 s->sha.pe2d->b2.rectangle->height,
+                 b2Vec2(s->sha.pe2d->xoffset, s->sha.pe2d->yoffset),
+                 s->sha.pe2d->rotation);
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
                 obj2d->body->SetFixedRotation(false);
                 obj2d->body->CreateFixture(&fixtureDef);
+                delete fixtureDef.shape;
             break;
             case BW_S2D_POLY:
-                _physics_Create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints, obj2d);
+                _physics_Create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints,
+                 obj2d, s->sha.pe2d);
             break;
             case BW_S2D_CIRCLE:
-                fixtureDef.shape = s->sha.pe2d->b2.circle;
+                fixtureDef.shape = (new b2CircleShape);
+                ((b2CircleShape*)(fixtureDef.shape))->m_p = b2Vec2(
+                 s->sha.pe2d->xoffset, s->sha.pe2d->yoffset);
+                ((b2CircleShape*)(fixtureDef.shape))->m_radius = s->sha.pe2d->\
+                 b2.circle->m_radius;
                 fixtureDef.friction = 1; // TODO: ???
                 fixtureDef.density = 1;
                 obj2d->body->SetFixedRotation(false);
                 obj2d->body->CreateFixture(&fixtureDef);
+                delete fixtureDef.shape;
             break;
             case BW_S2D_EDGE:
-                _physics_Create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj2d);
+                _physics_Create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj2d,
+                 s->sha.pe2d);
             break;
         }
         s += 1;
+        ++i;
     }
     obj->obj.ect2d = obj2d;
 #ifdef USE_PHYSICS3D

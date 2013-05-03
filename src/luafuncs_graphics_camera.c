@@ -159,7 +159,7 @@ int index, int arg, const char* func) {
         haveluaerror(l, badargument2, arg, func, "not a valid camera");
     }
     struct luacameralistentry* c = idref->ref.camera;
-    if (c->cameraslot) {
+    if (c->cameraslot < 0) {
         haveluaerror(l, badargument2, arg, func, "this camera was deleted");
     }
     return c;
@@ -170,6 +170,7 @@ int index, int arg, const char* func) {
 // @function getCameras
 // @treturn table a table list array containing @{blitwizard.graphics.camera|camera} items
 int luafuncs_getCameras(lua_State* l) {
+    lua_newtable(l);
     int c = graphics_GetCameraCount();
     int i = 0;
     while (i < c) {
@@ -185,11 +186,12 @@ int luafuncs_getCameras(lua_State* l) {
             e->next->prev = e;
         }
         luacameralist = e;
-
+        lua_pushnumber(l, i+1);
         luacfuncs_pushcameraidref(l, e);
+        lua_settable(l, -3);
         i++;
     }
-    return c;
+    return 1;
 }
 
 /// Blitwizard camera object which represents a render camera.
@@ -204,13 +206,16 @@ int luafuncs_getCameras(lua_State* l) {
 // different world views side by side, you would want multiple
 // cameras.
 //
-// IMPORTANT: If you want to show a different part of the game world,
+// <b>IMPORTANT:</b> If you want to show a different part of the game world,
 // this is where you want to be! Grab the first camera from
 // @{blitwizard.graphics.getCameras} and let's go:
 //
 // Use @{blitwizard.graphics.camera:set2dCenter} to modify the 2d world
 // position shown, and @{blitwizard.graphics.camera:set3dCenter} to modify
 // the 3d world position shown if you use any 3d objects.
+//
+// <i>Please note the SDL 2d renderer doesn't support more than one camera.
+// The OGRE 3d renderer supports multiple cameras.</i>
 // @type camera
 
 struct luacameralist {
@@ -228,6 +233,7 @@ struct luacameralist {
 // It will be removed from the @{blitwizard.graphics.getCameras} list
 // and all references you still have to it will become invalid.
 // @function destroy
+// @tparam userdata camera the @{blitwizard.graphics.camera|camera} to be destroyed
 int luafuncs_camera_destroy(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
     return haveluaerror(l, "the SDL renderer backend doesn't support destroying or adding cameras");
@@ -254,6 +260,94 @@ int luafuncs_camera_new(lua_State* l) {
 #endif
 }
 
+/// Set the camera's 2d center which is the position in the 2d world
+// centered by the camera. This allows you to move the camera's shown
+// part of the 2d world around, focussing on other places.
+//
+// The position is specified in <b>game units</b> (the same units used
+// for specifying the @{blitwizard.object:setPosition|position of objects}).
+// The camera initially looks at position 0, 0.
+//
+// If you want the camera to follow a 2d object, simply use this function
+// to set the 2d center to the coordinates of the object (you can do this
+// in the object's @{blitwizard.object:doAlways|doAlways} function).
+// @function set2dCenter
+// @tparam number x_position X position of the 2d point to look at
+// @tparam number y_position Y position of the 2d point to look at
+int luafuncs_camera_set2dCenter(lua_State* l) {
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizard.graphics.camera:set2dCenter");
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.graphics.camera:set2dCenter", "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.graphics.camera:set3dCenter", "number", lua_strtype(l, 3));
+    }
+    graphics_SetCamera2DCenterXY(e->cameraslot, lua_tonumber(l, 2),
+    lua_tonumber(l, 3)); 
+    return 0;
+}
+
+/// Get the dimensions of a camera on the actual
+// screen. It usually fills the whole window per default,
+// but not necessarily.
+// @function getScreenDimensions
+// @treturn number width Width of the camera on the screen in pixels
+// @treturn number height Height of the camera on the screen in pixels
+int luafuncs_camera_getScreenDimensions(lua_State* l) {
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizard.graphics.camera:getScreenDimensions");
+    lua_pushnumber(l, graphics_GetCameraWidth(e->cameraslot));
+    lua_pushnumber(l, graphics_GetCameraHeight(e->cameraslot));
+    return 2;
+}
+
+/// Set the dimensions of a camera on the screen.
+// @function setScreenDimensions
+// @tparam number width Width of the camera on the screen in pixels
+// @tparam number height Height of the camera on the screen in pixels
+int luafuncs_camera_setScreenDimensions(lua_State* l) {
+#ifdef USE_SDL_GRAPHICS
+    return haveluaerror(l, "the SDL renderer doesn't support resizing cameras");
+#else
+#error "Unimplemented code path"
+#endif
+}
+
+/// Get the 2d zoom factor (defaults to 1).
+// @function get2dZoomFactor
+// @treturn number zoom_factor the zoom factor of the camera
+int luafuncs_camera_get2dZoomFactor(lua_State* l) {
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizard.graphics.camera:get2dZoomFactor");
+    lua_pushnumber(l, graphics_GetCamera2DZoom(0));
+    return 1;
+}
+
+/// Set the 2d zoom factor. Only the 2d layer will be affected.
+// A large zoom factor will zoom into the details of the scene,
+// a small zoom factor will show more surroundings from a larger distance.
+// @function set2dZoomFactor
+// @tparam number zoom_factor the new zoom factor
+int luafuncs_camera_set2dZoomFactor(lua_State* l) {
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizard.graphics.camera:set2dZoomFactor");
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.graphics.camera:set2dZoomFactor",
+        "number", lua_strtype(l, 2));
+    }
+    if (lua_tonumber(l, 2) <= 0) {
+        return haveluaerror(l, badargument2,
+        "blitwizard.graphics.camera:set2dZoomFactor",
+        "zoom factor is zero or negative");
+    }
+    graphics_SetCamera2DZoom(e->cameraslot, lua_tonumber(l, 2));
+    return 0;
+}
+
 /// Get the extend in pixels a game unit in the 2d world
 // has at the default camera zoom level of 1.
 //
@@ -263,6 +357,10 @@ int luafuncs_camera_new(lua_State* l) {
 // position in the world etc.
 //
 // @function gameUnitsPerPixel
+// @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
+// @usage
+// -- Get the amount of pixels for one game unit for the first (=default) camera:
+// local pixels = blitwizard.graphics.getCameras()[1]:gameUnitsPerPixel()
 int luafuncs_camera_gameUnitsPerPixel(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
     l, 1, 0, "blitwizard.graphics.camera:gameUnitsPerPixel");

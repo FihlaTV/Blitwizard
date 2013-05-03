@@ -21,11 +21,11 @@
 
 */
 
-/// This is the default Lua "os" module.
-// (<a href="http://www.lua.org/manual/5.2/manual.html#6.9">Check here for its documentation</a>)
+/// This is the Lua "os" standard module, as extended by blitwizard.
+// (<a href="http://www.lua.org/manual/5.2/manual.html#6.9">Check here for the documentation of the Lua "os" standard functions</a>)
 //
-// However, blitwizard extends
-// it with a few additional functions as documented here.
+// Blitwizard extends Lua's "os" module with
+// a few additional functions as documented here.
 // Hopefully they'll be useful with your game building!
 // @author Jonas Thiem  (jonas.thiem@gmail.com)
 // @copyright 2011-2013

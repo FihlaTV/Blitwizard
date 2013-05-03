@@ -272,4 +272,41 @@ void thread_Spawn(threadinfo* t, void (*func)(void* userdata), void* userdata) {
 #endif
 }
 
+// code for storing, and recalling/identifying the main thread:
+
+#ifdef UNIX
+pthread_t mainThread;
+#else
+#ifdef WINDOWS
+int mainThread;
+#else
+#error "Code path not written"
+#endif
+#endif
+void thread_MarkAsMainThread(void) {
+    // mark current thread as main thread
+#ifdef UNIX
+    mainThread = pthread_self();
+#else
+#ifdef WINDOWS
+    mainThread = GetCurrentThreadId();
+#else
+#error "Missing code path"
+#endif
+#endif
+}
+
+int thread_IsMainThread(void) {
+#ifdef UNIX
+    return (pthread_self() == mainThread);
+#else
+#ifdef WINDOWS
+    return (GetCurrentThreadId() == mainThread);
+#else
+#error "Missing code path"
+#endif
+#endif
+}
+
+
 

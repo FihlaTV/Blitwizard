@@ -54,5 +54,12 @@ void* userdata);
 // free threadinfo (you can safely do this when the thread is still running):
 void thread_FreeInfo(threadinfo* tinfo);
 
+// mark a thread as the main thread:
+void thread_MarkAsMainThread(void);
+// (use this right at program start)
+
+// check if the current thread is the marked main thread:
+int thread_IsMainThread(void);
+
 #endif  // BLITWIZARD_THREADING_H_
 

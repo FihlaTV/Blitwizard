@@ -23,7 +23,7 @@
 
 /// The blitwizard graphics namespace allows to set up the graphics device
 // for graphical 2d/3d output.
-// @author Jonas Thiem  (jonas.thiem@gmail.com)
+// @author Jonas Thiem (jonas.thiem@gmail.com) et al
 // @copyright 2011-2013
 // @license zlib
 // @module blitwizard.graphics

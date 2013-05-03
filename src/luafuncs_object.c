@@ -25,7 +25,7 @@
 // @{blitwizard.object|blitwizard game entity object} and various sub
 // namespaces for @{blitwizard.physics|physics},
 // @{blitwizard.graphics|graphics} and more.
-// @author Jonas Thiem  (jonas.thiem@gmail.com)
+// @author Jonas Thiem (jonas.thiem@gmail.com) et al
 // @copyright 2011-2013
 // @license zlib
 // @module blitwizard
@@ -47,6 +47,7 @@
 #include "luafuncs_object.h"
 #include "luafuncs_objectgraphics.h"
 #include "luafuncs_objectphysics.h"
+#include "graphics2dsprites.h"
 
 struct blitwizardobject* objects = NULL;
 struct blitwizardobject* deletedobjects = NULL;
@@ -194,10 +195,24 @@ int luafuncs_object_new(lua_State* l) {
     struct blitwizardobject* o = malloc(sizeof(*o));
     if (!o) {
         luacfuncs_object_clearRegistryTable(l, o);
-        return haveluaerror(l, "Failed to allocate new object");
+        return haveluaerror(l, "failed to allocate new object");
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
+    // compose object registry entry string
+    snprintf(o->regTableName, sizeof(o->regTableName),
+   "bobj_table_%p", o);
+
+    // remember resource path:
+    if (resource) {
+        o->respath = strdup(resource);
+        if (!o->respath) {
+            luacfuncs_object_clearRegistryTable(l, o);
+            free(o);
+            return haveluaerror(l, "failed to allocate resource path for new "
+            "object");
+        }
+    }
 
     // add us to the object list:
     o->next = objects;
@@ -207,7 +222,7 @@ int luafuncs_object_new(lua_State* l) {
     objects = o;
 
     // if resource is present, start loading it:
-    luafuncs_objectgraphics_load(o, resource);
+    luafuncs_objectgraphics_load(o, o->respath);
 
     // push idref to object onto stack as return value:
     luacfuncs_pushbobjidref(l, o);
@@ -216,12 +231,8 @@ int luafuncs_object_new(lua_State* l) {
 
 void luacfuncs_object_clearRegistryTable(lua_State* l,
 struct blitwizardobject* o) {
-    char s[128];
-    // compose object registry entry string
-    snprintf(s, sizeof(s), "bobj_userdata_table_%p", o);
-
     // clear entry:
-    lua_pushstring(l, s);
+    lua_pushstring(l, o->regTableName);
     lua_pushnil(l);
     lua_settable(l, LUA_REGISTRYINDEX);
 }
@@ -231,12 +242,8 @@ struct blitwizardobject* o) {
     // obtain the hidden table that makes the blitwizard
     // object userdata behave like a table.
 
-    char s[128];
-    // compose object registry entry string
-    snprintf(s, sizeof(s), "bobj_userdata_table_%p", o);
-
     // obtain registry entry:
-    lua_pushstring(l, s);
+    lua_pushstring(l, o->regTableName);
     lua_gettable(l, LUA_REGISTRYINDEX);
 
     // if table is not present yet, create it:
@@ -244,48 +251,49 @@ struct blitwizardobject* o) {
         lua_pop(l, 1);  // pop whatever value this is
 
         // create a proper table:
-        lua_pushstring(l, s);
+        lua_pushstring(l, o->regTableName);
         lua_newtable(l);
+
+        // resize stack:
+        luaL_checkstack(l, 5,
+        "insufficient stack to obtain object registry table");
+
+        // the registry table's __index should go to
+        // blitwizard.object:
+        if (!lua_getmetatable(l, -1)) {
+            // we need to create the meta table first:
+            lua_newtable(l);
+            lua_setmetatable(l, -2);
+
+            // obtain it again:
+            lua_getmetatable(l, -1);
+        }
+        lua_pushstring(l, "__index");
+        lua_getglobal(l, "blitwizard");
+        if (lua_type(l, -1) == LUA_TTABLE) {
+            // extract blitwizard.object:
+            lua_pushstring(l, "object");
+            lua_gettable(l, -2);
+            lua_insert(l, -2);
+            lua_pop(l, 1);  // pop blitwizard table
+
+            if (lua_type(l, -1) != LUA_TTABLE) {
+                // error: blitwizard.object isn't a table as it should be
+                lua_pop(l, 3); // blitwizard.object, "__index", metatable
+            } else {
+                lua_rawset(l, -3); // removes blitwizard.object, "__index"
+                lua_setmetatable(l, -2); // setting remaining metatable
+                // stack is now back empty, apart from new userdata!
+            }
+        } else {
+            // error: blitwizard namespace is broken. nothing we could do
+            lua_pop(l, 3);  // blitwizard, "__index", metatable
+        }
         lua_settable(l, LUA_REGISTRYINDEX);
 
         // obtain it again:
-        lua_pushstring(l, s);
+        lua_pushstring(l, o->regTableName);
         lua_gettable(l, LUA_REGISTRYINDEX);
-    }
-
-    // resize stack:
-    luaL_checkstack(l, 5, "insufficient stack to obtain object registry table");
-
-    // the registry table's __index should go to
-    // blitwizard.object:
-    if (!lua_getmetatable(l, -1)) {
-        // we need to create the meta table first:
-        lua_newtable(l);
-        lua_setmetatable(l, -2);
-
-        // obtain it again:
-        lua_getmetatable(l, -1);
-    }
-    lua_pushstring(l, "__index");
-    lua_getglobal(l, "blitwizard");
-    if (lua_type(l, -1) == LUA_TTABLE) {
-        // extract blitwizard.object:
-        lua_pushstring(l, "object");
-        lua_gettable(l, -2);
-        lua_insert(l, -2);
-        lua_pop(l, 1);  // pop blitwizard table
-
-        if (lua_type(l, -1) != LUA_TTABLE) {
-            // error: blitwizard.object isn't a table as it should be
-            lua_pop(l, 3); // blitwizard.object, "__index", metatable
-        } else {
-            lua_rawset(l, -3); // removes blitwizard.object, "__index"
-            lua_setmetatable(l, -2); // setting remaining metatable
-            // stack is now back empty, apart from new userdata!
-        }
-    } else {
-        // error: blitwizard namespace is broken. nothing we could do
-        lua_pop(l, 3);  // blitwizard, "__index", metatable
     }
 }
 
@@ -293,10 +301,6 @@ struct blitwizardobject* o) {
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
 int args) {
-    char funcName[64];
-    snprintf(funcName, sizeof(funcName),
-    "blitwizard.object event function \"%s\"", eventName);
-
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
 
@@ -337,6 +341,10 @@ int args) {
     // process errors:
     if (ret != 0) {
         const char* e = lua_tostring(l, -1);
+
+        char funcName[64];
+        snprintf(funcName, sizeof(funcName),
+        "blitwizard.object event function \"%s\"", eventName);
         luacfuncs_onError(funcName, e);
     }
 
@@ -379,6 +387,7 @@ int luafuncs_object_destroy(lua_State* l) {
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
+    // remove from old list:
     if (o->prev) {
       o->prev->next = o->next;
     } else {
@@ -387,8 +396,11 @@ int luafuncs_object_destroy(lua_State* l) {
     if (o->next) {
       o->next->prev = o->prev;
     }
+    // add to deleted list:
     o->next = deletedobjects;
-    deletedobjects->prev = o;
+    if (o->next) {
+        o->next->prev = o;
+    }
     deletedobjects = o;
     o->prev = NULL;
 
@@ -421,12 +433,191 @@ int luafuncs_object_getPosition(lua_State* l) {
     return 2;
 }
 
-/// Set the object to a new position.
+/// Set the object to a new position. Specify two coordinates for 2d
+// objects (x, y) and three for 3d objects (x, y, z).
+//
+// Please note this game position is in <b>game units</b>, not pixels.
+//
+// To find out how much pixels 1 game unit is in the 2d world with
+// a default zoom of 1, check @{blitwizard.graphics.camera:gameUnitsPerPixel}.
+//
+// For the 3d world, one game unit should roughly equal one meter
+// if your game plays in a normal human-scale environment
+// (this works best for the physics).
 // @function setPosition
 // @tparam number pos_x x coordinate
 // @tparam number pos_y y coordinate
 // @tparam number pos_z (only for 3d objects) z coordinate
 int luafuncs_object_setPosition(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setPosition");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 3));
+    }
+    if (obj->is3d && lua_type(l, 4) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 4));
+    }
+    double x,y,z;
+    x = lua_tonumber(l, 2);
+    y = lua_tonumber(l, 3);
+    if (obj->is3d) {
+        z = lua_tonumber(l, 4);
+    }
+    objectphysics_setPosition(obj, x, y, z);
+    return 0;
+}
+
+/// Set the transparency of the visual representation of this object.
+// Defaults to 0 (solid).
+// @function setTransparency
+// @tparam number transparency transparency from 0 (solid) to 1 (invisible)
+int luafuncs_object_setTransparency(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setTransparency");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setTransparency", "number", lua_strtype(l, 2));
+    }
+    double a = 1 - lua_tonumber(l, 2);
+    if (a < 0) {
+        a = 0;
+    }
+    if (a > 1) {
+        a = 1;
+    }
+#ifdef USE_GRAPHICS
+    luacfuncs_objectgraphics_setAlpha(obj, a);
+#endif
+    return 0;
+}
+
+/// Get the transparency of the visual representation of this object.
+// @function getTransparency
+// @treturn number transparency from 0 (solid) to 1 (invisible)
+int luafuncs_object_getTransparency(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setTransparency");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+#ifdef USE_GRAPHICS
+    return 1-luacfuncs_objectgraphics_getAlpha(obj);
+#else
+    return 1;
+#endif
+}
+
+/// Get the dimensions of an object in game units (with
+// @{blitwizard.object:setScale|scaling} taking into account).
+//
+// For a 2d sprite, this returns two components (x, y) which
+// match the sprite's width and height, for a 3d object,
+// this returns a 3d box which would encapsulate the 3d mesh
+// in its first initial animation frame.
+//
+// If you call this function before getting the
+// @{blitwizard.object:onGeometryLoaded|geometry callback},
+// an error will be thrown that the information is not available
+// yet.
+// @function getDimensions
+// @treturn number x_size X dimension value
+// @treturn number y_size Y dimension value
+// @treturn number z_size (only for 3d objects) Z dimension value
+int luafuncs_object_getDimensions(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setPosition");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    double x, y, z;
+    if (!luacfuncs_objectgraphics_getDimensions(obj, &x, &y, &z)) {
+        return haveluaerror(l, "Object dimensions not known");
+    }
+    lua_pushnumber(l, x);
+    lua_pushnumber(l, y);
+    if (obj->is3d) {
+        lua_pushnumber(l, z);
+    }
+    return 2+(obj->is3d);
+}
+
+/// Get the object's scale, which per default is 1,1 for 2d objects
+// and 1,1,1 for 3d objects. The scale is a factor applied to the
+// dimensions of an object to stretch or shrink it.
+//
+// Returns 2 values for 2d objects, 3 values for 3d objects.
+// @function getScale
+// @treturn number x_scale X scale factor
+// @treturn number y_scale Y scale factor
+// @treturn number z_scale (optional) Z scale factor
+int luafuncs_object_getScale(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getScale");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (obj->is3d) {
+        lua_pushnumber(l, obj->scale3d.x);
+        lua_pushnumber(l, obj->scale3d.y);
+        lua_pushnumber(l, obj->scale3d.z);
+        return 3;
+    } else {
+        lua_pushnumber(l, obj->scale2d.x);
+        lua_pushnumber(l, obj->scale2d.y);
+        return 2;
+    }
+}
+
+/// Change an object's scale, also see @{blitwizard.object:getScale}.
+// This allows to stretch/shrink an object.
+//
+// Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
+// @function setScale
+// @tparam number x_scale X scale factor
+// @tparam number y_scale Y scale factor
+// @tparam number z_scale (optional) Z scale factor
+int luafuncs_object_setScale(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setScale");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setScale", "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.object.setScale", "number", lua_strtype(l, 3));
+    }
+    if (obj->is3d && lua_type(l, 4) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.object.setPosition", "number", lua_strtype(l, 4));
+    }
+    double x,y,z;
+    x = lua_tonumber(l, 2);
+    y = lua_tonumber(l, 3);
+    if (obj->is3d) {
+        z = lua_tonumber(l, 4);
+        obj->scale3d.x = x;
+        obj->scale3d.y = y;
+        obj->scale3d.z = z;
+    } else {
+        obj->scale2d.x = x;
+        obj->scale2d.y = y;
+    }
     return 0;
 }
 
@@ -436,21 +627,45 @@ int luafuncs_object_setPosition(lua_State* l) {
 // z index, the newer object will be drawn on top.
 //
 // The z index will be internally set to an integer,
-// so use numbers like 1, 2, 3, 99, ...
+// so use numbers like -25, 0, 1, 2, 3, 99, ...
+//
+// The default z index is 0.
 // @function setZIndex
 // @tparam number z_index New z index
 int luafuncs_object_setZIndex(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setZIndex");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object.setZIndex", "number", lua_strtype(l, 2));
+    }
+    if (!obj->is3d) {
+        return haveluaerror(l, "z index can only be set for 2d objects");
+    } else {
+        if (obj->graphics && obj->graphics->sprite) {
+            graphics2dsprites_setZIndex(obj->graphics->sprite, lua_tointeger(l, 2));
+        }
+    }
     return 0;
 }
 
 
-static void luacfuncs_object_doStep(struct blitwizardobject* o) {
-    lua_State* l = luastate_GetStatePtr();
+static void luacfuncs_object_doStep(lua_State* l,
+struct blitwizardobject* o) {
+    if (o->deleted) {
+        return;
+    }
+
     luacfuncs_object_callEvent(l, o, "doAlways", 0);
 }
 
-void luacfuncs_object_doAllSteps(void) {
+int luacfuncs_object_doAllSteps(int count) {
+    if (count < 1) {count = 1;}
     struct blitwizardobject* o;
+    lua_State* l = luastate_GetStatePtr();
 
     // mark all objects as not yet stepped:
     o = objects;
@@ -468,6 +683,7 @@ void luacfuncs_object_doAllSteps(void) {
         // objects get deleted while we doStep them
         while (o) {
             if (o->deleted) {
+                printf("deleted object, restarting loop\n");
                 // we ran into a deleted object (likely deleted by
                 // a DoStep() of another object).
                 // relaunch this run and start over from beginning
@@ -482,9 +698,31 @@ void luacfuncs_object_doAllSteps(void) {
             }
             // call doStep on object:
             struct blitwizardobject* onext = o->next;
-            luacfuncs_object_doStep(o);
+            int i = 0;
+            while (i < count && !o->deleted) {
+                luacfuncs_object_doStep(l, o);
+                i++;
+            }
             o = onext;
         }
+    }
+    return count;
+}
+
+void luacfuncs_object_updateGraphics() {
+    lua_State* l = luastate_GetStatePtr();
+    // update visual representations of objects:
+    struct blitwizardobject* o = objects;
+    while (o) {
+        // attempt to load graphics if not done yet:
+        luafuncs_objectgraphics_load(o, o->respath);
+
+        if (luafuncs_objectgraphics_NeedGeometryCallback(o)) {
+            luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0);
+        }
+
+        luacfuncs_objectgraphics_updatePosition(o);
+        o = o->next;
     }
 }
 
@@ -503,8 +741,10 @@ void luacfuncs_object_doAllSteps(void) {
 //   -- create a 2d sprite and output its size:
 //   local obj = obj:new(false, "my_image.png")
 //   function obj:onGeometryLoaded()
-//     -- call @{blitwizard.object.getSize|self:getSize} to get its dimensions
-//     print("My dimensions are: " .. self:getSize()[1], self:getSize()[2])
+//     -- call @{blitwizard.object.getDimensions|self:getDimensions} to get
+//     -- its dimensions
+//     print("My dimensions are: " .. self:getDimensions()[1],
+//     self:getDimensions()[2])
 //   end
 
 /// Set this event function to a custom
@@ -518,7 +758,7 @@ void luacfuncs_object_doAllSteps(void) {
 //
 // This function is called with all objects with a
 // frequency of 60 times a second (it can be changed
-// globally with @{blitwizard.setStep} if you know
+// globally with @{blitwizard:setStep} if you know
 // what you're doing.
 // @function doAlways
 // @usage

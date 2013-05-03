@@ -61,7 +61,7 @@
     <ul>
         <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@gmail.com)</li>
+        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
     </ul>
 
 
@@ -84,6 +84,28 @@
 	<tr>
 	<td class="name" ><a href="#object:setPosition">object:setPosition&nbsp;(pos_x, pos_y, pos_z)</a></td>
 	<td class="summary">Set the object to a new position.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setTransparency">object:setTransparency&nbsp;(transparency)</a></td>
+	<td class="summary">Set the transparency of the visual representation of this object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:getTransparency">object:getTransparency&nbsp;()</a></td>
+	<td class="summary">Get the transparency of the visual representation of this object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:getDimensions">object:getDimensions&nbsp;()</a></td>
+	<td class="summary">Get the dimensions of an object in game units (with
+ <a href="../modules/blitwizard.html#object:setScale">scaling</a> taking into account).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:getScale">object:getScale&nbsp;()</a></td>
+	<td class="summary">Get the object's scale, which per default is 1,1 for 2d objects
+ and 1,1,1 for 3d objects.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setScale">object:setScale&nbsp;(x_scale, y_scale, z_scale)</a></td>
+	<td class="summary">Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:setZIndex">object:setZIndex&nbsp;(z_index)</a></td>
@@ -275,7 +297,14 @@
     <strong>object:setPosition&nbsp;(pos_x, pos_y, pos_z)</strong>
     </dt>
     <dd>
-    Set the object to a new position.
+    Set the object to a new position.  Specify two coordinates for 2d
+ objects (x, y) and three for 3d objects (x, y, z).
+<p> Please note this game position is in <b>game units</b>, not pixels.
+<p> To find out how much pixels 1 game unit is in the 2d world with
+ a default zoom of 1, check <a href="../modules/blitwizard.graphics.html#camera:gameUnitsPerPixel">blitwizard.graphics.camera:gameUnitsPerPixel</a>.
+<p> For the 3d world, one game unit should roughly equal one meter
+ if your game plays in a normal human-scale environment
+ (this works best for the physics).
 
     <h3>Parameters:</h3>
     <ul>
@@ -296,6 +325,134 @@
 
 </dd>
     <dt>
+    <a name = "object:setTransparency"></a>
+    <strong>object:setTransparency&nbsp;(transparency)</strong>
+    </dt>
+    <dd>
+    Set the transparency of the visual representation of this object.
+ Defaults to 0 (solid).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">transparency</span>
+            <span class="types"><span class="type">number</span></span>
+         transparency from 0 (solid) to 1 (invisible)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getTransparency"></a>
+    <strong>object:getTransparency&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the transparency of the visual representation of this object.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        transparency from 0 (solid) to 1 (invisible)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getDimensions"></a>
+    <strong>object:getDimensions&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the dimensions of an object in game units (with
+ <a href="../modules/blitwizard.html#object:setScale">scaling</a> taking into account).
+<p> For a 2d sprite, this returns two components (x, y) which
+ match the sprite's width and height, for a 3d object,
+ this returns a 3d box which would encapsulate the 3d mesh
+ in its first initial animation frame.
+<p> If you call this function before getting the
+ <a href="../modules/blitwizard.html#object:onGeometryLoaded">geometry callback</a>,
+ an error will be thrown that the information is not available
+ yet.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x_size X dimension value</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y_size Y dimension value</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        z_size (only for 3d objects) Z dimension value</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getScale"></a>
+    <strong>object:getScale&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the object's scale, which per default is 1,1 for 2d objects
+ and 1,1,1 for 3d objects.  The scale is a factor applied to the
+ dimensions of an object to stretch or shrink it.
+<p> Returns 2 values for 2d objects, 3 values for 3d objects.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x_scale X scale factor</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y_scale Y scale factor</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        z_scale (optional) Z scale factor</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setScale"></a>
+    <strong>object:setScale&nbsp;(x_scale, y_scale, z_scale)</strong>
+    </dt>
+    <dd>
+    Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.
+ This allows to stretch/shrink an object.
+<p> Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_scale</span>
+            <span class="types"><span class="type">number</span></span>
+         X scale factor</li>
+        <li><span class="parameter">y_scale</span>
+            <span class="types"><span class="type">number</span></span>
+         Y scale factor</li>
+        <li><span class="parameter">z_scale</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Z scale factor</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "object:setZIndex"></a>
     <strong>object:setZIndex&nbsp;(z_index)</strong>
     </dt>
@@ -305,7 +462,8 @@
  others with a lower z index. If two objects have the same
  z index, the newer object will be drawn on top.
 <p> The z index will be internally set to an integer,
- so use numbers like 1, 2, 3, 99, ...
+ so use numbers like -25, 0, 1, 2, 3, 99, ...
+<p> The default z index is 0.
 
     <h3>Parameters:</h3>
     <ul>
@@ -343,8 +501,10 @@
    <span class="comment">-- create a 2d sprite and output its size:
 </span>   <span class="keyword">local</span> obj = obj:new(<span class="keyword">false</span>, <span class="string">"my_image.png"</span>)
    <span class="keyword">function</span> obj:onGeometryLoaded()
-     <span class="comment">-- call ??? to get its dimensions
-</span>     <span class="global">print</span>(<span class="string">"My dimensions are: "</span> .. self:getSize()[<span class="number">1</span>], self:getSize()[<span class="number">2</span>])
+     <span class="comment">-- call ??? to get
+</span>     <span class="comment">-- its dimensions
+</span>     <span class="global">print</span>(<span class="string">"My dimensions are: "</span> .. self:getDimensions()[<span class="number">1</span>],
+     self:getDimensions()[<span class="number">2</span>])
    <span class="keyword">end</span></pre>
     </ul>
 
