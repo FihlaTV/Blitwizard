@@ -1,48 +1,27 @@
 
--- open graphics output:
-blitwizard.graphics.setMode(800, 600, "TEST", false)
+-- Initialise audio first so FFmpeg is found in case we want it
+--pcall(blitwizard.sound.play)
 
--- zoom more into things:
---blitwizard.graphics.getCameras()[1]:set2dZoomFactor(2)
-
--- blue orb spawn function:
-function spawnOrb()
-    -- spawn blue orb at random position:
-    local obj = blitwizard.object:new(false, "orb.png")
-    obj:setPosition(math.random()*6-3, math.random()*6-3)
-
-    -- set random scale:
-    local v = math.random()
-    obj:setScale(v, v)
-
-    -- make it fall down:
-    obj.speed = {x = 0.2 * math.random() - 0.1, y = -0.05 * math.random()}
-    function obj:doAlways()
-        -- accelerate:
-        obj.speed.y = obj.speed.y + 0.0005
-
-        -- set new position:
-        local x,y = self:getPosition()
-        self:setPosition(x + obj.speed.x, y + obj.speed.y)
-
-        -- if too far below, delete:
-        if y > 3 then
-            self:destroy()
-
-            -- spawn new:
-            --spawnOrb()
-        end
-    end
+-- Try to run the templates first if they are one folder up
+if os.exists("samplebrowser/browser.lua") then
+	-- Templates are indeed one folder up, as it seems
+	local olddir = os.getcwd()
+	os.chdir("../templates/")
+	local function calltemplates()
+		dofile("init.lua")
+	end
+	calltemplates()
+	os.chdir(olddir)
 end
 
-function massSpawn()
-    -- spawn 20 orbs:
-    local i = 0
-    while i < 1 do
-        spawnOrb()
-        i = i + 1
-    end
+-- Check if the user created a custom game we would want to run preferrably
+if os.exists("../game.lua") then
+	os.chdir("../")
+	dofile("game.lua")
+	return
 end
 
-massSpawn()
+-- We simply want to run the sample browser otherwise
+os.chdir("samplebrowser")
+dofile("browser.lua")
 
