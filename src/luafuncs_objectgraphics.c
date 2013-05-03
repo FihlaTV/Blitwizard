@@ -135,7 +135,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
 
     } else {
         if (o->graphics && o->graphics->sprite) {
-            graphics2dsprites_Destroy(o->graphics->sprite);
+            graphics2dsprites_destroy(o->graphics->sprite);
             o->graphics->sprite = NULL;
         }
     }
@@ -158,7 +158,7 @@ struct blitwizardobject* o) {
             return 0;
         }
         size_t w,h;
-        if (graphics2dsprites_GetGeometry(o->graphics->sprite,
+        if (graphics2dsprites_getGeometry(o->graphics->sprite,
         &w, &h)) {
             o->graphics->geometryCallbackDone = 1;
             return 1;
@@ -178,7 +178,7 @@ struct blitwizardobject* o) {
         if (!o->graphics->sprite) {
             return 0;
         }
-        if (graphics2dsprites_IsTextureAvailable(o->graphics->sprite
+        if (graphics2dsprites_isTextureAvailable(o->graphics->sprite
         )) {
             o->graphics->visibilityCallbackDone = 1;
             return 1;

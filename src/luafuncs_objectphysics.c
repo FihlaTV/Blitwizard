@@ -143,8 +143,8 @@ int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physic
     int enabled = 1;
 
     // get the associated blitwizard objects to the collision objects:
-    struct blitwizardobject* aobj = (struct blitwizardobject*)physics_GetObjectUserdata(a);
-    struct blitwizardobject* bobj = (struct blitwizardobject*)physics_GetObjectUserdata(b);
+    struct blitwizardobject* aobj = (struct blitwizardobject*)physics_getObjectUserdata(a);
+    struct blitwizardobject* bobj = (struct blitwizardobject*)physics_getObjectUserdata(b);
 
     // call first object's callback:
     if (!luafuncs_trycollisioncallback2d(aobj, bobj, x, y, normalx, normaly, force, &enabled)) {
@@ -168,8 +168,8 @@ int luafuncs_globalcollision3dcallback_unprotected(void* userdata, struct physic
     int enabled = 1;
 
     // get the associated blitwizard objects to the collision objects:
-    struct blitwizardobject* aobj = (struct blitwizardobject*)physics_GetObjectUserdata(a);
-    struct blitwizardobject* bobj = (struct blitwizardobject*)physics_GetObjectUserdata(b);
+    struct blitwizardobject* aobj = (struct blitwizardobject*)physics_getObjectUserdata(a);
+    struct blitwizardobject* bobj = (struct blitwizardobject*)physics_getObjectUserdata(b);
 
     // call first object's callback:
     if (!luafuncs_trycollisioncallback3d(aobj, bobj, x, y, z, normalx, normaly, normalz, force, &enabled)) {
@@ -206,7 +206,7 @@ int luafuncs_disableCollision(lua_State* l) {
     }
 
     if (obj->physics->object) {
-        physics_DestroyObject(obj->physics->object);
+        physics_destroyObject(obj->physics->object);
         obj->physics->object = NULL;
     }
     return 0;
@@ -248,11 +248,11 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 
     // construct a shape list from the given shape tables:
     struct physicsobjectshape* shapes =
-    physics_CreateEmptyShapes(argcount);
+    physics_createEmptyShapes(argcount);
     int i = 0;
     while (i < argcount) {
         if (lua_type(l, 2+i) != LUA_TTABLE) {
-            physics_DestroyShapes(shapes, argcount);
+            physics_destroyShapes(shapes, argcount);
             return haveluaerror(l, badargument2, 2+i,
             "blitwizard.object:enableCollision",
             "shape parameter invalid: expected table");
@@ -260,7 +260,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
         lua_pushstring(l, "type");
         lua_gettable(l, 2+i);
         if (lua_type(l, -1) != LUA_TSTRING) {
-            physics_DestroyShapes(shapes, argcount);
+            physics_destroyShapes(shapes, argcount);
             return haveluaerror(l, badargument2, 2+i,
             "blitwizard.object:enableCollision",
             "shape has invalid type: expected string");
@@ -277,7 +277,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "width");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"decal\" needs \"width\" specified"
@@ -288,7 +288,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "height");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"decal\" needs \"height\" specified"
@@ -297,7 +297,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     height = lua_tonumber(l, -1);
                     lua_pop(l, 1);
 #ifdef USE_PHYSICS3D
-                    physics_Set3dShapeDecal(GET_SHAPE(shapes, i),
+                    physics_set3dShapeDecal(GET_SHAPE(shapes, i),
                     width, height);
 #endif
                 }
@@ -308,7 +308,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "diameter");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"ball\" needs \"diameter\" specified"
@@ -317,7 +317,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     diameter = lua_tonumber(l, -1);
                     lua_pop(l, 1);
 #ifdef USE_PHYSICS3D
-                    physics_Set3dShapeBall(GET_SHAPE(shapes, i),
+                    physics_set3dShapeBall(GET_SHAPE(shapes, i),
                     diameter);
 #endif
                 }
@@ -329,7 +329,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "x_size");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"box\" or \"elliptic ball\" needs"
@@ -341,7 +341,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "y_size");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"box\" or \"elliptic ball\" needs"
@@ -353,7 +353,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "y_size");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"box\" or \"elliptic ball\" needs"
@@ -364,12 +364,12 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 
                     if (strcmp(shapetype, "box") == 0) {
 #ifdef USE_PHYSICS3D
-                        physics_Set3dShapeBox(GET_SHAPE(shapes, i),
+                        physics_set3dShapeBox(GET_SHAPE(shapes, i),
                         x_size, y_size, z_size);
 #endif
                     } else {
 #ifdef USE_PHYSICS3D
-                        physics_Set3dShapeBox(GET_SHAPE(shapes, i),
+                        physics_set3dShapeBox(GET_SHAPE(shapes, i),
                         x_size, y_size, z_size);
 #endif
                     }
@@ -380,7 +380,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     snprintf(invalidshape, sizeof(invalidshape),
                     "not a valid shape for a 3d object: \"%s\"", shapetype);
                     invalidshape[sizeof(invalidshape)-1] = 0;
-                    physics_DestroyShapes(shapes, argcount);
+                    physics_destroyShapes(shapes, argcount);
                     return haveluaerror(l, badargument2, 2+i,
                     "blitwizard.object:enableCollision",
                     invalidshape);
@@ -396,7 +396,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "width");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"rectangle\" or \"oval\" needs"
@@ -408,7 +408,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "height");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"rectangle\" or \"oval\" needs"
@@ -418,10 +418,10 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pop(l, 1);
 
                     if (strcmp(shapetype, "oval") == 0) {
-                        physics_Set2dShapeOval(GET_SHAPE(shapes, i),
+                        physics_set2dShapeOval(GET_SHAPE(shapes, i),
                         width, height);
                     } else {
-                        physics_Set2dShapeRectangle(GET_SHAPE(shapes, i),
+                        physics_set2dShapeRectangle(GET_SHAPE(shapes, i),
                         width, height);
                     }
                 }
@@ -432,7 +432,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     lua_pushstring(l, "diameter");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TNUMBER) {
-                        physics_DestroyShapes(shapes, argcount);
+                        physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"circle\" needs \"diameter\" specified"
@@ -441,7 +441,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     diameter = lua_tonumber(l, -1);
                     lua_pop(l, 1);
 
-                    physics_Set2dShapeCircle(GET_SHAPE(shapes, i),
+                    physics_set2dShapeCircle(GET_SHAPE(shapes, i),
                     diameter);
                 }
                 if (!isok) {
@@ -450,7 +450,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     snprintf(invalidshape, sizeof(invalidshape),
                     "not a valid shape for a 2d object: \"%s\"", shapetype);
                     invalidshape[sizeof(invalidshape)-1] = 0;
-                    physics_DestroyShapes(shapes, argcount);
+                    physics_destroyShapes(shapes, argcount);
                     return haveluaerror(l, badargument2, 2+i,
                     "blitwizard.object:enableCollision",
                     invalidshape);
@@ -471,14 +471,14 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
     struct physicsobject* old = obj->physics->object;
 
     // create a physics object from the shapes:
-    obj->physics->object = physics_CreateObject(main_DefaultPhysics2dPtr(),
+    obj->physics->object = physics_createObject(main_DefaultPhysics2dPtr(),
     obj, movable, shapes, argcount);
-    physics_DestroyShapes(shapes, argcount);
+    physics_destroyShapes(shapes, argcount);
 
     // destroy old representation after transferring settings:
     if (old) {
         transferbodysettings(old, obj->physics->object);
-        physics_DestroyObject(old);
+        physics_destroyObject(old);
     }
 
     obj->physics->movable = 1;
@@ -570,7 +570,7 @@ int luafuncs_freeObjectPhysicsData(struct objectphysicsdata* d) {
         lua_settable(l, LUA_REGISTRYINDEX);*/
 
         // delete physics body
-        physics_DestroyObject(d->object);
+        physics_destroyObject(d->object);
         d->object = NULL;
     }
     free(d);
@@ -584,12 +584,12 @@ static void applyobjectsettings(struct blitwizardobject* obj) {
     if (obj->is3d) {
         if (obj->physics->rotationrestriction3dfull) {
 #ifdef USE_PHYSICS3D
-            physics_Set3dRotationRestrictionAllAxis(obj->physics->object);
+            physics_set3dRotationRestrictionAllAxis(obj->physics->object);
 #endif
         } else {
             if (obj->physics->rotationrestriction3daxis) {
 #ifdef USE_PHYSICS3D
-                physics_Set3dRotationRestrictionAroundAxis(
+                physics_set3dRotationRestrictionAroundAxis(
                 obj->physics->object,
                 obj->physics->rotationrestriction3daxisx,
                 obj->physics->rotationrestriction3daxisy,
@@ -597,19 +597,19 @@ static void applyobjectsettings(struct blitwizardobject* obj) {
 #endif
             } else {
 #ifdef USE_PHYSICS3D
-                physics_Set3dNoRotationRestriction();
+                physics_set3dNoRotationRestriction();
 #endif
             }
         }
     } else {
-        physics_Set2dRotationRestriction(obj->physics->object,
+        physics_set2dRotationRestriction(obj->physics->object,
         obj->physics->rotationrestriction2d);
     }
-    physics_SetRestitution(obj->physics->object, obj->physics->restitution);
-    physics_SetFriction(obj->physics->object, obj->physics->friction);
-    physics_SetAngularDamping(obj->physics->object,
+    physics_setRestitution(obj->physics->object, obj->physics->restitution);
+    physics_setFriction(obj->physics->object, obj->physics->friction);
+    physics_setAngularDamping(obj->physics->object,
     obj->physics->angulardamping);
-    physics_SetLinearDamping(obj->physics->object,
+    physics_setLinearDamping(obj->physics->object,
     obj->physics->lineardamping);
 }
 
@@ -683,11 +683,11 @@ int luafuncs_object_impulse(lua_State* l) {
     }
     if (obj->is3d) {
 #ifdef USE_PHYSICS3D
-        physics_Apply3dImpulse(obj->physics->object,
+        physics_apply3dImpulse(obj->physics->object,
         forcex, forcey, forcez, sourcex, sourcey, sourcez);
 #endif
     } else {
-        physics_Apply2dImpulse(obj->physics->object,
+        physics_apply2dImpulse(obj->physics->object,
         forcex, forcey, sourcex, sourcez);
     }
     return 0;
@@ -863,13 +863,13 @@ int luafuncs_object_setGravity(lua_State* l) {
     if (set) {
         if (obj->is3d) {
 #ifdef USE_PHYSICS3D
-            physics_Set3dGravity(obj->physics->object, gx, gy, gz);
+            physics_set3dGravity(obj->physics->object, gx, gy, gz);
 #endif
         } else {
-            physics_Set2dGravity(obj->physics->object, gx, gy);
+            physics_set2dGravity(obj->physics->object, gx, gy);
         }
     } else {
-        physics_UnsetGravity(obj->physics->object);
+        physics_unsetGravity(obj->physics->object);
     }
     return 0;
 }
@@ -953,14 +953,14 @@ int luafuncs_object_setMass(lua_State* l) {
         }
         centerz = lua_tonumber(l, 5);
     }
-    physics_SetMass(obj->physics->object, mass);
+    physics_setMass(obj->physics->object, mass);
     if (obj->is3d) {
 #ifdef USE_PHYSICS3D
-        physics_Set3dMassCenterOffset(obj->physics->object,
+        physics_set3dMassCenterOffset(obj->physics->object,
         centerx, centery, centerz);
 #endif
     } else {
-        physics_Set2dMassCenterOffset(obj->physics->object,
+        physics_set2dMassCenterOffset(obj->physics->object,
         centerx, centery);
     }
     return 0;
@@ -992,37 +992,37 @@ void transferbodysettings(struct physicsobject* oldbody,
 struct physicsobject* newbody) {
     // transfer position, mass etc from an old physics body
     // to a new one
-    if (((struct blitwizardobject*)physics_GetObjectUserdata(oldbody))->is3d
-    != ((struct blitwizardobject*)physics_GetObjectUserdata(newbody))->is3d) {
+    if (((struct blitwizardobject*)physics_getObjectUserdata(oldbody))->is3d
+    != ((struct blitwizardobject*)physics_getObjectUserdata(newbody))->is3d) {
         return;
     }
-    int is3d = ((struct blitwizardobject*)physics_GetObjectUserdata(oldbody))
+    int is3d = ((struct blitwizardobject*)physics_getObjectUserdata(oldbody))
     ->is3d;
-    double mass = physics_GetMass(oldbody);
+    double mass = physics_getMass(oldbody);
     double massx,massy,massz;
     double x,y,z;
     double angle;
     double qx,qy,qz,qrot;
     if (is3d) {
 #ifdef USE_PHYSICS3D
-        physics_Get3dMassCenterOffset(oldbody, &massx, &massy, &massz);
-        physics_Get3dPosition(oldbody, &x, &y, &z);
-        physics_Get3dRotationQuaternion(oldbody, &qx, &qy, &qz, &qrot);
+        physics_get3dMassCenterOffset(oldbody, &massx, &massy, &massz);
+        physics_get3dPosition(oldbody, &x, &y, &z);
+        physics_get3dRotationQuaternion(oldbody, &qx, &qy, &qz, &qrot);
 #endif
     } else {
-        physics_Get2dMassCenterOffset(oldbody, &massx, &massy);
-        physics_Get2dPosition(oldbody, &x, &y);
-        physics_Get2dRotation(oldbody, &angle);
+        physics_get2dMassCenterOffset(oldbody, &massx, &massy);
+        physics_get2dPosition(oldbody, &x, &y);
+        physics_get2dRotation(oldbody, &angle);
     }
-    physics_SetMass(newbody, mass);
+    physics_setMass(newbody, mass);
     if (is3d) {
 #ifdef USE_PHYSICS3D
-        physics_Set3dMassCenterOffset(newbody, massx, massy, massz);
-        physics_Warp3d(newbody, x, y, z, qx, qy, qz, qrot);
+        physics_set3dMassCenterOffset(newbody, massx, massy, massz);
+        physics_warp3d(newbody, x, y, z, qx, qy, qz, qrot);
 #endif
     } else {
-        physics_Set2dMassCenterOffset(newbody, massx, massy);
-        physics_Warp2d(newbody, x, y, angle);
+        physics_set2dMassCenterOffset(newbody, massx, massy);
+        physics_warp2d(newbody, x, y, angle);
     }
 }
 
@@ -1032,10 +1032,10 @@ void objectphysics_warp3d(struct blitwizardobject* obj, double x, double y,
 double z, double qx, double qy, double qz, double qrot, int anglespecified) {
 #ifdef USE_PHYSICS3D
     if (!anglespecified) {
-        physics_Get3dRotationQuaternion(obj->physics->object,
+        physics_get3dRotationQuaternion(obj->physics->object,
         &qx, &qy, &qz, &qrot);
     }
-    physics_Warp3d(obj->physics->object, x, y, z, qx, qy, qz, qrot);
+    physics_warp3d(obj->physics->object, x, y, z, qx, qy, qz, qrot);
 #endif
 }
 
@@ -1043,9 +1043,9 @@ void objectphysics_warp2d(struct blitwizardobject* obj, double x, double y,
 double angle, int anglespecified) {
 #ifdef USE_PHYSICS2D
     if (!anglespecified) {
-        physics_Get2dRotation(obj->physics->object, &angle);
+        physics_get2dRotation(obj->physics->object, &angle);
     }
-    physics_Warp2d(obj->physics->object, x, y, angle);
+    physics_warp2d(obj->physics->object, x, y, angle);
 #endif
 }
 
@@ -1066,11 +1066,11 @@ double* x, double* y, double* z) {
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
     if (obj->is3d) {
 #ifdef USE_PHYSICS3D
-        physics_Get3dPosition(obj->physics->object, x, y, z);
+        physics_get3dPosition(obj->physics->object, x, y, z);
 #endif
     } else {
 #ifdef USE_PHYSICS2D
-        physics_Get2dPosition(obj->physics->object, x, y);
+        physics_get2dPosition(obj->physics->object, x, y);
 #endif
     }
 #endif
@@ -1094,16 +1094,16 @@ double x, double y, double z) {
     if (obj->is3d) {
 #ifdef USE_PHYSICS3D
         double qx,qy,qz,qrot;
-        physics_Get3dRotationQuaternion(obj->physics->object,
+        physics_get3dRotationQuaternion(obj->physics->object,
         &qx, &qy, &qz, &qrot);
-        physics_Warp3d(obj->physics->object, x, y, z,
+        physics_warp3d(obj->physics->object, x, y, z,
         qx, qy, qz, qrot);
 #endif
     } else {
 #ifdef USE_PHYSICS2D
         double angle;
-        physics_Get2dRotation(obj->physics->object, &angle);
-        physics_Warp2d(obj->physics->object, x, y, angle);
+        physics_get2dRotation(obj->physics->object, &angle);
+        physics_warp2d(obj->physics->object, x, y, angle);
 #endif
     }
 #endif
@@ -1113,7 +1113,7 @@ void objectphysics_get2dRotation(struct blitwizardobject* obj,
 double* angle) {
 #ifdef USE_PHYSICS2D
     if (obj->physics && obj->physics->object) {
-        physics_Get2dRotation(obj->physics->object, angle);
+        physics_get2dRotation(obj->physics->object, angle);
     } else {
 #endif
         *angle = obj->rotation.angle;
@@ -1126,7 +1126,7 @@ void objectphysics_get3dRotation(struct blitwizardobject* obj,
 double* qx, double* qy, double* qz, double* qrot) {
 #ifdef USE_PHYSICS3D
     if (obj->physics && obj->physics->object) {
-        physics_Get3dRotationQuaternion(obj->physics->object,
+        physics_get3dRotationQuaternion(obj->physics->object,
         qx, qy, qz, qrot);
     } else {
 #endif

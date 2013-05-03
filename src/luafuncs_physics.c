@@ -106,7 +106,7 @@ int luafuncs_ray(lua_State* l, int use3d) {
     int returnvalue;
     if (use3d) {
 #ifdef USE_PHYSICS3D
-        returnvalue = physics_Ray3d(main_DefaultPhysics2dPtr(),
+        returnvalue = physics_ray3d(main_DefaultPhysics2dPtr(),
         startx, starty, startz,
         targetx, targety, targetz,
         &hitpointx, &hitpointy, &hitpointz,
@@ -114,7 +114,7 @@ int luafuncs_ray(lua_State* l, int use3d) {
         &normalx, &normaly, &normalz);
 #endif
     } else {
-        returnvalue = physics_Ray2d(main_DefaultPhysics2dPtr(),
+        returnvalue = physics_ray2d(main_DefaultPhysics2dPtr(),
         startx, starty,
         targetx, targety,
         &hitpointx, &hitpointy,
@@ -124,7 +124,8 @@ int luafuncs_ray(lua_State* l, int use3d) {
 
     if (returnvalue) {
         // create a new reference to the (existing) object the ray has hit:
-        luacfuncs_pushbobjidref(l, (struct blitwizardobject*)physics_GetObjectUserdata(obj));
+        luacfuncs_pushbobjidref(l, (struct blitwizardobject*)
+        physics_getObjectUserdata(obj));
 
         // push the other information we also want to return:
         lua_pushnumber(l, hitpointx);
@@ -184,7 +185,7 @@ int luafuncs_set2dGravity(lua_State* l) {
         return haveluaerror(l, badargument1, 2,
         "blitwizard.physics.set2dGravity", "number", lua_strtype(l, 2));
     }
-    physics_Set2dWorldGravity(main_DefaultPhysics2dPtr(),
+    physics_set2dWorldGravity(main_DefaultPhysics2dPtr(),
     lua_tonumber(l, 1), lua_tonumber(l, 2));
     return 0;
 #endif
