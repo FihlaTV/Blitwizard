@@ -153,6 +153,27 @@ void physics_warp3d(struct physicsobject* obj, double x, double y, double z, dou
 void physics_apply3dImpulse(struct physicsobject* obj, double forcex, double forcey, double forcez, double sourcex, double sourcey, double sourcez);
 #endif
 
+// Change and get velocity
+#ifdef USE_PHYSICS2D
+void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy);
+double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega);
+void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy);
+void physics_set2dAngularVelocity(struct physicsobject* obj, double omega);
+void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse);
+#endif
+#ifdef USE_PHYSICS3D
+void physics_get3dVelocity(struct physicsobject* obj, double *vx, double* vy,
+ double* vz);
+void physics_set3dVelocity(struct physicsobject* obj, double vx, double vy,
+ double vz);
+void physics_get3dAngularVelocityQuaternion(struct physicsobject* obj,
+ double* qx, double* qy, double* qz, double* qrot);
+void physics_set3dAngularVelocityQuaternion(struct physicsobject* obj,
+ double qx, double qy, double qz, double qrot);
+void physics_apply3dAngularImpulse(struct physicsobject* obj,
+ double qx, double qy, double qz, double qrot); // ? no idea if this is correct
+#endif
+
 // Collision test ray
 #ifdef USE_PHYSICS2D
 int physics_ray2d(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly); // returns 1 when something is hit, otherwise 0  -- XXX: not thread-safe!

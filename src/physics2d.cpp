@@ -1585,6 +1585,48 @@ void physics_apply2dImpulse(struct physicsobject* obj, double forcex, double for
 #endif
 
 #ifdef USE_PHYSICS2D
+void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body || !obj2d->movable) {return;}
+    b2Vec2 vel = obj2d->body->GetLinearVelocity();
+    *vx = vel.x;
+    *vy = vel.y;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body || !obj2d->movable) {return 0;} // TODO: sux
+    return obj2d->body->GetAngularVelocity();
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body || !obj2d->movable) {return;}
+    obj2d->body->SetLinearVelocity(b2Vec2(vx, vy));
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_set2dAngularVelocity(struct physicsobject* obj, double omega) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body || !obj2d->movable) {return;}
+    obj2d->body->SetAngularVelocity(omega);
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse) {
+    struct physicsobject2d* obj2d = obj->obj.ect2d;
+    if (!obj2d->body || !obj2d->movable) {return;}
+    obj2d->body->ApplyAngularImpulse(impulse);
+}
+#endif
+
+#ifdef USE_PHYSICS2D
 class mycallback : public b2RayCastCallback {
 public:
     b2Body* closestcollidedbody;
