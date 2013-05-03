@@ -512,7 +512,6 @@ void physics_step(struct physicsworld* world) {
         double forcefactor = (1.0/(1000.0f/physics_getStepSize(world)))*2;
         b2Body* b = world2d->w->GetBodyList();
         while (b) {
-            b2Vec2 dbgp = b->GetPosition();
             // obtain physics object struct from body
             struct physicsobject* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
             struct physicsobject2d* obj2d = obj->obj.ect2d;
@@ -536,7 +535,7 @@ void physics_step(struct physicsworld* world) {
         int it1 = 7;
         int it2 = 4;
 #endif
-        world2d->w->Step(1.0 /(1000.0f/physics_GetStepSize(world)), it1, it2);
+        world2d->w->Step(1.0 /(1000.0f/physics_getStepSize(world)), it1, it2);
         i++;
     }
     insidecollisioncallback = 0; // we are no longer inside a step
@@ -597,7 +596,7 @@ struct physicsobjectshape* physics_createEmptyShapes(int count) {
     }
     int i = 0;
     while (i < count) {
-        _physics_ResetShape(&(shapes[i]));
+        _physics_resetShape(&(shapes[i]));
         ++i;
     }
     return shapes;
@@ -1323,7 +1322,7 @@ void* physics_getObjectUserdata(struct physicsobject* object) {
 
 
 // Everything about "various properties" starts here
-void physics_getMass(struct physicsobject* obj, double mass) {
+void physics_setMass(struct physicsobject* obj, double mass) {
 #if defined(USE_PHYSICS2D) && defined(USE_PHYSICS3D)
     if (not obj->is3d) {
 #endif
@@ -1379,7 +1378,7 @@ double physics_getMass(struct physicsobject* obj) {
 }
 
 #ifdef USE_PHYSICS2D
-void physics_get2dMassCenterOffset(struct physicsobject* obj, double offsetx, double offsety) {
+void physics_set2dMassCenterOffset(struct physicsobject* obj, double offsetx, double offsety) {
     // TODO: checks for is3d or not?
     struct physicsobject2d* obj2d = obj->obj.ect2d;
     b2MassData mdata;
