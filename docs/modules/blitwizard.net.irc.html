@@ -30,6 +30,10 @@
   <li><a href="../index.html">Index</a></li>
 </ul>
 
+<h2>Contents</h2>
+<ul>
+<li><a href="#Class_connection">Class connection </a></li>
+</ul>
 
 
 <h2>Modules</h2>
@@ -52,15 +56,237 @@
 
 <h1>Module <code>blitwizard.net.irc</code></h1>
 
-<p></p>
-<p></p>
+<p>This is the IRC module which allows you to connect to the popular
+ <a href="http://en.wikipedia.org/wiki/IRC">Internet Relay Chat</a>.</p>
+<p>
+<p> You can add ingame chat rooms to your game quite easily using this
+ module.</p>
 
 
+<h2><a href="#Class_connection">Class connection </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#connection:new">connection:new&nbsp;(server, callback, username, optional)</a></td>
+	<td class="summary">Create a new IRC instance.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#connection:close">connection:close&nbsp;()</a></td>
+	<td class="summary">Close an IRC connection.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#connection:getUsername">connection:getUsername&nbsp;()</a></td>
+	<td class="summary">Get the user name currently used on the chat server.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#connection:enterRoom">connection:enterRoom&nbsp;(room)</a></td>
+	<td class="summary">Join a specific chat room</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#connection:talkToPerson">connection:talkToPerson&nbsp;(username, msg)</a></td>
+	<td class="summary">Talk to a specific person (in private chat).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#connection:talkToRoom">connection:talkToRoom&nbsp;(room, msg)</a></td>
+	<td class="summary">Talk to a specific chat room.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#connection:doRoomAction">connection:doRoomAction&nbsp;(room, action)</a></td>
+	<td class="summary">Roleplay a specific action in a room, e.g.</td>
+	</tr>
+</table>
 
 <br/>
 <br/>
 
 
+    <h2><a name="Class_connection"></a>Class connection </h2>
+        This is the IRC connection class type which embodies an IRC server
+  connection.
+<p> You can create as many as you like if you want to connect to
+ multiple servers at once.
+    <dl class="function">
+    <dt>
+    <a name = "connection:new"></a>
+    <strong>connection:new&nbsp;(server, callback, username, optional)</strong>
+    </dt>
+    <dd>
+    Create a new IRC instance.  (see usage example below!)
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">server</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the address of the server, e.g. irc.eloxoph.de</li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         the event callback. It will be called with first parameter being this IRC instance, the second one the event name and all additional parameters depending on the event.
+<p>  The following events are known:
+<p>  "connect": the connection was successfully established. Use <a href="../modules/blitwizard.net.irc.html#connection:enterRoom">connection:enterRoom</a> to enter a chat room now!
+<p>  "enter": parameters: room, user name. The user with the given name entered the specified chat room. <b>If the user name is yours (<a href="../modules/blitwizard.net.irc.html#connection:getUsername">connection:getUsername</a>), this means you are inside the chat room now</b> and you may participate in conversations using <a href="../modules/blitwizard.net.irc.html#connection:talkToRoom">connection:talkToRoom</a> or <a href="../modules/blitwizard.net.irc.html#connection:doRoomAction">connection:doRoomAction</a>.
+</li>
+        <li><span class="parameter">username</span>
+            <span class="types"><span class="type">number</span></span>
+         the desired user name to be used on the chat server</li>
+        <li><span class="parameter">optional</span>
+            <span class="types"><span class="type">port</span></span>
+        ) specify the server port. Defaults to 6667, the most commonly used IRC server port</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+  <span class="comment">-- connect to the #blitwizard chat room:
+</span>  myIRC = blitwizard.net.irc.connection:new(<span class="string">"irc.eloxoph.de"</span>,
+  <span class="keyword">function</span>(self, event, param1, param2, param3)
+      <span class="keyword">if</span> event == <span class="string">"connect"</span> <span class="keyword">then</span>
+          <span class="global">print</span>(<span class="string">"Connected! Will now enter chat room..."</span>)
+          self:enterRoom(<span class="string">"#blitwizard"</span>)
+      <span class="keyword">elseif</span> event == <span class="string">"enter"</span> <span class="keyword">then</span>
+          <span class="keyword">if</span> <span class="global">string</span>.lower(param1) == <span class="string">"#blitwizard"</span> <span class="keyword">and</span>
+          param2 == self:getUsername() <span class="keyword">then</span>
+              <span class="global">print</span>(<span class="string">"Now inside #blitwizard! Say \"Hello World!\"..."</span>)
+              self:talkToRoom(<span class="string">"#blitwizard"</span>, <span class="string">"Hello World!"</span>)
+          <span class="keyword">end</span>
+       <span class="keyword">elseif</span> event == <span class="string">"roomTalk"</span> <span class="keyword">and</span>
+        <span class="global">string</span>.lower(param1) == <span class="string">"#blitwizard"</span> <span class="keyword">then</span>
+           <span class="comment">-- a person talked in #blitwizard! display it!
+</span>           <span class="global">print</span>(<span class="string">"&lt;"</span> .. param2 .. <span class="string">"&gt; "</span> .. param3)
+       <span class="keyword">elseif</span> event == <span class="string">"roomAction"</span> <span class="keyword">and</span>
+        <span class="global">string</span>.lower(param1) == <span class="string">"#blitwizard"</span> <span class="keyword">then</span>
+           <span class="comment">-- a person did an 'action' in #blitwizard. display it:
+</span>           <span class="global">print</span>(<span class="string">"&lt;"</span> .. param2 .. <span class="string">" "</span> .. param3 .. <span class="string">"&gt;"</span>)
+       <span class="keyword">end</span>
+  <span class="keyword">end</span>, <span class="string">"testUser"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "connection:close"></a>
+    <strong>connection:close&nbsp;()</strong>
+    </dt>
+    <dd>
+    Close an IRC connection.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "connection:getUsername"></a>
+    <strong>connection:getUsername&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the user name currently used on the chat server.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+        the user name currently used
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "connection:enterRoom"></a>
+    <strong>connection:enterRoom&nbsp;(room)</strong>
+    </dt>
+    <dd>
+    Join a specific chat room
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">room</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the name of the chat room. Please note that on most servers, the name is required to start with #. Space chars are not allowed.</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "connection:talkToPerson"></a>
+    <strong>connection:talkToPerson&nbsp;(username, msg)</strong>
+    </dt>
+    <dd>
+    Talk to a specific person (in private chat).
+<p>   Please note offline chat is not supported (message will not arrive
+   if user is offline!)
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">username</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the user name of the person to talk to</li>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the message you want to send to the person</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "connection:talkToRoom"></a>
+    <strong>connection:talkToRoom&nbsp;(room, msg)</strong>
+    </dt>
+    <dd>
+    Talk to a specific chat room.  Please note this is not possible
+   before the "enter" event!
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">room</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the chat room to talk to</li>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the message you want to send</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "connection:doRoomAction"></a>
+    <strong>connection:doRoomAction&nbsp;(room, action)</strong>
+    </dt>
+    <dd>
+    Roleplay a specific action in a room, e.g.  "looks outside of window"
+   as an action will show up as "<Yourname> looks outside the window".
+<p>   Similar to <a href="../modules/blitwizard.net.irc.html#connection:talkToRoom">connection.talkToRoom</a>, this is not
+   possible before entering a room and getting the "enter" event.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">room</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the chat room you want to do the action in</li>
+        <li><span class="parameter">action</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the description of your action</li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
 
 
 </div> <!-- id="content" -->
