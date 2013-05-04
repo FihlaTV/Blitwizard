@@ -42,31 +42,31 @@ blitwizard.net.irc.open = function(name, port, nickname, callback_on_event)
     -- (=channels).
     --
     -- Event types:
-    --     "connect": parameters: irc
+    --     "connect": parameters: 
     --                The given IRC instance has connected to the server.
     --                Now you might want to use
     --                irc:joinCannel("#somechannel")
-    --     "join": parameters: irc, channel, nickname
+    --     "join": parameters: channel, nickname
     --             Someone with the given nickname joined the given channel.
     --             If it is yourself, you'll get a "names" event shortly after.
     --             You can use this to speak in a channel you joined:
     --               irc:talkToChannel(channel, "hello")
     --             You can obtain a list of users like this:
     --               irc:getChannelUsers(channel)
-    --     "leave": parameters: irc, channel, nickname, reason
+    --     "leave": parameters: channel, nickname, reason
     --              Someone with the given nickname left the given channel.
     --              The reason can contain a free text string specifying
     --              a reason.
     --              This can also be yourself.
     --              You might want to update your user list with
     --                irc:getChannelUsers(channel)
-    --     "quit": parameters: irc, nickname, reason
+    --     "quit": parameters: nickname, reason
     --             Someone with the given nickname disconnected (-> leaves all
     --             channels). The reason can contain a free text string
     --             specifying a reason.
     --             You might want to update your user list with:
     --                irc:getChannelUsers(channel)
-    --     "channelTalk": parameters: irc, channel, nickname, message
+    --     "channelTalk": parameters: channel, nickname, message
     --                       Someone said something in a channel.
     --                       message is a string with the message.
     --                       This should show up e.g. like that:
@@ -237,7 +237,7 @@ blitwizard.net.irc.open = function(name, port, nickname, callback_on_event)
                 end
             end
             if string.lower(args[1]) == "ping" then
-                blitwiz.net.send(stream, "PONG :" .. args[2] .. "\n")
+                blitwizard.net.send(stream, "PONG :" .. args[2] .. "\n")
             end
         end,
         function(stream, errmsg)

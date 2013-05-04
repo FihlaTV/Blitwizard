@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2012 Jonas Thiem
+  Copyright (C) 2012-2013 Shahriar Heidrich, Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -265,7 +265,7 @@ void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifo
         if (!w->callback(w->callbackuserdata, obj1, obj2, collidex, collidey, normalx, normaly, impact)) {
             // contact should be disabled:
             contact->SetEnabled(false);
-        }else{
+        } else {
             // contact should remain enabled:
             contact->SetEnabled(true);
         }
@@ -369,7 +369,7 @@ struct physicsworld* physics_createWorld(int use3dphysics) {
         printerror("Error: Trying to create 2D physics world, but USE_PHYSICS2D is disabled.");
         return NULL;
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
         return NULL;
@@ -386,7 +386,7 @@ void physics_destroyWorld(struct physicsworld* world) {
         delete world->wor.ld2d->w;
         free(world->wor.ld2d);
         free(world);
-    }else{
+    } else {
         printerror(BW_E_NO3DYET);
     }
 }
@@ -409,7 +409,7 @@ void physics_step(struct physicsworld* world) {
                     if (obj2d->gravityset) {
                         // custom gravity which we want to apply
                         b->ApplyLinearImpulse(b2Vec2(obj2d->gravityx * forcefactor, obj2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
-                    }else{
+                    } else {
                         // no custom gravity -> apply world gravity
                         b->ApplyLinearImpulse(b2Vec2(world2d->gravityx * forcefactor, world2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
                     }
@@ -443,7 +443,7 @@ void physics_step(struct physicsworld* world) {
             free(pobj);
         }
 #endif
-    }else{
+    } else {
         printerror(BW_E_NO3DYET);
     }
 }
@@ -710,10 +710,10 @@ int _physics_check2dEdgeLoop(struct edge* edge, struct edge* target) {
         struct edge* nextprev = e;
         if (e->adjacent1 && e->adjacent1 != eprev) {
             e = e->adjacent1;
-        }else{
+        } else {
             if (e->adjacent2 && e->adjacent2 != eprev) {
                 e = e->adjacent2;
-            }else{
+            } else {
                 e = NULL;
             }
         }
@@ -741,7 +741,7 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
             if (fabs(e->x1 - newedge->x1) < EPSILON && fabs(e->y1 - newedge->y1) < EPSILON && e->adjacent1 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
-                }else{
+                } else {
                     e->adjacentcount += newedge->adjacentcount;
                     newedge->adjacentcount = e->adjacentcount;
                 }
@@ -753,7 +753,7 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
             if (fabs(e->x2 - newedge->x1) < EPSILON && fabs(e->y2 - newedge->y1) < EPSILON && e->adjacent2 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
-                }else{
+                } else {
                     e->adjacentcount += newedge->adjacentcount;
                     newedge->adjacentcount = e->adjacentcount;
                 }
@@ -767,7 +767,7 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
             if (fabs(e->x1 - newedge->x2) < EPSILON && fabs(e->y1 - newedge->y2) < EPSILON && e->adjacent1 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
-                }else{
+                } else {
                     e->adjacentcount += newedge->adjacentcount;
                     newedge->adjacentcount = e->adjacentcount;
                 }
@@ -779,7 +779,7 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
             if (fabs(e->x2 - newedge->x2) < EPSILON && fabs(e->y2 - newedge->y2) < EPSILON && e->adjacent2 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
-                }else{
+                } else {
                     e->adjacentcount += newedge->adjacentcount;
                     newedge->adjacentcount = e->adjacentcount;
                 }
@@ -954,7 +954,7 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
             varray[0] = b2Vec2(e->x2, e->y2);
             varray[1] = b2Vec2(e->x1, e->y1);
             e2 = e->adjacent1;
-        }else{
+        } else {
             varray[0] = b2Vec2(e->x1, e->y1);
             varray[1] = b2Vec2(e->x2, e->y2);
             e2 = e->adjacent2;
@@ -970,17 +970,17 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
             //Check which vertex we want to add
             if (e2->adjacent1 == eprev) {
                 varray[i] = b2Vec2(e2->x2, e2->y2);
-            }else{
+            } else {
                 varray[i] = b2Vec2(e2->x1, e2->y1);
             }
 
             //advance to next edge
             if (e2->adjacent1 && e2->adjacent1 != eprev) {
                 e2 = e2->adjacent1;
-            }else{
+            } else {
                 if (e2->adjacent2 && e2->adjacent2 != eprev) {
                     e2 = e2->adjacent2;
-                }else{
+                } else {
                     e2 = NULL;
                 }
             }
@@ -1001,7 +1001,7 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
         //construct an edge shape from this
         if (e->inaloop) {
             chain.CreateLoop(varray, e->adjacentcount);
-        }else{
+        } else {
             chain.CreateChain(varray, e->adjacentcount+1);
         }
 
@@ -1113,7 +1113,7 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
         
         obj->is3d = 0;
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1145,7 +1145,7 @@ void physics_destroyObject(struct physicsobject* obj) {
         }
         if (!insidecollisioncallback) {
             _physics_destroy2dObjectDo(obj->obj.ect2d);
-        }else{
+        } else {
             obj->obj.ect2d->deleted = 1;
             struct deletedphysicsobject2d* dobject = (struct deletedphysicsobject2d*)malloc(sizeof(*dobject));
             if (!dobject) {
@@ -1160,7 +1160,7 @@ void physics_destroyObject(struct physicsobject* obj) {
         // ?
         free(obj);
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1173,7 +1173,7 @@ void* physics_getObjectUserdata(struct physicsobject* object) {
 #ifdef USE_PHYSICS2D
         return ((struct bodyuserdata*)object->obj.ect2d->body->GetUserData())->userdata;
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
         return NULL;
@@ -1194,7 +1194,7 @@ void physics_setMass(struct physicsobject* obj, double mass) {
             if (obj2d->body->GetType() == b2_staticBody) {
                 obj2d->body->SetType(b2_dynamicBody);
             }
-        }else{
+        } else {
             mass = 0;
             if (obj2d->body->GetType() == b2_dynamicBody) {
                 obj2d->body->SetType(b2_staticBody);
@@ -1205,7 +1205,7 @@ void physics_setMass(struct physicsobject* obj, double mass) {
         mdata.mass = mass;
         obj2d->body->SetMassData(&mdata);
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1220,7 +1220,7 @@ double physics_getMass(struct physicsobject* obj) {
         obj2d->body->GetMassData(&mdata);
         return mdata.mass;
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1274,7 +1274,7 @@ void physics_unsetGravity(struct physicsobject* obj) {
 #ifdef USE_PHYSICS2D
         obj->obj.ect2d->gravityset = 0;
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1288,7 +1288,7 @@ void physics_set2dRotationRestriction(struct physicsobject* obj, int restricted)
     if (!obj2d->body) {return;}
     if (restricted) {
         obj2d->body->SetFixedRotation(true);
-    }else{
+    } else {
         obj2d->body->SetFixedRotation(false);
     }
 }
@@ -1310,7 +1310,7 @@ void physics_setFriction(struct physicsobject* obj, double friction) {
             e = e->next;
         }
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1324,7 +1324,7 @@ void physics_setAngularDamping(struct physicsobject* obj, double damping) {
         if (!obj2d->body) {return;}
         obj2d->body->SetAngularDamping(damping);
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1338,7 +1338,7 @@ void physics_setLinearDamping(struct physicsobject* obj, double damping) {
         if (!obj2d->body) {return;}
         obj2d->body->SetLinearDamping(damping);
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
@@ -1363,7 +1363,7 @@ void physics_setRestitution(struct physicsobject* obj, double restitution) {
             e = e->next;
         }
 #endif
-    }else{
+    } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
 #endif
