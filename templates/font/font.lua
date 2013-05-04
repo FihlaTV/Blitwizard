@@ -109,6 +109,8 @@ glyphWidth, glyphHeight, glyphsPerLine)
         glyphs = {},
         _width = 0,
         _height = 0,
+        _x = 0,
+        _y = 0,
     }
     local mt = {
         __index = blitwizard.font.text
@@ -125,7 +127,7 @@ glyphWidth, glyphHeight, glyphsPerLine)
 
     -- obvious early abort conditions:
     if #text <= 0 or (width ~= nil and (width or 0) <= 0)
-    or glyphWidth <= 0 or glyphHeight <= 0
+    or glyphWidth <= 0 or glyphHeight <= 0 or scale <= 0
     or (glyphsPerLine ~= nil and (glyphsPerLine or 0) <= 0) then
         return t
     end
@@ -147,12 +149,14 @@ glyphWidth, glyphHeight, glyphsPerLine)
     blitwizard.graphics.getCameras()[1]:gameUnitToPixels()
     local glyphXShift = glyphWidth / gameUnitsInPixels
     local glyphYShift = glyphHeight / gameUnitsInPixels
+    t._glyphDimensionX = glyphXShift
+    t._glyphDimensionY = glyphYShift
     -- walk through all glyphs:
     while i <= #text do
         local character = string.sub(text, i, i)
         if character == "\r" or character == "\n" then
             -- line break!
-            x = 0
+            x = -glyphXShift
             y = y + glyphYShift
             -- handle \r\n properly:
             if i < #text and character == "\r" then
@@ -171,9 +175,10 @@ glyphWidth, glyphHeight, glyphsPerLine)
 
             -- add new glyph:
             local newGlyph = blitwizard.object:new(false, fontPath)
-            newGlyph.offset = {x = x, y = y}
+            newGlyph.offset = {x = x * scale, y = y * scale}
             newGlyph:setPosition(newGlyph.offset.x, newGlyph.offset.y)
             newGlyph:pinToCamera(camera)
+            newGlyph:setScale(scale, scale)
             newGlyph:set2dTextureClipping((charxslot - 1) * glyphWidth, 
             (charyslot - 1) * glyphHeight, glyphWidth, glyphHeight)
             t.glyphs[#t.glyphs+1] = newGlyph
@@ -206,6 +211,7 @@ function blitwizard.font.text:destroy()
     end
 end
 
+
 --[[--
   Move the text object to the given screen position in game units
   (0,0 is top left).
@@ -214,9 +220,54 @@ end
   @tparam number y new y position in game units (0 is top screen border)
 ]]
 function blitwizard.font.text:move(x, y)
+    self._x = x
+    self._y = y
     for i,v in ipairs(self.glyphs) do
         -- move all glyphs:
         v:setPosition(v.offset.x + x, v.offset.y + y)
+    end
+end
+
+--[[--
+  Get the current top-left position of the text object.
+  @function getPosition
+  @treturn number x coordinate
+  @treturn number y coordinate
+]]
+function blitwizard.font.text:getPosition()
+    return self._x, self._y
+end
+
+--[[--
+  Get the size of a glyph in game units.
+  @funciton getGlyphDimensions
+  @treturn number x dimensions of glyph (in game units!)
+  @treturn number y dimensions of glyph (in game units!)
+]]
+function blitwizard.font.text:getGlyphDimensions()
+    return self._glyphDimensionX, self._glyphDimensionY
+end
+
+--[[--
+  Set the Z index of the text block (see @{blitwizard.object:setZIndex}).
+  @function setZIndex
+  @tparam number zindex Z index
+]]
+function blitwizard.font.text:setZIndex(index)
+    for i,v in ipairs(self.glyphs) do
+        v:setZIndex(index)
+    end
+end
+
+--[[--
+  Set the visibility of a text block. This allows you to temporarily hide
+  a text object (see @{blitwizard.object:setVisible}).
+  @function setVisible
+  @tparam boolean visibility true if visible, false if not
+]]
+function blitwizard.font.text:setVisible(visible)
+    for i,v in ipairs(self.glyphs) do
+        v:setVisible(visible)
     end
 end
 

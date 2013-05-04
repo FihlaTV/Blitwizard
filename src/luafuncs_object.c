@@ -652,7 +652,7 @@ int luafuncs_object_setZIndex(lua_State* l) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setZIndex", "number", lua_strtype(l, 2));
     }
-    if (!obj->is3d) {
+    if (obj->is3d) {
         return haveluaerror(l, "z index can only be set for 2d objects");
     } else {
         if (obj->graphics && obj->graphics->sprite) {

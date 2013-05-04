@@ -89,13 +89,19 @@ static int graphics_InitVideoSubsystem(char** error) {
     return 1;
 }
 
+__attribute__((constructor)) static void graphics_SetInitialHints() {
+    SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
+   "1", SDL_HINT_OVERRIDE);
+}
+
 int graphics_Init(char** error, int use3dgraphics) {
     char errormsg[512];
     graphics3d = (use3dgraphics ? 1 : 0);
 
     if (!graphics3d) {
         // set scaling settings
-        SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "2", SDL_HINT_NORMAL);
+        SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
+        "1", SDL_HINT_OVERRIDE);
 
         // initialize SDL
         if (SDL_Init(SDL_INIT_TIMER) < 0) {

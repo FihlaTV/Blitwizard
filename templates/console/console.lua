@@ -55,6 +55,18 @@ do
     local commandHistory = { "" }
     local inCommandHistory = 1
 
+    -- blinking cursor offset (from right side)
+    local blinkCursorOffset = 0
+
+    -- create blinking cursor:
+    local blinkCursorText = blitwizard.font.text:new("|", "default", 1)
+    blinkCursorText:setVisible(false)
+    blinkCursorText:setZIndex(10001)
+
+    -- blinking cursor timing, text input line end in game units:
+    local blinkCursorTime = 0
+    local textEndX = 0 -- line end on screen
+
     -- lines storage:
     local lines = {}
     -- each line is { line = "text", text = blitwizard.font.text or nil }
@@ -62,6 +74,7 @@ do
     -- create background image for console:
     local consoleBg = blitwizard.object:new(false, os.templatedir() ..
     "/console/console.png")
+    consoleBg:setZIndex(9999)
     consoleBg:setVisible(true)
     consoleBg:pinToCamera(blitwizard.graphics.getCameras()[1])
     function consoleBg:onGeometryLoaded()
@@ -140,6 +153,7 @@ do
                         -- load glyphs
                         lines[i].text = blitwizard.font.text:new(
                         lines[i].line, "default", 1)
+                        lines[i].text:setZIndex(10000)
                     end
                     lines[i].text:move(0.1,
                     0.1 + y + ((i - 1) * consoleLineHeight))
@@ -147,6 +161,9 @@ do
                 i = i + 1
             end
         else
+            -- hide blinking text cursor:
+            blinkCursorText:setVisible(false)
+
             -- delete the glyph objects of all lines since they're invisible:
             local i = 1
             while i <= #lines do
@@ -162,9 +179,11 @@ do
         if consoleTextObj == nil then
             consoleTextObj = blitwizard.font.text:new(
             "> " .. consoleText, "default", 1)
+            consoleTextObj:setZIndex(10000)
         end
         -- move the console input line object if it exists:
         if consoleTextObj then
+            -- get a bit of info about screen size etc:
             local cw,ch = blitwizard.graphics.getCameras()[1]:
             getScreenDimensions()
             local gameunitpix = blitwizard.graphics.getCameras()[1]:
@@ -177,8 +196,34 @@ do
                 shiftleft = consoleTextObj:width() - (cw - 10/gameunitpix)
             end
 
+            -- move console text to calculated position:
             consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
             - consoleLineHeight - 0.1)
+
+            -- remember text ending for blinking cursor:
+            local tx,ty = consoleTextObj:getPosition()
+            textEndPos = tx + consoleTextObj:width()
+        end
+
+        -- handle blinking cursor
+        if consoleOpened or y > -consoleHeight then
+            -- draw blinking cursor
+            blinkCursorTime = blinkCursorTime + 1
+            if blinkCursorTime > 80 then
+                blinkCursorTime = 0
+            end
+            if blinkCursorTime < 40 then
+                -- cursor is visible
+                blinkCursorText:setVisible(true)
+
+                -- get glyph size of input line font:
+                local gw,gh = consoleTextObj:getGlyphDimensions()
+                blinkCursorText:move(textEndPos - blinkCursorOffset * gw
+                - gw * math.min(0.4, blinkCursorOffset),
+                y + consoleHeight - consoleLineHeight - 0.1)
+            else
+                blinkCursorText:setVisible(false)
+            end
         end
     end
 
@@ -219,8 +264,11 @@ do
             if consoleOpened then
                 if key == "backspace" then
                     -- remove one character:
-                    if #consoleText > 0 then
-                        consoleText = consoleText:sub(1, #consoleText - 1)
+                    if #consoleText > 0 and
+                    blinkCursorOffset < #consoleText then
+                        consoleText = consoleText:sub(1,
+                        #consoleText - blinkCursorOffset - 1) ..
+                        consoleText:sub(#consoleText - blinkCursorOffset +1)
                         if consoleTextObj then
                             consoleTextObj:destroy()
                             consoleTextObj = nil
@@ -233,13 +281,16 @@ do
                     addConsoleLine("> " .. cmd)
                     consoleText = ""
                     -- update command history:
-                    commandHistory[#commandHistory] = cmd
-                    commandHistory[#commandHistory+1] = ""
-                    inCommandHistory = #commandHistory
+                    if #cmd > 0 then
+                        commandHistory[#commandHistory] = cmd
+                        commandHistory[#commandHistory+1] = ""
+                        inCommandHistory = #commandHistory
+                    end
                     if consoleTextObj then
                         consoleTextObj:destroy()
                         consoleTextObj = nil
                     end
+                    blinkCursorOffset = 0
                     -- run the entered command:
                     local success,msg = pcall(function() dostring(cmd) end)
                     -- print error if it failed:
@@ -259,7 +310,22 @@ do
                         consoleTextObj:destroy()
                         consoleTextObj = nil
                     end
+                    blinkCursorOffset = 0
                     return true
+                end
+                if key == "left" then
+                    blinkCursorOffset = blinkCursorOffset + 1
+                    if blinkCursorOffset > #consoleText then
+                        blinkCursorOffset = #consoleText
+                    end
+                    blinkCursorTime = 0
+                end
+                if key == "right" then
+                    blinkCursorOffset = blinkCursorOffset - 1
+                    if blinkCursorOffset < 0 then
+                        blinkCursorOffset = 0
+                    end
+                    blinkCursorTime = 0
                 end
                 if key == "down" then
                     -- go to newer command history entries
@@ -273,6 +339,7 @@ do
                         consoleTextObj:destroy()
                         consoleTextObj = nil
                     end
+                    blinkCursorOffset = 0
                     return true
                 end
             end
@@ -292,7 +359,9 @@ do
     function blitwizard._onText_Templates(text)
         if consoleOpened then
             -- if console is open, append text:
-            consoleText = consoleText .. text
+
+            consoleText = consoleText:sub(1, #consoleText - blinkCursorOffset)
+             .. text .. consoleText:sub(#consoleText + 1 - blinkCursorOffset)
             if consoleTextObj then
                 consoleTextObj:destroy()
                 consoleTextObj = nil
