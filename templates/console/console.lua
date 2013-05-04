@@ -140,7 +140,7 @@ do
                         lines[i].line, "default", 1)
                     end
                     lines[i].text:move(0.1,
-                    0.1 + y + ((i - 1) *consoleLineHeight))
+                    0.1 + y + ((i - 1) * consoleLineHeight))
                 end
                 i = i + 1
             end
@@ -163,7 +163,19 @@ do
         end
         -- move the console input line object if it exists:
         if consoleTextObj then
-            consoleTextObj:move(0.1, y + consoleHeight 
+            local cw,ch = blitwizard.graphics.getCameras()[1]:
+            getScreenDimensions()
+            local gameunitpix = blitwizard.graphics.getCameras()[1]:
+                gameUnitToPixels()
+            cw = cw / gameunitpix
+
+            -- shift to the right when entering very long lines:
+            local shiftleft = 0        
+            if consoleTextObj:width() > cw - 10/gameunitpix then
+                shiftleft = consoleTextObj:width() - (cw - 10/gameunitpix)
+            end
+
+            consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
             - consoleLineHeight - 0.1)
         end
     end
