@@ -52,6 +52,8 @@ do
         text:destroy()
         return result-2
     end)()
+    local commandHistory = { "" }
+    local inCommandHistory = 1
 
     -- lines storage:
     local lines = {}
@@ -230,23 +232,48 @@ do
                     local cmd = consoleText
                     addConsoleLine("> " .. cmd)
                     consoleText = ""
+                    -- update command history:
+                    commandHistory[#commandHistory] = cmd
+                    commandHistory[#commandHistory+1] = ""
+                    inCommandHistory = #commandHistory
                     if consoleTextObj then
                         consoleTextObj:destroy()
                         consoleTextObj = nil
                     end
                     -- run the entered command:
-                    local success,msg
-                    local f = load(cmd)
-                    if f then
-                        success,msg = pcall(f)
-                    else
-                        success = false
-                        msg = "syntax error"
-                    end
+                    local success,msg = pcall(function() dostring(cmd) end)
                     -- print error if it failed:
                     if not success then
                         print("Error: " .. msg)
                     end
+                end
+                if key == "up" then
+                    -- go to older command history entries
+                    commandHistory[inCommandHistory] = (consoleText or "")
+                    inCommandHistory = inCommandHistory - 1
+                    if inCommandHistory < 1 then
+                        inCommandHistory = 1
+                    end
+                    consoleText = commandHistory[inCommandHistory]
+                    if consoleTextObj then
+                        consoleTextObj:destroy()
+                        consoleTextObj = nil
+                    end
+                    return true
+                end
+                if key == "down" then
+                    -- go to newer command history entries
+                    commandHistory[inCommandHistory] = (consoleText or "")
+                    inCommandHistory = inCommandHistory + 1
+                    if inCommandHistory > #commandHistory then
+                        inCommandHistory = #commandHistory
+                    end
+                    consoleText = commandHistory[inCommandHistory]
+                    if consoleTextObj then
+                        consoleTextObj:destroy()
+                        consoleTextObj = nil
+                    end
+                    return true
                 end
             end
             return true

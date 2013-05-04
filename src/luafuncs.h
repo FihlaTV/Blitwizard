@@ -35,6 +35,7 @@ int luafuncs_loadResourceArchive(lua_State* l);
 int luafuncs_loadfile(lua_State* l);
 int luafuncs_dofile(lua_State* l);
 int luafuncs_print(lua_State* l);
+int luafuncs_dostring(lua_State* l);
 
 // Time:
 int luafuncs_getTime(lua_State* l);

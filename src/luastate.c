@@ -323,6 +323,8 @@ static lua_State* luastate_New(void) {
     lua_setglobal(l, "dofile");
     lua_pushcfunction(l, &luafuncs_print);
     lua_setglobal(l, "print");
+    lua_pushcfunction(l, &luafuncs_dostring);
+    lua_setglobal(l, "dostring");
 
     // obtain the blitwiz lib
     lua_getglobal(l, "blitwizard");

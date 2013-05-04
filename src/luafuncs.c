@@ -340,11 +340,31 @@ int luafuncs_print(lua_State* l) { // not threadsafe
     return 0;
 }
 
+int luafuncs_dostring(lua_State* l) {
+    // a nice dostring which emits syntax error info
+    const char* p = lua_tostring(l,1);
+    if (!p) {
+        return haveluaerror(l, badargument1, 1, "dostring",
+        "string", lua_strtype(l, 1));
+    }
+
+    int r = luaL_loadstring(l, p);
+    if (r != 0) { // got an error, throw it
+        return lua_error(l);
+    }
+
+    // run string:
+    int before = lua_gettop(l);
+    lua_call(l, 0, LUA_MULTRET);
+    return lua_gettop(l)-before;
+}
+
 int luafuncs_dofile(lua_State* l) {
     // obtain function name argument
     const char* p = lua_tostring(l,1);
     if (!p) {
-        return haveluaerror(l, badargument1, 1, "loadfile", "string", lua_strtype(l, 1));
+        return haveluaerror(l, badargument1, 1, "loadfile", "string",
+        lua_strtype(l, 1));
     }
 
     // check additional arguments we might have received
@@ -364,8 +384,10 @@ int luafuncs_dofile(lua_State* l) {
         lua_insert(l, -(additionalargs+1));
     }
 
-    int previoustop = lua_gettop(l)-(1+additionalargs); // minus the function on the stack which lua_call() removes and all the args to it
-    lua_call(l, additionalargs, LUA_MULTRET); // call returned function by loadfile
+    int previoustop = lua_gettop(l)-(1+additionalargs); // minus the
+        // function on the stack which lua_call() removes and all the args to it
+    lua_call(l, additionalargs, LUA_MULTRET); // call returned function
+        // by loadfile
 
     // return all values the function has left for us on the stack
     return lua_gettop(l)-previoustop;
