@@ -187,6 +187,8 @@ void luastate_CreateCameraTable(lua_State* l) {
     "get2dZoomFactor");
     luastate_registerfunc(l, &luafuncs_camera_set2dZoomFactor,
     "set2dZoomFactor");
+    luastate_registerfunc(l, &luafuncs_camera_gameUnitToPixels,
+    "gameUnitToPixels");
 }
 #endif
 
@@ -221,8 +223,14 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
 
     // graphics/visual stuff:
-    luastate_registergraphics(l, &luafuncs_object_setTransparency, "setTransparency");
-    luastate_registergraphics(l, &luafuncs_object_getTransparency, "getTransparency");
+    luastate_registergraphics(l, &luafuncs_object_setTransparency,
+    "setTransparency");
+    luastate_registergraphics(l, &luafuncs_object_getTransparency,
+    "getTransparency");
+    luastate_registergraphics(l, &luafuncs_object_pinToCamera, "pinToCamera");
+    luastate_registergraphics(l, &luafuncs_object_set2dTextureClipping,
+    "set2dTextureClipping");
+    luastate_registergraphics(l, &luafuncs_object_setVisible, "setVisible");
 
     // physics functions:
     luastate_register2d3dphysics(l, &luafuncs_object_enableStaticCollision,

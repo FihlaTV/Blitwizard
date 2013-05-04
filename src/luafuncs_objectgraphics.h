@@ -68,5 +68,13 @@ void luacfuncs_objectgraphics_unsetTextureClipping(struct blitwizardobject* o);
 void luacfuncs_objectgraphics_setTextureClipping(struct blitwizardobject* o,
 size_t x, size_t y, size_t width, size_t height);
 
+// pin a sprite to a specific camera:
+void luacfuncs_objectgraphics_pinToCamera(struct blitwizardobject* o,
+int id);
+
+// Change visibility of an object:
+void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
+int visible);
+
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
 

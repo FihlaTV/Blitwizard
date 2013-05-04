@@ -535,8 +535,10 @@ int main(int argc, char** argv) {
                 if (strcasecmp(argv[i],"--help") == 0 || strcasecmp(argv[i], "-help") == 0
                 || strcasecmp(argv[i], "-?") == 0 || strcasecmp(argv[i],"/?") == 0
                 || strcasecmp(argv[i],"-h") == 0) {
-                    printf("blitwizard %s (C) 2011-2013 Jonas Thiem et al\n",VERSION);
-                    printf("Usage:\n   blitwizard [blitwizard options] [script name] [script options]\n\n");
+                    printf("blitwizard %s (C) 2011-2013 Jonas Thiem et al\n",
+                    VERSION);
+                    printf("Usage:\n   blitwizard [blitwizard options] "
+                           "[script name] [script options]\n\n");
                     printf("The script name should be a .lua file containing\n"
                     "Lua source code for use with blitwizard.\n\n");
                     printf("The script options (optional) are passed through\n"
@@ -553,12 +555,12 @@ int main(int argc, char** argv) {
                     printf("   -version               Show extended version info and quit\n");
                     return 0;
                 }
-                if (strcasecmp(argv[i],"-changedir") == 0) {
+                if (strcasecmp(argv[i], "-changedir") == 0) {
                     option_changedir = 1;
                     i++;
                     continue;
                 }
-                if (strcasecmp(argv[i],"-templatepath") == 0) {
+                if (strcasecmp(argv[i], "-templatepath") == 0) {
                     nextoptionistemplatepath = 1;
                     i++;
                     continue;

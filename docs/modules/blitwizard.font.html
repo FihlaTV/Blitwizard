@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Blitwizard API reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>blitwizard</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Class_text">Class text </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul>
+  <li><a href="../modules/blitwizard.html">blitwizard</a></li>
+  <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
+  <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
+  <li><strong>blitwizard.font</strong></li>
+  <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
+  <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
+  <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
+  <li><a href="../modules/os.html">os</a></li>
+  <li><a href="../modules/string.html">string</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>blitwizard.font</code></h1>
+
+<p>The font namespace allows to draw bitmap fonts.</p>
+<p>
+ One bitmap font is included and can be used by submitting "default".
+<p> Please note this module is implemented in the <b>blitwizard templates</b>,
+ so it is unavailable if you don't ship the templates with your game.</p>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Copyright</strong>: 2013</li>
+        <li><strong>License</strong>: zlib</li>
+        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
+    </ul>
+
+
+<h2><a href="#Class_text">Class text </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#text:new">text:new&nbsp;(text, font, scale, camera, width, glyphWidth, glyphHeight, glyphsPerLine)</a></td>
+	<td class="summary">Create a text object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:destroy">text:destroy&nbsp;()</a></td>
+	<td class="summary">Destroy a <a href="../modules/blitwizard.font.html#Class_text">text</a> object again.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:move">text:move&nbsp;(x, y)</a></td>
+	<td class="summary">Move the text object to the given screen position in game units
+  (0,0 is top left).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:width">text:width&nbsp;()</a></td>
+	<td class="summary">The width in game units of the complete text block.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:height">text:height&nbsp;()</a></td>
+	<td class="summary">The height of te text block in game units.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Class_text"></a>Class text </h2>
+        The text object represents a rendered text.  Create one using
+  ???. You can destroy it again
+  by using <a href="../modules/blitwizard.font.html#text:destroy">blitwizard.font.text:destroy</a>.
+
+            <h3>Usage:</h3>
+            <pre class="example">
+  <span class="comment">-- Create a text saying "Hello World" in the upper left corner
+</span>  <span class="comment">-- (with a scaling of 2, so twice the normal font size)
+</span>  <span class="keyword">local</span> myText = blitwizard.font.text:new(<span class="string">"Hello World"</span>,
+    <span class="string">"default"</span>, <span class="number">2</span>)
+
+  <span class="comment">-- Move it a bit away from the upper left corner:
+</span>  myText:setPosition(<span class="number">0.6</span>, <span class="number">0.6</span>)</pre>
+    <dl class="function">
+    <dt>
+    <a name = "text:new"></a>
+    <strong>text:new&nbsp;(text, font, scale, camera, width, glyphWidth, glyphHeight, glyphsPerLine)</strong>
+    </dt>
+    <dd>
+    Create a text object.  You submit a string, a font bitmap path
+  (can be "default" for standard font), and various layout
+  information like maximum width of the text block in game units
+  (will result in line wraps if text is too long) and font scaling.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">text</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the text you want to display</li>
+        <li><span class="parameter">font</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the path to the bitmap of the bitmap font you want to use. You can also use "default" for the default font</li>
+        <li><span class="parameter">scale</span>
+            <span class="types"><span class="type">number</span></span>
+         the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!</li>
+        <li><span class="parameter">camera</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the game camera to show the text on. Specify nil for the default camera (first one from <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a>)</li>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional, pass nil if you don't want to specify) the intended maximum width of the text in game units. If the rendered text was to exceed that width, line wraps will be applied to prevent that - it turns into a multi line text with multiple lines.</li>
+        <li><span class="parameter">glyphWidth</span>
+            <span class="types"><span class="type">number</span></span>
+         width of a glyph in the bitmap font in pixels. <b>Optional for the "default" font.</b></li>
+        <li><span class="parameter">glyphHeight</span>
+            <span class="types"><span class="type">number</span></span>
+         height of a glyph in the bitmap font in pixels. <b>Optional for the "default" font.</b></li>
+        <li><span class="parameter">glyphsPerLine</span>
+            <span class="types"><span class="type">number</span></span>
+         the amount of glyphs per line, if not texture width divided by glyphWidth. <b>Optional for the "default" font.</b></li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        returns <a href="../modules/blitwizard.font.html#Class_text">text object</a>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:destroy"></a>
+    <strong>text:destroy&nbsp;()</strong>
+    </dt>
+    <dd>
+    Destroy a <a href="../modules/blitwizard.font.html#Class_text">text</a> object again.
+  (If you don't do this, it will stay on the screen forever!)
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:move"></a>
+    <strong>text:move&nbsp;(x, y)</strong>
+    </dt>
+    <dd>
+    Move the text object to the given screen position in game units
+  (0,0 is top left).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x</span>
+            <span class="types"><span class="type">number</span></span>
+         new x position in game units (0 is left screen border)</li>
+        <li><span class="parameter">y</span>
+            <span class="types"><span class="type">number</span></span>
+         new y position in game units (0 is top screen border)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:width"></a>
+    <strong>text:width&nbsp;()</strong>
+    </dt>
+    <dd>
+    The width in game units of the complete text block.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:height"></a>
+    <strong>text:height&nbsp;()</strong>
+    </dt>
+    <dd>
+    The height of te text block in game units.
+
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.11</a></i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

@@ -233,9 +233,33 @@ size_t x, size_t y, size_t width, size_t height) {
     if (o->is3d) {
         // FIXME: 3d decals
     } else {
-        if (!o->graphics->sprite) {
+        if (o->graphics->sprite) {
             graphics2dsprites_setClippingWindow(o->graphics->sprite,
             x, y, width, height);
+        }
+    }
+}
+
+void luacfuncs_objectgraphics_pinToCamera(struct blitwizardobject* o,
+int id) {
+    if (!o->graphics) {
+        return;
+    }
+    if (!o->is3d) {
+        if (o->graphics->sprite) {
+            graphics2dsprites_setPinnedToCamera(o->graphics->sprite, id);
+        }
+    }
+}
+
+void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
+int visible) {
+    if (!o->graphics) {
+        return;
+    }
+    if (!o->is3d) {
+        if (o->graphics->sprite) {
+            graphics2dsprites_setVisible(o->graphics->sprite, (visible!= NULL));
         }
     }
 }
