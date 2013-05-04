@@ -142,7 +142,6 @@ blitwizard.net.irc.open = function(name, port, nickname, callback_on_event)
             server.nickname = nickname
         end,
         function(stream, line)
-            thisfunctiondoesnotexist()
             callback_on_event(server, "raw", line)
             -- split up IRC arguments:
             local args = {string.split(line, " ")}
