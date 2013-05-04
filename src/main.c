@@ -410,10 +410,21 @@ int attemptTemplateLoad(const char* path) {
     p[strlen(path)+1+strlen("init.lua")] = 0;
     file_MakeSlashesNative(p);
 
-    // if file doesn't exist, report failure:
-    if (!file_DoesFileExist(p)) {
-        free(p);
-        return 0;
+    int loadFromZip = 0;
+    struct resourcelocation loc;
+    if (!resource_IsFolderInZip(path)) {
+        // if file doesn't exist, report failure:
+        if (!file_DoesFileExist(p)) {
+            free(p);
+            return 0;
+        }
+    } else {
+        // check for file in our .zip archives:
+        loadFromZip = 1;
+        if (!resources_LocateResource(p, &loc)) {
+            free(p);
+            return 0;
+        }
     }
 
     // update global template path:
@@ -814,14 +825,23 @@ int main(int argc, char** argv) {
     // isn't supported), while for the desktop it is a regular folder.
 #if !defined(ANDROID)
     int checksystemwidetemplate = 1;
-    // see if there is a template directory & file:
-    if (file_DoesFileExist(option_templatepath)
-    && file_IsDirectory(option_templatepath)) {
+    // see if the template path points to a virtual zip folder:
+    if (resource_IsFolderInZip(option_templatepath)) {
+        // it does. run templates from here.
         checksystemwidetemplate = 0;
-
-        // now run template file:
         if (!attemptTemplateLoad(option_templatepath)) {
             checksystemwidetemplate = 1;
+        }
+    } else {
+        // see if there is a template directory & file:
+        if (file_DoesFileExist(option_templatepath)
+        && file_IsDirectory(option_templatepath)) {
+            checksystemwidetemplate = 0;
+
+            // now run template file:
+            if (!attemptTemplateLoad(option_templatepath)) {
+                checksystemwidetemplate = 1;
+            }
         }
     }
 #if defined(SYSTEM_TEMPLATE_PATH)

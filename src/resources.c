@@ -376,6 +376,24 @@ int encrypted) {
 #endif
 }
 
+int resource_IsFolderInZip(const char* path) {
+    if (!file_IsPathRelative(path)) {
+        return 0;
+    }
+
+    struct resourcearchive* a = resourcearchives;
+    while (a) {
+        // check if path maps to a directory in this archive:
+        if (zipfile_PathExists(a->z, path)) {
+            if (zipfile_IsDirectory(a->z, path)) {
+                return 1;
+            }
+        }
+        a = a->next;
+    }
+    // nope, no such directory in our archives.
+    return 0;
+}
 
 int resources_LocateResource(const char* path,
 struct resourcelocation* location) {

@@ -70,5 +70,10 @@ struct resourcelocation* location);
 // resourceinfo struct is modified to share the information.
 // Returns 0 if the resource wasn't found.
 
+
+// Check if a given folder exists in any of the zip files.
+// Returns 1 if yes, otherwise 0.
+int resource_IsFolderInZip(const char* path);
+
 #endif  // BLITWIZARD_RESOURCES_H_
 
