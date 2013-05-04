@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -55,7 +55,7 @@ static int connections_SetSocket(struct connection* c, int iptype) {
     if (iptype == IPTYPE_IPV4) {
         c->socket = so_CreateSocket(1, IPTYPE_IPV4);
         c->iptype = IPTYPE_IPV4;
-    }else{
+    } else {
         c->socket = so_CreateSocket(1, IPTYPE_IPV6);
         c->iptype = IPTYPE_IPV6;
     }
@@ -89,7 +89,7 @@ static int connections_TryConnect(struct connection* c, const char* target) {
 #endif
     if (0) { // ssl
         result = so_ConnectSSLSocketToIP(c->socket, target, c->targetport, &c->sslptr);
-    }else{
+    } else {
         result = so_ConnectSSLSocketToIP(c->socket, target, c->targetport, NULL);
     }
     if (!result) {
@@ -98,7 +98,7 @@ static int connections_TryConnect(struct connection* c, const char* target) {
         printinfo("[connections] TryConnect to %s failed instantly", target);
 #endif
         return 0;
-    }else{
+    } else {
 #ifdef CONNECTIONSDEBUG
         printinfo("[connections] TryConnect to %s in progress", target);
 #endif
@@ -110,17 +110,20 @@ static int connections_TryConnect(struct connection* c, const char* target) {
 }
 
 // Set error and report it back immediately:
-static int connections_E(struct connection* c, int (*errorcallback)(struct connection* c, int error), int error) {
+static void connections_E(struct connection* c,
+int (*errorcallback)(struct connection* c, int error), int error) {
     if (!c->errorreported) {
         c->errorreported = 1;
         c->error = error;
         if (errorcallback) {
             if (!errorcallback(c, error)) {
-                return 0;
+                // the error callback failed.
+                // however, there is nothing we could do about it!
+                return;
             }
         }
     }
-    return 1;
+    return;
 }
 
 static struct connection* justreadingfromconnection = NULL;
@@ -220,7 +223,9 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 c->errorreported = 1;
                 if (errorcallback) {
                     if (!errorcallback(c, c->error)) {
-                        return 0;
+                        // an error occured. proceed to next connect:
+                        c = cnext;
+                        continue;
                     }
                 }
             }
@@ -234,11 +239,10 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 c->autoclosecallback(c);
                 connections_Close(c);
                 c = cnext;
-            }else{
-                // make connection error:
-                if (!connections_E(c, errorcallback, CONNECTIONERROR_CONNECTIONAUTOCLOSE)) {
-                    return 0;
-                }
+            } else {
+                // make the connection error:
+                connections_E(c, errorcallback,
+                CONNECTIONERROR_CONNECTIONAUTOCLOSE);
             }
             continue;
         }
@@ -246,10 +250,11 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
         if (c->outbufbytes <= 0 && c->closewhensent) {
             if (c->luarefcount <= 0) {
 #ifdef CONNECTIONSDEBUG
-                printinfo("[connections] closing connection %d since data is sent", c->socket);
+                printinfo("[connections] closing connection %d "
+                "since data is sent", c->socket);
 #endif
                 connections_Close(c);
-            }else{
+            } else {
                 // lua still has a reference, don't close
             }
             c = cnext;
@@ -315,9 +320,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                             result = connections_TryConnect(c, ipv4);
                             free(ipv4);
                             if (!result) {
-                                if (!connections_E(c, errorcallback, CONNECTIONERROR_CONNECTIONFAILED)) {
-                                    return 0;
-                                }
+                                connections_E(c, errorcallback,
+                                CONNECTIONERROR_CONNECTIONFAILED);
                             }
                         }
                         c = cnext;
@@ -329,7 +333,7 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                     // then continue:
                     c = cnext;
                     continue;
-                }else{
+                } else {
                     if (ipv4) {
                         // Attempt an IPv4 connection:
                         result = connections_TryConnect(c, ipv4);
@@ -341,13 +345,11 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
 
                         // Didn't work, so nothing we can do:
                         free(ipv4);
-                        if (!connections_E(c, errorcallback, CONNECTIONERROR_CONNECTIONFAILED)) {
-                            return 0;
-                        }
-                    }else{
-                        if (!connections_E(c, errorcallback, CONNECTIONERROR_NOSUCHHOST)) {
-                            return 0;
-                        }
+                        connections_E(c, errorcallback,
+                        CONNECTIONERROR_CONNECTIONFAILED);
+                    } else {
+                        connections_E(c, errorcallback,
+                        CONNECTIONERROR_NOSUCHHOST);
                     }
                     c = cnext;
                     continue;
@@ -368,10 +370,11 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                     c->connected = 1;
                     if (connectedcallback) {
                         if (!connectedcallback(c)) {
-                            return 0;
+                            // a callback error occured.
+                            // we will simply continue.
                         }
                     }
-                }else{
+                } else {
                     // we aren't connected!
                     if (c->retryv4ip) { // we tried ipv6, now try ipv4
 #ifdef CONNECTIONSDEBUG
@@ -382,9 +385,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                         free(c->retryv4ip);
                         c->retryv4ip = NULL;
                         if (!result) {
-                            if (!connections_E(c, errorcallback, CONNECTIONERROR_CONNECTIONFAILED)) {
-                                return 0;
-                            }
+                            connections_E(c, errorcallback,
+                            CONNECTIONERROR_CONNECTIONFAILED);
                         }
                         c = cnext;
                         continue;
@@ -392,9 +394,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
 #ifdef CONNECTIONSDEBUG
                     printinfo("[connections] connection couldn't be established");
 #endif
-                    if (!connections_E(c, errorcallback, CONNECTIONERROR_CONNECTIONFAILED)) {
-                        return 0;
-                    }
+                    connections_E(c, errorcallback,
+                    CONNECTIONERROR_CONNECTIONFAILED);
                     c = cnext;
                     continue;
                 }
@@ -408,14 +409,15 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 c->linebuffered = 0;
                 int closed = 0;
                 if (!connections_ProcessReceivedData(c, readcallback, &closed)) {
-                    return 0;
+                    // an error occured in te read callback.
+                    // we will simply continue.
                 }
                 if (closed) { // connection was closed by callback
                     c = cnext;
                     continue;
                 }
                 if (c->error >= 0) { // lua closed this connection
-                    c = c->next;
+                    c = cnext;
                     continue;
                 }
                 // then, turn it back on:
@@ -427,8 +429,10 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 // connection closed. send out all data we still have:
                 if (c->inbufbytes > 0) {
                     int closed = 0;
-                    if (!connections_ProcessReceivedData(c, readcallback, &closed)) {
-                        return 0;
+                    if (!connections_ProcessReceivedData(
+                    c, readcallback, &closed)) {
+                        // an error occured in the read callback.
+                        // we will simply continue.
                     }
                     if (closed) { // connection was closed by callback
                         c = cnext;
@@ -436,9 +440,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                     }
                 }
                 // then error:
-                if (!connections_E(c, errorcallback, CONNECTIONERROR_CONNECTIONCLOSED)) {
-                    return 0;
-                }
+                connections_E(c, errorcallback,
+                CONNECTIONERROR_CONNECTIONCLOSED);
 #ifdef CONNECTIONSDEBUG
                 printinfo("[connections] receive on %d returned end of stream", c->socket);
 #endif
@@ -450,7 +453,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 c->lastreadtime = time_GetMilliseconds();
                 int closed = 0;
                 if (!connections_ProcessReceivedData(c, readcallback, &closed)) {
-                    return 0;
+                    // an error occured in the read callback.
+                    // we will simply continue.
                 }
                 if (closed) { // connection was closed by callback
                     c = cnext;
@@ -459,13 +463,15 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
             }
         }
         // write things if we can:
-        if ((c->error < 0 || (c->socket >= 0 && c->closewhensent)) && c->connected && c->outbufbytes > 0 && so_SelectSaysWrite(c->socket, &c->sslptr)) {
-            int r = so_SendSSLData(c->socket, c->outbuf + c->outbufoffset, c->outbufbytes, &c->sslptr);
+        if ((c->error < 0 ||
+        (c->socket >= 0 && c->closewhensent)) && c->connected
+         && c->outbufbytes > 0 && so_SelectSaysWrite(c->socket, &c->sslptr)) {
+            int r = so_SendSSLData(c->socket, c->outbuf + c->outbufoffset,
+            c->outbufbytes, &c->sslptr);
             if (r == 0) {
                 // connection closed:
-                if (!connections_E(c, errorcallback, CONNECTIONERROR_CONNECTIONCLOSED)) {
-                    return 0;
-                }
+                connections_E(c, errorcallback,
+                CONNECTIONERROR_CONNECTIONCLOSED);
 #ifdef CONNECTIONSDEBUG
                 printinfo("[connections] send returned end of stream");
 #endif
@@ -480,7 +486,7 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 if (c->outbufbytes <= 0) {
                     c->outbufoffset = 0;
                     so_SelectWantWrite(c->socket, 0);
-                }else{
+                } else {
                     if (c->outbufoffset > CONNECTIONOUTBUFSIZE/2) {
                         // move buffer contents back to beginning
                         memmove(c->outbuf, c->outbuf + c->outbufoffset, c->outbufbytes);
@@ -497,7 +503,7 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 printinfo("[connections] closing connection %d since data is sent", c->socket);
 #endif
                 connections_Close(c);
-            }else{
+            } else {
                 // lua still has a reference, but close at least the socket:
                 so_CloseSSLSocket(c->socket, &c->sslptr);
                 c->socket = -1;
@@ -571,7 +577,7 @@ void connections_Init(struct connection* c, const char* target, int port, int li
             c->error = CONNECTIONERROR_INITIALISATIONFAILED;
             return;
         }
-    }else{ // otherwise, try ipv6 first
+    } else { // otherwise, try ipv6 first
         if (!connections_SetSocket(c, IPTYPE_IPV6)) {
             c->error = CONNECTIONERROR_INITIALISATIONFAILED;
             return;
@@ -659,7 +665,7 @@ void connections_Close(struct connection* c) {
     }
     if (prevc) {
         prevc->next = c->next;
-    }else{
+    } else {
         connectionlist = c->next;
     }
 #ifdef CONNECTIONSDEBUG

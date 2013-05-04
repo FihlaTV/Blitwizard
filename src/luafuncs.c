@@ -87,11 +87,17 @@ static const char* luastringchunkreader(lua_State *l, void *data, size_t *size) 
 #endif
 
 void luacfuncs_onError(const char* funcname, const char* error) {
-    printerror("Error when calling %s: %s", funcname, error);
+    char errorstr[1024];
+    snprintf(errorstr, sizeof(errorstr), "Error when calling %s: %s",
+    funcname, error);
+    printerror("%s", errorstr);
 
     // send error to ingame lua console:
+    lua_State* l = (lua_State*)luastate_GetStatePtr();
 
-
+    lua_getglobal(l, "print");
+    lua_pushstring(l, errorstr);
+    lua_pcall(l, 1, 0, 0);
 }
 
 int luafuncs_getTemplateDirectory(lua_State* l) {

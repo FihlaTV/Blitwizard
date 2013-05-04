@@ -26,6 +26,11 @@ Permission is granted to anyone to use this software for any purpose, including 
  You can explicitely request the console to open using
  @{blitwizard.console.open}.
 
+ <i>Keep in mind when releasing your game:</i> please note this module
+ is implemented in the
+ <b>blitwizard templates</b>, so it is unavailable if you don't ship
+ the templates with your game.
+
  @author Jonas Thiem (jonas.thiem@gmail.com)
  @copyright 2013
  @license zlib
@@ -43,10 +48,10 @@ do
     local slideSpeed = 0.1
     local consoleDisabled = false
     local consoleLineHeight = 0
-    local consoleHeight = 200 / blitwizard.graphics.getCameras()[1]
+    local consoleHeight = 240 / blitwizard.graphics.getCameras()[1]
         :gameUnitToPixels()
     local consoleLinesShown = (function()
-        local text = blitwizard.font.text:new("Hello", "default", 1)
+        local text = blitwizard.font.text:new("Hello", "default", 0.8)
         consoleLineHeight = text:height()
         local result = math.floor(consoleHeight/text:height())
         text:destroy()
@@ -89,6 +94,22 @@ do
     end
 
     local function addConsoleLine(line)
+        if line == nil then
+            return
+        end
+
+        if line:find("\n") then
+            local lines = {string.split(line, "\n")}
+            local i = 1
+            while i <= #lines do
+                addConsoleLine(lines[i])
+                i = i + 1
+            end
+            return
+        end
+
+        line = line:gsub("\r", "")
+
         lines[#lines+1] = { line = line, text = nil }
         while #lines > consoleLinesShown do
             -- remove first line:
@@ -156,7 +177,7 @@ do
                     if lines[i].text == nil then
                         -- load glyphs
                         lines[i].text = blitwizard.font.text:new(
-                        lines[i].line, "default", 1)
+                        lines[i].line, "default", 0.88)
                         lines[i].text:setZIndex(10000)
                     end
                     lines[i].text:move(0.1,

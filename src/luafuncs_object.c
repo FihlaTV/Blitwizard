@@ -348,7 +348,7 @@ int args) {
     if (ret != 0) {
         const char* e = lua_tostring(l, -1);
 
-        char funcName[64];
+        char funcName[128];
         snprintf(funcName, sizeof(funcName),
         "blitwizard.object event function \"%s\"", eventName);
         luacfuncs_onError(funcName, e);

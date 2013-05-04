@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -35,6 +35,7 @@
 #include "timefuncs.h"
 #include "sockets.h"
 #include "listeners.h"
+#include "luafuncs.h"
 
 struct luanetstream {
     struct connection* c;
@@ -100,7 +101,8 @@ static int garbagecollect_netstream(lua_State* l) {
             int donotclose = 0;
 
             // maybe we would want to keep the connection open
-            if (stream->c->error < 0 || (stream->c->closewhensent && stream->c->outbufbytes > 0)) {
+            if (stream->c->error < 0
+            || (stream->c->closewhensent && stream->c->outbufbytes > 0)) {
                 // keep open if we still intend to send data and the connection is formally already closed:
                 if (stream->c->closewhensent && stream->c->outbufbytes > 0) {
 #ifdef CONNECTIONSDEBUG
@@ -108,7 +110,7 @@ static int garbagecollect_netstream(lua_State* l) {
 #endif
                     donotclose = 1;
                     // don't close, however continue here and wipe callbacks:
-                }else{
+                } else {
 
                     // keep open and autoclose when no activity:
                     if (stream->c->canautoclose && stream->c->lastreadtime + 20000 > time_GetMilliseconds()) {
@@ -463,7 +465,13 @@ static int connectedevents(struct connection* c) {
     // prompt callback:
     int result = lua_pcall(l, 1, 0, -3);
     if (result != 0) {
-        printerror("Error: An error occured when calling blitwiz.net.open() open callback: %s", lua_tostring(l, -1));
+        const char* e = lua_tostring(l, -1);
+
+        char funcName[128];
+        snprintf(funcName, sizeof(funcName),
+        "blitwizard.object event function "
+        "\"blitwizard.net.stream:connectCallback\"");
+        luacfuncs_onError(funcName, e);
         lua_pop(l, 2); // pop error message, error handler
         return 0;
     }
@@ -507,8 +515,14 @@ static int readevents(struct connection* c, char* data, unsigned int datalength)
     // prompt callback:
     int result = lua_pcall(l, 2, 0, -4);
     if (result != 0) {
-        printerror("Error: An error occured when calling blitwiz.net.open() read callback: %s", lua_tostring(l, -1));
-        lua_pop(l, 1); // pop error message, error handler
+        const char* e = lua_tostring(l, -1);
+
+        char funcName[124];
+        snprintf(funcName, sizeof(funcName),
+        "blitwizard.object event function "
+        "\"blitwizard.net.stream:readCallback\"");
+        luacfuncs_onError(funcName, e);
+        lua_pop(l, 2); // pop error message, error handler
         return 0;
     }
     lua_pop(l, 1); // pop error handler
@@ -620,8 +634,14 @@ int connectionevents(int port, int socket, const char* ip, void* sslptr, void* u
     // prompt callback:
     int result = lua_pcall(l, 2, 0, -4);
     if (result != 0) {
-        printerror("Error: An error occured when calling blitwiz.net.server() callback: %s", lua_tostring(l, -1));
-        lua_pop(l, 1); // pop error message, error handler
+        const char* e = lua_tostring(l, -1);
+
+        char funcName[128];
+        snprintf(funcName, sizeof(funcName),
+        "blitwizard.object event function "
+        "\"blitwizard.net.server:serverCallback\"");
+        luacfuncs_onError(funcName, e);
+        lua_pop(l, 2); // pop error message, error handler
         return 0;
     }
     lua_pop(l, 1); // pop error handler
@@ -680,8 +700,13 @@ static int errorevents(struct connection* c, int error) {
     // prompt callback:
     int result = lua_pcall(l, 2, 0, -4);
     if (result != 0) {
-        printerror("Error: An error occured when calling blitwiz.net.open() close callback: %s", lua_tostring(l, -1));
-        lua_pop(l, 1); // pop error message, error handler
+        const char* e = lua_tostring(l, -1);
+        char funcName[128];
+        snprintf(funcName, sizeof(funcName),
+        "blitwizard.object event function "
+        "\"blitwizard.net.stream:closeCallback\"");
+        luacfuncs_onError(funcName, e);
+        lua_pop(l, 2); // pop error message, error handler
         return 0;
     }
     lua_pop(l, 1); // pop error message
