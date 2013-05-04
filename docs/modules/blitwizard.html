@@ -327,7 +327,7 @@
  objects (x, y) and three for 3d objects (x, y, z).
 <p> Please note this game position is in <b>game units</b>, not pixels.
 <p> To find out how much pixels 1 game unit is in the 2d world with
- a default zoom of 1, check ???.
+ a default zoom of 1, check <a href="../modules/blitwizard.graphics.html#camera:gameUnitToPixels">blitwizard.graphics.camera:gameUnitToPixels</a>.
 <p> For the 3d world, one game unit should roughly equal one meter
  if your game plays in a normal human-scale environment
  (this works best for the physics).
@@ -617,7 +617,7 @@
    <span class="comment">-- create a 2d sprite and output its size:
 </span>   <span class="keyword">local</span> obj = obj:new(<span class="keyword">false</span>, <span class="string">"my_image.png"</span>)
    <span class="keyword">function</span> obj:onGeometryLoaded()
-     <span class="comment">-- call ??? to get
+     <span class="comment">-- call <a href="../modules/blitwizard.html#object:getDimensions">self:getDimensions</a> to get
 </span>     <span class="comment">-- its dimensions
 </span>     <span class="global">print</span>(<span class="string">"My dimensions are: "</span> .. self:getDimensions()[<span class="number">1</span>],
      self:getDimensions()[<span class="number">2</span>])
@@ -760,7 +760,7 @@
  <span class="comment">-- Set the dimensions of the object to a 1x1 square
 </span> <span class="comment">-- (find out how large that is in pixels
 </span> <span class="comment">-- at the default zoom level with
-</span> <span class="comment">-- <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a>()[1]:???() - multiply this
+</span> <span class="comment">-- <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a>()[1]:<a href="../modules/blitwizard.graphics.html#camera:gameUnitToPixels">gameUnitToPixels</a>() - multiply this
 </span> <span class="comment">-- with any number of game units to get their size in pixels)
 </span> myobject:setScale(<span class="number">1</span>, <span class="number">1</span>)
 

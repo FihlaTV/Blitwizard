@@ -445,7 +445,7 @@ int luafuncs_object_getPosition(lua_State* l) {
 // Please note this game position is in <b>game units</b>, not pixels.
 //
 // To find out how much pixels 1 game unit is in the 2d world with
-// a default zoom of 1, check @{blitwizard.graphics.camera:gameUnitsPerPixel}.
+// a default zoom of 1, check @{blitwizard.graphics.camera:gameUnitToPixels}.
 //
 // For the 3d world, one game unit should roughly equal one meter
 // if your game plays in a normal human-scale environment
@@ -863,7 +863,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 //   -- create a 2d sprite and output its size:
 //   local obj = obj:new(false, "my_image.png")
 //   function obj:onGeometryLoaded()
-//     -- call @{blitwizard.object.getDimensions|self:getDimensions} to get
+//     -- call @{blitwizard.object:getDimensions|self:getDimensions} to get
 //     -- its dimensions
 //     print("My dimensions are: " .. self:getDimensions()[1],
 //     self:getDimensions()[2])

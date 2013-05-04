@@ -33,7 +33,7 @@ blitwizard.font.text = {}
 
 --[[--
   The text object represents a rendered text. Create one using
-  @{blitwizard.font.text:create}. You can destroy it again
+  @{blitwizard.font.text:new}. You can destroy it again
   by using @{blitwizard.font.text:destroy}.
 
   @type text
@@ -240,7 +240,7 @@ end
 
 --[[--
   Get the size of a glyph in game units.
-  @funciton getGlyphDimensions
+  @function getGlyphDimensions
   @treturn number x dimensions of glyph (in game units!)
   @treturn number y dimensions of glyph (in game units!)
 ]]

@@ -85,6 +85,22 @@
   (0,0 is top left).</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#text:getPosition">text:getPosition&nbsp;()</a></td>
+	<td class="summary">Get the current top-left position of the text object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:getGlyphDimensions">text:getGlyphDimensions&nbsp;()</a></td>
+	<td class="summary">Get the size of a glyph in game units.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:setZIndex">text:setZIndex&nbsp;(zindex)</a></td>
+	<td class="summary">Set the Z index of the text block (see <a href="../modules/blitwizard.html#object:setZIndex">blitwizard.object:setZIndex</a>).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:setVisible">text:setVisible&nbsp;(visibility)</a></td>
+	<td class="summary">Set the visibility of a text block.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#text:width">text:width&nbsp;()</a></td>
 	<td class="summary">The width in game units of the complete text block.</td>
 	</tr>
@@ -100,7 +116,7 @@
 
     <h2><a name="Class_text"></a>Class text </h2>
         The text object represents a rendered text.  Create one using
-  ???. You can destroy it again
+  <a href="../modules/blitwizard.font.html#text:new">blitwizard.font.text:new</a>. You can destroy it again
   by using <a href="../modules/blitwizard.font.html#text:destroy">blitwizard.font.text:destroy</a>.
 
             <h3>Usage:</h3>
@@ -193,6 +209,89 @@
         <li><span class="parameter">y</span>
             <span class="types"><span class="type">number</span></span>
          new y position in game units (0 is top screen border)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:getPosition"></a>
+    <strong>text:getPosition&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the current top-left position of the text object.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x coordinate</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y coordinate</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:getGlyphDimensions"></a>
+    <strong>text:getGlyphDimensions&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the size of a glyph in game units.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x dimensions of glyph (in game units!)</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y dimensions of glyph (in game units!)</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:setZIndex"></a>
+    <strong>text:setZIndex&nbsp;(zindex)</strong>
+    </dt>
+    <dd>
+    Set the Z index of the text block (see <a href="../modules/blitwizard.html#object:setZIndex">blitwizard.object:setZIndex</a>).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">zindex</span>
+            <span class="types"><span class="type">number</span></span>
+         Z index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:setVisible"></a>
+    <strong>text:setVisible&nbsp;(visibility)</strong>
+    </dt>
+    <dd>
+    Set the visibility of a text block.  This allows you to temporarily hide
+  a text object (see <a href="../modules/blitwizard.html#object:setVisible">blitwizard.object:setVisible</a>).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">visibility</span>
+            <span class="types"><span class="type">boolean</span></span>
+         true if visible, false if not</li>
     </ul>
 
 
