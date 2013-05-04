@@ -1,4 +1,4 @@
---[[-----
+--[[
 blitwizard.font
 Under the zlib license:
 
@@ -14,88 +14,229 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 3. This notice may not be removed or altered from any source distribution.
 
---]]-----
+]]
+
+--[[--
+ The font namespace allows to draw bitmap fonts.
+ One bitmap font is included and can be used by submitting "default".
+
+ Please note this module is implemented in the <b>blitwizard templates</b>,
+ so it is unavailable if you don't ship the templates with your game.
+ @author Jonas Thiem (jonas.thiem@gmail.com)
+ @copyright 2013
+ @license zlib
+ @module blitwizard.font
+]]
 
 blitwizard.font = {}
-blitwizard.font.fonts = {}
+blitwizard.font.text = {}
 
---[[function loadfontimage(path)
-    if blitwiz.graphics.isImageLoaded(path) ~= true then
-        blitwiz.graphics.loadImageAsync(path)
+--[[--
+  The text object represents a rendered text. Create one using
+  @{blitwizard.font.text:create}. You can destroy it again
+  by using @{blitwizard.font.text:destroy}.
+
+  @type text
+  @usage
+  -- Create a text saying "Hello World" in the upper left corner
+  -- (with a scaling of 2, so twice the normal font size)
+  local myText = blitwizard.font.text:new("Hello World",
+    "default", 2)
+
+  -- Move it a bit away from the upper left corner:
+  myText:setPosition(0.6, 0.6)
+]]
+
+--[[--
+  Create a text object. You submit a string, a font bitmap path
+  (can be "default" for standard font), and various layout
+  information like maximum width of the text block in game units
+  (will result in line wraps if text is too long) and font scaling.
+
+  @function new
+  @tparam string text the text you want to display
+  @tparam string font the path to the bitmap of the bitmap font you want to use. You can also use "default" for the default font
+  @tparam number scale the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!
+  @tparam userdata camera the game camera to show the text on. Specify nil for the default camera (first one from @{blitwizard.graphics.getCameras})
+  @tparam number width (optional, pass nil if you don't want to specify) the intended maximum width of the text in game units. If the rendered text was to exceed that width, line wraps will be applied to prevent that - it turns into a multi line text with multiple lines.
+  @tparam number glyphWidth width of a glyph in the bitmap font in pixels. <b>Optional for the "default" font.</b>
+  @tparam number glyphHeight height of a glyph in the bitmap font in pixels. <b>Optional for the "default" font.</b>
+  @tparam number glyphsPerLine the amount of glyphs per line, if not texture width divided by glyphWidth. <b>Optional for the "default" font.</b>
+  @treturn table returns @{blitwizard.font.text|text object}
+]]
+
+function blitwizard.font.text:new(text, fontPath, scale, camera, width,
+glyphWidth, glyphHeight, glyphsPerLine)
+    -- parameter validation:
+    if type(text) ~= "string" then
+        error("bad parameter #1 to blitwizard.font.text:create: expected " ..
+        "string")
     end
-end
-
-function blitwiz.font.register(path, name, charwidth, charheight, charsperline, charset)
-    blitwiz.font.fonts[name] = {
-        path,
-        charwidth,
-        charheight,
-        charsperline,
-        charset
-    }
-    result = pcall(loadfontimage, path)
-    if result == false then
-        -- We cannot load the font as it seems
-        blitwiz.font.fonts[name] = nil
+    if type(fontPath) ~= "string" then
+        error("bad parameter #2 to blitwizard.font.text:create: expected " ..
+        "string")
     end
-end
-
-local function drawfontslot(font, slot, posx, posy, r, g, b, a, clipx, clipy, clipw, cliph)
-    -- check for invalid slot:
-    if slot < 1 or slot > 32*8 then
-        return
-    end 
-
-    -- do we need to draw at all?
-    if blitwiz.graphics.isImageLoaded(font[1]) ~= true then
-        return
+    if type(scale) ~= "number" then
+        error("bad parameter #3 to blitwizard.font.text:create: expected " ..
+        "number")
     end
-    if clipx ~= nil and clipy ~= nil then
-        if clipx >= posx + font[2] or clipy >= posy + font[3] then
-            return
+    if type(width) ~= "number" and type(width) ~= "nil" then
+        error("bad parameter #4 to blitwizard.font.text:create: expected " ..
+        "number or nil")
+    end
+    if fontPath ~= "default" or type(glyphWidth) ~= "nil"
+    or type(glyphHeight) ~= "nil" or type(glyphsPerLine) ~= "nil" then
+        if type(glyphWidth) ~= "number" then
+            error("bad parameter #5 to blitwizard.font.text:create: " ..
+            "expected number")
         end
-        if clipw ~= nil and cliph ~= nil then
-            if clipx + clipw < posx or clipy + cliph < posy then
-                return
+        if type(glyphHeight) ~= "number" then
+            error("bad parameter #6 to blitwizard.font.text:create: " ..
+            "expected number")
+        end
+        if type(glyphsPerLine) ~= "number" then
+            error("bad parameter #7 to blitwizard.font.text:create: " ..
+            "expected number")
+        end
+    end
+
+    if camera == nil then
+        camera = blitwizard.graphics.getCameras()[1]
+    end
+
+    local t = {
+        font = fontPath,
+        glyphs = {},
+        _width = 0,
+        _height = 0,
+    }
+    local mt = {
+        __index = blitwizard.font.text
+    }
+    setmetatable(t, mt)
+
+    if fontPath == "default" then
+        -- use default settings:
+        fontPath = os.templatedir() .. "/font/default.png"
+        glyphWidth = 7
+        glyphHeight = 14
+        glyphsPerLine = 32
+    end
+
+    -- obvious early abort conditions:
+    if #text <= 0 or (width ~= nil and (width or 0) <= 0)
+    or glyphWidth <= 0 or glyphHeight <= 0
+    or (glyphsPerLine ~= nil and (glyphsPerLine or 0) <= 0) then
+        return t
+    end
+
+    local charsPerLine = #text
+    if type(width) ~= "nil" or (width or 0) < 0 then
+        -- calculate horizontal char limit:
+        charsPerLine = math.floor(width / glyphWidth)
+    end
+
+    -- see if we need to insert line breaks:
+
+
+    -- now create all glyph objects:
+    local i = 1
+    local x = 0
+    local y = 0
+    local gameUnitsInPixels =
+    blitwizard.graphics.getCameras()[1]:gameUnitToPixels()
+    local glyphXShift = glyphWidth / gameUnitsInPixels
+    local glyphYShift = glyphHeight / gameUnitsInPixels
+    -- walk through all glyphs:
+    while i <= #text do
+        local character = string.sub(text, i, i)
+        if character == "\r" or character == "\n" then
+            -- line break!
+            x = 0
+            y = y + glyphYShift
+            -- handle \r\n properly:
+            if i < #text and character == "\r" then
+                if string.sub(text, i + 1, i + 1) == "\n" then
+                    i = i + 1
+                end
+            end
+        else
+            -- get letter font pos:
+            local charxslot = string.byte(character)-32+1
+            local charyslot = 1
+            while charxslot > glyphsPerLine do
+                charxslot = charxslot - glyphsPerLine
+                charyslot = charyslot + 1 
+            end
+
+            -- add new glyph:
+            local newGlyph = blitwizard.object:new(false, fontPath)
+            newGlyph.offset = {x = x, y = y}
+            newGlyph:setPosition(newGlyph.offset.x, newGlyph.offset.y)
+            newGlyph:pinToCamera(camera)
+            newGlyph:set2dTextureClipping((charxslot - 1) * glyphWidth, 
+            (charyslot - 1) * glyphHeight, glyphWidth, glyphHeight)
+            t.glyphs[#t.glyphs+1] = newGlyph
+
+            -- update overall text block width and height:
+            if t._width < x + glyphWidth then
+                t._width = x + glyphWidth / gameUnitsInPixels
+            end
+            if t._height < y + glyphHeight then
+                t._height = y + glyphHeight / gameUnitsInPixels
             end
         end
+        i = i + 1
+        x = x + glyphWidth / gameUnitsInPixels
     end
-    
-    -- Find out row
-    local row = 1
-    while slot > font[4] do
-        row = row + 1
-        slot = slot - font[4]
-    end
-    
-    -- Draw
-    local cutx = 0
-    local cuty = 0
-    local cutw = font[2]
-    local cuth = font[3]
-    if clipx ~= nil and clipy ~= nil then
-        cutx = math.max(0, clipx - posx)
-        cuty = math.max(0, clipy - posy)
-        if clipw ~= nil and cliph ~= nil then
-            cutw = math.max(0, clipw + (clipx - posx))
-            cuth = math.max(0, cliph + (clipy - posy))
-        end
-    end
-    if cutw + cutx > font[2] then
-        cutw = font[2] - cutx
-    end
-    if cuth + cuty > font[3] then
-        cuth = font[3] - cuty
-    end
-    blitwiz.graphics.drawImage(font[1], {x=posx, y=posy, alpha=a, cutx=cutx + (slot-1) * font[2], cuty=cuty + (row-1) * font[3], cutwidth=cutw, cutheight=cuth, red=r, green=g, blue=b})
+
+    -- return text:
+    return t
 end
 
-function blitwiz.font.draw(name, text, posx, posy, r, g, b, a, wrapwidth, clipx, clipy, clipw, cliph)
-    local origposx = posx
-    local font = blitwiz.font.fonts[name]
-    if font == nil then
-        error ("Font \"" .. name .. "\" is not loaded")
+--[[--
+  Destroy a @{blitwizard.font.text|text} object again.
+  (If you don't do this, it will stay on the screen forever!)
+  @function destroy
+]]
+function blitwizard.font.text:destroy()
+    for i,v in ipairs(self.glyphs) do
+        -- destroy all glyphs:
+        v:destroy()
     end
+end
+
+--[[--
+  Move the text object to the given screen position in game units
+  (0,0 is top left).
+  @function move
+  @tparam number x new x position in game units (0 is left screen border)
+  @tparam number y new y position in game units (0 is top screen border)
+]]
+function blitwizard.font.text:move(x, y)
+    for i,v in ipairs(self.glyphs) do
+        -- move all glyphs:
+        v:setPosition(v.offset.x + x, v.offset.y + y)
+    end
+end
+
+--[[--
+  The width in game units of the complete text block.
+  @function width
+]]
+function blitwizard.font.text:width()
+    return self._width
+end
+
+--[[--
+  The height of te text block in game units.
+  @function height
+]]
+function blitwizard.font.text:height()
+    return self._height
+end
+
+--[[
     -- calculate wrap width:
     local maxperline = nil
     if wrapwidth ~= nil then

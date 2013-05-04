@@ -188,12 +188,19 @@ double angle,
 double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY,
 size_t sourceWidth, size_t sourceHeight,
-int visible) {
+int visible, int cameraId) {
     if (!tex) {
         return;
     }
     if (!visible) {
         return;
+    }
+
+    // if a camera is specified for pinning,
+    // the sprite will be pinned to the screen:
+    int pinnedToCamera = 0;
+    if (cameraId >= 0) {
+        pinnedToCamera = 1;
     }
 
     // evaluate special width/height:
@@ -213,24 +220,36 @@ int visible) {
     }
 
     // scale position according to zoom:
-    x *= UNIT_TO_PIXELS * zoom;
-    y *= UNIT_TO_PIXELS * zoom;
+    if (!pinnedToCamera) {
+        x *= UNIT_TO_PIXELS * zoom;
+        y *= UNIT_TO_PIXELS * zoom;
+    } else {
+        // ignore zoom when pinned to screen
+        x *= UNIT_TO_PIXELS;
+        y *= UNIT_TO_PIXELS;
+    }
 
-    // image center offset:
-    x -= (width/2.0) * UNIT_TO_PIXELS * zoom;
-    y -= (height/2.0) * UNIT_TO_PIXELS * zoom;
+    if (!pinnedToCamera) {
+        // image center offset (when not pinned to screen):
+        x -= (width/2.0) * UNIT_TO_PIXELS * zoom;
+        y -= (height/2.0) * UNIT_TO_PIXELS * zoom;
 
-    // screen center offset:
-    unsigned int winw,winh;
-    graphics_GetWindowDimensions(&winw, &winh);
-    x += (winw/2.0);
-    y += (winh/2.0);
+        // screen center offset (if not pinned):
+        unsigned int winw,winh;
+        graphics_GetWindowDimensions(&winw, &winh);
+        x += (winw/2.0);
+        y += (winh/2.0);
 
-    // move according to zoom etc:
-    width *= UNIT_TO_PIXELS * zoom;
-    height *= UNIT_TO_PIXELS * zoom;
-    x -= centerx * UNIT_TO_PIXELS * zoom;
-    y -= centery * UNIT_TO_PIXELS * zoom;
+        // move according to zoom, cam pos etc:
+        width *= UNIT_TO_PIXELS * zoom;
+        height *= UNIT_TO_PIXELS * zoom;
+        x -= centerx * UNIT_TO_PIXELS * zoom;
+        y -= centery * UNIT_TO_PIXELS * zoom;
+    } else {
+        // only adjust width/height to proper units when pinned
+        width *= UNIT_TO_PIXELS;
+        height *= UNIT_TO_PIXELS;
+    }
 
     // render:
     graphicsrender_DrawCropped(tex, x, y, alpha,

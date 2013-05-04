@@ -120,13 +120,14 @@ double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
-int zindex, int visible),
+int zindex, int visible, int cameraId),
 void (*spriteModified) (void* handle,
 double x, double y,
 double width, double height, double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
-size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight),
+size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
+int zindex, int visible, int cameraId),
 void (*spriteDeleted) (void* handle)
 );
 
@@ -148,7 +149,7 @@ double x, double y, double width, double height,
 size_t texwidth, size_t texheight,
 double angle, double alpha, double r, double g, double b,
 size_t sourceX, size_t sizeY, size_t sizeWidth, size_t sizeHeight,
-int visible));
+int visible, int cameraId));
 // Sprites will be returned in Z-Index order.
 // (lower index first, and for same z-index
 // with the older sprites first)
@@ -161,6 +162,10 @@ struct graphics2dsprite* sprite);
 // to 1 (solid).
 void graphics2dsprites_setAlpha(
 struct graphics2dsprite* sprite, double alpha);
+
+// Set pinned to camera state:
+void graphics2dsprites_setPinnedToCamera(struct graphics2dsprite* sprite,
+int cameraId);
 
 #ifdef __cplusplus
 }

@@ -52,6 +52,9 @@ struct graphics2dsprite {
     // texture dimensions (initially 0, 0 if not known):
     size_t texWidth, texHeight;
 
+    // pinned to camera with given id (or -1 if not):
+    int pinnedToCamera;
+
     // texture info:
     struct graphicstexture* tex;
     struct texturerequesthandle* request;
@@ -183,6 +186,7 @@ size_t* width, size_t* height) {
         if (sprite->clippingWidth && sprite->clippingHeight) {
             *width = sprite->clippingWidth;
             *height = sprite->clippingHeight;
+            mutex_Release(m);
             return 1;
         }
         // otherwise, report texture size if known:
@@ -221,6 +225,7 @@ size_t x, size_t y, size_t w, size_t h) {
     sprite->clippingY = y;
     sprite->clippingWidth = w;
     sprite->clippingHeight = h;
+    sprite->clippingEnabled = 1;
     graphics2dsprites_fixClippingWindow(sprite);
     mutex_Release(m);
 }
@@ -240,7 +245,7 @@ double x, double y, double width, double height,
 size_t texWidth, size_t texHeight,
 double angle, double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
-int visible)) {
+int visible, int cameraId)) {
     if (!spriteInformation) {
         return;
     }
@@ -268,13 +273,13 @@ int visible)) {
             spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
             s->texWidth, s->texHeight, s->angle, s->alpha, s->r, s->g, s->b,
             sx, sy, sw, sh,
-            s->visible);
+            s->visible, s->pinnedToCamera);
         } else {
             // report sprite as invisible:
             spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
             s->texWidth, s->texHeight, s->angle, s->alpha, s->r, s->g, s->b,
             s->clippingX, s->clippingY, s->clippingWidth, s->clippingHeight,
-            0);
+            0, s->pinnedToCamera);
         }
 
         s = s->next;
@@ -342,8 +347,9 @@ double x, double y, double angle) {
 static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     // seek the earliest sprite (from the back)
     // which has a lower or equal zindex, and add us behind
-    struct graphics2dsprite* s2 = spritelist;
-    while (s2 && s2->zindex < s->zindex) {
+    struct graphics2dsprite* s2 = spritelistEnd;
+    while (s2 && (s2->zindex > s->zindex ||
+    (s2->pinnedToCamera >= 0 && s->pinnedToCamera < 0))) {
         s2 = s2->prev;
     }
     if (s2) {
@@ -386,6 +392,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->r = 1;
     s->g = 1;
     s->b = 1;
+    s->pinnedToCamera = -1;
     s->alpha = 1;
     s->width = width;
     s->height = height;
@@ -430,6 +437,35 @@ int zindex) {
     // add us back to the list:
     graphics2dsprites_addToList(sprite);
 
+    mutex_Release(m);
+}
+
+void graphics2dsprites_setPinnedToCamera(struct graphics2dsprite* sprite,
+int cameraId) {
+    if (!sprite) {
+        return;
+    }
+    mutex_Lock(m);
+    if (sprite->pinnedToCamera == cameraId) {
+        mutex_Release(m);
+        return;
+    }
+
+    // set new pinned state:
+    sprite->pinnedToCamera = cameraId;
+
+    // readd to list:
+    graphics2dsprites_removeFromList(sprite);
+    graphics2dsprites_addToList(sprite);
+
+    // done.
+    mutex_Release(m);
+}
+
+void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
+int visible) {
+    mutex_Lock(m);
+    sprite->visible = (visible != NULL);
     mutex_Release(m);
 }
 

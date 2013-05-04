@@ -41,7 +41,11 @@
 <ul>
   <li><a href="../modules/blitwizard.html">blitwizard</a></li>
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
+  <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
+  <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
   <li><strong>blitwizard.graphics</strong></li>
+  <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
+  <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
   <li><a href="../modules/os.html">os</a></li>
   <li><a href="../modules/string.html">string</a></li>
@@ -108,7 +112,7 @@
 	<td class="summary">Set the 2d zoom factor.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:gameUnitsPerPixel">camera:gameUnitsPerPixel&nbsp;()</a></td>
+	<td class="name" ><a href="#camera:gameUnitToPixels">camera:gameUnitToPixels&nbsp;()</a></td>
 	<td class="summary">Get the extend in pixels a game unit in the 2d world
  has at the default camera zoom level of 1.</td>
 	</tr>
@@ -353,8 +357,8 @@
 
 </dd>
     <dt>
-    <a name = "camera:gameUnitsPerPixel"></a>
-    <strong>camera:gameUnitsPerPixel&nbsp;()</strong>
+    <a name = "camera:gameUnitToPixels"></a>
+    <strong>camera:gameUnitToPixels&nbsp;()</strong>
     </dt>
     <dd>
     Get the extend in pixels a game unit in the 2d world
@@ -379,7 +383,7 @@
     <ul>
         <pre class="example">
  <span class="comment">-- Get the amount of pixels for one game unit for the first (=default) camera:
-</span> <span class="keyword">local</span> pixels = blitwizard.graphics.getCameras()[<span class="number">1</span>]:gameUnitsPerPixel()</pre>
+</span> <span class="keyword">local</span> pixels = blitwizard.graphics.getCameras()[<span class="number">1</span>]:gameUnitsToPixel()</pre>
     </ul>
 
 </dd>

@@ -165,6 +165,13 @@ int index, int arg, const char* func) {
     return c;
 }
 
+int toluacameraid(lua_State* l,
+int index, int arg, const char* func) {
+    struct luacameralistentry* le = toluacameralistentry(l, index, arg,
+    func);
+    return le->cameraslot;
+}
+
 /// Get a table array with all currently active cameras.
 // (per default, this is only one)
 // @function getCameras
@@ -356,15 +363,16 @@ int luafuncs_camera_set2dZoomFactor(lua_State* l) {
 // to the very dynamic way objects look depending on your
 // position in the world etc.
 //
-// @function gameUnitsPerPixel
+// @function gameUnitToPixels
 // @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
 // @usage
 // -- Get the amount of pixels for one game unit for the first (=default) camera:
-// local pixels = blitwizard.graphics.getCameras()[1]:gameUnitsPerPixel()
-int luafuncs_camera_gameUnitsPerPixel(lua_State* l) {
+// local pixels = blitwizard.graphics.getCameras()[1]:gameUnitsToPixel()
+int luafuncs_camera_gameUnitToPixels(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:gameUnitsPerPixel");
-    return UNIT_TO_PIXELS;
+    l, 1, 0, "blitwizard.graphics.camera:gameUnitsToPixel");
+    lua_pushnumber(l, UNIT_TO_PIXELS);
+    return 1;
 }
 
 #endif  // USE_GRAPHICS

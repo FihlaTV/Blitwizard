@@ -79,7 +79,13 @@ int luafuncs_object_getTransparency(lua_State* l);
 int luafuncs_object_setTransparency(lua_State* l);
 
 // set 2d texture clipping window:
-int luafuncs_set2dTextureClipping(lua_State* l);
+int luafuncs_object_set2dTextureClipping(lua_State* l);
+
+// pin a 2d object to a camera:
+int luafuncs_object_pinToCamera(lua_State* l);
+
+// set object visibility:
+int luafuncs_object_setVisible(lua_State* l);
 
 #ifdef __cplusplus
 }

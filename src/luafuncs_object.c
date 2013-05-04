@@ -50,6 +50,7 @@
 #include "luafuncs_objectgraphics.h"
 #include "luafuncs_objectphysics.h"
 #include "graphics2dsprites.h"
+#include "luafuncs_graphics_camera.h"
 
 struct blitwizardobject* objects = NULL;
 struct blitwizardobject* deletedobjects = NULL;
@@ -681,13 +682,14 @@ int luafuncs_object_setZIndex(lua_State* l) {
 // @tparam number y the y offset in the texture, in pixels (default: 0)
 // @tparam number width the clipping window width in the texture in pixels (defaults to full texture width)
 // @tparam number height the clipping window height in the texture in pixels 8defaults to full texture height)
-int luafuncs_set2dTextureClipping(lua_State* l) {
+#ifdef USE_GRAPHICS
+int luafuncs_object_set2dTextureClipping(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:set2dTextureClipping");
     if (obj->deleted) {
         return haveluaerror(l, "Object was deleted");
     }
-    if (!obj->is3d) {
+    if (obj->is3d) {
         // FIXME: support 3d decals here
         return haveluaerror(l, "Not a 2d object");
     }
@@ -715,7 +717,38 @@ int luafuncs_set2dTextureClipping(lua_State* l) {
     lua_tosize_t(l, 5));
     return 0;
 }
+#endif
 
+/// Pin a sprite to a given @{blitwizard.graphics.camera|game camera}.
+// 
+// It will only be visible on that given camera, it will ignore the
+// camera's 2d position and zoom and will simply display with default zoom
+// with 0,0 being the upper left corner.
+//
+// It will also be above all unpinned sprites.
+//
+// You might want to use this for on-top interface graphics that shouldn't
+// move with the level but stick to the screen.
+// @function pinToCamera
+// @tparam userdata camera the @{blitwizard.graphics.camera|camera} to pin to, or nil to unpin
+#ifdef USE_GRAPHICS
+int luafuncs_object_pinToCamera(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:pinToCamera");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+
+    int cameraId = -1;
+    if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
+        cameraId = toluacameraid(l, 2, 1, "blitwizard.object:pinToCamera");
+    }
+
+    // pin it to the given camera:
+    luacfuncs_objectgraphics_pinToCamera(obj, cameraId);
+    return 0;
+}
+#endif
 
 static void luacfuncs_object_doStep(lua_State* l,
 struct blitwizardobject* o) {
@@ -789,6 +822,31 @@ void luacfuncs_object_updateGraphics() {
         o = o->next;
     }
 }
+
+/// Change whether an object is shown at all, or whether it is hidden.
+// If you know objects aren't going to be needed at some point or
+// if you want to hide them until something specific happens,
+// use this function to hide them temporarily.
+//
+// @function setVisible
+// @tparam boolean visible specify true if you want the object to be shown (default), or false if you want it to be hidden. Please note this has no effect on collision
+#ifdef USE_GRAPHICS
+int luafuncs_object_setVisible(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:pinToCamera");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (lua_type(l, 2) != LUA_TBOOLEAN) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:pinToCamera", "boolean",
+        lua_strtype(l, 2));
+    }        
+    luacfuncs_objectgraphics_setVisible(obj,
+    lua_toboolean(l, 2));
+    return 0;
+}
+#endif
 
 /// Set this event function to a custom function
 // of yours to get notified when the geometry

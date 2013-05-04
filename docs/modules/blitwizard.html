@@ -40,7 +40,11 @@
 <ul>
   <li><strong>blitwizard</strong></li>
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
+  <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
+  <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
   <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
+  <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
   <li><a href="../modules/os.html">os</a></li>
   <li><a href="../modules/string.html">string</a></li>
@@ -118,6 +122,14 @@
  original texture used for the sprite which allows you to
  specify a sub-rectangle of the texture to be used as
  image source.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:pinToCamera">object:pinToCamera&nbsp;(camera)</a></td>
+	<td class="summary">Pin a sprite to a given <a href="../modules/blitwizard.graphics.html#Class_camera">game camera</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setVisible">object:setVisible&nbsp;(visible)</a></td>
+	<td class="summary">Change whether an object is shown at all, or whether it is hidden.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:onGeometryLoaded">object:onGeometryLoaded&nbsp;()</a></td>
@@ -315,7 +327,7 @@
  objects (x, y) and three for 3d objects (x, y, z).
 <p> Please note this game position is in <b>game units</b>, not pixels.
 <p> To find out how much pixels 1 game unit is in the 2d world with
- a default zoom of 1, check <a href="../modules/blitwizard.graphics.html#camera:gameUnitsPerPixel">blitwizard.graphics.camera:gameUnitsPerPixel</a>.
+ a default zoom of 1, check ???.
 <p> For the 3d world, one game unit should roughly equal one meter
  if your game plays in a normal human-scale environment
  (this works best for the physics).
@@ -533,6 +545,55 @@
 
 </dd>
     <dt>
+    <a name = "object:pinToCamera"></a>
+    <strong>object:pinToCamera&nbsp;(camera)</strong>
+    </dt>
+    <dd>
+    Pin a sprite to a given <a href="../modules/blitwizard.graphics.html#Class_camera">game camera</a>.
+
+ It will only be visible on that given camera, it will ignore the
+ camera's 2d position and zoom and will simply display with default zoom
+ with 0,0 being the upper left corner.
+<p> It will also be above all unpinned sprites.
+<p> You might want to use this for on-top interface graphics that shouldn't
+ move with the level but stick to the screen.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">camera</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to pin to, or nil to unpin</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setVisible"></a>
+    <strong>object:setVisible&nbsp;(visible)</strong>
+    </dt>
+    <dd>
+    Change whether an object is shown at all, or whether it is hidden.
+ If you know objects aren't going to be needed at some point or
+ if you want to hide them until something specific happens,
+ use this function to hide them temporarily.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">visible</span>
+            <span class="types"><span class="type">boolean</span></span>
+         specify true if you want the object to be shown (default), or false if you want it to be hidden. Please note this has no effect on collision</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "object:onGeometryLoaded"></a>
     <strong>object:onGeometryLoaded&nbsp;()</strong>
     </dt>
@@ -699,7 +760,7 @@
  <span class="comment">-- Set the dimensions of the object to a 1x1 square
 </span> <span class="comment">-- (find out how large that is in pixels
 </span> <span class="comment">-- at the default zoom level with
-</span> <span class="comment">-- <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a>()[1]:<a href="../modules/blitwizard.graphics.html#camera:gameUnitsPerPixel">gameUnitsPerPixel</a>() - multiply this
+</span> <span class="comment">-- <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a>()[1]:???() - multiply this
 </span> <span class="comment">-- with any number of game units to get their size in pixels)
 </span> myobject:setScale(<span class="number">1</span>, <span class="number">1</span>)
 
