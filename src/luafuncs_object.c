@@ -72,6 +72,8 @@ void cleanupobject(struct blitwizardobject* o) {
     luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
 }
 
+static void luacfuncs_object_deleteIfOk(struct blitwizardobject* o);
+
 static int garbagecollect_blitwizobjref(lua_State* l) {
     // we need to decrease our reference count of the
     // blitwizard object we referenced to.
@@ -93,6 +95,11 @@ static int garbagecollect_blitwizobjref(lua_State* l) {
 
     // if it's already deleted and ref count is zero, remove it
     // entirely and free it:
+    luacfuncs_object_deleteIfOk(o);
+    return 0;
+}
+
+static void luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
     if (o->deleted && o->refcount <= 0) {
         cleanupobject(o);
 
@@ -112,7 +119,7 @@ static int garbagecollect_blitwizobjref(lua_State* l) {
         // free object
         free(o);
     }
-    return 0;
+    return;
 }
 
 void luacfuncs_object_obtainRegistryTable(lua_State* l,
@@ -802,6 +809,14 @@ int luacfuncs_object_doAllSteps(int count) {
             }
             o = onext;
         }
+    }
+
+    // delete objects:
+    o = deletedobjects;
+    while (o) {
+        struct blitwizardobject* onext = o->next;
+        luacfuncs_object_deleteIfOk(o);
+        o = onext;
     }
     return count;
 }
