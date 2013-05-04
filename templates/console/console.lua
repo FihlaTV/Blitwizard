@@ -104,6 +104,10 @@ do
         end
     end
 
+    local printvar = function(var)
+        print(tostring(var))
+    end
+
     local oldprint = print
     function print(...)
         local str = ""
@@ -292,7 +296,23 @@ do
                     end
                     blinkCursorOffset = 0
                     -- run the entered command:
-                    local success,msg = pcall(function() dostring(cmd) end)
+                    local result = nil
+                    local success,msg = pcall(
+                        function() result = dostring(cmd) end)
+
+                    -- if that worked, print return value if present:
+                    if success and result ~= nil then
+                        printvar(result)
+                    end
+
+                    -- if that didn't work, see if we can do other things:
+                    if not success then
+                        if _G[cmd] then  -- print global var
+                            printvar(_G[cmd])
+                            success = true
+                        end
+                    end
+
                     -- print error if it failed:
                     if not success then
                         print("Error: " .. msg)

@@ -354,7 +354,7 @@ int luafuncs_dostring(lua_State* l) {
     }
 
     // run string:
-    int before = lua_gettop(l);
+    int before = lua_gettop(l)-1;  // minus function itself
     lua_call(l, 0, LUA_MULTRET);
     return lua_gettop(l)-before;
 }
