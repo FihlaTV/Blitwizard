@@ -308,7 +308,7 @@ void graphicstexturelist_FreeAllTextures(void) {
     mutex_Release(listMutex);
 }
 
-/*void graphicstexturelist_DoForAllTextures(
+void graphicstexturelist_doForAllTextures(
 int (*callback)(struct graphicstexturemanaged* texture,
 struct graphicstexturemanaged* previoustexture,
 void* userdata), void* userdata) {
@@ -324,7 +324,7 @@ void* userdata), void* userdata) {
         gt = gtnext;
     }
     mutex_Release(listMutex);
-}*/
+}
 
 #endif // ifdef USE_GRAPHICS
 

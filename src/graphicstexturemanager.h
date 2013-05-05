@@ -142,8 +142,13 @@ struct texturerequesthandle* request, int visibility);
 // when not used for a longer time:
 #define TEXSIZE_TINY 32
 
+// How fast to scale down things:
+#define SCALEDOWNSECONDSVERYLONG (60*1)
 #define SCALEDOWNSECONDSLONG 20
 #define SCALEDOWNSECONDS 5
+
+// How often to check all textures for down- and upscaling:
+#define ADOPTINTERVAL 5
 
 
 // Destroy a texture request. You will still get a textureSwitch
