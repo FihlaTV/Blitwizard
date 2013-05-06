@@ -653,12 +653,15 @@ static void applyobjectsettings(struct blitwizardobject* obj) {
 // This will only work if the object has movable collision enabled through @{object:enableMovableCollision|object:enableMovableCollision}.
 // IMPORTANT: Some parameters are not present for 2d objects, see list below.
 // @function impulse
-// @tparam number source_x the x source coordinate from where the push will be given
-// @tparam number source_y the y source coordinate
-// @tparam number source_z (parameter only present for 3d objects) the z source coordinate
 // @tparam number force_x the x coordinate of the force vector applied through the impulse
 // @tparam number force_y the y coordinate of the force vector
-// @tparam number force_z (parameter only present for 3d objects) the z coordinate of the force vector
+// @tparam number force_z <i>(parameter only present for 3d objects)</i> the z coordinate of the force vector
+// @tparam number source_x (optional, defaults to object's x position) the x source coordinate from where the push will be given
+// @tparam number source_y (optional, defaults to object's y position) the y source coordinate
+// @tparam number source_z (optional, defaults to object's z position) <i>(parameter only present for 3d objects)</i> the z source coordinate
+// @usage
+// -- apply an upward impulse to a 2d object with collsion enabled:
+// obj:impulse(0, -1)
 int luafuncs_object_impulse(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:impulse");
@@ -675,47 +678,64 @@ int luafuncs_object_impulse(lua_State* l) {
         lua_pushstring(l, "Impulse can be only applied to movable objects");
         return lua_error(l);
     }
-    if (lua_type(l, 2) != LUA_TNUMBER) {  // source x
+    // validate force parameters:
+    if (lua_type(l, 2) != LUA_TNUMBER) {  // force x
         return haveluaerror(l, badargument1, 1, funcname, "number",
         lua_strtype(l, 2));
     }
-    if (lua_type(l, 3) != LUA_TNUMBER) {  // source y
+    if (lua_type(l, 3) != LUA_TNUMBER) {  // force y
         return haveluaerror(l, badargument1, 2, funcname, "number",
         lua_strtype(l, 3));
     }
     if (obj->is3d) {
-        if (lua_type(l, 4) != LUA_TNUMBER) {  // source z
+        if (lua_type(l, 4) != LUA_TNUMBER) {  // force z
             return haveluaerror(l, badargument1, 3, funcname,
             "number", lua_strtype(l, 4));
         }
     }
-    if (lua_type(l, 4+obj->is3d) != LUA_TNUMBER) { // force x
-        return haveluaerror(l, badargument1, 3+obj->is3d, funcname, "number",
-        lua_strtype(l, 4+obj->is3d));
-    }
-    if (lua_type(l, 5+obj->is3d) != LUA_TNUMBER) { // force y
-        return haveluaerror(l, badargument1, 4+obj->is3d, funcname, "number",
-        lua_strtype(l, 5+obj->is3d));
-    }
-    if (obj->is3d) {
-        if (lua_type(l, 7) != LUA_TNUMBER) { // force z
-            return haveluaerror(l, badargument1, 6, funcname, "number",
-            lua_strtype(l, 7));
+    // see if we have a source parameter:
+    int havesource = 0;
+    if ((obj->is3d && lua_gettop(l) > 4) || (!obj->is3d && lua_gettop(l) > 3)) {
+        // validate source parameters:
+        havesource = 1;
+        if (lua_type(l, 4+obj->is3d) != LUA_TNUMBER) { // source x
+            return haveluaerror(l, badargument1, 3+obj->is3d, funcname, "number",
+            lua_strtype(l, 4+obj->is3d));
+        }
+        if (lua_type(l, 5+obj->is3d) != LUA_TNUMBER) { // source y
+            return haveluaerror(l, badargument1, 4+obj->is3d, funcname, "number",
+            lua_strtype(l, 5+obj->is3d));
+        }
+        if (obj->is3d) {
+            if (lua_type(l, 7) != LUA_TNUMBER) { // source z
+                return haveluaerror(l, badargument1, 6, funcname, "number",
+                lua_strtype(l, 7));
+            }
         }
     }
     double sourcex,sourcey,sourcez;
     double forcex, forcey, forcez;
-    sourcex = lua_tonumber(l, 2);
-    sourcey = lua_tonumber(l, 3);
-    sourcez = 0;
+    // get force:
+    forcex = lua_tonumber(l, 2);
+    forcey = lua_tonumber(l, 3);
+    forcez = 0;
     if (obj->is3d) {
-        sourcez = lua_tonumber(l, 4);
+        forcez = lua_tonumber(l, 4);
     }
-    forcex = lua_tonumber(l, 4+obj->is3d);
-    forcey = lua_tonumber(l, 5+obj->is3d);
-    if (obj->is3d) {
-        forcez = lua_tonumber(l, 7);
+    // get source:
+    if (havesource) {
+        sourcex = lua_tonumber(l, 4+obj->is3d);
+        sourcey = lua_tonumber(l, 5+obj->is3d);
+        sourcez = 0;
+        if (obj->is3d) {
+            forcez = lua_tonumber(l, 7);
+        }
+    } else {
+        // initialise source to object position:
+        sourcez = 0;
+        objectphysics_getPosition(obj, &sourcex, &sourcey, &sourcez);
     }
+    // apply impulse:
     if (obj->is3d) {
 #ifdef USE_PHYSICS3D
         physics_apply3dImpulse(obj->physics->object,

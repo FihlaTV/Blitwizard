@@ -201,7 +201,7 @@
  objects to collide with it.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#object:impulse">object:impulse&nbsp;(source_x, source_y, source_z, force_x, force_y, force_z)</a></td>
+	<td class="name" ><a href="#object:impulse">object:impulse&nbsp;(force_x, force_y, force_z, source_x, source_y, source_z)</a></td>
 	<td class="summary">Apply a physics impulse onto an object (which will make it move,
  for example as if someone had pushed it).</td>
 	</tr>
@@ -1012,7 +1012,7 @@
 </dd>
     <dt>
     <a name = "object:impulse"></a>
-    <strong>object:impulse&nbsp;(source_x, source_y, source_z, force_x, force_y, force_z)</strong>
+    <strong>object:impulse&nbsp;(force_x, force_y, force_z, source_x, source_y, source_z)</strong>
     </dt>
     <dd>
     Apply a physics impulse onto an object (which will make it move,
@@ -1022,15 +1022,6 @@
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">source_x</span>
-            <span class="types"><span class="type">number</span></span>
-         the x source coordinate from where the push will be given</li>
-        <li><span class="parameter">source_y</span>
-            <span class="types"><span class="type">number</span></span>
-         the y source coordinate</li>
-        <li><span class="parameter">source_z</span>
-            <span class="types"><span class="type">number</span></span>
-         (parameter only present for 3d objects) the z source coordinate</li>
         <li><span class="parameter">force_x</span>
             <span class="types"><span class="type">number</span></span>
          the x coordinate of the force vector applied through the impulse</li>
@@ -1039,12 +1030,27 @@
          the y coordinate of the force vector</li>
         <li><span class="parameter">force_z</span>
             <span class="types"><span class="type">number</span></span>
-         (parameter only present for 3d objects) the z coordinate of the force vector</li>
+         <i>(parameter only present for 3d objects)</i> the z coordinate of the force vector</li>
+        <li><span class="parameter">source_x</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional, defaults to object's x position) the x source coordinate from where the push will be given</li>
+        <li><span class="parameter">source_y</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional, defaults to object's y position) the y source coordinate</li>
+        <li><span class="parameter">source_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional, defaults to object's z position) <i>(parameter only present for 3d objects)</i> the z source coordinate</li>
     </ul>
 
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- apply an upward impulse to a 2d object with collsion enabled:
+</span> obj:impulse(<span class="number">0</span>, -<span class="number">1</span>)</pre>
+    </ul>
 
 </dd>
     <dt>
