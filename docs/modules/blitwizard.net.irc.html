@@ -139,7 +139,7 @@
     <ul>
         <pre class="example">
   <span class="comment">-- connect to the #blitwizard chat room:
-</span>  myIRC = blitwizard.net.irc.connection:new(<span class="string">"irc.eloxoph.de"</span>,
+</span>  myIRC = `blitwizard.net.irc.connection:new`(<span class="string">"irc.eloxoph.de"</span>,
   <span class="keyword">function</span>(self, event, param1, param2, param3)
       <span class="keyword">if</span> event == <span class="string">"connect"</span> <span class="keyword">then</span>
           <span class="global">print</span>(<span class="string">"Connected! Will now enter chat room..."</span>)
@@ -268,7 +268,8 @@
     <dd>
     Roleplay a specific action in a room, e.g.  "looks outside of window"
    as an action will show up as "<Yourname> looks outside the window".
-<p>   Similar to <a href="../modules/blitwizard.net.irc.html#connection:talkToRoom">connection.talkToRoom</a>, this is not
+<p>   Similar to <a href="../modules/blitwizard.net.irc.html#connection:talkToRoom">connection.talkToRoom</a>,
+   this is not
    possible before entering a room and getting the "enter" event.
 
     <h3>Parameters:</h3>

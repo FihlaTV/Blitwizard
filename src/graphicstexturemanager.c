@@ -118,16 +118,17 @@ time_t now, int savememory) {
             (savememory &&  // previous detail use is long ago:
             gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
             SCALEDOWNSECONDSLONG < now &&
-            gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] < SCALEDOWNSECONDS)) {
+            gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] + SCALEDOWNSECONDS
+            < now)) {
             // it hasn't been used at normal distance for a long time
             // (or detail distance for quite a while and normal for a short
             // time and we want memory).
             // go down to medium scaling:
             wantsize = 3;  // medium
             if (gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] +
-            SCALEDOWNSECONDSLONG < now &&
+            SCALEDOWNSECONDSVERYLONG < now &&
             gtm->lastUsage[USING_AT_VISIBILITY_DETAIL]
-            < SCALEDOWNSECONDSLONG &&
+            < SCALEDOWNSECONDSVERYLONG &&
                 // require memory saving plans or
                 // recent invisible use to go to low:
                 (savememory ||
@@ -160,19 +161,21 @@ time_t now, int savememory) {
     // all uses including distant use are quite in the past:
     (
         gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
-        SCALEDOWNSECONDSVERYLONG < now &&
+        SCALEDOWNSECONDSVERYVERYLONG < now &&
         gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] + 
-        SCALEDOWNSECONDSVERYLONG < now &&
+        SCALEDOWNSECONDSVERYVERYLONG < now &&
         (
             gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
             SCALEDOWNSECONDSLONG < now ||
             (gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
-            SCALEDOWNSECONDS && savememory)
+            SCALEDOWNSECONDS < now && savememory)
         )
     )
     ) {
         wantsize = 1;  // tiny
-        if (savememory == 2) {
+        if (savememory == 2 &&
+        gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
+        SCALEDOWNSECONDSVERYLONG < now) {
             // we anxiously want memory.
             // suggest unloading:
             wantsize = -1;

@@ -143,8 +143,13 @@ struct texturerequesthandle* request, int visibility);
 #define TEXSIZE_TINY 32
 
 // How fast to scale down things:
+// Going down to TINY roughly after this time:
+#define SCALEDOWNSECONDSVERYVERYLONG (60*2)
+// Going down to LOW roughly after this time:
 #define SCALEDOWNSECONDSVERYLONG (60*1)
+// Going down to MEDIUM roughly after this time:
 #define SCALEDOWNSECONDSLONG 20
+// Going down to HIGH roughly after this time:
 #define SCALEDOWNSECONDS 5
 
 // How often to check all textures for down- and upscaling:
