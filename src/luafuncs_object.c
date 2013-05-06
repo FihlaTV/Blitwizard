@@ -881,7 +881,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 // This function is called with all objects with a
 // frequency of 60 times a second (it can be changed
 // globally with @{blitwizard.setStep} if you know
-// what you're doing.
+// what you're doing).
 // @function doAlways
 // @usage
 // -- have a sprite move up the screen
