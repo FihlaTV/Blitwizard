@@ -297,15 +297,67 @@ int luafuncs_camera_set2dCenter(lua_State* l) {
     return 0;
 }
 
+/// Get the game units of the visible 2d area of the game world
+// shown through this camera. This depends on the camera's
+// @{blitwizard.graphics.getPixelDimensionsOnScreen|actual size in pixels
+// on the screen}, the camera's @{blitwizard.graphics.camera.get2dZoomFactor|
+// 2d zoom factor} and the camera's @{blitwizard.graphics.camera:get2dAspectRatio|
+// 2d aspect ratio}.
+//
+// <i>Note on 3d objects:</i>
+// There is no similar function for 3d objects, because in 3d it
+// largely depends on the camera's position and angle which objects
+// will be visible how large on the screen, while for 2d it only
+// depends on zoom and aspect ratio.
+//
+// <i>Note on @{blitwizard.object:pinToCamera|pinned} 2d objects:</i>
+// If you want to know the area visible in game units for
+// @{blitwizard.object:pinToCamera|pinned objects} which are unaffected
+// by camera zoom when drawn, specify <i>false</i> as first parameter
+// for not taking the zoom into account.
+// @function getVisible2dAreaDimensions
+// @tparam boolean consider_zoom (optional) defaults to true. Specifies whether
+// the zoom factor should be taken into account. Set to <i>true</i> if yes,
+// <i>false</i> if not.
+// @treturn number width the width of the visible 2d world area
+// @treturn number height the height of the visible 2d world area
+int luafuncs_camera_getVisible2dAreaDimensions(lua_State* l) {
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizard.graphics.camera:getVisible2dAreaDimensions");
+
+    int considerzoom = 0;
+    // get consider_zoom parameter:
+    if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
+        if (lua_type(l, 2) != LUA_TBOOLEAN) {
+            return haveluaerror(l, badargument1, 1, "blitwizard.graphics.camera:"
+            "getVisible2dAreaDimensions", "boolean", lua_strtype(l, 2));
+        }
+        considerzoom = lua_toboolean(l, 2);
+    }
+
+    // return visible area dimensions:
+    // FIXME: take aspect ratio into account once it can be changed
+    double w = graphics_GetCameraWidth(e->cameraslot);
+    double h = graphics_GetCameraHeight(e->cameraslot);
+    double z = graphics_GetCamera2DZoom(e->cameraslot);
+    if (!considerzoom) {
+        z = 1;
+    }
+    lua_pushnumber(l, (w/UNIT_TO_PIXELS) * z);
+    lua_pushnumber(l, (h/UNIT_TO_PIXELS) * z);
+    return 2;
+}
+
 /// Get the dimensions of a camera on the actual
-// screen. It usually fills the whole window per default,
-// but not necessarily.
-// @function getScreenDimensions
+// screen. It usually fills the whole window (= the full size of the
+// resolution you specified in @{blitwizard.graphics.setMode),
+// but that may be changed with @{blitwizard.graphics.camera:setPixelDimensionsOnScreen}.
+// @function getPixelDimensionsOnScreen
 // @treturn number width Width of the camera on the screen in pixels
 // @treturn number height Height of the camera on the screen in pixels
-int luafuncs_camera_getScreenDimensions(lua_State* l) {
+int luafuncs_camera_getPixelDimensionsOnScreen(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:getScreenDimensions");
+    l, 1, 0, "blitwizard.graphics.camera:getPixelDimensionsOnScreen");
     lua_pushnumber(l, graphics_GetCameraWidth(e->cameraslot));
     lua_pushnumber(l, graphics_GetCameraHeight(e->cameraslot));
     return 2;
@@ -315,7 +367,7 @@ int luafuncs_camera_getScreenDimensions(lua_State* l) {
 // @function setScreenDimensions
 // @tparam number width Width of the camera on the screen in pixels
 // @tparam number height Height of the camera on the screen in pixels
-int luafuncs_camera_setScreenDimensions(lua_State* l) {
+int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
     return haveluaerror(l, "the SDL renderer doesn't support resizing cameras");
 #else

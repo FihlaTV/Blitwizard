@@ -86,9 +86,7 @@ do
         -- calculate proper size of the dev console:
         local w,h = consoleBg:getDimensions()
         local cw,ch = blitwizard.graphics.getCameras()[1]:
-        getScreenDimensions()
-        cw = cw / blitwizard.graphics.getCameras()[1]:gameUnitToPixels()
-        ch = ch / blitwizard.graphics.getCameras()[1]:gameUnitToPixels()
+        getVisible2dAreaDimensions(false)
         consoleBg:setScale(cw/w, consoleHeight/h)
         consoleBg:setPosition(0, -h)
     end
@@ -210,15 +208,12 @@ do
         if consoleTextObj then
             -- get a bit of info about screen size etc:
             local cw,ch = blitwizard.graphics.getCameras()[1]:
-            getScreenDimensions()
-            local gameunitpix = blitwizard.graphics.getCameras()[1]:
-                gameUnitToPixels()
-            cw = cw / gameunitpix
+            getVisible2dAreaDimensions(false)
 
             -- shift to the right when entering very long lines:
             local shiftleft = 0        
-            if consoleTextObj:width() > cw - 10/gameunitpix then
-                shiftleft = consoleTextObj:width() - (cw - 10/gameunitpix)
+            if consoleTextObj:width() > cw - 0.1 then
+                shiftleft = consoleTextObj:width() - (cw - 0.1)
             end
 
             -- move console text to calculated position:

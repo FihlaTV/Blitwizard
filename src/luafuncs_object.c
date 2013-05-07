@@ -567,6 +567,12 @@ int luafuncs_object_getDimensions(lua_State* l) {
 // and 1,1,1 for 3d objects. The scale is a factor applied to the
 // dimensions of an object to stretch or shrink it.
 //
+// Please note if you want to scale up a unit to precisely
+// match a specific size in game units (instead of just making
+// it twice the size, three times the size etc with setScale),
+// you might want to use @{blitwizard.object:scaleToDimensions|
+// object:scaleToDimensions}.
+//
 // Returns 2 values for 2d objects, 3 values for 3d objects.
 // @function getScale
 // @treturn number x_scale X scale factor
@@ -591,13 +597,28 @@ int luafuncs_object_getScale(lua_State* l) {
 }
 
 /// Change an object's scale, also see @{blitwizard.object:getScale}.
-// This allows to stretch/shrink an object.
+// This allows to stretch/shrink an object. If physics are enabled
+// with @{blitwizard.object:enableMovableCollision|object:enableMovableCollision}
+// or @{blitwzard.object:enableStaticCollision|enableStaticCollision},
+// the physics hull will be scaled accordingly aswell.
+//
+// Please note if you want to scale up a unit to precisely
+// // match a specific size in game units (instead of just making
+// // it twice the size, three times the size etc with setScale),
+// // you might want to use @{blitwizard.object:scaleToDimensions|
+// // object:scaleToDimensions}.
 //
 // Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
 // @function setScale
 // @tparam number x_scale X scale factor
 // @tparam number y_scale Y scale factor
 // @tparam number z_scale (optional) Z scale factor
+// @usage
+// -- scale a 2d object to twice the original size
+// obj3d:setScale(2, 2)
+//
+// -- scale 3d object to half its original size
+// obj3d:setScale(0.5, 0.5, 0.5)
 int luafuncs_object_setScale(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setScale");
@@ -624,6 +645,147 @@ int luafuncs_object_setScale(lua_State* l) {
         obj->scale3d.x = x;
         obj->scale3d.y = y;
         obj->scale3d.z = z;
+    } else {
+        obj->scale2d.x = x;
+        obj->scale2d.y = y;
+    }
+    return 0;
+}
+
+/// Scale up an object to precise boundaries in game units.
+// An according @{blitwizard.object:setScale|scale factor}
+// will be picked to achieve this.
+//
+// For 2d objects, a width and a height can be specified.
+// For 3d objects, the size along all three axis (x, y, z)
+// can be specified.
+//
+// If you want the object to be scaled up but maintain
+// its aspect ratio, specify just one parameter and pass
+// <i>nil</i> for the others which will then be calculated
+// accordingly.
+// @function scaleToDimensions
+// @tparam number width width or x size in game units
+// @tparam number height height or y size
+// @tparam number z_size (only present for 3d objects) z size
+// @usage
+// -- Scale up a 3d object so its height matches 2 game units:
+// -- (it's proportions will be kept)
+// obj3d:scaleToDimensions(nil, nil, 2)
+int luafuncs_object_scaleToDimensions(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:scaleToDimensions");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+
+    // check parameters:
+    if (lua_type(l, 2) != LUA_TNUMBER && lua_type(l, 2) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:scaleToDimensions", "number or nil",
+        lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER && lua_type(l, 3) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:scaleToDimensions", "number or nil",
+        lua_strtype(l, 3));
+    }
+    if (obj->is3d &&
+        lua_type(l, 4) != LUA_TNUMBER && lua_type(l, 4) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.object:scaleToDimensions", "number or nil",
+        lua_strtype(l, 4));
+    }
+
+    double x,y,z;
+    if (!luacfuncs_objectgraphics_getDimensions(obj,
+    &x, &y, &z)) {
+        return haveluaerror(l, "object dimensions not known yet, "
+        "wait for onGeometryLoaded event before using this function");
+    }
+    if (x <= 0 || y <= 0 || z <= 0) {
+        return haveluaerror(l, "for objects with a size of zero, "
+        "there is no way to scale them up to a given size");
+    }
+
+    // get parameters:
+    double xdim = 0;
+    double ydim = 0;
+    double zdim = 0;
+    int gotdimension = 0;
+    if (lua_type(l, 2) == LUA_TNUMBER) {
+        xdim = lua_tonumber(l, 2);
+        gotdimension = 1;
+        if (xdim <= 0) {
+            return haveluaerror(l, "cannot scale to dimension which is "
+            "zero or negative");
+        }
+    }
+    if (lua_type(l, 3) == LUA_TNUMBER) {
+        ydim = lua_tonumber(l, 3);
+        gotdimension = 1;
+        if (ydim <= 0) {
+            return haveluaerror(l, "cannot scale to dimension which is "
+            "zero or negative");
+        }
+    }
+    if (obj->is3d && lua_type(l, 4) == LUA_TNUMBER) {
+        zdim = lua_tonumber(l, 4);
+        gotdimension = 1;
+        if (zdim <= 0) {
+            return haveluaerror(l, "cannot scale to dimension which is "
+            "zero or negative");
+        }
+    }
+
+    // we require one dimension at least:
+    if (!gotdimension) {
+        return haveluaerror(l, "you need to specify at least one dimension "
+        "for scaling");
+    }
+
+    // calculate factors:
+    double xfactor = 0;
+    double yfactor = 0;
+    double zfactor = 0;
+    if (xdim > 0) {
+        xfactor = xdim/x;
+    }
+    if (ydim > 0) {
+        yfactor = ydim/y;
+    }
+    if (obj->is3d && zdim > 0) {
+        zfactor = zdim/z;
+    }
+
+    // calculate missing factors:
+    if (xfactor == 0) {
+        if (yfactor > 0 || !obj->is3d) {
+            xfactor = yfactor;
+        } else {
+            xfactor = zfactor;
+        }
+    }
+    if (yfactor == 0) {
+        if (zfactor > 0 && obj->is3d) {
+            yfactor = zfactor;
+        } else {
+            yfactor = xfactor;
+        }
+    }
+    if (obj->is3d && zfactor == 0) {
+        if (xfactor > 0) {
+            zfactor = xfactor;
+        } else {
+            zfactor = yfactor;
+        }
+    }
+
+    // do scaling:
+    if (obj->is3d) {
+        obj->scale3d.x = xfactor;
+        obj->scale3d.y = yfactor;
+        obj->scale3d.z = zfactor;
     } else {
         obj->scale2d.x = x;
         obj->scale2d.y = y;
