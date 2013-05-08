@@ -306,7 +306,7 @@ struct blitwizardobject* o) {
 // implicitely calls luacfuncs_onError() when an error happened
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
-int args) {
+int args, int* boolreturn) {
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
 
@@ -341,7 +341,12 @@ int args) {
     // move error handling function in front of function + args
     lua_insert(l, -(args+3));
 
-    int ret = lua_pcall(l, args+1, 0, -(args+3));
+    // call function:
+    int returnvalues = 0;
+    if (boolreturn) {
+        returnvalues = 1;
+    }
+    int ret = lua_pcall(l, args+1, returnvalues, -(args+3));
 
     int errorHappened = 0;
     // process errors:
@@ -352,6 +357,12 @@ int args) {
         snprintf(funcName, sizeof(funcName),
         "blitwizard.object event function \"%s\"", eventName);
         luacfuncs_onError(funcName, e);
+    }
+
+    // obtain return value:
+    if (boolreturn) {
+        *boolreturn = lua_toboolean(l, -1);
+        lua_pop(l, 1);
     }
 
     // pop error handling function from stack again:
@@ -928,7 +939,7 @@ struct blitwizardobject* o) {
         return;
     }
 
-    luacfuncs_object_callEvent(l, o, "doAlways", 0);
+    luacfuncs_object_callEvent(l, o, "doAlways", 0, NULL);
 }
 
 int luacfuncs_object_doAllSteps(int count) {
@@ -986,7 +997,7 @@ void luacfuncs_object_updateGraphics() {
         luafuncs_objectgraphics_load(o, o->respath);
 
         if (luafuncs_objectgraphics_NeedGeometryCallback(o)) {
-            luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0);
+            luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0, NULL);
         }
 
         luacfuncs_objectgraphics_updatePosition(o);

@@ -65,58 +65,39 @@ struct blitwizardobject* obj) {
     lua_gettable(l, LUA_REGISTRYINDEX);
 }
 
-// Attempt to trigger a user-defined collision callback for a given object.
+// Attempt to trigger onCollision callback for a given object.
 // When no callback is set by the user or if the callback succeeds,
 // 1 will be returned.
-// In case of a lua error in the callback, 0 will be returned and a
-// traceback printed to stderr.
+// In case of a lua error in the callback, 0 will be returned and
+// luacfuncs_OnError will be triggered.
 static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct blitwizardobject* otherobj, double x, double y, double z, double normalx, double normaly, double normalz, double force, int* enabled, int use3d) {
     // get global lua state we use for blitwizard (no support for multiple
     // states as of now):
     lua_State* l = luastate_GetStatePtr();
 
-    // obtain the collision callback:
-    luafuncs_pushcollisioncallback(l, obj);
-
-    // check if the collision callback is not nil (-> defined):
-    if (lua_type(l, -1) != LUA_TNIL) {
-        // we got a collision callback for this object -> call it
-        lua_pushcfunction(l, (lua_CFunction)internaltracebackfunc());
-        lua_insert(l, -2);
-
-        // push all args:
-        luacfuncs_pushbobjidref(l, otherobj);
-        lua_pushnumber(l, x);
-        lua_pushnumber(l, y);
-        if (use3d) {
-            lua_pushnumber(l, z);
-        }
-        lua_pushnumber(l, normalx);
-        lua_pushnumber(l, normaly);
-        if (use3d) {
-            lua_pushnumber(l, normalz);
-        }
-        lua_pushnumber(l, force);
-
-        // Call the function:
-        int ret = lua_pcall(l, 6+2*use3d, 1, -(8+2*use3d));
-        if (ret != 0) {
-            callbackerror(l, "<blitwizardobject>:onCollision", lua_tostring(l, -1));
-            lua_pop(l, 2); // pop error string, error handling function
-            return 0;
-        } else {
-            // evaluate return result...
-            if (!lua_toboolean(l, -1)) {
-                *enabled = 0;
-            }
-
-            // pop error handling function and return value:
-            lua_pop(l, 2);
-        }
-    } else {
-        // callback was nil and not defined by user
-        lua_pop(l, 1); // pop the nil value
+    // push all args:
+    luacfuncs_pushbobjidref(l, otherobj);
+    lua_pushnumber(l, x);
+    lua_pushnumber(l, y);
+    if (use3d) {
+        lua_pushnumber(l, z);
     }
+    lua_pushnumber(l, normalx);
+    lua_pushnumber(l, normaly);
+    if (use3d) {
+        lua_pushnumber(l, normalz);
+    }
+    lua_pushnumber(l, force);
+
+    // attempt callback:
+    int boolreturn;
+    int r = luacfuncs_object_callEvent(l,
+    obj, "onCollision", 6 + 2 * use3d, &boolreturn);
+    if (!r) {
+        *enabled = 0;
+        return 0;
+    }
+    *enabled = boolreturn;
     return 1;
 }
 
@@ -186,6 +167,13 @@ int luafuncs_globalcollision3dcallback_unprotected(void* userdata, struct physic
         return 0;
     }
     return 1;
+}
+
+void luacfuncs_object_initialisePhysicsCallbacks(void) {
+#ifdef USE_PHYSICS2D
+    physics_set2dCollisionCallback(main_DefaultPhysics2dPtr(),
+    &luafuncs_globalcollision2dcallback_unprotected, NULL);
+#endif
 }
 
 /// Disable the physics simulation on an object. It will no longer collide

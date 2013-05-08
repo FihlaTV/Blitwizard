@@ -76,5 +76,8 @@ double angle, int anglespecified);
 void objectphysics_warp3d(struct blitwizardobject* obj, double x, double y,
 double z, double qx, double qy, double qz, double qrot, int anglespecified);
 
+void luacfuncs_object_initialisePhysicsCallbacks(void);
+
+
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTPHYSICS_H_
 

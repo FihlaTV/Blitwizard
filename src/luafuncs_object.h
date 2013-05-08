@@ -56,7 +56,7 @@ struct blitwizardobject* o, const char* eventName);
 // Arguments will be popped from the stack.
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
-int args);
+int args, int* boolreturnvalue);
 // Returns 0 if there was a lua error in the
 // event function, otherwise 1.
 

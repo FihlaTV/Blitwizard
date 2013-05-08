@@ -149,6 +149,7 @@ time_t now, int savememory) {
             // (or detail distance for quite a while and normal for a short
             // time and we want memory).
             // go down to medium scaling:
+            return -1;
             wantsize = 3;  // medium
             if (gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] +
             SCALEDOWNSECONDSVERYLONG < now &&
@@ -353,9 +354,6 @@ struct graphicstexturemanaged* gtm, int slot) {
 #endif
         return texturemanager_GetRandomGPUTexture(gtm);
     } else {
-#ifdef DEBUGTEXTUREMANAGER
-        printinfo("[TEXMAN] obtaining size %d of %s", i, gtm->path);
-#endif
         if (gtm->scalelist[i].gt) {
             return gtm->scalelist[i].gt;
         } else {
@@ -651,9 +649,6 @@ size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
 struct graphicstexture* texture, void* userdata),
 void* userdata) {
-#ifdef DEBUGTEXTUREMANAGER
-    printinfo("[TEXMAN] texture %s requested", path);
-#endif
 
     // allocate request:
     struct texturerequesthandle* request = malloc(sizeof(*request));
@@ -828,7 +823,12 @@ struct graphicstexturemanaged* gtm, int neededversion) {
                 if (gtm->scalelist[i].gt) {
                     graphicstexture_Destroy(gtm->scalelist[i].gt);
                     gtm->scalelist[i].gt = NULL;
-                    gpuMemUse -= 4 * gtm->scalelist[i].width * gtm->scalelist[i].height;
+                    gpuMemUse -= 4 * gtm->scalelist[i].width *
+                    gtm->scalelist[i].height;
+#ifdef DEBUGTEXTUREMANAGER
+                    printinfo("[TEXMAN] Unloading %s size %d from GPU",
+                    gtm->path, i);
+#endif
                 }
                 
             }
