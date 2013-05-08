@@ -44,6 +44,9 @@ int luafuncs_globalcollision2dcallback_unprotected(void* userdata,
 struct physicsobject* a, struct physicsobject* b,
 double x, double y, double normalx, double normaly, double force);
 
+// report sprite visibility:
+void graphics2dsprites_ReportVisibility(void);
+
 // lua funcs doStep processing function:
 int luacfuncs_object_doAllSteps(int count);
 
@@ -1063,6 +1066,9 @@ int main(int argc, char** argv) {
                 // we don't need to iterate anymore -> everything is fine
             }
         }
+
+        // report visibility of sprites to texture manager:
+        graphics2dsprites_ReportVisibility();
 
         // texture manager tick:
         texturemanager_Tick();

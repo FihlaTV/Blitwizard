@@ -232,6 +232,10 @@ int visible, int cameraId) {
     if (width == 0 && height == 0) {
         width = ((double)texWidth) / UNIT_TO_PIXELS;
         height = ((double)texHeight) / UNIT_TO_PIXELS;
+        if (sourceWidth > 0) {
+            width = ((double)sourceWidth) / UNIT_TO_PIXELS;
+            height = ((double)sourceHeight) / UNIT_TO_PIXELS;
+        }
     }
     if (width < 0) {
         width = -width;

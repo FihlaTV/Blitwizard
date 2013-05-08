@@ -167,6 +167,9 @@ struct graphics2dsprite* sprite, double alpha);
 void graphics2dsprites_setPinnedToCamera(struct graphics2dsprite* sprite,
 int cameraId);
 
+// Report visibility to texture manager
+void graphics2dsprites_ReportVisibility(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -526,7 +526,7 @@ int luafuncs_object_getTransparency(lua_State* l) {
 }
 
 /// Get the dimensions of an object in game units (with
-// @{blitwizard.object:setScale|scaling} taking into account).
+// @{blitwizard.object:setScale|scaling} taken into account).
 //
 // For a 2d sprite, this returns two components (x, y) which
 // match the sprite's width and height, for a 3d object,
@@ -552,13 +552,22 @@ int luafuncs_object_getDimensions(lua_State* l) {
         return haveluaerror(l, "Object was deleted");
     }
     double x, y, z;
-    if (!luacfuncs_objectgraphics_getDimensions(obj, &x, &y, &z)) {
+    if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
         return haveluaerror(l, "Object dimensions not known");
     }
-    lua_pushnumber(l, x);
-    lua_pushnumber(l, y);
+    double sx, sy, sz;
     if (obj->is3d) {
-        lua_pushnumber(l, z);
+        sx = obj->scale3d.x;
+        sy = obj->scale3d.y;
+        sz = obj->scale3d.z;
+    } else {
+        sx = obj->scale2d.x;
+        sy = obj->scale2d.y;
+    }
+    lua_pushnumber(l, x * sx);
+    lua_pushnumber(l, y * sy);
+    if (obj->is3d) {
+        lua_pushnumber(l, z * sz);
     }
     return 2+(obj->is3d);
 }
@@ -603,10 +612,10 @@ int luafuncs_object_getScale(lua_State* l) {
 // the physics hull will be scaled accordingly aswell.
 //
 // Please note if you want to scale up a unit to precisely
-// // match a specific size in game units (instead of just making
-// // it twice the size, three times the size etc with setScale),
-// // you might want to use @{blitwizard.object:scaleToDimensions|
-// // object:scaleToDimensions}.
+// match a specific size in game units (instead of just making
+// it twice the size, three times the size etc with setScale),
+// you might want to use @{blitwizard.object:scaleToDimensions|
+// object:scaleToDimensions}.
 //
 // Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
 // @function setScale
@@ -698,7 +707,8 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
     }
 
     double x,y,z;
-    if (!luacfuncs_objectgraphics_getDimensions(obj,
+    z = 1234;
+    if (!luacfuncs_objectgraphics_getOriginalDimensions(obj,
     &x, &y, &z)) {
         return haveluaerror(l, "object dimensions not known yet, "
         "wait for onGeometryLoaded event before using this function");
@@ -787,8 +797,8 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
         obj->scale3d.y = yfactor;
         obj->scale3d.z = zfactor;
     } else {
-        obj->scale2d.x = x;
-        obj->scale2d.y = y;
+        obj->scale2d.x = xfactor;
+        obj->scale2d.y = yfactor;
     }
     return 0;
 }
@@ -942,7 +952,6 @@ int luacfuncs_object_doAllSteps(int count) {
         // objects get deleted while we doStep them
         while (o) {
             if (o->deleted) {
-                printf("deleted object, restarting loop\n");
                 // we ran into a deleted object (likely deleted by
                 // a DoStep() of another object).
                 // relaunch this run and start over from beginning

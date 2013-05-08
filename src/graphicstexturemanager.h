@@ -48,6 +48,8 @@
 
 #ifdef USE_GRAPHICS
 
+#include <stdint.h>
+
 #include "graphics.h"
 #include "graphicstexture.h"
 
@@ -152,6 +154,16 @@ struct texturerequesthandle* request, int visibility);
 // Going down to HIGH roughly after this time:
 #define SCALEDOWNSECONDS 5
 
+// helps with debugging downscaling:
+#define ULTRAFASTDOWNSCALE
+
+#ifdef ULTRAFASTDOWNSCALE
+#define SCALEDOWNSECONDS 2
+#define SCALEDOWNSECONDSLONG 3
+#define SCALEDOWNSECONDSVERYLONG 4
+#define SCALEDOWNSECONDSVERYVERYLONG 5
+#endif
+
 // How often to check all textures for down- and upscaling:
 #define ADOPTINTERVAL 5
 
@@ -183,6 +195,9 @@ void texturemanager_Tick(void);
 // with it while you're doing that:
 void texturemanager_LockForTextureAccess(void);
 void texturemanager_ReleaseFromTextureAccess(void);
+
+// Query the current GPU memory use by the texture manager in bytes:
+uint64_t texturemanager_getGpuMemoryUse(void);
 
 #endif  // USE_GRAPHICS
 

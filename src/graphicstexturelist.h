@@ -60,6 +60,8 @@ struct graphicstexturescaled {
     char* diskcachepath;  // path to raw disk cache file or NULL
     size_t width, height;  // width/height of this particular scaled entry
     struct graphicstexturemanaged* parent;
+    int refcount;  // requests using this particular size
+    size_t lastGpuUpload;
 };
 
 // A managed texture entry containing all the different sized cached versions:

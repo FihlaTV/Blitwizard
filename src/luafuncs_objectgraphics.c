@@ -187,7 +187,7 @@ struct blitwizardobject* o) {
     }
 }
 
-int luacfuncs_objectgraphics_getDimensions(
+int luacfuncs_objectgraphics_getOriginalDimensions(
 struct blitwizardobject* o, double *x, double *y, double *z) {
     if (o->is3d) {
         return 0;
