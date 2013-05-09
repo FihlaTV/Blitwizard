@@ -219,12 +219,23 @@ public:
     ~mycontactlistener();
 private:
     void PreSolve(b2Contact *contact, const b2Manifold *oldManifold);
+    void BeginContact(b2Contact* contact);
 };
 
 mycontactlistener::mycontactlistener() {return;}
 mycontactlistener::~mycontactlistener() {return;}
 
+static void physics_handleContact(b2Contact* contact);
+
 void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifold) {
+    physics_handleContact(contact);
+}
+
+void mycontactlistener::BeginContact(b2Contact* contact) {
+    physics_handleContact(contact);
+}
+
+static void physics_handleContact(b2Contact* contact) {
     struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()->GetBody()->GetUserData())->pobj;
     struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()->GetBody()->GetUserData())->pobj;
     if (obj1->obj.ect2d->deleted || obj2->obj.ect2d->deleted) {
@@ -233,7 +244,8 @@ void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifo
         return;
     }
 
-    // get collision point (this is never really accurate, but mostly sufficient)
+    // get collision point
+    // (this is never really accurate, but mostly sufficient)
     int n = contact->GetManifold()->pointCount;
     b2WorldManifold wmanifold;
     contact->GetWorldManifold(&wmanifold);
@@ -259,6 +271,10 @@ void mycontactlistener::PreSolve(b2Contact *contact, const b2Manifold *oldManifo
 
     // find our current world
     struct physicsworld* w = obj1->pworld;
+
+    /*// no wait, we cancel:
+    contact->SetEnabled(false);
+    return;*/
 
     // return the information through the callback
     if (w->callback) {
@@ -423,7 +439,7 @@ void physics_step(struct physicsworld* world) {
 #else
             // more accurate on desktop
             int it1 = 7;
-            int it2 = 4;
+            int it2 = 3;
 #endif
             world2d->w->Step(1.0 /(1000.0f/physics_getStepSize(world)), it1, it2);
             i++;
