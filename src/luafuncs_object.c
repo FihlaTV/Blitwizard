@@ -354,7 +354,7 @@ int args, int* boolreturn) {
     if (boolreturn) {
         returnvalues = 1;
     }
-    printf("t6: %llu\n", time_GetMicroseconds());
+    //printf("t6: %llu\n", time_GetMicroseconds());
     int ret = lua_pcall(l, args+1, returnvalues, -(args+3));
 
     int errorHappened = 0;

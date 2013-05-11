@@ -269,10 +269,10 @@ void mycontactlistener::EndContact(b2Contact* contact) {
 static void physics_storeDisabledContact(struct physicsobject* obj,
 b2Contact* contact) {
     // check if we need more disabled contact blocks:
-    if (obj->obj.ect2d->disabledContactCount >
+    if (obj->obj.ect2d->disabledContactCount+1 >
     obj->obj.ect2d->disabledContactBlockCount *
     DISABLEDCONTACTBLOCKSIZE) {
-        if (obj->obj.ect2d->disabledContactBlockCount >=
+        if (obj->obj.ect2d->disabledContactBlockCount+1 >=
         MAXDISABLEDBLOCKS) {
             // we ran out of disabled contact space.
             // we won't store it then (this is simply a performance
@@ -282,12 +282,12 @@ b2Contact* contact) {
 
         // allocate new block:
         obj->obj.ect2d->disabledContacts[obj->obj.ect2d->
-        disabledContactBlockCount+1] = 
+        disabledContactBlockCount] = 
         (struct b2Contact**)malloc(sizeof(void*) *
         DISABLEDCONTACTBLOCKSIZE);
 
         if (!obj->obj.ect2d->disabledContacts[obj->obj.ect2d->
-        disabledContactBlockCount+1]) {
+        disabledContactBlockCount]) {
             // allocation failed! nothing we can do
             return;
         }
@@ -297,7 +297,7 @@ b2Contact* contact) {
     }
     // figure out the index where we want to store the
     // disabled contact:
-    int i = obj->obj.ect2d->disabledContactCount + 1;
+    int i = obj->obj.ect2d->disabledContactCount;
     int block = 0;
     while (i >= DISABLEDCONTACTBLOCKSIZE) {
         i -= DISABLEDCONTACTBLOCKSIZE;
@@ -305,7 +305,10 @@ b2Contact* contact) {
     }
 
     // store it:
-    obj->obj.ect2d->disabledContacts[block][i] = contact;
+    obj->obj.ect2d->disabledContacts[block][i]
+     = contact;
+
+    obj->obj.ect2d->disabledContactCount++;
 }
 
 static int physics_contactIsDisabled(struct physicsobject* obj,
@@ -316,7 +319,8 @@ b2Contact* contact) {
         int k = 0;
         while (k < DISABLEDCONTACTBLOCKSIZE &&
         c < obj->obj.ect2d->disabledContactCount) {
-            if (obj->obj.ect2d->disabledContacts[i][k] == contact) {
+            if (obj->obj.ect2d->disabledContacts[i][k]
+             == contact) {
                 return 1;
             }
             k++;
