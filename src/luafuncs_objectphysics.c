@@ -55,16 +55,6 @@
 void transferbodysettings(struct physicsobject* oldbody,
 struct physicsobject* newbody);
 
-// Put the collision callback of the given object on stack
-static void luafuncs_pushcollisioncallback(lua_State* l,
-struct blitwizardobject* obj) {
-    char funcname[200];
-    snprintf(funcname, sizeof(funcname), "collisioncallback%p", obj);
-    funcname[sizeof(funcname)-1] = 0;
-    lua_pushstring(l, funcname);
-    lua_gettable(l, LUA_REGISTRYINDEX);
-}
-
 // Attempt to trigger onCollision callback for a given object.
 // When no callback is set by the user or if the callback succeeds,
 // 1 will be returned.
@@ -731,7 +721,7 @@ int luafuncs_object_impulse(lua_State* l) {
 #endif
     } else {
         physics_apply2dImpulse(obj->physics->object,
-        forcex, forcey, sourcex, sourcez);
+        forcex, forcey, sourcex, sourcey);
     }
     return 0;
 }

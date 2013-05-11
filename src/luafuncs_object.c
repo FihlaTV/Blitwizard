@@ -42,6 +42,7 @@
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "luaheader.h"
+#include "timefuncs.h"
 #include "luastate.h"
 #include "luaerror.h"
 #include "luafuncs.h"
@@ -307,8 +308,11 @@ struct blitwizardobject* o) {
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
 int args, int* boolreturn) {
+    //printf("event: %s\n", eventName);
+    //printf("t0: %llu\n", time_GetMicroseconds());
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
+    //printf("t1: %llu\n", time_GetMicroseconds());
 
     // get event function
     lua_pushstring(l, eventName);
@@ -319,13 +323,16 @@ int args, int* boolreturn) {
         lua_pop(l, 2);  // pop function, registry table
         return 1;
     }
+    //printf("t2: %llu\n", time_GetMicroseconds());
 
     // get rid of the object table again:
     lua_insert(l, -2);  // push function below table
     lua_pop(l, 1);  // remove table
 
     // push self as first argument:
+    //printf("t3: %llu\n", time_GetMicroseconds());
     luacfuncs_pushbobjidref(l, o);
+    //printf("t4: %llu\n", time_GetMicroseconds());
     if (args > 0) {
         lua_insert(l, -(args+1));
     }
@@ -336,6 +343,7 @@ int args, int* boolreturn) {
     }
 
     // push error handling function onto stack:
+    //printf("t5: %llu\n", time_GetMicroseconds());
     lua_pushcfunction(l, internaltracebackfunc());
 
     // move error handling function in front of function + args
@@ -346,6 +354,7 @@ int args, int* boolreturn) {
     if (boolreturn) {
         returnvalues = 1;
     }
+    printf("t6: %llu\n", time_GetMicroseconds());
     int ret = lua_pcall(l, args+1, returnvalues, -(args+3));
 
     int errorHappened = 0;
@@ -368,6 +377,7 @@ int args, int* boolreturn) {
     // pop error handling function from stack again:
     lua_pop(l, 1);
 
+    //printf("t7: %llu\n", time_GetMicroseconds());
     return (errorHappened == 0);
 }
 

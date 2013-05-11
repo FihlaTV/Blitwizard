@@ -23,13 +23,13 @@
 
 #include "os.h"
 #include <stdint.h>
+#include <time.h>
 #ifdef HAVE_SDL
 #include "SDL.h"
 #else
 #ifdef WINDOWS
 #include <windows.h>
 #else
-#include <time.h>
 #include <unistd.h>
 #include <string.h>
 #endif
@@ -41,15 +41,15 @@
 #include <mach/mach_time.h>
 #endif
 
-#if (!defined(HAVE_SDL) && defined(UNIX))
-#ifdef MAC
+#ifdef MAC 
 uint64_t lastunixtime;
 #else
+#ifdef UNIX
 static struct timespec lastunixtime;
 uint64_t lasttimestamp = 0;
 #endif
-int startinitialised = 0;
 #endif
+int startinitialised = 0;
 
 uint64_t oldtime = 0;
 uint64_t timeoffset = 0;
@@ -64,7 +64,7 @@ uint64_t time_GetMilliseconds() {
     if (i > oldtime) {
         // normal time difference
         oldtime = i;
-    }else{
+    } else {
         // we wrapped around. set a time offset to avoid the wrap
         timeoffset = (oldtime - i) + 1;
         i += timeoffset;
@@ -101,12 +101,32 @@ uint64_t time_GetMilliseconds() {
         i += lasttimestamp;
         lasttimestamp = i;
         memcpy(&lastunixtime, &current, sizeof(struct timespec));
-    }else{
+    } else {
         i += lasttimestamp;
     }
 #endif // ifdef MAC
 #endif // ifdef HAVE_SDL
     return i;
+}
+
+uint64_t time_GetMicroseconds() {
+#ifdef LINUX
+    if (!startinitialised) {
+        clock_gettime(CLOCK_MONOTONIC, &lastunixtime);
+        startinitialised = 1;
+        lasttimestamp = 0;
+        return 0;
+    }
+    struct timespec current;
+    clock_gettime(CLOCK_MONOTONIC, &current);
+    int64_t seconds = current.tv_sec - lastunixtime.tv_sec;
+    int64_t nseconds = current.tv_nsec - lastunixtime.tv_nsec;
+    uint64_t i = (uint64_t)((double)((seconds) * 1000000 + nseconds / 1000.0) + 0.5);
+    i += lasttimestamp * 1000;
+    return i;
+#else
+    return 0;
+#endif
 }
 
 void time_Sleep(uint32_t milliseconds) {

@@ -153,6 +153,9 @@ struct physicsworld2d {
     int (*callback)(void* userdata, struct physicsobject2d* a, struct physicsobject2d* b, double x, double y, double normalx, double normaly, double force); // FIXME: remove once appropriate
 };
 
+#define DISABLEDCONTACTBLOCKSIZE 16
+#define MAXDISABLEDBLOCKS 16
+
 struct physicsobject2d {
     int movable;
     b2World* world;
@@ -162,6 +165,14 @@ struct physicsobject2d {
     void* userdata;
     struct physicsworld2d* pworld; // FIXME: remove once appropriate
     int deleted; // 1: deleted inside collision callback, 0: everything normal
+
+    // we store disabled contacts here because
+    // box2d won't let us keep it in b2Contact
+    // (which sucks!)
+    b2Contact** disabledContacts
+        [MAXDISABLEDBLOCKS];  // list of blocks of disabled contacts
+    int disabledContactCount;
+    int disabledContactBlockCount;
 };
 
 struct physicsobjectshape2d {
@@ -220,6 +231,7 @@ public:
 private:
     void PreSolve(b2Contact *contact, const b2Manifold *oldManifold);
     void BeginContact(b2Contact* contact);
+    void EndContact(b2Contact* contact);
 };
 
 mycontactlistener::mycontactlistener() {return;}
@@ -235,11 +247,103 @@ void mycontactlistener::BeginContact(b2Contact* contact) {
     physics_handleContact(contact);
 }
 
+void mycontactlistener::EndContact(b2Contact* contact) {
+    // since we assume all EndContact events roughly occur
+    // at the same point (when stepping of all contacts is
+    // finished), we no longer want to keep the disabled
+    // contact information - it was kept to avoid refiring
+    // the events during presolve, which is now done with
+    // endcontact.
+    // Hence, clear all disabled contacts up:
+    struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()
+        ->GetBody()->GetUserData())->pobj;
+    struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()
+        ->GetBody()->GetUserData())->pobj;
+    obj1->obj.ect2d->disabledContactCount = 0;
+    obj2->obj.ect2d->disabledContactCount = 0;
+}
+
+#include "timefuncs.h"
+
+// store a contact as disabled up to the 
+static void physics_storeDisabledContact(struct physicsobject* obj,
+b2Contact* contact) {
+    // check if we need more disabled contact blocks:
+    if (obj->obj.ect2d->disabledContactCount >
+    obj->obj.ect2d->disabledContactBlockCount *
+    DISABLEDCONTACTBLOCKSIZE) {
+        if (obj->obj.ect2d->disabledContactBlockCount >=
+        MAXDISABLEDBLOCKS) {
+            // we ran out of disabled contact space.
+            // we won't store it then (this is simply a performance
+            // problem, not a huge issue).
+            return;
+        }
+
+        // allocate new block:
+        obj->obj.ect2d->disabledContacts[obj->obj.ect2d->
+        disabledContactBlockCount+1] = 
+        (struct b2Contact**)malloc(sizeof(void*) *
+        DISABLEDCONTACTBLOCKSIZE);
+
+        if (!obj->obj.ect2d->disabledContacts[obj->obj.ect2d->
+        disabledContactBlockCount+1]) {
+            // allocation failed! nothing we can do
+            return;
+        }
+
+        // we need a larger disabled contact list:
+        obj->obj.ect2d->disabledContactBlockCount++;
+    }
+    // figure out the index where we want to store the
+    // disabled contact:
+    int i = obj->obj.ect2d->disabledContactCount + 1;
+    int block = 0;
+    while (i >= DISABLEDCONTACTBLOCKSIZE) {
+        i -= DISABLEDCONTACTBLOCKSIZE;
+        block++;
+    }
+
+    // store it:
+    obj->obj.ect2d->disabledContacts[block][i] = contact;
+}
+
+static int physics_contactIsDisabled(struct physicsobject* obj,
+b2Contact* contact) {
+    int i = 0;
+    int c = 0;
+    while (i < obj->obj.ect2d->disabledContactBlockCount) {
+        int k = 0;
+        while (k < DISABLEDCONTACTBLOCKSIZE &&
+        c < obj->obj.ect2d->disabledContactCount) {
+            if (obj->obj.ect2d->disabledContacts[i][k] == contact) {
+                return 1;
+            }
+            k++;
+            c++;
+        }
+        i++;
+    }
+    return 0;
+}
+
+// handle the contact event and pass it on to the physics callback:
 static void physics_handleContact(b2Contact* contact) {
-    struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()->GetBody()->GetUserData())->pobj;
-    struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()->GetBody()->GetUserData())->pobj;
+    //printf("handlecontact0: %llu\n", time_GetMicroseconds());
+    struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()
+        ->GetBody()->GetUserData())->pobj;
+    struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()
+        ->GetBody()->GetUserData())->pobj;
     if (obj1->obj.ect2d->deleted || obj2->obj.ect2d->deleted) {
         // one of the objects should be deleted already, ignore collision
+        contact->SetEnabled(false);
+        return;
+    }
+
+    // if the contact is remembered as disabled,
+    // bail out here:
+    if (physics_contactIsDisabled(obj1, contact) ||
+    physics_contactIsDisabled(obj2, contact)) {
         contact->SetEnabled(false);
         return;
     }
@@ -272,20 +376,22 @@ static void physics_handleContact(b2Contact* contact) {
     // find our current world
     struct physicsworld* w = obj1->pworld;
 
-    /*// no wait, we cancel:
-    contact->SetEnabled(false);
-    return;*/
-
     // return the information through the callback
+    contact->SetEnabled(false);
     if (w->callback) {
         if (!w->callback(w->callbackuserdata, obj1, obj2, collidex, collidey, normalx, normaly, impact)) {
             // contact should be disabled:
             contact->SetEnabled(false);
+
+            // remember it being disabled:
+            physics_storeDisabledContact(obj1, contact);
+            physics_storeDisabledContact(obj2, contact);
         } else {
             // contact should remain enabled:
             contact->SetEnabled(true);
         }
     }
+    //printf("handlecontact1: %llu\n", time_GetMicroseconds());
 }
 
 /*
@@ -899,7 +1005,9 @@ void physics_get2dShapeOffsetRotation(struct physicsobjectshape* shape, double* 
 #ifdef USE_PHYSICS2D
 static struct physicsobject2d* _physics_create2dObj(struct physicsworld2d* world, struct physicsobject* object, void* userdata, int movable) {
     struct physicsobject2d* obj2d = (struct physicsobject2d*)malloc(sizeof(*obj2d));
-    if (!obj2d) {return NULL;}
+    if (!obj2d) {
+        return NULL;
+    }
     memset(obj2d, 0, sizeof(*obj2d));
 
     struct bodyuserdata* pdata = (struct bodyuserdata*)malloc(sizeof(*pdata));
@@ -1150,6 +1258,13 @@ static void _physics_destroy2dObjectDo(struct physicsobject2d* obj) {
     if (obj->body) {
         obj->world->DestroyBody(obj->body);
     }
+    if (obj->disabledContactBlockCount > 0) {
+        int i = 0;
+        while (i < obj->disabledContactBlockCount) {
+            free(obj->disabledContacts[i]);
+            i++;
+        }
+    }
     free(obj);
 }
 
@@ -1239,6 +1354,9 @@ double physics_getMass(struct physicsobject* obj) {
     } else {
 #ifdef USE_PHYSICS3D
         printerror(BW_E_NO3DYET);
+#else
+        // nothing useful we could return here:
+        return 0;
 #endif
     }
 }

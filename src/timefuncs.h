@@ -37,6 +37,13 @@ uint64_t time_GetMilliseconds(void);
 // returned, but the time will never wrap/suddenly
 // jump backwards until uint64_t is exceeded.
 
+uint64_t time_GetMicroseconds(void);
+// Time which has passed in micro seconds since an undefined
+// point in time (e.g. program start).
+//
+// Please note this is unimplemented on some systems
+// (returns always 0).
+
 void time_Sleep(uint32_t milliseconds);
 // Sleep for a specified amount of time.
 
