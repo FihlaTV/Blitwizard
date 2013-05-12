@@ -102,49 +102,20 @@ inline void _physics_rotateThenOffset2dPoint(double xoffset, double yoffset,
  double rotation, double* x, double* y);
 void _physics_apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
  b2Vec2* targets, int count);
-static struct physicsobject2d* _physics_create2dObj(struct physicsworld2d* world, struct physicsobject* object, void* userdata, int movable);
+static int _physics_create2dObj(struct physicsworld2d* world,
+struct physicsobject* object, void* userdata, int movable);
 void _physics_create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
 void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
-static void _physics_destroy2dObjectDo(struct physicsobject2d* obj);
 
 /*
     Structs
 */
 
-/*
-    General (2D/3D) structs
-*/
-struct physicsobject {
-    union dimension_specific_object {
-        struct physicsobject2d* ect2d;
-        struct physicsobject3d* ect3d;
-    } obj;
-    int is3d;
-    struct physicsworld* pworld;
-};
-
-struct physicsworld {
-    union dimension_specific_world {
-        struct physicsworld2d* ld2d;
-        struct physicsworld3d* ld3d;
-    } wor;
-    int is3d;
-    void* callbackuserdata;
-    int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
-};
-
-struct physicsobjectshape {
-    union dimension_specific_shape {
-        struct physicsobjectshape2d* pe2d;
-        struct physicsobjectshape3d* pe3d;
-    } sha;
-    int is3d;
-};
-
 
 /*
     2D-specific structs
 */
+
 struct physicsworld2d {
     mycontactlistener* listener;
     b2World* w;
@@ -157,6 +128,7 @@ struct physicsworld2d {
 #define MAXDISABLEDBLOCKS 16
 
 struct physicsobject2d {
+#ifdef USE_PHYSICS2D
     int movable;
     b2World* world;
     b2Body* body;
@@ -164,7 +136,6 @@ struct physicsobject2d {
     double gravityx,gravityy;
     void* userdata;
     struct physicsworld2d* pworld; // FIXME: remove once appropriate
-    int deleted; // 1: deleted inside collision callback, 0: everything normal
 
     // we store disabled contacts here because
     // box2d won't let us keep it in b2Contact
@@ -173,9 +144,11 @@ struct physicsobject2d {
         [MAXDISABLEDBLOCKS];  // list of blocks of disabled contacts
     int disabledContactCount;
     int disabledContactBlockCount;
+#endif
 };
 
 struct physicsobjectshape2d {
+#ifdef USE_PHYSICS2D
     union specific_type_of_shape {
         struct rectangle2d* rectangle;
         struct polygonpoint* polygonpoints;
@@ -186,14 +159,15 @@ struct physicsobjectshape2d {
     double xoffset;
     double yoffset;
     double rotation;
+#endif
 };
 
-struct deletedphysicsobject2d {
-    struct physicsobject2d* obj;
-    struct deletedphysicsobject2d* next;
+struct deletedphysicsobject {
+    struct physicsobject* obj;
+    struct deletedphysicsobject* next;
 };
 
-struct deletedphysicsobject2d* deletedlist = NULL;
+struct deletedphysicsobject* deletedlist = NULL;
 
 struct bodyuserdata {
     void* userdata;
@@ -222,6 +196,47 @@ struct physicsobject2dedgecontext {
     struct physicsobject2d* obj;
     double friction;
     struct edge* edgelist;
+};
+
+
+/*
+    3d-specific structs
+*/
+
+struct physicsobject3d {
+    // TODO
+};
+
+/*
+    General (2D/3D) structs
+*/
+
+struct physicsobject {
+    union {
+        struct physicsobject2d object2d;
+        struct physicsobject3d object3d;
+    };
+    int deleted; // 1: deleted inside collision callback, 0: everything normal
+    int is3d;
+    struct physicsworld* pworld;
+};
+
+struct physicsworld {
+    union dimension_specific_world {
+        struct physicsworld2d* ld2d;
+        struct physicsworld3d* ld3d;
+    } wor;
+    int is3d;
+    void* callbackuserdata;
+    int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
+};
+
+struct physicsobjectshape {
+    union dimension_specific_shape {
+        struct physicsobjectshape2d* pe2d;
+        struct physicsobjectshape3d* pe3d;
+    } sha;
+    int is3d;
 };
 
 class mycontactlistener : public b2ContactListener {
@@ -259,8 +274,8 @@ void mycontactlistener::EndContact(b2Contact* contact) {
         ->GetBody()->GetUserData())->pobj;
     struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()
         ->GetBody()->GetUserData())->pobj;
-    obj1->obj.ect2d->disabledContactCount = 0;
-    obj2->obj.ect2d->disabledContactCount = 0;
+    obj1->object2d.disabledContactCount = 0;
+    obj2->object2d.disabledContactCount = 0;
 }
 
 #include "timefuncs.h"
@@ -269,10 +284,10 @@ void mycontactlistener::EndContact(b2Contact* contact) {
 static void physics_storeDisabledContact(struct physicsobject* obj,
 b2Contact* contact) {
     // check if we need more disabled contact blocks:
-    if (obj->obj.ect2d->disabledContactCount+1 >
-    obj->obj.ect2d->disabledContactBlockCount *
+    if (obj->object2d.disabledContactCount+1 >
+    obj->object2d.disabledContactBlockCount *
     DISABLEDCONTACTBLOCKSIZE) {
-        if (obj->obj.ect2d->disabledContactBlockCount+1 >=
+        if (obj->object2d.disabledContactBlockCount+1 >=
         MAXDISABLEDBLOCKS) {
             // we ran out of disabled contact space.
             // we won't store it then (this is simply a performance
@@ -281,23 +296,23 @@ b2Contact* contact) {
         }
 
         // allocate new block:
-        obj->obj.ect2d->disabledContacts[obj->obj.ect2d->
+        obj->object2d.disabledContacts[obj->object2d.
         disabledContactBlockCount] = 
         (struct b2Contact**)malloc(sizeof(void*) *
         DISABLEDCONTACTBLOCKSIZE);
 
-        if (!obj->obj.ect2d->disabledContacts[obj->obj.ect2d->
+        if (!obj->object2d.disabledContacts[obj->object2d.
         disabledContactBlockCount]) {
             // allocation failed! nothing we can do
             return;
         }
 
         // we need a larger disabled contact list:
-        obj->obj.ect2d->disabledContactBlockCount++;
+        obj->object2d.disabledContactBlockCount++;
     }
     // figure out the index where we want to store the
     // disabled contact:
-    int i = obj->obj.ect2d->disabledContactCount;
+    int i = obj->object2d.disabledContactCount;
     int block = 0;
     while (i >= DISABLEDCONTACTBLOCKSIZE) {
         i -= DISABLEDCONTACTBLOCKSIZE;
@@ -305,21 +320,21 @@ b2Contact* contact) {
     }
 
     // store it:
-    obj->obj.ect2d->disabledContacts[block][i]
+    obj->object2d.disabledContacts[block][i]
      = contact;
 
-    obj->obj.ect2d->disabledContactCount++;
+    obj->object2d.disabledContactCount++;
 }
 
 static int physics_contactIsDisabled(struct physicsobject* obj,
 b2Contact* contact) {
     int i = 0;
     int c = 0;
-    while (i < obj->obj.ect2d->disabledContactBlockCount) {
+    while (i < obj->object2d.disabledContactBlockCount) {
         int k = 0;
         while (k < DISABLEDCONTACTBLOCKSIZE &&
-        c < obj->obj.ect2d->disabledContactCount) {
-            if (obj->obj.ect2d->disabledContacts[i][k]
+        c < obj->object2d.disabledContactCount) {
+            if (obj->object2d.disabledContacts[i][k]
              == contact) {
                 return 1;
             }
@@ -338,7 +353,7 @@ static void physics_handleContact(b2Contact* contact) {
         ->GetBody()->GetUserData())->pobj;
     struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()
         ->GetBody()->GetUserData())->pobj;
-    if (obj1->obj.ect2d->deleted || obj2->obj.ect2d->deleted) {
+    if (obj1->deleted || obj2->deleted) {
         // one of the objects should be deleted already, ignore collision
         contact->SetEnabled(false);
         return;
@@ -517,6 +532,7 @@ void physics_destroyWorld(struct physicsworld* world) {
     }
 }
 
+static void _physics_destroyObjectDo(struct physicsobject* obj);
 void physics_step(struct physicsworld* world) {
     if (!world->is3d) {
 #ifdef USE_PHYSICS2D
@@ -530,7 +546,7 @@ void physics_step(struct physicsworld* world) {
             while (b) {
                 // obtain physics object struct from body
                 struct physicsobject* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
-                struct physicsobject2d* obj2d = obj->obj.ect2d;
+                struct physicsobject2d* obj2d = &obj->object2d;
                 if (obj) {
                     if (obj2d->gravityset) {
                         // custom gravity which we want to apply
@@ -559,10 +575,10 @@ void physics_step(struct physicsworld* world) {
         // actually delete objects marked for deletion during the step:
         while (deletedlist) {
             // delete first object in the queue
-            _physics_destroy2dObjectDo(deletedlist->obj);
+            _physics_destroyObjectDo(deletedlist->obj);
 
             // update list pointers (-> remove object from queue)
-            struct deletedphysicsobject2d* pobj = deletedlist;
+            struct deletedphysicsobject* pobj = deletedlist;
             deletedlist = deletedlist->next;
 
             // free removed object
@@ -1007,17 +1023,14 @@ void physics_get2dShapeOffsetRotation(struct physicsobjectshape* shape, double* 
 
 // Everything about object creation starts here
 #ifdef USE_PHYSICS2D
-static struct physicsobject2d* _physics_create2dObj(struct physicsworld2d* world, struct physicsobject* object, void* userdata, int movable) {
-    struct physicsobject2d* obj2d = (struct physicsobject2d*)malloc(sizeof(*obj2d));
-    if (!obj2d) {
-        return NULL;
-    }
+static int _physics_create2dObj(struct physicsworld2d* world,
+struct physicsobject* object, void* userdata, int movable) {
+    struct physicsobject2d* obj2d = &object->object2d;
     memset(obj2d, 0, sizeof(*obj2d));
 
     struct bodyuserdata* pdata = (struct bodyuserdata*)malloc(sizeof(*pdata));
     if (!pdata) {
-        free(obj2d);
-        return NULL;
+        return 0;
     }
     memset(pdata, 0, sizeof(*pdata));
     pdata->userdata = userdata;
@@ -1035,16 +1048,16 @@ static struct physicsobject2d* _physics_create2dObj(struct physicsworld2d* world
     obj2d->world = world->w;
     obj2d->pworld = world;
     if (!obj2d->body) {
-        free(obj2d);
         free(pdata);
-        return NULL;
+        return 0;
     }
-    return obj2d;
+    return 1;
 }
 #endif
 
 #ifdef USE_PHYSICS2D
-// TODO: Weaken coupling, i.e. no direct reference to physicsobject2d, instead take edges and return b2 chains
+// TODO: Weaken coupling, i.e. no direct reference to physicsobject2d,
+// instead take edges and return b2 chains
 // (goal: common code for fixture etc. in outer function)
 // problem: memory mgmt., variable number of returned edge shapes
 void _physics_create2dObjectEdges_End(struct edge* edges,
@@ -1136,7 +1149,7 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
         //add it to our body
         b2FixtureDef fixtureDef;
         fixtureDef.shape = &chain;
-        fixtureDef.friction = 1; // TODO: ???
+        fixtureDef.friction = 0.5; // TODO: ???
         fixtureDef.density = 1; // TODO: ???
         object->body->CreateFixture(&fixtureDef);
 
@@ -1185,8 +1198,9 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
     struct physicsobject* obj = (struct physicsobject*)malloc(sizeof(*obj));
     if (!(world->is3d)) {
 #ifdef USE_PHYSICS2D
-        struct physicsobject2d* obj2d = _physics_create2dObj(world->wor.ld2d, obj, userdata, movable);
-        if (obj2d == NULL) {
+        if (!_physics_create2dObj(world->wor.ld2d, obj, userdata,
+        movable)) {
+            free(obj);
             return NULL;
         }
         
@@ -1209,13 +1223,13 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
                      s->sha.pe2d->rotation);
                     fixtureDef.friction = 1; // TODO: ???
                     fixtureDef.density = 1;
-                    obj2d->body->SetFixedRotation(false);
-                    obj2d->body->CreateFixture(&fixtureDef);
+                    obj->object2d.body->SetFixedRotation(false);
+                    obj->object2d.body->CreateFixture(&fixtureDef);
                     delete fixtureDef.shape;
                 break;
                 case BW_S2D_POLY:
                     _physics_create2dObjectPoly_End(s->sha.pe2d->b2.polygonpoints,
-                     obj2d, s->sha.pe2d);
+                     &obj->object2d, s->sha.pe2d);
                 break;
                 case BW_S2D_CIRCLE:
                     fixtureDef.shape = (new b2CircleShape);
@@ -1225,19 +1239,18 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
                      b2.circle->m_radius;
                     fixtureDef.friction = 1; // TODO: ???
                     fixtureDef.density = 1;
-                    obj2d->body->SetFixedRotation(false);
-                    obj2d->body->CreateFixture(&fixtureDef);
+                    obj->object2d.body->SetFixedRotation(false);
+                    obj->object2d.body->CreateFixture(&fixtureDef);
                     delete fixtureDef.shape;
                 break;
                 case BW_S2D_EDGE:
-                    _physics_create2dObjectEdges_End(s->sha.pe2d->b2.edges, obj2d,
-                     s->sha.pe2d);
-                break;
+                    _physics_create2dObjectEdges_End(s->sha.pe2d->b2.edges,
+                    &obj->object2d, s->sha.pe2d);
+                    break;
             }
             s += 1;
             ++i;
         }
-        obj->obj.ect2d = obj2d;
         
         obj->is3d = 0;
 #endif
@@ -1258,47 +1271,41 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
 
 
 // Everything about object deletion starts here
-static void _physics_destroy2dObjectDo(struct physicsobject2d* obj) {
-    if (obj->body) {
-        obj->world->DestroyBody(obj->body);
-    }
-    if (obj->disabledContactBlockCount > 0) {
-        int i = 0;
-        while (i < obj->disabledContactBlockCount) {
-            free(obj->disabledContacts[i]);
-            i++;
+static void _physics_destroyObjectDo(struct physicsobject* obj) {
+    if (!obj->is3d) {
+#ifdef USE_PHYSICS2D
+        if (obj->object2d.body) {
+            obj->object2d.world->DestroyBody(obj->object2d.body);
         }
+        if (obj->object2d.disabledContactBlockCount > 0) {
+            int i = 0;
+            while (i < obj->object2d.disabledContactBlockCount) {
+                free(obj->object2d.disabledContacts[i]);
+                i++;
+            }
+        }
+#endif
     }
     free(obj);
 }
 
 void physics_destroyObject(struct physicsobject* obj) {
-    if (not obj->is3d) {
-#ifdef USE_PHYSICS2D
-        if (!obj->obj.ect2d || obj->obj.ect2d->deleted == 1) {
+    if (obj->deleted == 1) {
+        return;
+    }
+    if (!insidecollisioncallback) {
+        _physics_destroyObjectDo(obj);
+    } else {
+        obj->deleted = 1;
+        struct deletedphysicsobject* dobject =
+        (struct deletedphysicsobject*)malloc(sizeof(*dobject));
+        if (!dobject) {
             return;
         }
-        if (!insidecollisioncallback) {
-            _physics_destroy2dObjectDo(obj->obj.ect2d);
-        } else {
-            obj->obj.ect2d->deleted = 1;
-            struct deletedphysicsobject2d* dobject = (struct deletedphysicsobject2d*)malloc(sizeof(*dobject));
-            if (!dobject) {
-                return;
-            }
-            memset(dobject, 0, sizeof(*dobject));
-            dobject->obj = obj->obj.ect2d;
-            dobject->next = deletedlist;
-            deletedlist = dobject;
-        }
-        
-        // ?
-        free(obj);
-#endif
-    } else {
-#ifdef USE_PHYSICS3D
-        printerror(BW_E_NO3DYET);
-#endif
+        memset(dobject, 0, sizeof(*dobject));
+        dobject->obj = obj;
+        dobject->next = deletedlist;
+        deletedlist = dobject;
     }
 }
 
@@ -1306,7 +1313,8 @@ void physics_destroyObject(struct physicsobject* obj) {
 void* physics_getObjectUserdata(struct physicsobject* object) {
     if (not object->is3d) {
 #ifdef USE_PHYSICS2D
-        return ((struct bodyuserdata*)object->obj.ect2d->body->GetUserData())->userdata;
+        return ((struct bodyuserdata*)object->object2d.body->
+        GetUserData())->userdata;
 #endif
     } else {
 #ifdef USE_PHYSICS3D
@@ -1322,7 +1330,7 @@ void* physics_getObjectUserdata(struct physicsobject* object) {
 void physics_setMass(struct physicsobject* obj, double mass) {
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
-        struct physicsobject2d* obj2d = obj->obj.ect2d;
+        struct physicsobject2d* obj2d = &obj->object2d;
         if (!obj2d->movable) {return;}
         if (!obj2d->body) {return;}
         if (mass > 0) {
@@ -1350,9 +1358,8 @@ void physics_setMass(struct physicsobject* obj, double mass) {
 double physics_getMass(struct physicsobject* obj) {
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
-        struct physicsobject2d* obj2d = obj->obj.ect2d;
         b2MassData mdata;
-        obj2d->body->GetMassData(&mdata);
+        obj->object2d.body->GetMassData(&mdata);
         return mdata.mass;
 #endif
     } else {
@@ -1366,21 +1373,20 @@ double physics_getMass(struct physicsobject* obj) {
 }
 
 #ifdef USE_PHYSICS2D
-void physics_set2dMassCenterOffset(struct physicsobject* obj, double offsetx, double offsety) {
-    // TODO: checks for is3d or not?
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
+void physics_set2dMassCenterOffset(struct physicsobject* obj,
+double offsetx, double offsety) {
     b2MassData mdata;
-    obj2d->body->GetMassData(&mdata);
+    obj->object2d.body->GetMassData(&mdata);
     mdata.center = b2Vec2(offsetx, offsety);
-    obj2d->body->SetMassData(&mdata);
+    obj->object2d.body->SetMassData(&mdata);
 }
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_get2dMassCenterOffset(struct physicsobject* obj, double* offsetx, double* offsety) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
+void physics_get2dMassCenterOffset(struct physicsobject* obj,
+double* offsetx, double* offsety) {
     b2MassData mdata;
-    obj2d->body->GetMassData(&mdata);
+    obj->object2d.body->GetMassData(&mdata);
     *offsetx = mdata.center.x;
     *offsety = mdata.center.y;
 }
@@ -1388,18 +1394,14 @@ void physics_get2dMassCenterOffset(struct physicsobject* obj, double* offsetx, d
 
 #ifdef USE_PHYSICS2D
 void physics_set2dGravity(struct physicsobject* obj, double x, double y) {
-    // TODO: again: check for is3d or not?
-    if (!obj) {return;}
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    obj2d->gravityset = 1;
-    obj2d->gravityx = x;
-    obj2d->gravityy = y;
+    obj->object2d.gravityset = 1;
+    obj->object2d.gravityx = x;
+    obj->object2d.gravityy = y;
 }
 #endif
 
 #ifdef USE_PHYSICS2D
 void physics_set2dWorldGravity(struct physicsworld* world, double x, double y) {
-    if (!world) return;
     struct physicsworld2d* world2d = world->wor.ld2d;
     world2d->gravityx = x;
     world2d->gravityy = y;
@@ -1407,10 +1409,9 @@ void physics_set2dWorldGravity(struct physicsworld* world, double x, double y) {
 #endif
 
 void physics_unsetGravity(struct physicsobject* obj) {
-    if (!obj) {return;}
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
-        obj->obj.ect2d->gravityset = 0;
+        obj->object2d.gravityset = 0;
 #endif
     } else {
 #ifdef USE_PHYSICS3D
@@ -1421,13 +1422,10 @@ void physics_unsetGravity(struct physicsobject* obj) {
 
 #ifdef USE_PHYSICS2D
 void physics_set2dRotationRestriction(struct physicsobject* obj, int restricted) {
-    // TODO: CHECK IS3D YES OR NO FFFFF
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    if (!obj2d->body) {return;}
     if (restricted) {
-        obj2d->body->SetFixedRotation(true);
+        obj->object2d.body->SetFixedRotation(true);
     } else {
-        obj2d->body->SetFixedRotation(false);
+        obj->object2d.body->SetFixedRotation(false);
     }
 }
 #endif
@@ -1435,14 +1433,12 @@ void physics_set2dRotationRestriction(struct physicsobject* obj, int restricted)
 void physics_setFriction(struct physicsobject* obj, double friction) {
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
-        struct physicsobject2d* obj2d = obj->obj.ect2d;
-        if (!obj2d->body) {return;}
-        b2Fixture* f = obj2d->body->GetFixtureList();
+        b2Fixture* f = obj->object2d.body->GetFixtureList();
         while (f) {
             f->SetFriction(friction);
             f = f->GetNext();
         }
-        b2ContactEdge* e = obj2d->body->GetContactList();
+        b2ContactEdge* e = obj->object2d.body->GetContactList();
         while (e) {
             e->contact->ResetFriction();
             e = e->next;
@@ -1458,9 +1454,7 @@ void physics_setFriction(struct physicsobject* obj, double friction) {
 void physics_setAngularDamping(struct physicsobject* obj, double damping) {
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
-        struct physicsobject2d* obj2d = obj->obj.ect2d;
-        if (!obj2d->body) {return;}
-        obj2d->body->SetAngularDamping(damping);
+        obj->object2d.body->SetAngularDamping(damping);
 #endif
     } else {
 #ifdef USE_PHYSICS3D
@@ -1472,9 +1466,10 @@ void physics_setAngularDamping(struct physicsobject* obj, double damping) {
 void physics_setLinearDamping(struct physicsobject* obj, double damping) {
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
-        struct physicsobject2d* obj2d = obj->obj.ect2d;
-        if (!obj2d->body) {return;}
-        obj2d->body->SetLinearDamping(damping);
+        if (!obj->object2d.body) {
+            return;
+        }
+        obj->object2d.body->SetLinearDamping(damping);
 #endif
     } else {
 #ifdef USE_PHYSICS3D
@@ -1486,16 +1481,17 @@ void physics_setLinearDamping(struct physicsobject* obj, double damping) {
 void physics_setRestitution(struct physicsobject* obj, double restitution) {
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
-        struct physicsobject2d* obj2d = obj->obj.ect2d;
         if (restitution > 1) {restitution = 1;}
         if (restitution < 0) {restitution = 0;}
-        if (!obj2d->body) {return;}
-        b2Fixture* f = obj2d->body->GetFixtureList();
+        if (!obj->object2d.body) {
+            return;
+        }
+        b2Fixture* f = obj->object2d.body->GetFixtureList();
         while (f) {
             f->SetRestitution(restitution);
             f = f->GetNext();
         }
-        b2ContactEdge* e = obj2d->body->GetContactList();
+        b2ContactEdge* e = obj->object2d.body->GetContactList();
         while (e) {
             e->contact->SetRestitution(restitution);
             e = e->next;
@@ -1510,8 +1506,7 @@ void physics_setRestitution(struct physicsobject* obj, double restitution) {
 
 #ifdef USE_PHYSICS2D
 void physics_get2dPosition(struct physicsobject* obj, double* x, double* y) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    b2Vec2 pos = obj2d->body->GetPosition();
+    b2Vec2 pos = obj->object2d.body->GetPosition();
     *x = pos.x;
     *y = pos.y;
 }
@@ -1519,31 +1514,26 @@ void physics_get2dPosition(struct physicsobject* obj, double* x, double* y) {
 
 #ifdef USE_PHYSICS2D
 void physics_get2dRotation(struct physicsobject* obj, double* angle) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    *angle = (obj2d->body->GetAngle() * 180)/M_PI;
+    *angle = (obj->object2d.body->GetAngle() * 180)/M_PI;
 }
 #endif
 
 #ifdef USE_PHYSICS2D
 void physics_warp2d(struct physicsobject* obj, double x, double y, double angle) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    obj2d->body->SetTransform(b2Vec2(x, y), angle * M_PI / 180);
+    obj->object2d.body->SetTransform(b2Vec2(x, y), angle * M_PI / 180);
 }
 #endif
 
 #ifdef USE_PHYSICS2D
 void physics_apply2dImpulse(struct physicsobject* obj, double forcex, double forcey, double sourcex, double sourcey) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    if (!obj2d->body || !obj2d->movable) {return;}
-    obj2d->body->ApplyLinearImpulse(b2Vec2(forcex, forcey), b2Vec2(sourcex, sourcey));
+    obj->object2d.body->ApplyLinearImpulse(b2Vec2(forcex, forcey),
+    b2Vec2(sourcex, sourcey));
 }
 #endif
 
 #ifdef USE_PHYSICS2D
 void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    if (!obj2d->body || !obj2d->movable) {return;}
-    b2Vec2 vel = obj2d->body->GetLinearVelocity();
+    b2Vec2 vel = obj->object2d.body->GetLinearVelocity();
     *vx = vel.x;
     *vy = vel.y;
 }
@@ -1551,33 +1541,25 @@ void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
 
 #ifdef USE_PHYSICS2D
 double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    if (!obj2d->body || !obj2d->movable) {return 0;} // TODO: sux
-    return obj2d->body->GetAngularVelocity();
+    return obj->object2d.body->GetAngularVelocity();
 }
 #endif
 
 #ifdef USE_PHYSICS2D
 void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    if (!obj2d->body || !obj2d->movable) {return;}
-    obj2d->body->SetLinearVelocity(b2Vec2(vx, vy));
+    obj->object2d.body->SetLinearVelocity(b2Vec2(vx, vy));
 }
 #endif
 
 #ifdef USE_PHYSICS2D
 void physics_set2dAngularVelocity(struct physicsobject* obj, double omega) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    if (!obj2d->body || !obj2d->movable) {return;}
-    obj2d->body->SetAngularVelocity(omega);
+    obj->object2d.body->SetAngularVelocity(omega);
 }
 #endif
 
 #ifdef USE_PHYSICS2D
 void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse) {
-    struct physicsobject2d* obj2d = obj->obj.ect2d;
-    if (!obj2d->body || !obj2d->movable) {return;}
-    obj2d->body->ApplyAngularImpulse(impulse);
+    obj->object2d.body->ApplyAngularImpulse(impulse);
 }
 #endif
 
