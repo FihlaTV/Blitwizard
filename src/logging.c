@@ -29,6 +29,7 @@
 #include "logging.h"
 #include "luaheader.h"
 #include "luafuncs.h"
+#include "threading.h"
 #include "os.h"
 #ifdef WINDOWS
 #include <windows.h>
@@ -43,8 +44,65 @@
 char* memorylogbuf = NULL;
 int memorylogbufsize = 0;
 extern int suppressfurthererrors;
+mutex* memLogMutex = NULL;
+
+#define CONSOLELOGMAXBUFFEREDLINES 1024
+char* consoleloglines[CONSOLELOGMAXBUFFEREDLINES];
+char* consoleloglinetypes[CONSOLELOGMAXBUFFEREDLINES];
+int consoleloglinecount = 0;
+int mayConsoleLog = 0;
+mutex* consoleLogMutex = NULL;
+
+__attribute__ ((constructor)) static void prepareMutexes(void) {
+    consoleLogMutex = mutex_Create();
+    memLogMutex = mutex_Create();
+}
+
+void consolelog(const char* type, const char* str) {
+    mutex_Lock(consoleLogMutex);
+    if (!mayConsoleLog) {
+        printf("storing line in memory\n");
+        consoleloglinecount++;
+        if (consoleloglinecount > CONSOLELOGMAXBUFFEREDLINES) {
+            consoleloglinecount--;
+            mutex_Release(consoleLogMutex);
+            return;
+        }
+        consoleloglines[consoleloglinecount-1] = strdup(str);
+        consoleloglinetypes[consoleloglinecount-1] = strdup(type);
+    } else {
+        printf("calling onLog\n");
+        luacfuncs_onLog(type, "%s", str);
+    }
+    mutex_Release(consoleLogMutex);
+}
+
+void enableConsoleLog() {
+    mutex_Lock(consoleLogMutex);
+    // enable console log
+    mayConsoleLog = 1;
+
+    // flush out all buffered lines:
+    int i = 0;
+    while (i < consoleloglinecount) {
+        if (consoleloglines[i] && consoleloglinetypes[i]) {
+            luacfuncs_onLog(consoleloglinetypes[i], "%s",
+            consoleloglines[i]);
+        }
+        if (consoleloglines[i]) {
+            free(consoleloglines[i]);
+        }
+        if (consoleloglinetypes[i]) {
+            free(consoleloglinetypes[i]);
+        }
+        i++;
+    }
+    consoleloglinecount = 0;
+    mutex_Release(consoleLogMutex);
+}
 
 void memorylog(const char* str) {
+    mutex_Lock(memLogMutex);
     int newlen = strlen(str);
     int currlen = 0;
     if (memorylogbuf) {
@@ -61,6 +119,7 @@ void memorylog(const char* str) {
         char* p = realloc(memorylogbuf, newsize);
         // out of memory.. nothing we could sensefully do
         if (!p) {
+            mutex_Release(memLogMutex);
             return;
         }
         // resizing complete:
@@ -70,6 +129,7 @@ void memorylog(const char* str) {
     // append new log data:
     memcpy(memorylogbuf + currlen, str, newlen);
     memorylogbuf[currlen+newlen] = 0;
+    mutex_Release(memLogMutex);
 }
 
 void printerror(const char* fmt, ...) {
@@ -86,6 +146,7 @@ void printerror(const char* fmt, ...) {
     fflush(stderr);
     memorylog(printline);
     memorylog("\n");
+    consolelog("error", printline);
 #endif
 #ifdef WINDOWS
     // we want graphical error messages for windows
@@ -120,10 +181,9 @@ void printwarning(const char* fmt, ...) {
 #if defined(ANDROID) || defined(__ANDROID__)
     __android_log_print(ANDROID_LOG_ERROR, "blitwizard", "%s", printline);
 #else
-    fprintf(stderr, "%s\n",printline);
-    fflush(stderr);
     memorylog(printline);
     memorylog("\n");
+    consolelog("warning", printline);
 #endif
 }
 
@@ -137,10 +197,9 @@ void printinfo(const char* fmt, ...) {
 #if defined(ANDROID) || defined(__ANDROID__)
     __android_log_print(ANDROID_LOG_INFO, "blitwizard", "%s", printline);
 #else
-    printf("%s\n", printline);
-    fflush(stdout);
     memorylog(printline);
     memorylog("\n");
+    consolelog("info", printline);
 #endif
 }
 

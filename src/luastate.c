@@ -26,6 +26,7 @@
 #include "luastate.h"
 #include "luafuncs.h"
 #include "physics.h"
+#include "threading.h"
 #include "luafuncs_graphics.h"
 #include "luafuncs_object.h"
 #include "luafuncs_objectphysics.h"
@@ -455,6 +456,13 @@ static lua_State* luastate_New(void) {
     lua_pushstring(l, vstr);
     lua_setglobal(l, "_VERSION");
 
+    // now set a default blitwizard.onLog handler:
+    lua_getglobal(l, "dostring");
+    lua_pushstring(l, "function blitwizard.onLog(type, msg)\n"
+    "    print(\"[LOG:\" .. type .. \"] \" .. msg)\n"
+    "end\n");
+    lua_pcall(l, 1, 0, 0);
+
     return l;
 }
 
@@ -716,5 +724,43 @@ int* functiondidnotexist, int *returnedbool) {
 
 void luastate_GCCollect() {
     lua_gc(scriptstate, LUA_GCSTEP, 0);
+}
+
+int wassuspended = 0;
+int suspendcount = 0;
+mutex* suspendLock = NULL;
+__attribute__((constructor)) void luastate_lockForSuspendGC() {
+    suspendLock = mutex_Create();
+}
+
+void luastate_suspendGC() {
+    mutex_Lock(suspendLock);
+    if (suspendcount <= 0) {
+        // check current gc state:
+        wassuspended = 1;
+        if (lua_gc(scriptstate, LUA_GCISRUNNING, 0)) {
+            wassuspended = 0;
+        }
+
+        // stop it:
+        if (!wassuspended) {
+            lua_gc(scriptstate, LUA_GCSTOP, 0);
+        }
+    }
+    // increase count:
+    suspendcount++;
+    mutex_Release(suspendLock);
+}
+
+void luastate_resumeGC() {
+    mutex_Lock(suspendLock);
+    suspendcount--;
+    if (suspendcount <= 0) {
+        suspendcount = 0;
+        if (!wassuspended) {
+            lua_gc(scriptstate, LUA_GCRESTART, 0);
+        }
+    }
+    mutex_Release(suspendLock);
 }
 

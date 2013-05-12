@@ -95,12 +95,16 @@ int triggerOnLog) {
         // trigger log entry:
         printerror("%s", errorstr);
     } else {
+        luastate_suspendGC();
         // send error to ingame lua console:
         lua_State* l = (lua_State*)luastate_GetStatePtr();
 
+        // call print with suspended garbage collector:
         lua_getglobal(l, "print");
         lua_pushstring(l, errorstr);
         lua_pcall(l, 1, 0, 0);
+
+        luastate_resumeGC();
     }
 }
 
@@ -116,6 +120,7 @@ void luacfuncs_onLog(const char* type, const char* fmt, ...) {
     printline[sizeof(printline)-1] = 0;
     va_end(a);
 
+    luastate_suspendGC();
     if (!luastate_PushFunctionArgumentToMainstate_String(type)) {
         fprintf(stderr, "Error when pushing func args to blitwizard.onLog");
         main_Quit(1); 
@@ -126,13 +131,15 @@ void luacfuncs_onLog(const char* type, const char* fmt, ...) {
         main_Quit(1);
         return;
     }
+
+    // call blitwizard.onLog:
     char* error;
-    if (!luastate_CallFunctionInMainstate("blitwizard.onLog", 1, 1, 1,
+    if (!luastate_CallFunctionInMainstate("blitwizard.onLog", 2, 1, 1,
     &error, NULL, NULL)) {
         _luacfuncs_onError_internal("blitwizard.onLog", error, 0);
         free(error);
-        return;
     }
+    luastate_resumeGC();
 }
 
 int luafuncs_getTemplateDirectory(lua_State* l) {
@@ -276,7 +283,7 @@ static int luafuncs_printline(void) {
         return 0;
     }
     printlinebuf[i] = 0;
-    printinfo("%s", printlinebuf);
+    fprintf(stdout, "%s\n", printlinebuf);
     memmove(printlinebuf, printlinebuf+(i+1), sizeof(printlinebuf)-(i+1));
     return 1;
 }
@@ -635,6 +642,7 @@ int luafuncs_getDisplayModes(lua_State* l) {
 // callbacks triggering oddly late, ...), so this function
 // is only useful for some rare cases.
 // @function setStep
+// @tparam number step_time the amount of time between steps in milliseconds. 16 is minimum (and default). HIGH STEPPING TIME MAY CAUSE SLOPPY FRAMERATE AND OTHER PROBLEMS
 
 int luafuncs_setstep(lua_State* l) {
     int newtimestep = 16;
@@ -715,6 +723,26 @@ int luafuncs_setstep(lua_State* l) {
 // -- Listen for mouse evens:
 // function blitwizard.onMouseUp(x, y, button)
 //     print("Mouse up: button: " .. button .. ", x: " .. x .. ", y: " .. y)
+// end
+
+/// Specify this function if you want to receive internal
+// blitwizard log messages.
+//
+// <b>This function is defined with a default function that
+// simply prints() all log messages, which sends them to the
+// @{blitwizard.console|developer console}.</b>
+//
+// Feel free to redefine it to do something more useful.
+// @function onLog
+// @tparam string msgtype the type of log message. Currently supported types: "info", "warning", "error"
+// @tparam string msg the actual log message
+// @usage
+// -- only show warnings and errors:
+// function blitwizard.onLog(msgtype, msg)
+//     if type == "info" then
+//         return
+//     end
+//     print("[LOG:" .. msgtype .. "] " .. msg)
 // end
 
 // an additional helper function:

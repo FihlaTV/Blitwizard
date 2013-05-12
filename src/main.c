@@ -889,6 +889,7 @@ int main(int argc, char** argv) {
         main_Quit(1);
         return 1;
     }
+    enableConsoleLog();
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Calling blitwiz.on_init...");

@@ -78,7 +78,7 @@
 	<td class="summary">Load a .zip file as a resource archive.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#setStep">setStep&nbsp;()</a></td>
+	<td class="name" ><a href="#setStep">setStep&nbsp;(step_time)</a></td>
 	<td class="summary">Set the stepping frequency of the game logic.</td>
 	</tr>
 	<tr>
@@ -104,6 +104,11 @@
  when a mouse button (which was previously pressed down)
  is released
  on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#onLog">onLog&nbsp;(msgtype, msg)</a></td>
+	<td class="summary">Specify this function if you want to receive internal
+ blitwizard log messages.</td>
 	</tr>
 </table>
 <h2><a href="#Class_object">Class object </a></h2>
@@ -277,7 +282,7 @@
 </dd>
     <dt>
     <a name = "setStep"></a>
-    <strong>setStep&nbsp;()</strong>
+    <strong>setStep&nbsp;(step_time)</strong>
     </dt>
     <dd>
     Set the stepping frequency of the game logic.
@@ -293,6 +298,12 @@
  callbacks triggering oddly late, ...), so this function
  is only useful for some rare cases.
 
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">step_time</span>
+            <span class="types"><span class="type">number</span></span>
+         the amount of time between steps in milliseconds. 16 is minimum (and default). HIGH STEPPING TIME MAY CAUSE SLOPPY FRAMERATE AND OTHER PROBLEMS</li>
+    </ul>
 
 
 
@@ -430,6 +441,44 @@
  <span class="comment">-- Listen for mouse evens:
 </span> <span class="keyword">function</span> blitwizard.onMouseUp(x, y, button)
      <span class="global">print</span>(<span class="string">"Mouse up: button: "</span> .. button .. <span class="string">", x: "</span> .. x .. <span class="string">", y: "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "onLog"></a>
+    <strong>onLog&nbsp;(msgtype, msg)</strong>
+    </dt>
+    <dd>
+    Specify this function if you want to receive internal
+ blitwizard log messages.
+<p> <b>This function is defined with a default function that
+ simply prints() all log messages, which sends them to the
+ <a href="../modules/blitwizard.console.html#">developer console</a>.</b>
+<p> Feel free to redefine it to do something more useful.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msgtype</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the type of log message. Currently supported types: "info", "warning", "error"</li>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the actual log message</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- only show warnings and errors:
+</span> <span class="keyword">function</span> blitwizard.onLog(msgtype, msg)
+     <span class="keyword">if</span> <span class="global">type</span> == <span class="string">"info"</span> <span class="keyword">then</span>
+         <span class="keyword">return</span>
+     <span class="keyword">end</span>
+     <span class="global">print</span>(<span class="string">"[LOG:"</span> .. msgtype .. <span class="string">"] "</span> .. msg)
  <span class="keyword">end</span></pre>
     </ul>
 

@@ -46,7 +46,7 @@ void audiocallback(void *intentionally_unused, Uint8 *stream, int len) {
     samplecallbackptr(stream, (unsigned int)len);
 }
 
-const char* audio_GetCurrentBackendName() {
+const char* audio_GetCurrentBackendName(void) {
     if (!soundenabled) {
         return NULL;
     }
@@ -54,7 +54,7 @@ const char* audio_GetCurrentBackendName() {
 }
 
 
-void audio_Quit() {
+void audio_Quit(void) {
     if (soundenabled) {
         SDL_CloseAudio();
         SDL_AudioQuit();
@@ -173,11 +173,11 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
     return 1;
 }
 
-void audio_LockAudioThread() {
+void audio_LockAudioThread(void) {
     SDL_LockAudio();
 }
 
-void audio_UnlockAudioThread() {
+void audio_UnlockAudioThread(void) {
     SDL_UnlockAudio();
 }
 

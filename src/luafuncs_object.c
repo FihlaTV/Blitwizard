@@ -62,20 +62,24 @@ struct blitwizardobject* deletedobjects = NULL;
 // with visual representation, behaviour code and collision shape.
 // @type object
 
-void cleanupobject(struct blitwizardobject* o) {
+void cleanupobject(struct blitwizardobject* o, int fullclean) {
     // clear up all the graphics, physics, event function things
     // attached to the object:
-    luafuncs_objectgraphics_unload(o);
+    if (fullclean) {
+        luafuncs_objectgraphics_unload(o);
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
-    if (o->physics) {
-        luafuncs_freeObjectPhysicsData(o->physics);
-        o->physics = NULL;
-    }
+        if (o->physics) {
+            luafuncs_freeObjectPhysicsData(o->physics);
+            o->physics = NULL;
+        }
 #endif
-    luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
+        luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
+    } else {
+        luacfuncs_objectgraphics_setVisible(o, 0);
+    }
 }
 
-static void luacfuncs_object_deleteIfOk(struct blitwizardobject* o);
+static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o);
 
 static int garbagecollect_blitwizobjref(lua_State* l) {
     // we need to decrease our reference count of the
@@ -95,16 +99,12 @@ static int garbagecollect_blitwizobjref(lua_State* l) {
     // it is a valid blitwizard object, decrease ref count:
     struct blitwizardobject* o = idref->ref.bobj;
     o->refcount--;
-
-    // if it's already deleted and ref count is zero, remove it
-    // entirely and free it:
-    luacfuncs_object_deleteIfOk(o);
     return 0;
 }
 
-static void luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
+static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
     if (o->deleted && o->refcount <= 0) {
-        cleanupobject(o);
+        cleanupobject(o, 1);
 
         // remove object from the list
         if (o->prev) {
@@ -121,8 +121,9 @@ static void luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
 
         // free object
         free(o);
+        return 1;
     }
-    return;
+    return 0;
 }
 
 void luacfuncs_object_obtainRegistryTable(lua_State* l,
@@ -328,6 +329,9 @@ int args, int* boolreturn) {
         return 1;
     }
 
+    // for speed reasons, disable GC:
+    luastate_suspendGC();
+
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
 
@@ -338,6 +342,7 @@ int args, int* boolreturn) {
     // if function is not a function, don't call:
     if (lua_type(l, -1) != LUA_TFUNCTION) {
         lua_pop(l, 2);  // pop function, registry table
+        luastate_resumeGC();
         return 1;
     }
 
@@ -397,6 +402,7 @@ int args, int* boolreturn) {
     lua_pop(l, 1);
 
     //printf("t7: %llu\n", time_GetMicroseconds());
+    luastate_resumeGC();
     return (errorHappened == 0);
 }
 
@@ -450,8 +456,8 @@ int luafuncs_object_destroy(lua_State* l) {
     deletedobjects = o;
     o->prev = NULL;
 
-    // destroy the drawing and physics things attached to it:
-    cleanupobject(o);
+    // do a first temp cleanup:
+    cleanupobject(o, 0);
     return 0;
 }
 
@@ -1076,7 +1082,11 @@ int luacfuncs_object_doAllSteps(int count) {
     o = deletedobjects;
     while (o) {
         struct blitwizardobject* onext = o->next;
-        luacfuncs_object_deleteIfOk(o);
+        if (luacfuncs_object_deleteIfOk(o)) {
+            if (deletedobjects == o) {
+                deletedobjects = onext;
+            }
+        }
         o = onext;
     }
     return count;
