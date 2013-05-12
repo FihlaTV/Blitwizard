@@ -488,6 +488,7 @@ request, int listLocked) {
     if (!listLocked) {
         mutex_Lock(textureReqListMutex);
     }
+
     // handle a request which has been waiting for a texture.
     int successfullyhandled = 0;
 
@@ -496,6 +497,23 @@ request, int listLocked) {
 
     if (!gtm) {
         // request has no texture.
+        if (!listLocked) {
+            mutex_Release(textureReqListMutex);
+        }
+        return;
+    }
+
+    // if request has been used ages ago, do not care:
+    int relevant = 0;
+    int j = 0;
+    while (j < USING_AT_COUNT) {
+        if (gtm->lastUsage[j] +
+        SCALEDOWNSECONDSVERYVERYLONG/2 > time(NULL)) {
+            relevant = 1;
+        }
+        j++;
+    }
+    if (!relevant) {  // not used for ages, do not process
         if (!listLocked) {
             mutex_Release(textureReqListMutex);
         }
@@ -676,6 +694,10 @@ void* userdata) {
     }
     request->gtm = gtm;
 
+    // assume initial usage:
+    request->gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] =
+    time(NULL);
+
     mutex_Lock(textureReqListMutex);
     // add to unhandled texture request list:
     request->unhandledNext = unhandledRequestList;
@@ -762,9 +784,7 @@ int newsize) {
             request->textureSwitchCallback(request, NULL, request->userdata);
             request->handedTexture = NULL;
             request->handedTextureScaledEntry = NULL;
-            return;
-        }
-        if (request->handedTexture != gtm->scalelist[newsize].gt) {
+        } else if (request->handedTexture != gtm->scalelist[newsize].gt) {
             // this request needs to be set to the new size:
             if (request->handedTextureScaledEntry) {
                 request->handedTextureScaledEntry->refcount--;
@@ -774,6 +794,38 @@ int newsize) {
             request->handedTexture = gtm->scalelist[newsize].gt;
             request->handedTextureScaledEntry = &gtm->scalelist[newsize];
             request->handedTextureScaledEntry->refcount++;
+        }
+    }
+    if (newsize < 0) {
+        // move request to unhandled request list:
+        // (so it will try to re-obtain the texture if it's now
+        // without any)
+        if ((request->prev || request->next
+        || textureRequestList == request)) {
+            if (!request->unhandledPrev && !request->unhandledNext &&
+            !(unhandledRequestList == request)) {
+                // add it to unhandled list:
+                request->unhandledNext = unhandledRequestList;
+                if (request->unhandledNext) {
+                    request->unhandledNext->unhandledPrev = request;
+                }
+                request->unhandledPrev = NULL;
+                unhandledRequestList = request;
+            }
+            // remove from regular request list:
+            if (request->prev) {
+                request->prev->next = request->next;
+            } else {
+                textureRequestList = request->unhandledNext;
+                if (textureRequestList) {
+                    textureRequestList->prev = NULL;
+                }
+            }
+            if (request->next) {
+                request->next->prev = request->prev;
+            }
+            request->next = NULL;
+            request->prev = NULL;
         }
     }
 }
@@ -788,6 +840,9 @@ struct graphicstexturemanaged* gtm, int newsize) {
         // texture not loaded yet. there is nothing to do here.
         return;
     }
+#ifdef DEBUGTEXTUREMANAGER
+    printinfo("[TEXMAN] new size for %s: %d", gtm->path, newsize);
+#endif
     if (newsize >= 0) {
         if (gtm->scalelist[newsize].locked) {
             // texture is locked, cannot use.
