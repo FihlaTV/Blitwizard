@@ -1196,6 +1196,7 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
  void* userdata, int movable, struct physicsobjectshape* shapelist,
  int shapecount) {
     struct physicsobject* obj = (struct physicsobject*)malloc(sizeof(*obj));
+    memset(obj, 0, sizeof(*obj));
     if (!(world->is3d)) {
 #ifdef USE_PHYSICS2D
         if (!_physics_create2dObj(world->wor.ld2d, obj, userdata,
