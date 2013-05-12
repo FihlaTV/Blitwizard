@@ -47,14 +47,21 @@
 #include "graphicstexturemanager.h"
 
 // This contains the cache info for one specific size of a texture:
+struct graphicstexturemanaged;
 struct graphicstexturescaled {
     int locked; // if this is 1, do not access any other fields except width
       // and height! the entry is currently processed from another thread
       // e.g. for scaling, disk caching or other
+    int writelock;  // if this is 1, you may read the pixel data and use
+      // everything read-only, but you must not change anything or obtain
+      // a full lock (locked)
     struct graphicstexture* gt;  // NULL if not loaded or not in GPU memory
     void* pixels; // not NULL if texture is in regular memory
     char* diskcachepath;  // path to raw disk cache file or NULL
     size_t width, height;  // width/height of this particular scaled entry
+    struct graphicstexturemanaged* parent;
+    int refcount;  // requests using this particular size
+    size_t lastGpuUpload;
 };
 
 // A managed texture entry containing all the different sized cached versions:
@@ -66,6 +73,7 @@ struct graphicstexturemanaged {
     int beingInitiallyLoaded;  // the texture is just being initiially loaded
         // from disk (= wait until loading is complete)
     int failedToLoad;  // the texture failed to load (e.g. file not found)
+    int handedOutLast;  // the scaled index of the last handed out size
 
     // usage time stamps:
     time_t lastUsage[USING_AT_COUNT];
@@ -129,7 +137,7 @@ void graphicstexturelist_DestroyTexture(struct graphicstexturemanaged* gt);
 void graphicstexturelist_FreeAllTextures(void);
 
 // Do something with all textures:
-void graphicstexturelist_DoForAllTextures(
+void graphicstexturelist_doForAllTextures(
 int (*callback)(struct graphicstexturemanaged* texture,
 struct graphicstexturemanaged* previoustexture, void* userdata),
 void* userdata);

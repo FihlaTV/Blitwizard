@@ -179,10 +179,12 @@ void luastate_CreateCameraTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_camera_destroy, "destroy");
     luastate_registerfunc(l, &luafuncs_camera_set2dCenter,
     "set2dCenter");
-    luastate_registerfunc(l, &luafuncs_camera_getScreenDimensions,
-    "getScreenDimensions");
-    luastate_registerfunc(l, &luafuncs_camera_setScreenDimensions,
-    "setScreenDimensions");
+    luastate_registerfunc(l, &luafuncs_camera_getPixelDimensionsOnScreen,
+    "getPixelDimensionsOnScreen");
+    luastate_registerfunc(l, &luafuncs_camera_setPixelDimensionsOnScreen,
+    "setPixelDimensionsOnScreen");
+    luastate_registerfunc(l, &luafuncs_camera_getVisible2dAreaDimensions,
+    "getVisible2dAreaDimensions");
     luastate_registerfunc(l, &luafuncs_camera_get2dZoomFactor,
     "get2dZoomFactor");
     luastate_registerfunc(l, &luafuncs_camera_set2dZoomFactor,
@@ -221,6 +223,12 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_object_getDimensions, "getDimensions");
     luastate_registerfunc(l, &luafuncs_object_getScale, "getScale");
     luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
+    luastate_registerfunc(l, &luafuncs_object_scaleToDimensions,
+    "scaleToDimensions");
+    luastate_registerfunc(l, &luafuncs_object_setRotationAngle,
+    "setRotationAngle");
+    luastate_registerfunc(l, &luafuncs_object_getRotationAngle,
+    "getRotationAngle");
 
     // graphics/visual stuff:
     luastate_registergraphics(l, &luafuncs_object_setTransparency,

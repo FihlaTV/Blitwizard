@@ -47,8 +47,8 @@ struct blitwizardobject* o);
 // Move graphical representation of object to correct position:
 void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o);
 
-// get dimensions of object:
-int luacfuncs_objectgraphics_getDimensions(
+// get dimensions of object (unscaled/original):
+int luacfuncs_objectgraphics_getOriginalDimensions(
 struct blitwizardobject* o, double *x, double *y, double *z);
 // returns 1 on success and 0 on failure.
 // for 2d objects, the z component won't be altered.

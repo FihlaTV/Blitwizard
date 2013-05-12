@@ -39,6 +39,7 @@ int luafuncs_object_destroy(lua_State* l);
 int luafuncs_object_getDimensions(lua_State* l);
 int luafuncs_object_getScale(lua_State* l);
 int luafuncs_object_setScale(lua_State* l);
+int luafuncs_object_scaleToDimensions(lua_State* l);
 
 // set the function on top of the stack as event function:
 // (put nil on top of the stack if you want to clear the event)
@@ -55,7 +56,7 @@ struct blitwizardobject* o, const char* eventName);
 // Arguments will be popped from the stack.
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
-int args);
+int args, int* boolreturnvalue);
 // Returns 0 if there was a lua error in the
 // event function, otherwise 1.
 
@@ -86,6 +87,10 @@ int luafuncs_object_pinToCamera(lua_State* l);
 
 // set object visibility:
 int luafuncs_object_setVisible(lua_State* l);
+
+// get and adjust 2d rotation:
+int luafuncs_object_setRotationAngle(lua_State* l);
+int luafuncs_object_getRotationAngle(lua_State* l);
 
 #ifdef __cplusplus
 }

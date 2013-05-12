@@ -353,7 +353,8 @@ end
    Roleplay a specific action in a room, e.g. "looks outside of window"
    as an action will show up as "<Yourname> looks outside the window".
 
-   Similar to @{blitwizard.net.irc.connection:talkToRoom|connection.talkToRoom}, this is not
+   Similar to @{blitwizard.net.irc.connection:talkToRoom|connection.talkToRoom},
+   this is not
    possible before entering a room and getting the "enter" event.
    @function doRoomAction
    @tparam string room the chat room you want to do the action in

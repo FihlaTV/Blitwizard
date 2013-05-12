@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "os.h"
 #ifdef USE_SDL_GRAPHICS
@@ -42,6 +43,7 @@
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "luaheader.h"
+#include "timefuncs.h"
 #include "luastate.h"
 #include "luaerror.h"
 #include "luafuncs.h"
@@ -313,9 +315,12 @@ struct blitwizardobject* o) {
 // implicitely calls luacfuncs_onError() when an error happened
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
-int args) {
+int args, int* boolreturn) {
+    //printf("event: %s\n", eventName);
+    //printf("t0: %llu\n", time_GetMicroseconds());
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
+    //printf("t1: %llu\n", time_GetMicroseconds());
 
     // get event function
     lua_pushstring(l, eventName);
@@ -326,13 +331,16 @@ int args) {
         lua_pop(l, 2);  // pop function, registry table
         return 1;
     }
+    //printf("t2: %llu\n", time_GetMicroseconds());
 
     // get rid of the object table again:
     lua_insert(l, -2);  // push function below table
     lua_pop(l, 1);  // remove table
 
     // push self as first argument:
+    //printf("t3: %llu\n", time_GetMicroseconds());
     luacfuncs_pushbobjidref(l, o);
+    //printf("t4: %llu\n", time_GetMicroseconds());
     if (args > 0) {
         lua_insert(l, -(args+1));
     }
@@ -343,12 +351,19 @@ int args) {
     }
 
     // push error handling function onto stack:
+    //printf("t5: %llu\n", time_GetMicroseconds());
     lua_pushcfunction(l, internaltracebackfunc());
 
     // move error handling function in front of function + args
     lua_insert(l, -(args+3));
 
-    int ret = lua_pcall(l, args+1, 0, -(args+3));
+    // call function:
+    int returnvalues = 0;
+    if (boolreturn) {
+        returnvalues = 1;
+    }
+    //printf("t6: %llu\n", time_GetMicroseconds());
+    int ret = lua_pcall(l, args+1, returnvalues, -(args+3));
 
     int errorHappened = 0;
     // process errors:
@@ -361,9 +376,16 @@ int args) {
         luacfuncs_onError(funcName, e);
     }
 
+    // obtain return value:
+    if (boolreturn) {
+        *boolreturn = lua_toboolean(l, -1);
+        lua_pop(l, 1);
+    }
+
     // pop error handling function from stack again:
     lua_pop(l, 1);
 
+    //printf("t7: %llu\n", time_GetMicroseconds());
     return (errorHappened == 0);
 }
 
@@ -484,6 +506,8 @@ int luafuncs_object_setPosition(lua_State* l) {
     y = lua_tonumber(l, 3);
     if (obj->is3d) {
         z = lua_tonumber(l, 4);
+    } else {
+        z = 0;
     }
     objectphysics_setPosition(obj, x, y, z);
     return 0;
@@ -533,7 +557,7 @@ int luafuncs_object_getTransparency(lua_State* l) {
 }
 
 /// Get the dimensions of an object in game units (with
-// @{blitwizard.object:setScale|scaling} taking into account).
+// @{blitwizard.object:setScale|scaling} taken into account).
 //
 // For a 2d sprite, this returns two components (x, y) which
 // match the sprite's width and height, for a 3d object,
@@ -559,13 +583,23 @@ int luafuncs_object_getDimensions(lua_State* l) {
         return haveluaerror(l, "Object was deleted");
     }
     double x, y, z;
-    if (!luacfuncs_objectgraphics_getDimensions(obj, &x, &y, &z)) {
+    if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
         return haveluaerror(l, "Object dimensions not known");
     }
-    lua_pushnumber(l, x);
-    lua_pushnumber(l, y);
+    double sx, sy, sz;
     if (obj->is3d) {
-        lua_pushnumber(l, z);
+        sx = obj->scale3d.x;
+        sy = obj->scale3d.y;
+        sz = obj->scale3d.z;
+    } else {
+        sx = obj->scale2d.x;
+        sy = obj->scale2d.y;
+        sz = 0;
+    }
+    lua_pushnumber(l, x * sx);
+    lua_pushnumber(l, y * sy);
+    if (obj->is3d) {
+        lua_pushnumber(l, z * sz);
     }
     return 2+(obj->is3d);
 }
@@ -573,6 +607,12 @@ int luafuncs_object_getDimensions(lua_State* l) {
 /// Get the object's scale, which per default is 1,1 for 2d objects
 // and 1,1,1 for 3d objects. The scale is a factor applied to the
 // dimensions of an object to stretch or shrink it.
+//
+// Please note if you want to scale up a unit to precisely
+// match a specific size in game units (instead of just making
+// it twice the size, three times the size etc with setScale),
+// you might want to use @{blitwizard.object:scaleToDimensions|
+// object:scaleToDimensions}.
 //
 // Returns 2 values for 2d objects, 3 values for 3d objects.
 // @function getScale
@@ -598,13 +638,28 @@ int luafuncs_object_getScale(lua_State* l) {
 }
 
 /// Change an object's scale, also see @{blitwizard.object:getScale}.
-// This allows to stretch/shrink an object.
+// This allows to stretch/shrink an object. If physics are enabled
+// with @{blitwizard.object:enableMovableCollision|object:enableMovableCollision}
+// or @{blitwizard.object:enableStaticCollision|object:enableStaticCollision},
+// the physics hull will be scaled accordingly aswell.
+//
+// Please note if you want to scale up a unit to precisely
+// match a specific size in game units (instead of just making
+// it twice the size, three times the size etc with setScale),
+// you might want to use @{blitwizard.object:scaleToDimensions|
+// object:scaleToDimensions}.
 //
 // Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
 // @function setScale
 // @tparam number x_scale X scale factor
 // @tparam number y_scale Y scale factor
 // @tparam number z_scale (optional) Z scale factor
+// @usage
+// -- scale a 2d object to twice the original size
+// obj3d:setScale(2, 2)
+//
+// -- scale 3d object to half its original size
+// obj3d:setScale(0.5, 0.5, 0.5)
 int luafuncs_object_setScale(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setScale");
@@ -634,6 +689,148 @@ int luafuncs_object_setScale(lua_State* l) {
     } else {
         obj->scale2d.x = x;
         obj->scale2d.y = y;
+    }
+    return 0;
+}
+
+/// Scale up an object to precise boundaries in game units.
+// An according @{blitwizard.object:setScale|scale factor}
+// will be picked to achieve this.
+//
+// For 2d objects, a width and a height can be specified.
+// For 3d objects, the size along all three axis (x, y, z)
+// can be specified.
+//
+// If you want the object to be scaled up but maintain
+// its aspect ratio, specify just one parameter and pass
+// <i>nil</i> for the others which will then be calculated
+// accordingly.
+// @function scaleToDimensions
+// @tparam number width width or x size in game units
+// @tparam number height height or y size
+// @tparam number z_size (only present for 3d objects) z size
+// @usage
+// -- Scale up a 3d object so its height matches 2 game units:
+// -- (it's proportions will be kept)
+// obj3d:scaleToDimensions(nil, nil, 2)
+int luafuncs_object_scaleToDimensions(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:scaleToDimensions");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+
+    // check parameters:
+    if (lua_type(l, 2) != LUA_TNUMBER && lua_type(l, 2) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:scaleToDimensions", "number or nil",
+        lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER && lua_type(l, 3) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:scaleToDimensions", "number or nil",
+        lua_strtype(l, 3));
+    }
+    if (obj->is3d &&
+        lua_type(l, 4) != LUA_TNUMBER && lua_type(l, 4) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.object:scaleToDimensions", "number or nil",
+        lua_strtype(l, 4));
+    }
+
+    double x,y,z;
+    z = 1234;
+    if (!luacfuncs_objectgraphics_getOriginalDimensions(obj,
+    &x, &y, &z)) {
+        return haveluaerror(l, "object dimensions not known yet, "
+        "wait for onGeometryLoaded event before using this function");
+    }
+    if (x <= 0 || y <= 0 || z <= 0) {
+        return haveluaerror(l, "for objects with a size of zero, "
+        "there is no way to scale them up to a given size");
+    }
+
+    // get parameters:
+    double xdim = 0;
+    double ydim = 0;
+    double zdim = 0;
+    int gotdimension = 0;
+    if (lua_type(l, 2) == LUA_TNUMBER) {
+        xdim = lua_tonumber(l, 2);
+        gotdimension = 1;
+        if (xdim <= 0) {
+            return haveluaerror(l, "cannot scale to dimension which is "
+            "zero or negative");
+        }
+    }
+    if (lua_type(l, 3) == LUA_TNUMBER) {
+        ydim = lua_tonumber(l, 3);
+        gotdimension = 1;
+        if (ydim <= 0) {
+            return haveluaerror(l, "cannot scale to dimension which is "
+            "zero or negative");
+        }
+    }
+    if (obj->is3d && lua_type(l, 4) == LUA_TNUMBER) {
+        zdim = lua_tonumber(l, 4);
+        gotdimension = 1;
+        if (zdim <= 0) {
+            return haveluaerror(l, "cannot scale to dimension which is "
+            "zero or negative");
+        }
+    }
+
+    // we require one dimension at least:
+    if (!gotdimension) {
+        return haveluaerror(l, "you need to specify at least one dimension "
+        "for scaling");
+    }
+
+    // calculate factors:
+    double xfactor = 0;
+    double yfactor = 0;
+    double zfactor = 0;
+    if (xdim > 0) {
+        xfactor = xdim/x;
+    }
+    if (ydim > 0) {
+        yfactor = ydim/y;
+    }
+    if (obj->is3d && zdim > 0) {
+        zfactor = zdim/z;
+    }
+
+    // calculate missing factors:
+    if (xfactor == 0) {
+        if (yfactor > 0 || !obj->is3d) {
+            xfactor = yfactor;
+        } else {
+            xfactor = zfactor;
+        }
+    }
+    if (yfactor == 0) {
+        if (zfactor > 0 && obj->is3d) {
+            yfactor = zfactor;
+        } else {
+            yfactor = xfactor;
+        }
+    }
+    if (obj->is3d && zfactor == 0) {
+        if (xfactor > 0) {
+            zfactor = xfactor;
+        } else {
+            zfactor = yfactor;
+        }
+    }
+
+    // do scaling:
+    if (obj->is3d) {
+        obj->scale3d.x = xfactor;
+        obj->scale3d.y = yfactor;
+        obj->scale3d.z = zfactor;
+    } else {
+        obj->scale2d.x = xfactor;
+        obj->scale2d.y = yfactor;
     }
     return 0;
 }
@@ -669,6 +866,60 @@ int luafuncs_object_setZIndex(lua_State* l) {
     return 0;
 }
 
+/// Set the rotation angle of a 2d object. (You need to use
+// @{blitwizard.object:setRotationAngles|object:setRotationAngles},
+// @{blitwizard.object:setRotationFromQuaternion|
+// object:setRotationFromQuaternion}
+// or @{blitwizard.object:turnToPosition|object:turnToPosition}
+// for 3d objects)
+//
+// An angle of 0 is the default rotation, 90 will turn it
+// on its side counter-clockwise by 90° degree, etc.
+// @function setRotationAngle
+// @tparam number rotation the rotation angle
+int luafuncs_object_setRotationAngle(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setRotationAngle");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (obj->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:setRotationAngle", "number", lua_strtype(l, 2));
+    }
+    objectphysics_set2dRotation(obj, fmod(lua_tonumber(l, 2), 360));
+    return 0;
+}
+
+/// Get the rotation angle of a 2d object.
+// (Use @{blitwizard.object.getRotationAngles|object:getRotationAngles} or
+// @{blitwizard.object.getRotationQuaternion|object:getRotationQuaternion}
+// for 3d objects)
+//
+// Also see @{blitwizard.object:setRotationAngle|object:setRotationAngle}.
+// @function getRotationAngle
+// @treturn number the current 2d rotation of the object
+int luafuncs_object_getRotationAngle(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getRotationAngle");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (obj->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    double angle = 0;
+    objectphysics_get2dRotation(obj, &angle);
+    angle = fmod(angle, 360);
+    if (angle < 0) {
+        angle += 360;
+    }
+    lua_pushnumber(l, angle);
+    return 1;
+}
 
 /// For 2d sprite objects, set a clipping window inside the
 // original texture used for the sprite which allows you to
@@ -763,7 +1014,7 @@ struct blitwizardobject* o) {
         return;
     }
 
-    luacfuncs_object_callEvent(l, o, "doAlways", 0);
+    luacfuncs_object_callEvent(l, o, "doAlways", 0, NULL);
 }
 
 int luacfuncs_object_doAllSteps(int count) {
@@ -787,7 +1038,6 @@ int luacfuncs_object_doAllSteps(int count) {
         // objects get deleted while we doStep them
         while (o) {
             if (o->deleted) {
-                printf("deleted object, restarting loop\n");
                 // we ran into a deleted object (likely deleted by
                 // a DoStep() of another object).
                 // relaunch this run and start over from beginning
@@ -830,7 +1080,7 @@ void luacfuncs_object_updateGraphics() {
         luafuncs_objectgraphics_load(o, o->respath);
 
         if (luafuncs_objectgraphics_NeedGeometryCallback(o)) {
-            luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0);
+            luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0, NULL);
         }
 
         luacfuncs_objectgraphics_updatePosition(o);
@@ -895,8 +1145,8 @@ int luafuncs_object_setVisible(lua_State* l) {
 //
 // This function is called with all objects with a
 // frequency of 60 times a second (it can be changed
-// globally with @{blitwizard:setStep} if you know
-// what you're doing.
+// globally with @{blitwizard.setStep} if you know
+// what you're doing).
 // @function doAlways
 // @usage
 // -- have a sprite move up the screen

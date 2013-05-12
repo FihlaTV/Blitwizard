@@ -95,12 +95,17 @@
  centered by the camera.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:getScreenDimensions">camera:getScreenDimensions&nbsp;()</a></td>
+	<td class="name" ><a href="#camera:getVisible2dAreaDimensions">camera:getVisible2dAreaDimensions&nbsp;(consider_zoom)</a></td>
+	<td class="summary">Get the game units of the visible 2d area of the game world
+ shown through this camera.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:getPixelDimensionsOnScreen">camera:getPixelDimensionsOnScreen&nbsp;()</a></td>
 	<td class="summary">Get the dimensions of a camera on the actual
  screen.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:setScreenDimensions">camera:setScreenDimensions&nbsp;(width, height)</a></td>
+	<td class="name" ><a href="#camera:setPixelDimensionsOnScreen">camera:setPixelDimensionsOnScreen&nbsp;(width, height)</a></td>
 	<td class="summary">Set the dimensions of a camera on the screen.</td>
 	</tr>
 	<tr>
@@ -195,9 +200,11 @@
 <p> <b>IMPORTANT:</b> If you want to show a different part of the game world,
  this is where you want to be! Grab the first camera from
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> and let's go:
-<p> Use <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">blitwizard.graphics.camera:set2dCenter</a> to modify the 2d world
- position shown, and ??? to modify
- the 3d world position shown if you use any 3d objects.
+<p> Use <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">camera:set2dCenter</a>
+ to modify the 2d world
+ position shown, and
+ ???
+ to modify the 3d world position shown if you use any 3d objects.
 <p> <i>Please note the SDL 2d renderer doesn't support more than one camera.
  The OGRE 3d renderer supports multiple cameras.</i>
     <dl class="function">
@@ -271,13 +278,60 @@
 
 </dd>
     <dt>
-    <a name = "camera:getScreenDimensions"></a>
-    <strong>camera:getScreenDimensions&nbsp;()</strong>
+    <a name = "camera:getVisible2dAreaDimensions"></a>
+    <strong>camera:getVisible2dAreaDimensions&nbsp;(consider_zoom)</strong>
+    </dt>
+    <dd>
+    Get the game units of the visible 2d area of the game world
+ shown through this camera.  This depends on the camera's
+ <a href="../modules/blitwizard.graphics.html#camera:getPixelDimensionsOnScreen">actual size in pixels
+ on the screen</a>, the camera's <a href="../modules/blitwizard.graphics.html#camera:get2dZoomFactor">
+ 2d zoom factor</a> and the camera's ???.
+<p> <i>Note on 3d objects:</i>
+ There is no similar function for 3d objects, because in 3d it
+ largely depends on the camera's position and angle which objects
+ will be visible how large on the screen, while for 2d it only
+ depends on zoom and aspect ratio.
+<p> <i>Note on <a href="../modules/blitwizard.html#object:pinToCamera">pinned</a> 2d objects:</i>
+ If you want to know the area visible in game units for
+ <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a> which are unaffected
+ by camera zoom when drawn, specify <i>false</i> as first parameter
+ for not taking the zoom into account.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">consider_zoom</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) defaults to true. Specifies whether
+ the zoom factor should be taken into account. Set to <i>true</i> if yes,
+ <i>false</i> if not.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        width the width of the visible 2d world area</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        height the height of the visible 2d world area</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:getPixelDimensionsOnScreen"></a>
+    <strong>camera:getPixelDimensionsOnScreen&nbsp;()</strong>
     </dt>
     <dd>
     Get the dimensions of a camera on the actual
- screen.  It usually fills the whole window per default,
- but not necessarily.
+ screen.  It usually fills the whole window (= the full size of the
+ resolution you specified in <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>),
+ but that may be changed with
+ <a href="../modules/blitwizard.graphics.html#camera:setPixelDimensionsOnScreen">
+ camera:setPixelDimensionsOnScreen</a>.
 
 
     <h3>Returns:</h3>
@@ -295,8 +349,8 @@
 
 </dd>
     <dt>
-    <a name = "camera:setScreenDimensions"></a>
-    <strong>camera:setScreenDimensions&nbsp;(width, height)</strong>
+    <a name = "camera:setPixelDimensionsOnScreen"></a>
+    <strong>camera:setPixelDimensionsOnScreen&nbsp;(width, height)</strong>
     </dt>
     <dd>
     Set the dimensions of a camera on the screen.

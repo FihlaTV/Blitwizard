@@ -465,8 +465,79 @@ int cameraId) {
 void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
 int visible) {
     mutex_Lock(m);
-    sprite->visible = (visible != NULL);
+    sprite->visible = (visible != 0);
     mutex_Release(m);
+}
+
+void graphics2dsprites_ReportVisibility(void) {
+    int c = graphics_GetCameraCount();
+    mutex_Lock(m);
+    struct graphics2dsprite* sprite = spritelist;
+    while (sprite) {
+        if (!sprite->texWidth || !sprite->texHeight
+        || sprite->loadingError) {
+            sprite = sprite->next;
+            continue;
+        }
+        // cycle through all cameras:
+        int i = 0;
+        while (i < c) {
+            if (i != sprite->pinnedToCamera && sprite->pinnedToCamera >= 0) {
+                // not visible on this camera.
+                i++;
+                continue;
+            }
+
+            // get camera settings:
+            double w = graphics_GetCameraWidth(i);
+            double h = graphics_GetCameraHeight(i);
+            double zoom = graphics_GetCamera2DZoom(i);
+            double ratio = graphics_GetCamera2DAspectRatio(i);
+            double centerx = graphics_GetCamera2DCenterX(i);
+            double centery = graphics_GetCamera2DCenterY(i);
+
+            // calculate visible area on screen:
+            double x,y;
+            if (sprite->pinnedToCamera < 0) {
+                x = ((sprite->x - centerx + (w/2) /
+                    UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
+                y = ((sprite->y - centery + (h/2) /
+                    UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
+            } else {
+                x = sprite->x * UNIT_TO_PIXELS;
+                y = sprite->y * UNIT_TO_PIXELS;
+            }
+            double width = sprite->width;
+            double height = sprite->height;
+            if (width == 0 && height == 0) {
+                width = sprite->texWidth;
+                height = sprite->texHeight;
+                if (sprite->clippingWidth > 0) {
+                    width = sprite->clippingWidth;
+                    height = sprite->clippingHeight;
+                }
+            } else {
+                width *= UNIT_TO_PIXELS;
+                height *= UNIT_TO_PIXELS;
+            }
+
+            // now check if rectangle is on screen:
+            if (((x >= 0 && x < w) || (x + width >= 0 && x + width < w))
+            && ((y >= 0 && y < h) || (y + height >= 0 && y + height < h))) {
+                // it is.
+                texturemanager_UsingRequest(sprite->request,
+                USING_AT_VISIBILITY_DETAIL);
+                // printf("on screen: %s\n", sprite->path);
+            } else {
+                // printf("not on screen: %s\n", sprite->path);
+            }
+
+            i++;
+        }
+
+        sprite = sprite->next;
+    }
+    mutex_Release(m); 
 }
 
 #endif

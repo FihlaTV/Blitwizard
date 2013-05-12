@@ -376,19 +376,19 @@ int originalheight, char** newdata, int targetwidth, int targetheight) {
     // do scaling:
     int r,k;
     r = 0;
-    float scalex = ((float)targetwidth/(float)originalwidth);
-    float scaley = ((float)targetheight/(float)originalheight);
+    float scalex = ((float)originalwidth/(float)targetwidth);
+    float scaley = ((float)originalheight/(float)targetheight);
     while (r < targetwidth) {
         k = 0;
         while (k < targetheight) {
-            int fromx = r * scalex;
+            int fromx = (float)r * scalex;
             if (fromx < 0) {fromx = 0;}
-            if (fromx >= originalwidth) {fromx = originalwidth;}
-            int fromy = k * scaley;
+            if (fromx >= originalwidth) {fromx = originalwidth-1;}
+            int fromy = (float)k * scaley;
             if (fromy < 0) {fromy = 0;}
-            if (fromy >= originalheight) {fromy = originalheight;}
+            if (fromy >= originalheight) {fromy = originalheight-1;}
             
-            memcpy((*newdata) + (r + (k * targetheight)) * bytesize,
+            memcpy((*newdata) + (r + (k * targetwidth)) * bytesize,
             imgdata + (fromx + (fromy * originalwidth)) * 4, 4);
             
             k++;

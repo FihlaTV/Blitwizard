@@ -740,12 +740,24 @@ int graphics_GetCameraHeight(int index) {
     unsigned int w = 0;
     unsigned int h = 0;
     graphics_GetWindowDimensions(&w, &h);
-    return w;
+    return h;
 }
 
 void graphics_SetCamera2DCenterXY(int index, double x, double y) {
     centerx = x;
     centery = y;
+}
+
+double graphics_GetCamera2DAspectRatio(int index) {
+    return 1.0;
+}
+
+double graphics_GetCamera2DCenterX(int index) {
+    return centerx;
+}
+
+double graphics_GetCamera2DCenterY(int index) {
+    return centery;
 }
 
 #endif  // USE_SDL_GRAPHICS

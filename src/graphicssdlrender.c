@@ -183,7 +183,7 @@ static void graphicssdlrender_spriteCallback(
 const char* path, struct graphicstexture* tex,
 double x, double y,
 double width, double height,
-size_t texwidth, size_t texheight,
+size_t texWidth, size_t texHeight,
 double angle,
 double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY,
@@ -196,6 +196,29 @@ int visible, int cameraId) {
         return;
     }
 
+    // get actual texture size (texWidth, texHeight are theoretical
+    // texture size of full sized original texture)
+    size_t actualTexW, actualTexH;
+    graphics_GetTextureDimensions(tex, &actualTexW, &actualTexH);
+
+    // if the actual texture is upscaled or downscaled,
+    // we need to take this into account:
+    if ((texWidth != actualTexW || texHeight != actualTexH) &&
+    (texWidth != 0 && texHeight != 0)) {
+        double scalex = (double)actualTexW / (double)texWidth;
+        double scaley = (double)actualTexH / (double)texHeight;
+
+        // scale all stuff according to this:
+        sourceX = scalex * (double)sourceX;
+        sourceY = scaley * (double)sourceY;
+        sourceWidth = scalex * (double)sourceWidth;
+        sourceHeight = scaley * (double)sourceHeight;
+    }
+
+    // now override texture size:
+    texWidth = actualTexW;
+    texHeight = actualTexH;
+
     // if a camera is specified for pinning,
     // the sprite will be pinned to the screen:
     int pinnedToCamera = 0;
@@ -207,8 +230,12 @@ int visible, int cameraId) {
     // negative for flipping, zero'ed etc
     int horiflip = 0;
     if (width == 0 && height == 0) {
-        width = ((double)texwidth) / UNIT_TO_PIXELS;
-        height = ((double)texheight) / UNIT_TO_PIXELS;
+        width = ((double)texWidth) / UNIT_TO_PIXELS;
+        height = ((double)texHeight) / UNIT_TO_PIXELS;
+        if (sourceWidth > 0) {
+            width = ((double)sourceWidth) / UNIT_TO_PIXELS;
+            height = ((double)sourceHeight) / UNIT_TO_PIXELS;
+        }
     }
     if (width < 0) {
         width = -width;
@@ -254,7 +281,7 @@ int visible, int cameraId) {
     // render:
     graphicsrender_DrawCropped(tex, x, y, alpha,
     sourceX, sourceY, sourceWidth, sourceHeight, width, height,
-    width/2, height/2, angle, horiflip,
+    sourceWidth/2, sourceHeight/2, angle, horiflip,
     r, g, b);
 }
 

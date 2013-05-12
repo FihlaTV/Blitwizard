@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "zipfile.h"
 #include "graphicstexture.h"
@@ -83,24 +84,40 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
         if (!info->gtm->scalelist) {
             int scalecount = 1;
 
+            // for smaller textures, divide the sizes we use for downscaling:
+            unsigned int sizedivisor = 1;
+            if (info->width < 64 || info->height < 64) {
+                sizedivisor = 8;
+            } else if (info->width < 128 || info->height < 128) {
+                sizedivisor = 4;
+            } else if (info->width < 256 || info->height < 256) {
+                sizedivisor = 2;
+            }
+
+            // now we only want to have those sizes that are actually
+            // smaller than our current image:
+
             // check for tiny size:
-            if (info->width > TEXSIZE_TINY || info->height > TEXSIZE_TINY) {
+            if (info->width > TEXSIZE_TINY/sizedivisor ||
+            info->height > TEXSIZE_TINY/sizedivisor) {
                 scalecount++;
             }
 
             // check for low size:
-            if (info->width > TEXSIZE_LOW || info->height > TEXSIZE_LOW) {
+            if (info->width > TEXSIZE_LOW/sizedivisor ||
+            info->height > TEXSIZE_LOW/sizedivisor) {
                 scalecount++;
             }
 
             // check if this texture needs a medium size:
-            if (info->width > TEXSIZE_MEDIUM ||
-            info->height > TEXSIZE_MEDIUM) {
+            if (info->width > TEXSIZE_MEDIUM/sizedivisor ||
+            info->height > TEXSIZE_MEDIUM/sizedivisor) {
                 scalecount++;
             }
 
             // check if this texture needs a scaled down high size:
-            if (info->width > TEXSIZE_HIGH || info->height > TEXSIZE_HIGH) {
+            if (info->width > TEXSIZE_HIGH/sizedivisor ||
+            info->height > TEXSIZE_HIGH/sizedivisor) {
                 scalecount++;
             }
 
@@ -122,6 +139,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
             // fill scaled texture list:
             int i = 0;
             while (i < scalecount) {
+                info->gtm->scalelist[i].parent = info->gtm;
                 if (i == 0) {
                     // original size
                     info->gtm->scalelist[i].pixels = imgdata;
@@ -135,19 +153,19 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
 #endif
                 } else {
                     // see what would be the intended side size:
-                    int intendedsize;
+                    int intendedsize = 0;
                     switch (i) {
                     case 1:
-                        intendedsize = TEXSIZE_TINY;
+                        intendedsize = TEXSIZE_TINY/sizedivisor;
                         break;
                     case 2:
-                        intendedsize = TEXSIZE_LOW;
+                        intendedsize = TEXSIZE_LOW/sizedivisor;
                         break;
                     case 3:
-                        intendedsize = TEXSIZE_MEDIUM;
+                        intendedsize = TEXSIZE_MEDIUM/sizedivisor;
                         break;
                     case 4:
-                        intendedsize = TEXSIZE_HIGH;
+                        intendedsize = TEXSIZE_HIGH/sizedivisor;
                         break;
                     }
 
@@ -168,6 +186,10 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                 i++;
             }
         } else {
+#ifdef DEBUGTEXTURELOADER
+            printinfo("[TEXLOAD] imgloader is confused about: %s",
+            info->path);
+#endif
             // scale list already there. shwoot
             free(imgdata);
             imgdata = NULL;
@@ -287,6 +309,9 @@ void* userdata) {
     info->callbackDimensions = callbackDimensions;
     info->callbackData = callbackData;
     info->userdata = userdata;
+
+    // give texture initial normal usage to start with:
+    info->gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] = time(NULL);
 
     // spawn our loader thread:
     threadinfo* ti = thread_CreateInfo();

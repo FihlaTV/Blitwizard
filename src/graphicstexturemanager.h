@@ -48,6 +48,8 @@
 
 #ifdef USE_GRAPHICS
 
+#include <stdint.h>
+
 #include "graphics.h"
 #include "graphicstexture.h"
 
@@ -142,8 +144,34 @@ struct texturerequesthandle* request, int visibility);
 // when not used for a longer time:
 #define TEXSIZE_TINY 32
 
+// How fast to scale down things:
+// Going down to TINY roughly after this time:
+#define SCALEDOWNSECONDSVERYVERYLONG (60*2)
+// Going down to LOW roughly after this time:
+#define SCALEDOWNSECONDSVERYLONG (60*1)
+// Going down to MEDIUM roughly after this time:
 #define SCALEDOWNSECONDSLONG 20
+// Going down to HIGH roughly after this time:
 #define SCALEDOWNSECONDS 5
+
+// helps with debugging downscaling:
+//#define ULTRAFASTDOWNSCALE
+
+
+#ifdef ULTRAFASTDOWNSCALE
+#warning "debugging with ultra fast down scale!"
+#undef SCALEDOWNSECONDS
+#define SCALEDOWNSECONDS 2
+#undef SCALEDOWNSECONDSLONG
+#define SCALEDOWNSECONDSLONG 3
+#undef SCALEDOWNSECONDSVERYLONG
+#define SCALEDOWNSECONDSVERYLONG 4
+#undef SCALEDOWNSECONDSVERYVERYLONG
+#define SCALEDOWNSECONDSVERYVERYLONG 5
+#endif
+
+// How often to check all textures for down- and upscaling:
+#define ADOPTINTERVAL 5
 
 
 // Destroy a texture request. You will still get a textureSwitch
@@ -173,6 +201,9 @@ void texturemanager_Tick(void);
 // with it while you're doing that:
 void texturemanager_LockForTextureAccess(void);
 void texturemanager_ReleaseFromTextureAccess(void);
+
+// Query the current GPU memory use by the texture manager in bytes:
+uint64_t texturemanager_getGpuMemoryUse(void);
 
 #endif  // USE_GRAPHICS
 

@@ -38,11 +38,11 @@
 #include <android/log.h>
 #endif
 
-// physics2d callback we will need later when setting up the physics simulation
-struct physicsobject;
-int luafuncs_globalcollision2dcallback_unprotected(void* userdata,
-struct physicsobject* a, struct physicsobject* b,
-double x, double y, double normalx, double normaly, double force);
+// set physics callbacks:
+void luacfuncs_object_initialisePhysicsCallbacks(void);
+
+// report sprite visibility:
+void graphics2dsprites_ReportVisibility(void);
 
 // lua funcs doStep processing function:
 int luacfuncs_object_doAllSteps(int count);
@@ -812,8 +812,7 @@ int main(int argc, char** argv) {
         main_Quit(1);
         return 1;
     }
-    physics_set2dCollisionCallback(physics2ddefaultworld,
-    &luafuncs_globalcollision2dcallback_unprotected, NULL);
+    luacfuncs_object_initialisePhysicsCallbacks();
 #endif
 
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -1063,6 +1062,9 @@ int main(int argc, char** argv) {
                 // we don't need to iterate anymore -> everything is fine
             }
         }
+
+        // report visibility of sprites to texture manager:
+        graphics2dsprites_ReportVisibility();
 
         // texture manager tick:
         texturemanager_Tick();

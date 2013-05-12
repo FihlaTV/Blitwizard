@@ -55,68 +55,39 @@
 void transferbodysettings(struct physicsobject* oldbody,
 struct physicsobject* newbody);
 
-// Put the collision callback of the given object on stack
-static void luafuncs_pushcollisioncallback(lua_State* l,
-struct blitwizardobject* obj) {
-    char funcname[200];
-    snprintf(funcname, sizeof(funcname), "collisioncallback%p", obj);
-    funcname[sizeof(funcname)-1] = 0;
-    lua_pushstring(l, funcname);
-    lua_gettable(l, LUA_REGISTRYINDEX);
-}
-
-// Attempt to trigger a user-defined collision callback for a given object.
+// Attempt to trigger onCollision callback for a given object.
 // When no callback is set by the user or if the callback succeeds,
 // 1 will be returned.
-// In case of a lua error in the callback, 0 will be returned and a
-// traceback printed to stderr.
+// In case of a lua error in the callback, 0 will be returned and
+// luacfuncs_OnError will be triggered.
 static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct blitwizardobject* otherobj, double x, double y, double z, double normalx, double normaly, double normalz, double force, int* enabled, int use3d) {
     // get global lua state we use for blitwizard (no support for multiple
     // states as of now):
     lua_State* l = luastate_GetStatePtr();
 
-    // obtain the collision callback:
-    luafuncs_pushcollisioncallback(l, obj);
-
-    // check if the collision callback is not nil (-> defined):
-    if (lua_type(l, -1) != LUA_TNIL) {
-        // we got a collision callback for this object -> call it
-        lua_pushcfunction(l, (lua_CFunction)internaltracebackfunc());
-        lua_insert(l, -2);
-
-        // push all args:
-        luacfuncs_pushbobjidref(l, otherobj);
-        lua_pushnumber(l, x);
-        lua_pushnumber(l, y);
-        if (use3d) {
-            lua_pushnumber(l, z);
-        }
-        lua_pushnumber(l, normalx);
-        lua_pushnumber(l, normaly);
-        if (use3d) {
-            lua_pushnumber(l, normalz);
-        }
-        lua_pushnumber(l, force);
-
-        // Call the function:
-        int ret = lua_pcall(l, 6+2*use3d, 1, -(8+2*use3d));
-        if (ret != 0) {
-            callbackerror(l, "<blitwizardobject>:onCollision", lua_tostring(l, -1));
-            lua_pop(l, 2); // pop error string, error handling function
-            return 0;
-        } else {
-            // evaluate return result...
-            if (!lua_toboolean(l, -1)) {
-                *enabled = 0;
-            }
-
-            // pop error handling function and return value:
-            lua_pop(l, 2);
-        }
-    } else {
-        // callback was nil and not defined by user
-        lua_pop(l, 1); // pop the nil value
+    // push all args:
+    luacfuncs_pushbobjidref(l, otherobj);
+    lua_pushnumber(l, x);
+    lua_pushnumber(l, y);
+    if (use3d) {
+        lua_pushnumber(l, z);
     }
+    lua_pushnumber(l, normalx);
+    lua_pushnumber(l, normaly);
+    if (use3d) {
+        lua_pushnumber(l, normalz);
+    }
+    lua_pushnumber(l, force);
+
+    // attempt callback:
+    int boolreturn;
+    int r = luacfuncs_object_callEvent(l,
+    obj, "onCollision", 6 + 2 * use3d, &boolreturn);
+    if (!r) {
+        *enabled = 0;
+        return 0;
+    }
+    *enabled = boolreturn;
     return 1;
 }
 
@@ -186,6 +157,13 @@ int luafuncs_globalcollision3dcallback_unprotected(void* userdata, struct physic
         return 0;
     }
     return 1;
+}
+
+void luacfuncs_object_initialisePhysicsCallbacks(void) {
+#ifdef USE_PHYSICS2D
+    physics_set2dCollisionCallback(main_DefaultPhysics2dPtr(),
+    &luafuncs_globalcollision2dcallback_unprotected, NULL);
+#endif
 }
 
 /// Disable the physics simulation on an object. It will no longer collide
@@ -653,12 +631,15 @@ static void applyobjectsettings(struct blitwizardobject* obj) {
 // This will only work if the object has movable collision enabled through @{object:enableMovableCollision|object:enableMovableCollision}.
 // IMPORTANT: Some parameters are not present for 2d objects, see list below.
 // @function impulse
-// @tparam number source_x the x source coordinate from where the push will be given
-// @tparam number source_y the y source coordinate
-// @tparam number source_z (parameter only present for 3d objects) the z source coordinate
 // @tparam number force_x the x coordinate of the force vector applied through the impulse
 // @tparam number force_y the y coordinate of the force vector
-// @tparam number force_z (parameter only present for 3d objects) the z coordinate of the force vector
+// @tparam number force_z <i>(parameter only present for 3d objects)</i> the z coordinate of the force vector
+// @tparam number source_x (optional, defaults to object's x position) the x source coordinate from where the push will be given
+// @tparam number source_y (optional, defaults to object's y position) the y source coordinate
+// @tparam number source_z (optional, defaults to object's z position) <i>(parameter only present for 3d objects)</i> the z source coordinate
+// @usage
+// -- apply an upward impulse to a 2d object with collsion enabled:
+// obj:impulse(0, -1)
 int luafuncs_object_impulse(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:impulse");
@@ -675,47 +656,64 @@ int luafuncs_object_impulse(lua_State* l) {
         lua_pushstring(l, "Impulse can be only applied to movable objects");
         return lua_error(l);
     }
-    if (lua_type(l, 2) != LUA_TNUMBER) {  // source x
+    // validate force parameters:
+    if (lua_type(l, 2) != LUA_TNUMBER) {  // force x
         return haveluaerror(l, badargument1, 1, funcname, "number",
         lua_strtype(l, 2));
     }
-    if (lua_type(l, 3) != LUA_TNUMBER) {  // source y
+    if (lua_type(l, 3) != LUA_TNUMBER) {  // force y
         return haveluaerror(l, badargument1, 2, funcname, "number",
         lua_strtype(l, 3));
     }
     if (obj->is3d) {
-        if (lua_type(l, 4) != LUA_TNUMBER) {  // source z
+        if (lua_type(l, 4) != LUA_TNUMBER) {  // force z
             return haveluaerror(l, badargument1, 3, funcname,
             "number", lua_strtype(l, 4));
         }
     }
-    if (lua_type(l, 4+obj->is3d) != LUA_TNUMBER) { // force x
-        return haveluaerror(l, badargument1, 3+obj->is3d, funcname, "number",
-        lua_strtype(l, 4+obj->is3d));
-    }
-    if (lua_type(l, 5+obj->is3d) != LUA_TNUMBER) { // force y
-        return haveluaerror(l, badargument1, 4+obj->is3d, funcname, "number",
-        lua_strtype(l, 5+obj->is3d));
-    }
-    if (obj->is3d) {
-        if (lua_type(l, 7) != LUA_TNUMBER) { // force z
-            return haveluaerror(l, badargument1, 6, funcname, "number",
-            lua_strtype(l, 7));
+    // see if we have a source parameter:
+    int havesource = 0;
+    if ((obj->is3d && lua_gettop(l) > 4) || (!obj->is3d && lua_gettop(l) > 3)) {
+        // validate source parameters:
+        havesource = 1;
+        if (lua_type(l, 4+obj->is3d) != LUA_TNUMBER) { // source x
+            return haveluaerror(l, badargument1, 3+obj->is3d, funcname, "number",
+            lua_strtype(l, 4+obj->is3d));
+        }
+        if (lua_type(l, 5+obj->is3d) != LUA_TNUMBER) { // source y
+            return haveluaerror(l, badargument1, 4+obj->is3d, funcname, "number",
+            lua_strtype(l, 5+obj->is3d));
+        }
+        if (obj->is3d) {
+            if (lua_type(l, 7) != LUA_TNUMBER) { // source z
+                return haveluaerror(l, badargument1, 6, funcname, "number",
+                lua_strtype(l, 7));
+            }
         }
     }
     double sourcex,sourcey,sourcez;
     double forcex, forcey, forcez;
-    sourcex = lua_tonumber(l, 2);
-    sourcey = lua_tonumber(l, 3);
-    sourcez = 0;
+    // get force:
+    forcex = lua_tonumber(l, 2);
+    forcey = lua_tonumber(l, 3);
+    forcez = 0;
     if (obj->is3d) {
-        sourcez = lua_tonumber(l, 4);
+        forcez = lua_tonumber(l, 4);
     }
-    forcex = lua_tonumber(l, 4+obj->is3d);
-    forcey = lua_tonumber(l, 5+obj->is3d);
-    if (obj->is3d) {
-        forcez = lua_tonumber(l, 7);
+    // get source:
+    if (havesource) {
+        sourcex = lua_tonumber(l, 4+obj->is3d);
+        sourcey = lua_tonumber(l, 5+obj->is3d);
+        sourcez = 0;
+        if (obj->is3d) {
+            forcez = lua_tonumber(l, 7);
+        }
+    } else {
+        // initialise source to object position:
+        sourcez = 0;
+        objectphysics_getPosition(obj, &sourcex, &sourcey, &sourcez);
     }
+    // apply impulse:
     if (obj->is3d) {
 #ifdef USE_PHYSICS3D
         physics_apply3dImpulse(obj->physics->object,
@@ -723,7 +721,7 @@ int luafuncs_object_impulse(lua_State* l) {
 #endif
     } else {
         physics_apply2dImpulse(obj->physics->object,
-        forcex, forcey, sourcex, sourcez);
+        forcex, forcey, sourcex, sourcey);
     }
     return 0;
 }
@@ -1144,8 +1142,30 @@ double x, double y, double z) {
 #endif
 }
 
+void objectphysics_set2dRotation(struct blitwizardobject* obj,
+double angle) {
+    if (obj->is3d) {
+        return;
+    }
+#ifdef USE_PHYSICS2D
+    if (obj->physics && obj->physics->object) {
+        double x, y;
+        physics_get2dPosition(obj->physics->object, &x, &y);
+        physics_warp2d(obj->physics->object, x, y, angle);
+    } else {
+#endif
+        obj->rotation.angle = angle;
+#ifdef USE_PHYSICS2D
+    }
+#endif
+}
+
 void objectphysics_get2dRotation(struct blitwizardobject* obj,
 double* angle) {
+    if (obj->is3d) {
+        *angle = 0;
+        return;
+    }
 #ifdef USE_PHYSICS2D
     if (obj->physics && obj->physics->object) {
         physics_get2dRotation(obj->physics->object, angle);
