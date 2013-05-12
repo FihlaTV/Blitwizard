@@ -48,12 +48,12 @@
 #include "diskcache.h"
 
 // texture system memory budget in megabyte:
-uint64_t textureSysMemoryBudgetMin = 10;
-uint64_t texturesysMemoryBudgetMax = 20;
+uint64_t textureSysMemoryBudgetMin = 100;
+uint64_t texturesysMemoryBudgetMax = 200;
 
 // texture gpu memory budget in megabyte:
-uint64_t textureGpuMemoryBudgetMin = 1;
-uint64_t textureGpuMemoryBudgetMax = 5;
+uint64_t textureGpuMemoryBudgetMin = 50;
+uint64_t textureGpuMemoryBudgetMax = 100;
 
 // actual resource use:
 uint64_t sysMemUse = 0;
