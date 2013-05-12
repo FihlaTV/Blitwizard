@@ -350,15 +350,16 @@ int args, int* boolreturn) {
     lua_insert(l, -2);  // push function below table
     lua_pop(l, 1);  // remove table
 
-    // push self as first argument:
-    luacfuncs_pushbobjidref(l, o);
+    // move function in front of all args:
     if (args > 0) {
         lua_insert(l, -(args+1));
     }
 
-    // move function in front of all args:
+    // push self as first argument:
+    luacfuncs_pushbobjidref(l, o);
     if (args > 0) {
-        lua_insert(l, -(args+2));
+        // move in front of all args:
+        lua_insert(l, -(args+1));
     }
 
     // push error handling function onto stack:

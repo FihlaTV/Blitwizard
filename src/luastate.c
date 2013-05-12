@@ -160,6 +160,7 @@ int luastate_GetWantFFmpeg() {
 }
 
 static int gettraceback(lua_State* l) {
+    lua_checkstack(l, 5);
     char errormsg[2048] = "";
 
     // obtain the error first:
@@ -174,7 +175,7 @@ static int gettraceback(lua_State* l) {
 
     // add a line break if we can
     if (strlen(errormsg) + strlen("\n") < sizeof(errormsg)) {
-        strcat(errormsg,"\n");
+        strcat(errormsg, "\n");
     }
 
     // call the original debug.traceback
@@ -182,8 +183,11 @@ static int gettraceback(lua_State* l) {
     lua_gettable(l, LUA_REGISTRYINDEX);
     if (lua_type(l, -1) != LUA_TFUNCTION) { // make sure it is valid
         // oops.
-        char invaliddebugtraceback[] = "OOPS: The debug traceback couldn't be generated:\n  Traceback function is not present or invalid (lua type is '";
-        if (strlen(errormsg) + strlen(invaliddebugtraceback) < sizeof(errormsg)) {
+        char invaliddebugtraceback[] = "OOPS: The debug traceback "
+        "couldn't be generated:\n"
+        "  Traceback function is not present or invalid (lua type is '";
+        if (strlen(errormsg) + strlen(invaliddebugtraceback) <
+        sizeof(errormsg)) {
             strcat(errormsg, invaliddebugtraceback);
         }
 
@@ -194,6 +198,9 @@ static int gettraceback(lua_State* l) {
         if (strlen(errormsg) + strlen(typebuf) < sizeof(errormsg)) {
             strcat(errormsg, typebuf);
         }
+
+        // pop non-function:
+        lua_pop(l, 1);
 
         // push error:
         lua_pushstring(l, errormsg);
@@ -523,7 +530,7 @@ static void preparepush(void) {
             return;
         }
     }
-    lua_checkstack(scriptstate, 1);
+    lua_checkstack(scriptstate, 2);
 }
 
 int luastate_PushFunctionArgumentToMainstate_Bool(int yesno) {
@@ -669,6 +676,7 @@ int* functiondidnotexist, int *returnedbool) {
 
     if (lua_type(scriptstate, -1) != LUA_TFUNCTION) {
         lua_pop(scriptstate, 1); // error func
+        lua_pop(scriptstate, args); // arguments
         if (recursivetables > 0) {
             // clean up recursive origin table left on stack
             lua_pop(scriptstate, 1);
@@ -729,7 +737,7 @@ void luastate_GCCollect() {
 int wassuspended = 0;
 int suspendcount = 0;
 mutex* suspendLock = NULL;
-__attribute__((constructor)) void luastate_lockForSuspendGC() {
+__attribute__((constructor)) void luastate_lockForSuspendGC(void) {
     suspendLock = mutex_Create();
 }
 

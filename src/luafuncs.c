@@ -133,11 +133,13 @@ void luacfuncs_onLog(const char* type, const char* fmt, ...) {
     }
 
     // call blitwizard.onLog:
-    char* error;
+    char* error = NULL;
     if (!luastate_CallFunctionInMainstate("blitwizard.onLog", 2, 1, 1,
     &error, NULL, NULL)) {
         _luacfuncs_onError_internal("blitwizard.onLog", error, 0);
-        free(error);
+        if (error) {
+            free(error);
+        }
     }
     luastate_resumeGC();
 }
