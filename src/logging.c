@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "logging.h"
+#include "luaheader.h"
+#include "luafuncs.h"
 #include "os.h"
 #ifdef WINDOWS
 #include <windows.h>
@@ -80,7 +82,7 @@ void printerror(const char* fmt, ...) {
 #ifdef ANDROID
     __android_log_print(ANDROID_LOG_ERROR, "blitwizard", "%s", printline);
 #else
-    fprintf(stderr,"%s\n",printline);
+    fprintf(stderr, "%s\n",printline);
     fflush(stderr);
     memorylog(printline);
     memorylog("\n");
@@ -118,7 +120,7 @@ void printwarning(const char* fmt, ...) {
 #if defined(ANDROID) || defined(__ANDROID__)
     __android_log_print(ANDROID_LOG_ERROR, "blitwizard", "%s", printline);
 #else
-    fprintf(stderr,"%s\n",printline);
+    fprintf(stderr, "%s\n",printline);
     fflush(stderr);
     memorylog(printline);
     memorylog("\n");
@@ -135,7 +137,7 @@ void printinfo(const char* fmt, ...) {
 #if defined(ANDROID) || defined(__ANDROID__)
     __android_log_print(ANDROID_LOG_INFO, "blitwizard", "%s", printline);
 #else
-    printf("%s\n",printline);
+    printf("%s\n", printline);
     fflush(stdout);
     memorylog(printline);
     memorylog("\n");

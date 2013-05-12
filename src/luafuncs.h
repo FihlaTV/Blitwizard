@@ -61,6 +61,9 @@ int luafuncs_trandom(lua_State* l);
 // Internal error handling:
 void luacfuncs_onError(const char* funcname, const char* error);
 
+// Logging function which gets passed on to blitwizard.onLog:
+void luacfuncs_onLog(const char* type, const char* fmt, ...);
+
 // Misc:
 size_t lua_tosize_t(lua_State* l, int index);
 

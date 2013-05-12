@@ -86,18 +86,53 @@ static const char* luastringchunkreader(lua_State *l, void *data, size_t *size) 
 
 #endif
 
-void luacfuncs_onError(const char* funcname, const char* error) {
+void _luacfuncs_onError_internal(const char* funcname, const char* error,
+int triggerOnLog) {
     char errorstr[1024];
     snprintf(errorstr, sizeof(errorstr), "Error when calling %s: %s",
     funcname, error);
-    printerror("%s", errorstr);
+    if (triggerOnLog) {
+        // trigger log entry:
+        printerror("%s", errorstr);
+    } else {
+        // send error to ingame lua console:
+        lua_State* l = (lua_State*)luastate_GetStatePtr();
 
-    // send error to ingame lua console:
-    lua_State* l = (lua_State*)luastate_GetStatePtr();
+        lua_getglobal(l, "print");
+        lua_pushstring(l, errorstr);
+        lua_pcall(l, 1, 0, 0);
+    }
+}
 
-    lua_getglobal(l, "print");
-    lua_pushstring(l, errorstr);
-    lua_pcall(l, 1, 0, 0);
+void luacfuncs_onError(const char* funcname, const char* error) {
+    _luacfuncs_onError_internal(funcname, error, 1);
+}
+
+void luacfuncs_onLog(const char* type, const char* fmt, ...) {
+    char printline[2048];
+    va_list a;
+    va_start(a, fmt);
+    vsnprintf(printline, sizeof(printline)-1, fmt, a);
+    printline[sizeof(printline)-1] = 0;
+    va_end(a);
+
+    if (!luastate_PushFunctionArgumentToMainstate_String(type)) {
+        fprintf(stderr, "Error when pushing func args to blitwizard.onLog");
+        main_Quit(1); 
+        return;
+    }
+    if (!luastate_PushFunctionArgumentToMainstate_String(printline)) {
+        fprintf(stderr, "Error when pushing func args to blitwizard.onLog");
+        main_Quit(1);
+        return;
+    }
+    char* error;
+    if (!luastate_CallFunctionInMainstate("blitwizard.onLog", 1, 1, 1,
+    &error, NULL, NULL)) {
+        _luacfuncs_onError_internal("blitwizard.onLog", error, 0);
+        free(error);
+        return;
+    }
 }
 
 int luafuncs_getTemplateDirectory(lua_State* l) {

@@ -24,6 +24,8 @@
 #ifndef BLITWIZARD_BLITWIZARDOBJECT_H_
 #define BLITWIZARD_BLITWIZARDOBJECT_H_
 
+#include <time.h>
+
 #include "os.h"
 #include "objectgraphicsdata.h"
 
@@ -60,6 +62,11 @@ struct blitwizardobject {
     struct objectphysicsdata* physics;
 #endif
     struct blitwizardobject* prev,*next;
+
+    // temporarily disabled events
+    // (due to errors in event handlers)
+    time_t disabledDoAlways;
+    time_t disabledOnCollision;
 };
 
 extern struct blitwizardobject* objects;

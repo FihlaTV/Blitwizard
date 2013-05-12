@@ -190,17 +190,15 @@ void main_InitAudio(void) {
 #endif  // ifdef USE_AUDIO
 }
 
-
+void luacfuncs_onError(const char* funcname, const char* error);
 static void quitevent(void) {
     char* error;
     if (!luastate_CallFunctionInMainstate("blitwizard.onClose",
     0, 1, 1, &error, NULL, NULL)) {
-        printerror("Error when calling blitwizard.onClose: %s",error);
+        luacfuncs_onError("blitwizard.onClose", error);
         if (error) {
             free(error);
         }
-        fatalscripterror();
-        return;
     }
     exit(0);
 }
@@ -232,12 +230,10 @@ static void mousebuttonevent(int button, int release, int x, int y) {
     }
     if (!luastate_CallFunctionInMainstate(funcname, 3, 1, 1, &error, NULL,
     NULL)) {
-        printerror("Error when calling %s: %s", funcname, error);
+        luacfuncs_onError(funcname, error);
         if (error) {
             free(error);
         }
-        fatalscripterror();
-        main_Quit(1);
         return;
     }
 }
@@ -257,12 +253,10 @@ static void mousemoveevent(int x, int y) {
     }
     if (!luastate_CallFunctionInMainstate("blitwizard.onMouseMove",
     2, 1, 1, &error, NULL, NULL)) {
-        printerror("Error when calling blitwizard.onMouseMove: %s", error);
+        luacfuncs_onError("blitwizard.onMouseMove", error);
         if (error) {
             free(error);
         }
-        fatalscripterror();
-        main_Quit(1);
         return;
     }
 }
@@ -295,12 +289,10 @@ static void keyboardevent(const char* key, int release) {
     }
     if (!luastate_CallFunctionInMainstate(funcname_templates, 1, 1, 1, &error,
     NULL, &returnboolean)) {
-        printerror("Error when calling %s: %s", funcname_templates, error);
+        luacfuncs_onError(funcname_templates, error);
         if (error) {
             free(error);
         }
-        fatalscripterror();
-        main_Quit(1);
         return;
     }
 
@@ -319,12 +311,10 @@ static void keyboardevent(const char* key, int release) {
     }
     if (!luastate_CallFunctionInMainstate(funcname, 1, 1, 1, &error, NULL,
     NULL)) {
-        printerror("Error when calling %s: %s", funcname, error);
+        luacfuncs_onError(funcname, error);
         if (error) {
             free(error);
         }
-        fatalscripterror();
-        main_Quit(1);
         return;
     }
 }
@@ -337,16 +327,15 @@ static void textevent(const char* text) {
         printerror("Error when pushing func args to "
         "blitwizard._onText_Templates");
         fatalscripterror();
+        main_Quit(1);
         return;
     }
     if (!luastate_CallFunctionInMainstate("blitwizard._onText_Templates",
     1, 1, 1, &error, NULL, &returnboolean)) {
-        printerror("Error when calling blitwizard._onText_Templates: "
-        "%s", error);
+        luacfuncs_onError("blitwizard._onText_Templates", error);
         if (error) {
             free(error);
         }
-        fatalscripterror();
         return;
     }
 
@@ -361,15 +350,15 @@ static void textevent(const char* text) {
     if (!luastate_PushFunctionArgumentToMainstate_String(text)) {
         printerror("Error when pushing func args to blitwizard.onText");
         fatalscripterror();
+        main_Quit(1);
         return;
     }
     if (!luastate_CallFunctionInMainstate("blitwizard.onText",
     1, 1, 1, &error, NULL, NULL)) {
-        printerror("Error when calling blitwizard.onText: %s", error);
+        luacfuncs_onError("blitwizard.onText", error);
         if (error) {
             free(error);
         }
-        fatalscripterror();
         return;
     }
 }

@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #include "os.h"
 #ifdef USE_SDL_GRAPHICS
@@ -316,11 +317,19 @@ struct blitwizardobject* o) {
 int luacfuncs_object_callEvent(lua_State* l,
 struct blitwizardobject* o, const char* eventName,
 int args, int* boolreturn) {
-    //printf("event: %s\n", eventName);
-    //printf("t0: %llu\n", time_GetMicroseconds());
+    // some events might be temporarily disabled, due to
+    // previous errors in the event function:
+    if (o->disabledDoAlways >= time(NULL) &&
+    strcmp(eventName, "doAlways") == 0) {
+        return 1;
+    }
+    if (o->disabledOnCollision >= time(NULL)
+    && strcmp(eventName, "onCollision") == 0) {
+        return 1;
+    }
+
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
-    //printf("t1: %llu\n", time_GetMicroseconds());
 
     // get event function
     lua_pushstring(l, eventName);
@@ -331,16 +340,13 @@ int args, int* boolreturn) {
         lua_pop(l, 2);  // pop function, registry table
         return 1;
     }
-    //printf("t2: %llu\n", time_GetMicroseconds());
 
     // get rid of the object table again:
     lua_insert(l, -2);  // push function below table
     lua_pop(l, 1);  // remove table
 
     // push self as first argument:
-    //printf("t3: %llu\n", time_GetMicroseconds());
     luacfuncs_pushbobjidref(l, o);
-    //printf("t4: %llu\n", time_GetMicroseconds());
     if (args > 0) {
         lua_insert(l, -(args+1));
     }
@@ -351,7 +357,6 @@ int args, int* boolreturn) {
     }
 
     // push error handling function onto stack:
-    //printf("t5: %llu\n", time_GetMicroseconds());
     lua_pushcfunction(l, internaltracebackfunc());
 
     // move error handling function in front of function + args
@@ -362,7 +367,6 @@ int args, int* boolreturn) {
     if (boolreturn) {
         returnvalues = 1;
     }
-    //printf("t6: %llu\n", time_GetMicroseconds());
     int ret = lua_pcall(l, args+1, returnvalues, -(args+3));
 
     int errorHappened = 0;
@@ -374,6 +378,13 @@ int args, int* boolreturn) {
         snprintf(funcName, sizeof(funcName),
         "blitwizard.object event function \"%s\"", eventName);
         luacfuncs_onError(funcName, e);
+
+        if (strcmp(eventName, "doAlways") == 0) {
+            // temporarily disable for 1-2 seconds:
+            o->disabledDoAlways = time(NULL)+1;
+        } else if (strcmp(eventName, "onCollision") == 0) {
+            o->disabledOnCollision = time(NULL)+1;
+        }
     }
 
     // obtain return value:
