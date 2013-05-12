@@ -1142,8 +1142,30 @@ double x, double y, double z) {
 #endif
 }
 
+void objectphysics_set2dRotation(struct blitwizardobject* obj,
+double angle) {
+    if (obj->is3d) {
+        return;
+    }
+#ifdef USE_PHYSICS2D
+    if (obj->physics && obj->physics->object) {
+        double x, y;
+        physics_get2dPosition(obj->physics->object, &x, &y);
+        physics_warp2d(obj->physics->object, x, y, angle);
+    } else {
+#endif
+        obj->rotation.angle = angle;
+#ifdef USE_PHYSICS2D
+    }
+#endif
+}
+
 void objectphysics_get2dRotation(struct blitwizardobject* obj,
 double* angle) {
+    if (obj->is3d) {
+        *angle = 0;
+        return;
+    }
 #ifdef USE_PHYSICS2D
     if (obj->physics && obj->physics->object) {
         physics_get2dRotation(obj->physics->object, angle);

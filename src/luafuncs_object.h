@@ -88,6 +88,10 @@ int luafuncs_object_pinToCamera(lua_State* l);
 // set object visibility:
 int luafuncs_object_setVisible(lua_State* l);
 
+// get and adjust 2d rotation:
+int luafuncs_object_setRotationAngle(lua_State* l);
+int luafuncs_object_getRotationAngle(lua_State* l);
+
 #ifdef __cplusplus
 }
 #endif

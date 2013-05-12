@@ -217,9 +217,11 @@ int luafuncs_getCameras(lua_State* l) {
 // this is where you want to be! Grab the first camera from
 // @{blitwizard.graphics.getCameras} and let's go:
 //
-// Use @{blitwizard.graphics.camera:set2dCenter} to modify the 2d world
-// position shown, and @{blitwizard.graphics.camera:set3dCenter} to modify
-// the 3d world position shown if you use any 3d objects.
+// Use @{blitwizard.graphics.camera:set2dCenter|camera:set2dCenter}
+// to modify the 2d world
+// position shown, and
+// @{blitwizard.graphics.camera:set3dCenter|set3dCenter}
+// to modify the 3d world position shown if you use any 3d objects.
 //
 // <i>Please note the SDL 2d renderer doesn't support more than one camera.
 // The OGRE 3d renderer supports multiple cameras.</i>
@@ -299,8 +301,8 @@ int luafuncs_camera_set2dCenter(lua_State* l) {
 
 /// Get the game units of the visible 2d area of the game world
 // shown through this camera. This depends on the camera's
-// @{blitwizard.graphics.getPixelDimensionsOnScreen|actual size in pixels
-// on the screen}, the camera's @{blitwizard.graphics.camera.get2dZoomFactor|
+// @{blitwizard.graphics.camera:getPixelDimensionsOnScreen|actual size in pixels
+// on the screen}, the camera's @{blitwizard.graphics.camera:get2dZoomFactor|
 // 2d zoom factor} and the camera's @{blitwizard.graphics.camera:get2dAspectRatio|
 // 2d aspect ratio}.
 //
@@ -350,8 +352,10 @@ int luafuncs_camera_getVisible2dAreaDimensions(lua_State* l) {
 
 /// Get the dimensions of a camera on the actual
 // screen. It usually fills the whole window (= the full size of the
-// resolution you specified in @{blitwizard.graphics.setMode),
-// but that may be changed with @{blitwizard.graphics.camera:setPixelDimensionsOnScreen}.
+// resolution you specified in @{blitwizard.graphics.setMode}),
+// but that may be changed with
+// @{blitwizard.graphics.camera:setPixelDimensionsOnScreen|
+// camera:setPixelDimensionsOnScreen}.
 // @function getPixelDimensionsOnScreen
 // @treturn number width Width of the camera on the screen in pixels
 // @treturn number height Height of the camera on the screen in pixels
@@ -364,7 +368,7 @@ int luafuncs_camera_getPixelDimensionsOnScreen(lua_State* l) {
 }
 
 /// Set the dimensions of a camera on the screen.
-// @function setScreenDimensions
+// @function setPixelDimensionsOnScreen
 // @tparam number width Width of the camera on the screen in pixels
 // @tparam number height Height of the camera on the screen in pixels
 int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {

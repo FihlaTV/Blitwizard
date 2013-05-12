@@ -281,7 +281,7 @@ int visible, int cameraId) {
     // render:
     graphicsrender_DrawCropped(tex, x, y, alpha,
     sourceX, sourceY, sourceWidth, sourceHeight, width, height,
-    width/2, height/2, angle, horiflip,
+    sourceWidth/2, sourceHeight/2, angle, horiflip,
     r, g, b);
 }
 

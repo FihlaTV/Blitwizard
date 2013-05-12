@@ -65,6 +65,8 @@ int luafuncs_getPosition(lua_State* l);
 
 void objectphysics_get2dRotation(struct blitwizardobject* obj,
 double* angle);
+void objectphysics_set2dRotation(struct blitwizardobject* obj,
+double angle);
 void objectphysics_get3dRotation(struct blitwizardobject* obj,
 double* qx, double* qy, double* qz, double* qrot);
 void objectphysics_getPosition(struct blitwizardobject* obj,

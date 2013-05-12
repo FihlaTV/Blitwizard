@@ -225,6 +225,10 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
     luastate_registerfunc(l, &luafuncs_object_scaleToDimensions,
     "scaleToDimensions");
+    luastate_registerfunc(l, &luafuncs_object_setRotationAngle,
+    "setRotationAngle");
+    luastate_registerfunc(l, &luafuncs_object_getRotationAngle,
+    "getRotationAngle");
 
     // graphics/visual stuff:
     luastate_registergraphics(l, &luafuncs_object_setTransparency,

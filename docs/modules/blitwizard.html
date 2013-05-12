@@ -137,7 +137,7 @@
 	<tr>
 	<td class="name" ><a href="#object:getDimensions">object:getDimensions&nbsp;()</a></td>
 	<td class="summary">Get the dimensions of an object in game units (with
- <a href="../modules/blitwizard.html#object:setScale">scaling</a> taking into account).</td>
+ <a href="../modules/blitwizard.html#object:setScale">scaling</a> taken into account).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:getScale">object:getScale&nbsp;()</a></td>
@@ -149,8 +149,20 @@
 	<td class="summary">Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:scaleToDimensions">object:scaleToDimensions&nbsp;(width, height, z_size)</a></td>
+	<td class="summary">Scale up an object to precise boundaries in game units.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:setZIndex">object:setZIndex&nbsp;(z_index)</a></td>
 	<td class="summary">Set the z-index of the object (only for 2d objects).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setRotationAngle">object:setRotationAngle&nbsp;(rotation)</a></td>
+	<td class="summary">Set the rotation angle of a 2d object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:getRotationAngle">object:getRotationAngle&nbsp;()</a></td>
+	<td class="summary">Get the rotation angle of a 2d object.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:set2dTextureClipping">object:set2dTextureClipping&nbsp;(x, y, width, height)</a></td>
@@ -586,7 +598,7 @@
     </dt>
     <dd>
     Get the dimensions of an object in game units (with
- <a href="../modules/blitwizard.html#object:setScale">scaling</a> taking into account).
+ <a href="../modules/blitwizard.html#object:setScale">scaling</a> taken into account).
 <p> For a 2d sprite, this returns two components (x, y) which
  match the sprite's width and height, for a 3d object,
  this returns a 3d box which would encapsulate the 3d mesh
@@ -625,6 +637,11 @@
     Get the object's scale, which per default is 1,1 for 2d objects
  and 1,1,1 for 3d objects.  The scale is a factor applied to the
  dimensions of an object to stretch or shrink it.
+<p> Please note if you want to scale up a unit to precisely
+ match a specific size in game units (instead of just making
+ it twice the size, three times the size etc with setScale),
+ you might want to use <a href="../modules/blitwizard.html#object:scaleToDimensions">
+ object:scaleToDimensions</a>.
 <p> Returns 2 values for 2d objects, 3 values for 3d objects.
 
 
@@ -651,7 +668,15 @@
     </dt>
     <dd>
     Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.
- This allows to stretch/shrink an object.
+ This allows to stretch/shrink an object. If physics are enabled
+ with <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>
+ or <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a>,
+ the physics hull will be scaled accordingly aswell.
+<p> Please note if you want to scale up a unit to precisely
+ match a specific size in game units (instead of just making
+ it twice the size, three times the size etc with setScale),
+ you might want to use <a href="../modules/blitwizard.html#object:scaleToDimensions">
+ object:scaleToDimensions</a>.
 <p> Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
 
     <h3>Parameters:</h3>
@@ -670,6 +695,56 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- scale a 2d object to twice the original size
+</span> obj3d:setScale(<span class="number">2</span>, <span class="number">2</span>)
+
+ <span class="comment">-- scale 3d object to half its original size
+</span> obj3d:setScale(<span class="number">0.5</span>, <span class="number">0.5</span>, <span class="number">0.5</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:scaleToDimensions"></a>
+    <strong>object:scaleToDimensions&nbsp;(width, height, z_size)</strong>
+    </dt>
+    <dd>
+    Scale up an object to precise boundaries in game units.
+ An according <a href="../modules/blitwizard.html#object:setScale">scale factor</a>
+ will be picked to achieve this.
+<p> For 2d objects, a width and a height can be specified.
+ For 3d objects, the size along all three axis (x, y, z)
+ can be specified.
+<p> If you want the object to be scaled up but maintain
+ its aspect ratio, specify just one parameter and pass
+ <i>nil</i> for the others which will then be calculated
+ accordingly.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         width or x size in game units</li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         height or y size</li>
+        <li><span class="parameter">z_size</span>
+            <span class="types"><span class="type">number</span></span>
+         (only present for 3d objects) z size</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Scale up a 3d object so its height matches 2 game units:
+</span> <span class="comment">-- (it's proportions will be kept)
+</span> obj3d:scaleToDimensions(<span class="keyword">nil</span>, <span class="keyword">nil</span>, <span class="number">2</span>)</pre>
+    </ul>
 
 </dd>
     <dt>
@@ -692,6 +767,54 @@
          New z index</li>
     </ul>
 
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setRotationAngle"></a>
+    <strong>object:setRotationAngle&nbsp;(rotation)</strong>
+    </dt>
+    <dd>
+    Set the rotation angle of a 2d object.  (You need to use
+ ???,
+ ???
+ or ???
+ for 3d objects)
+<p> An angle of 0 is the default rotation, 90 will turn it
+ on its side counter-clockwise by 90° degree, etc.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">rotation</span>
+            <span class="types"><span class="type">number</span></span>
+         the rotation angle</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getRotationAngle"></a>
+    <strong>object:getRotationAngle&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the rotation angle of a 2d object.
+ (Use ??? or
+ ???
+ for 3d objects)
+<p> Also see <a href="../modules/blitwizard.html#object:setRotationAngle">object:setRotationAngle</a>.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        the current 2d rotation of the object
+    </ol>
 
 
 

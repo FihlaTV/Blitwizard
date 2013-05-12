@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "os.h"
 #ifdef USE_SDL_GRAPHICS
@@ -498,6 +499,8 @@ int luafuncs_object_setPosition(lua_State* l) {
     y = lua_tonumber(l, 3);
     if (obj->is3d) {
         z = lua_tonumber(l, 4);
+    } else {
+        z = 0;
     }
     objectphysics_setPosition(obj, x, y, z);
     return 0;
@@ -584,6 +587,7 @@ int luafuncs_object_getDimensions(lua_State* l) {
     } else {
         sx = obj->scale2d.x;
         sy = obj->scale2d.y;
+        sz = 0;
     }
     lua_pushnumber(l, x * sx);
     lua_pushnumber(l, y * sy);
@@ -629,7 +633,7 @@ int luafuncs_object_getScale(lua_State* l) {
 /// Change an object's scale, also see @{blitwizard.object:getScale}.
 // This allows to stretch/shrink an object. If physics are enabled
 // with @{blitwizard.object:enableMovableCollision|object:enableMovableCollision}
-// or @{blitwzard.object:enableStaticCollision|enableStaticCollision},
+// or @{blitwizard.object:enableStaticCollision|object:enableStaticCollision},
 // the physics hull will be scaled accordingly aswell.
 //
 // Please note if you want to scale up a unit to precisely
@@ -855,6 +859,60 @@ int luafuncs_object_setZIndex(lua_State* l) {
     return 0;
 }
 
+/// Set the rotation angle of a 2d object. (You need to use
+// @{blitwizard.object:setRotationAngles|object:setRotationAngles},
+// @{blitwizard.object:setRotationFromQuaternion|
+// object:setRotationFromQuaternion}
+// or @{blitwizard.object:turnToPosition|object:turnToPosition}
+// for 3d objects)
+//
+// An angle of 0 is the default rotation, 90 will turn it
+// on its side counter-clockwise by 90° degree, etc.
+// @function setRotationAngle
+// @tparam number rotation the rotation angle
+int luafuncs_object_setRotationAngle(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setRotationAngle");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (obj->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:setRotationAngle", "number", lua_strtype(l, 2));
+    }
+    objectphysics_set2dRotation(obj, fmod(lua_tonumber(l, 2), 360));
+    return 0;
+}
+
+/// Get the rotation angle of a 2d object.
+// (Use @{blitwizard.object.getRotationAngles|object:getRotationAngles} or
+// @{blitwizard.object.getRotationQuaternion|object:getRotationQuaternion}
+// for 3d objects)
+//
+// Also see @{blitwizard.object:setRotationAngle|object:setRotationAngle}.
+// @function getRotationAngle
+// @treturn number the current 2d rotation of the object
+int luafuncs_object_getRotationAngle(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getRotationAngle");
+    if (obj->deleted) {
+        return haveluaerror(l, "Object was deleted");
+    }
+    if (obj->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    double angle = 0;
+    objectphysics_get2dRotation(obj, &angle);
+    angle = fmod(angle, 360);
+    if (angle < 0) {
+        angle += 360;
+    }
+    lua_pushnumber(l, angle);
+    return 1;
+}
 
 /// For 2d sprite objects, set a clipping window inside the
 // original texture used for the sprite which allows you to
