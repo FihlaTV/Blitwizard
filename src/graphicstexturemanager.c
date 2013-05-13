@@ -841,7 +841,10 @@ struct graphicstexturemanaged* gtm, int newsize) {
         return;
     }
 #ifdef DEBUGTEXTUREMANAGER
-    printinfo("[TEXMAN] new size for %s: %d", gtm->path, newsize);
+    if (gtm->preferredSize != newsize) {
+        printinfo("[TEXMAN] new size for %s: %d", gtm->path, newsize);
+        gtm->preferredSize = newsize;
+    }
 #endif
     if (newsize >= 0) {
         if (gtm->scalelist[newsize].locked) {

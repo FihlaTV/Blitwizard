@@ -74,6 +74,7 @@ struct graphicstexturemanaged {
         // from disk (= wait until loading is complete)
     int failedToLoad;  // the texture failed to load (e.g. file not found)
     int handedOutLast;  // the scaled index of the last handed out size
+    int preferredSize;
 
     // usage time stamps:
     time_t lastUsage[USING_AT_COUNT];

@@ -81,6 +81,7 @@ const char* path) {
         free(m);
         return NULL;
     }
+    m->preferredSize = -1;
     m->origscale = -1;
     mutex_Lock(listMutex);
     m->next = texlist;
