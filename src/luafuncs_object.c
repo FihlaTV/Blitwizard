@@ -138,7 +138,8 @@ void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
     ref->ref.bobj = o;
 
     // set garbage collect callback:
-    luastate_SetGCCallback(l, -1, (int (*)(void*))&garbagecollect_blitwizobjref);
+    luastate_SetGCCallback(l, -1,
+    (int (*)(void*))&garbagecollect_blitwizobjref);
 
     // set metatable __index and __newindex to registry table:
     lua_getmetatable(l, -1);
@@ -260,6 +261,7 @@ struct blitwizardobject* o) {
     // object userdata behave like a table.
 
     // obtain registry entry:
+    lua_checkstack(l, 4);
     lua_pushstring(l, o->regTableName);
     lua_gettable(l, LUA_REGISTRYINDEX);
 
@@ -322,15 +324,20 @@ int args, int* boolreturn) {
     // previous errors in the event function:
     if (o->disabledDoAlways >= time(NULL) &&
     strcmp(eventName, "doAlways") == 0) {
+        lua_pop(l, args);
         return 1;
     }
     if (o->disabledOnCollision >= time(NULL)
     && strcmp(eventName, "onCollision") == 0) {
+        lua_pop(l, args);
         return 1;
     }
 
     // for speed reasons, disable GC:
     luastate_suspendGC();
+
+    // ensure sufficient stack size:
+    lua_checkstack(l, 4+args);
 
     // get object table:
     luacfuncs_object_obtainRegistryTable(l, o);
@@ -342,6 +349,7 @@ int args, int* boolreturn) {
     // if function is not a function, don't call:
     if (lua_type(l, -1) != LUA_TFUNCTION) {
         lua_pop(l, 2);  // pop function, registry table
+        lua_pop(l, args);  // remove args
         luastate_resumeGC();
         return 1;
     }

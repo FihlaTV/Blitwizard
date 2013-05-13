@@ -129,6 +129,7 @@ do
 
     local oldprint = print
     function print(...)
+        -- bake everything into one string:
         local str = ""
         local args = table.pack(...)
         local i = 1
@@ -139,7 +140,11 @@ do
             str = str .. tostring(args[i])
             i = i + 1
         end
-        oldprint(str)
+
+        -- uncomment to send stuff to stdout too:
+        --oldprint(str)
+
+        -- add line to console:
         addConsoleLine(str)
     end
     addConsoleLine(_VERSION .. ", developer console")

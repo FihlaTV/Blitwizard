@@ -564,7 +564,7 @@ void physics_step(struct physicsworld* world) {
             int it2 = 2;
 #else
             // more accurate on desktop
-            int it1 = 7;
+            int it1 = 10;
             int it2 = 3;
 #endif
             world2d->w->Step(1.0 /(1000.0f/physics_getStepSize(world)), it1, it2);

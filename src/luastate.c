@@ -111,7 +111,8 @@ void luastate_PrintStackDebug() {
 }
 
 // table must be on stack to which you want to set this function
-void luastate_SetGCCallback(void* luastate, int tablestackindex, int (*callback)(void*)) {
+void luastate_SetGCCallback(void* luastate, int tablestackindex,
+int (*callback)(void*)) {
     lua_State* l = luastate;
     lua_newtable(l);
     lua_pushstring(l, "__gc");

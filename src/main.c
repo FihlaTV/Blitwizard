@@ -23,6 +23,7 @@
 
 #include "os.h"
 #include "resources.h"
+#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -889,6 +890,8 @@ int main(int argc, char** argv) {
         main_Quit(1);
         return 1;
     }
+
+    // enable blitwizard.onLog
     enableConsoleLog();
 
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -927,7 +930,7 @@ int main(int argc, char** argv) {
     uint64_t lastdrawingtime = 0;
     uint64_t physicstimestamp = time_GetMilliseconds();
     while (!wantquit) {
-        uint64_t time = time_GetMilliseconds();
+        uint64_t timeNow = time_GetMilliseconds();
 
         // this is a hack for SDL bug http://bugzilla.libsdl.org/show_bug.cgi?id=1422
 
@@ -992,17 +995,23 @@ int main(int argc, char** argv) {
         // call the step function and advance physics
         int physicsiterations = 0;
         int logiciterations = 0;
-        while ((logictimestamp < time || physicstimestamp < time) &&
+        time_t iterationStart = time(NULL);
+        while (
+        // allow maximum of iterations in an attempt to keep up:
+        (logictimestamp < timeNow || physicstimestamp < timeNow) &&
         (logiciterations < MAXLOGICITERATIONS
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
  ||  physicsiterations < MAXPHYSICSITERATIONS
 #endif
-)) {
+        )
+        // .. unless we're already doing this for >2 seconds:
+        && iterationStart + 2 >= time(NULL)
+            ) {
             if (logiciterations < MAXLOGICITERATIONS &&
-            logictimestamp < time && (logictimestamp <= physicstimestamp
+            logictimestamp < timeNow && (logictimestamp <= physicstimestamp
             || physicsiterations >= MAXPHYSICSITERATIONS)) {
                 // check how much logic we might want to do in a batch:
-                int k = (time-logictimestamp)/TIMESTEP;
+                int k = (timeNow-logictimestamp)/TIMESTEP;
                 if (k > MAXBATCHEDLOGIC) {
                     k = MAXBATCHEDLOGIC;
                 }
@@ -1015,7 +1024,7 @@ int main(int argc, char** argv) {
             }
 #ifdef USE_PHYSICS2D
             if (physicsiterations < MAXPHYSICSITERATIONS &&
-            physicstimestamp < time && (physicstimestamp <= logictimestamp
+            physicstimestamp < timeNow && (physicstimestamp <= logictimestamp
             || logiciterations >= MAXLOGICITERATIONS)) {
                 int psteps = ((float)TIMESTEP/
                 (float)physics_getStepSize(physics2ddefaultworld));
@@ -1031,18 +1040,19 @@ int main(int argc, char** argv) {
                 physicsiterations++;
             }
 #else
-            physicstimestamp = time + 2000;
+            physicstimestamp = timeNow + 2000;
 #endif
         }
 
         // check if we ran out of iterations:
         if (logiciterations >= MAXLOGICITERATIONS ||
-        physicsiterations >= MAXPHYSICSITERATIONS) {
+        physicsiterations >= MAXPHYSICSITERATIONS
+        || iterationStart + 2 < time(NULL)) {
             if (
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
-                    physicstimestamp < time ||
+                    physicstimestamp < timeNow ||
 #endif
-                 logictimestamp < time) {
+                 logictimestamp < timeNow) {
                 // we got a problem: we aren't finished,
                 // but we hit the iteration limit
                 physicstimestamp = time_GetMilliseconds();

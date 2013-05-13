@@ -61,7 +61,6 @@ __attribute__ ((constructor)) static void prepareMutexes(void) {
 void consolelog(const char* type, const char* str) {
     mutex_Lock(consoleLogMutex);
     if (!mayConsoleLog) {
-        printf("storing line in memory\n");
         consoleloglinecount++;
         if (consoleloglinecount > CONSOLELOGMAXBUFFEREDLINES) {
             consoleloglinecount--;
@@ -71,7 +70,6 @@ void consolelog(const char* type, const char* str) {
         consoleloglines[consoleloglinecount-1] = strdup(str);
         consoleloglinetypes[consoleloglinecount-1] = strdup(type);
     } else {
-        printf("calling onLog\n");
         luacfuncs_onLog(type, "%s", str);
     }
     mutex_Release(consoleLogMutex);
