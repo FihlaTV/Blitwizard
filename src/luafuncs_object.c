@@ -441,10 +441,6 @@ struct blitwizardobject* o, const char* eventName) {
 int luafuncs_object_destroy(lua_State* l) {
     // delete the given object
     struct blitwizardobject* o = toblitwizardobject(l, 1, 1, "blitwiz.object.delete");
-    if (o->deleted) {
-        lua_pushstring(l, "Object was deleted");
-        return lua_error(l);
-    }
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
@@ -480,9 +476,6 @@ int luafuncs_object_destroy(lua_State* l) {
 int luafuncs_object_getPosition(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:getPosition");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     double x,y,z;
     objectphysics_getPosition(obj, &x, &y, &z);
     lua_pushnumber(l, x);
@@ -512,9 +505,6 @@ int luafuncs_object_getPosition(lua_State* l) {
 int luafuncs_object_setPosition(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setPosition");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setPosition", "number", lua_strtype(l, 2));
@@ -546,9 +536,6 @@ int luafuncs_object_setPosition(lua_State* l) {
 int luafuncs_object_setTransparency(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setTransparency");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setTransparency", "number", lua_strtype(l, 2));
@@ -572,9 +559,6 @@ int luafuncs_object_setTransparency(lua_State* l) {
 int luafuncs_object_getTransparency(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setTransparency");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
 #ifdef USE_GRAPHICS
     return 1-luacfuncs_objectgraphics_getAlpha(obj);
 #else
@@ -605,9 +589,6 @@ int luafuncs_object_getTransparency(lua_State* l) {
 int luafuncs_object_getDimensions(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setPosition");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     double x, y, z;
     if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
         return haveluaerror(l, "Object dimensions not known");
@@ -648,9 +629,6 @@ int luafuncs_object_getDimensions(lua_State* l) {
 int luafuncs_object_getScale(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:getScale");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (obj->is3d) {
         lua_pushnumber(l, obj->scale3d.x);
         lua_pushnumber(l, obj->scale3d.y);
@@ -689,9 +667,6 @@ int luafuncs_object_getScale(lua_State* l) {
 int luafuncs_object_setScale(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setScale");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setScale", "number", lua_strtype(l, 2));
@@ -742,9 +717,6 @@ int luafuncs_object_setScale(lua_State* l) {
 int luafuncs_object_scaleToDimensions(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:scaleToDimensions");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
 
     // check parameters:
     if (lua_type(l, 2) != LUA_TNUMBER && lua_type(l, 2) != LUA_TNIL) {
@@ -875,9 +847,6 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
 int luafuncs_object_setZIndex(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setZIndex");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setZIndex", "number", lua_strtype(l, 2));
@@ -906,9 +875,6 @@ int luafuncs_object_setZIndex(lua_State* l) {
 int luafuncs_object_setRotationAngle(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setRotationAngle");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (obj->is3d) {
         return haveluaerror(l, "not a 2d object");
     }
@@ -931,9 +897,6 @@ int luafuncs_object_setRotationAngle(lua_State* l) {
 int luafuncs_object_getRotationAngle(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:getRotationAngle");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (obj->is3d) {
         return haveluaerror(l, "not a 2d object");
     }
@@ -970,9 +933,6 @@ int luafuncs_object_getRotationAngle(lua_State* l) {
 int luafuncs_object_set2dTextureClipping(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:set2dTextureClipping");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (obj->is3d) {
         // FIXME: support 3d decals here
         return haveluaerror(l, "Not a 2d object");
@@ -1019,9 +979,6 @@ int luafuncs_object_set2dTextureClipping(lua_State* l) {
 int luafuncs_object_pinToCamera(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:pinToCamera");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
 
     int cameraId = -1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
@@ -1129,9 +1086,6 @@ void luacfuncs_object_updateGraphics() {
 int luafuncs_object_setVisible(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:pinToCamera");
-    if (obj->deleted) {
-        return haveluaerror(l, "Object was deleted");
-    }
     if (lua_type(l, 2) != LUA_TBOOLEAN) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:pinToCamera", "boolean",

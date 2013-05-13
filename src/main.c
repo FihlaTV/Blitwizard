@@ -1101,7 +1101,7 @@ int main(int argc, char** argv) {
 #ifdef USE_GRAPHICS
         // be very sleepy if in background
         if (appinbackground) {
-            time_Sleep(80);
+            time_Sleep(40);
         }
 #endif
 
