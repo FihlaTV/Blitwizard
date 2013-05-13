@@ -409,6 +409,29 @@ int luafuncs_dostring(lua_State* l) {
     return lua_gettop(l)-before;
 }
 
+int luafuncs_dostring_returnvalues(lua_State* l) {
+    // a nice dostring which emits syntax error info
+    const char* p = lua_tostring(l,1);
+    if (!p) {
+        return haveluaerror(l, badargument1, 1,
+        "dostring_returnvalues",
+        "string", lua_strtype(l, 1));
+    }
+
+    int r = luaL_loadstring(l, p);
+    if (r != 0) { // got an error, throw it
+        return lua_error(l);
+    }
+
+    // run string:
+    int before = lua_gettop(l)-1;  // minus function itself
+    lua_call(l, 0, LUA_MULTRET);
+    int returncount = lua_gettop(l)-before;
+    lua_pushnumber(l, returncount);
+    lua_insert(l, -(returncount+1));
+    return returncount + 1;
+}
+
 int luafuncs_dofile(lua_State* l) {
     // obtain function name argument
     const char* p = lua_tostring(l,1);

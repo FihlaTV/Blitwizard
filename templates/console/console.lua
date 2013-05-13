@@ -318,6 +318,7 @@ do
                     blinkCursorOffset = 0
                     -- run the entered command:
                     local result = nil
+                    local resultcount = 0;
                     local success,msg = pcall(
                     function()
                         -- extract first possible keyword from cmd
@@ -337,12 +338,13 @@ do
                             cmd = "return " .. cmd
                         end
                         -- execute command:
-                        result = dostring(cmd)
+                        resultcount, result =
+                        dostring_returnvalues(cmd)
                     end
                     )
 
                     -- if that worked, print return value if present:
-                    if success and result ~= nil then
+                    if success and resultcount > 0 then
                         printvar(result)
                     end
 
