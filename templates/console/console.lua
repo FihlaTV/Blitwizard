@@ -319,7 +319,27 @@ do
                     -- run the entered command:
                     local result = nil
                     local success,msg = pcall(
-                        function() result = dostring(cmd) end)
+                    function()
+                        -- extract first possible keyword from cmd
+                        local k = string.split(cmd, " ")
+                        k = string.split(k, "(")
+                        -- check if it is a known lua keyword:
+                        local iskeyword = false
+                        if k == "if" or k == "while" or k == "then"
+                        or k == "for" or k == "return" or k == "end"
+                        or k == "local" or k == "repeat" or k == "until"
+                        or k == "break" then
+                            iskeyword = true
+                        end
+                        -- if it is not a known keyword, prepend with
+                        -- return to get return value:
+                        if not iskeyword then
+                            cmd = "return " .. cmd
+                        end
+                        -- execute command:
+                        result = dostring(cmd)
+                    end
+                    )
 
                     -- if that worked, print return value if present:
                     if success and result ~= nil then
