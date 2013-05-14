@@ -444,10 +444,10 @@ static lua_State* luastate_New(void) {
     lua_getglobal(l, "string");
 
     // set custom string functions
-    lua_pushstring(l, "starts");
+    lua_pushstring(l, "startswith");
     lua_pushcfunction(l, &luafuncs_startswith);
     lua_settable(l, -3);
-    lua_pushstring(l, "ends");
+    lua_pushstring(l, "endswith");
     lua_pushcfunction(l, &luafuncs_endswith);
     lua_settable(l, -3);
     lua_pushstring(l, "split");

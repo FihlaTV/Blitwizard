@@ -699,6 +699,7 @@ void* userdata) {
     time(NULL);
 
     mutex_Lock(textureReqListMutex);
+
     // add to unhandled texture request list:
     request->unhandledNext = unhandledRequestList;
     if (request->unhandledNext) {

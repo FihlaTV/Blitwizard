@@ -23,6 +23,7 @@
 
 #include "os.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -30,10 +31,12 @@
 #include <windows.h>
 #else // ifdef HAVE_WINDOWS
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 #endif // ifdef HAVE_WINDOWS
 
 // disable mutex debugging:
-#define NDEBUG
+//#define NDEBUG
 
 
 #ifndef WINDOWS
@@ -192,11 +195,28 @@ void mutex_Lock(mutex* m) {
 #endif
 }
 
+int mutex_TryLock(mutex* m) {
+#ifdef WINDOWS
+    if (WaitForSingleObject(m->m, 0) == WAIT_OBJECT_0) {
+        return 1;
+    }
+    return 0;
+#else
+    if (pthread_mutex_trylock(&m->m) != 0) {
+        return 0;
+    }
+    return 1;
+#endif
+}
+
 void mutex_Release(mutex* m) {
 #ifdef WINDOWS
     ReleaseMutex(m->m);
 #else
 #ifndef NDEBUG
+    //int i = pthread_mutex_unlock(&m->m);
+    //printf("return value: %d\n", i);
+    //assert(i == 0);
     assert(pthread_mutex_unlock(&m->m) == 0);
 #else
     pthread_mutex_unlock(&m->m);
@@ -308,5 +328,17 @@ int thread_IsMainThread(void) {
 #endif
 }
 
+int thread_OwnThreadId(void) {
+    // mark current thread as main thread
+#ifdef UNIX
+    return (int)syscall(SYS_gettid);
+#else
+#ifdef WINDOWS
+    return (int)GetCurrentThreadId();
+#else
+#error "Missing code path"
+#endif
+#endif
+}
 
 

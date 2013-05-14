@@ -47,10 +47,10 @@ extern int suppressfurthererrors;
 mutex* memLogMutex = NULL;
 
 #define CONSOLELOGMAXBUFFEREDLINES 1024
-char* consoleloglines[CONSOLELOGMAXBUFFEREDLINES];
-char* consoleloglinetypes[CONSOLELOGMAXBUFFEREDLINES];
-int consoleloglinecount = 0;
-int mayConsoleLog = 0;
+volatile char* consoleloglines[CONSOLELOGMAXBUFFEREDLINES];
+volatile char* consoleloglinetypes[CONSOLELOGMAXBUFFEREDLINES];
+volatile int consoleloglinecount = 0;
+volatile int mayConsoleLog = 0;
 mutex* consoleLogMutex = NULL;
 
 __attribute__ ((constructor)) static void prepareMutexes(void) {
@@ -60,22 +60,18 @@ __attribute__ ((constructor)) static void prepareMutexes(void) {
 
 void consolelog(const char* type, const char* str) {
     mutex_Lock(consoleLogMutex);
-    if (!mayConsoleLog) {
-        consoleloglinecount++;
-        if (consoleloglinecount > CONSOLELOGMAXBUFFEREDLINES) {
-            consoleloglinecount--;
-            mutex_Release(consoleLogMutex);
-            return;
-        }
-        consoleloglines[consoleloglinecount-1] = strdup(str);
-        consoleloglinetypes[consoleloglinecount-1] = strdup(type);
-    } else {
-        luacfuncs_onLog(type, "%s", str);
+    consoleloglinecount++;
+    if (consoleloglinecount > CONSOLELOGMAXBUFFEREDLINES) {
+        consoleloglinecount--;
+        mutex_Release(consoleLogMutex);
+        return;
     }
+    consoleloglines[consoleloglinecount-1] = strdup(str);
+    consoleloglinetypes[consoleloglinecount-1] = strdup(type);
     mutex_Release(consoleLogMutex);
 }
 
-void enableConsoleLog() {
+void doConsoleLog() {
     mutex_Lock(consoleLogMutex);
     // enable console log
     mayConsoleLog = 1;
@@ -84,8 +80,13 @@ void enableConsoleLog() {
     int i = 0;
     while (i < consoleloglinecount) {
         if (consoleloglines[i] && consoleloglinetypes[i]) {
-            luacfuncs_onLog(consoleloglinetypes[i], "%s",
-            consoleloglines[i]);
+            char* tp = strdup(consoleloglinetypes[i]);
+            char* tl = strdup(consoleloglines[i]);
+            mutex_Release(consoleLogMutex);
+            luacfuncs_onLog(tp, "%s", tl);
+            mutex_Lock(consoleLogMutex);
+            free(tp);
+            free(tl);
         }
         if (consoleloglines[i]) {
             free(consoleloglines[i]);

@@ -314,6 +314,9 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     }
     mutex_Lock(m);
 
+    // remove sprite from list:
+    graphics2dsprites_removeFromList(sprite);
+
     // destroy texture manager request
     sprite->deleted = 1;
     if (sprite->request) {
@@ -405,14 +408,16 @@ const char* texturePath, double x, double y, double width, double height) {
     }
     s->visible = 1;
 
-    // add us to the list:
-    graphics2dsprites_addToList(s);
-
+    mutex_Release(m);
     // get a texture request:
     s->request = texturemanager_RequestTexture(
     s->path, graphics2dsprites_dimensionInfoCallback,
     graphics2dsprites_textureSwitchCallback,
     s);
+    mutex_Lock(m);
+
+    // add us to the list:
+    graphics2dsprites_addToList(s);
 
     mutex_Release(m);
 

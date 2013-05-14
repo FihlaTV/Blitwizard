@@ -36,6 +36,10 @@ void mutex_Destroy(mutex* m);
 void mutex_Lock(mutex* m);
 void mutex_Release(mutex* m);
 
+// attempt to lock a mutex, but abort immediately
+// if mutex is currently not available:
+int mutex_TryLock(mutex* m);
+
 // create, destroy a semaphore:
 semaphore* semaphore_Create(int value);  // init with given value
 void semaphore_Destroy(semaphore* s);
@@ -60,6 +64,9 @@ void thread_MarkAsMainThread(void);
 
 // check if the current thread is the marked main thread:
 int thread_IsMainThread(void);
+
+// return the thread id of the current thread:
+int thread_OwnThreadId(void);
 
 #endif  // BLITWIZARD_THREADING_H_
 

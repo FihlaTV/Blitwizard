@@ -73,9 +73,26 @@ const char* resource) {
     }
 }
 
+static int object_checkgraphics(struct blitwizardobject* o) {
+    // check for graphics struct and attempt to create it:
+    if (!o->graphics) {
+        /*o->graphics = malloc(sizeof(*(o->graphics)));
+        if (!o->graphics) {
+            // memory allocation error
+            return 0;
+        }
+        memset(o->graphics, 0, sizeof(*(o->graphics)));*/
+        luafuncs_objectgraphics_load(o, o->respath);
+        if (!o->graphics) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void luacfuncs_objectgraphics_setAlpha(struct blitwizardobject* o,
 double alpha) {
-    if (!o->graphics) {
+    if (!object_checkgraphics(o)) {
         return;
     }
     if (o->is3d) {
@@ -90,7 +107,7 @@ double alpha) {
 }
 
 double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o) {
-    if (!o->graphics) {
+    if (!object_checkgraphics(o)) {
         return 1;
     }
     if (o->is3d) {
@@ -105,7 +122,7 @@ double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o) {
 }
 
 void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
-    if (!o->graphics) {
+    if (!object_checkgraphics(o)) {
         return;
     }
     double x, y, z;
@@ -169,6 +186,9 @@ struct blitwizardobject* o) {
 
 int luafuncs_objectgraphics_NeedVisibleCallback(
 struct blitwizardobject* o) {
+    if (!object_checkgraphics(o)) {
+        return 0;
+    }
     if (o->graphics->visibilityCallbackDone) {
         return 0;
     }
@@ -189,6 +209,9 @@ struct blitwizardobject* o) {
 
 int luacfuncs_objectgraphics_getOriginalDimensions(
 struct blitwizardobject* o, double *x, double *y, double *z) {
+    if (!object_checkgraphics(o)) {
+        return 0;
+    }
     if (o->is3d) {
         return 0;
     } else {
@@ -218,6 +241,9 @@ void luacfuncs_objectgraphics_newFrame() {
 
 void luacfuncs_objectgraphics_unsetTextureClipping(
 struct blitwizardobject* o) {
+    if (!object_checkgraphics(o)) {  
+        return;
+    }
     if (o->is3d) {
         // FIXME: handle 3d decals
     } else {
@@ -230,6 +256,9 @@ struct blitwizardobject* o) {
 
 void luacfuncs_objectgraphics_setTextureClipping(struct blitwizardobject* o,
 size_t x, size_t y, size_t width, size_t height) {
+    if (!object_checkgraphics(o)) {
+        return;
+    }
     if (o->is3d) {
         // FIXME: 3d decals
     } else {
@@ -242,7 +271,7 @@ size_t x, size_t y, size_t width, size_t height) {
 
 void luacfuncs_objectgraphics_pinToCamera(struct blitwizardobject* o,
 int id) {
-    if (!o->graphics) {
+    if (!object_checkgraphics(o)) {
         return;
     }
     if (!o->is3d) {
@@ -254,7 +283,7 @@ int id) {
 
 void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
 int visible) {
-    if (!o->graphics) {
+    if (!object_checkgraphics(o)) {
         return;
     }
     if (!o->is3d) {

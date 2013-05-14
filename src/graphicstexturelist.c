@@ -63,7 +63,6 @@ __attribute__((constructor)) static void graphicstexturelist_Init(void) {
 
 void graphicstexturelist_InitializeHashmap(void) {
     if (texhashmap) {
-        mutex_Release(listMutex);
         return;
     }
     texhashmap = hashmap_New(1024 * 1024);
@@ -261,17 +260,6 @@ struct graphicstexturemanaged* gt) {
     mutex_Release(listMutex);
 }
 
-
-struct graphicstexturemanaged* graphicstexturelist_GetPreviousTexture(
-struct graphicstexturemanaged* gt) {
-    mutex_Lock(listMutex);
-    struct graphicstexturemanaged* gtprev = texlist;
-    while (gtprev && !(gtprev->next == gt)) {
-        gtprev = gtprev->next;
-    }
-    mutex_Release(listMutex);
-    return gtprev;
-}
 
 void graphicstexturelist_DestroyTexture(
 struct graphicstexturemanaged* gt) {

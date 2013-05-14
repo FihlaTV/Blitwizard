@@ -1,5 +1,5 @@
 --[[
-blitwizard.font
+blitwizard.console
 Under the zlib license:
 
 Copyright (c) 2013 Jonas Thiem
@@ -120,6 +120,13 @@ do
                 i = i + 1
             end
             table.remove(lines, #lines)
+        end
+
+        -- refresh console instantly:
+        if consoleYPos > -consoleHeight then
+            if consoleBg.doAlways then
+                consoleBg:doAlways()
+            end
         end
     end
 

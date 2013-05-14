@@ -892,11 +892,12 @@ int main(int argc, char** argv) {
     }
 
     // enable blitwizard.onLog
-    enableConsoleLog();
+    doConsoleLog();
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Calling blitwiz.on_init...");
 #endif
+    doConsoleLog();
 
     // call init
     if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1,
@@ -909,14 +910,17 @@ int main(int argc, char** argv) {
         main_Quit(1);
         return 1;
     }
+    doConsoleLog();
 
     // when graphics or audio is open, run the main loop
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Entering main loop...");
 #endif
+    doConsoleLog();
 
     // Initialise audio when it isn't
     main_InitAudio();
+    doConsoleLog();
 
     // If we failed to initialise audio, we want to simulate it
 #ifdef USE_AUDIO
@@ -930,6 +934,7 @@ int main(int argc, char** argv) {
     uint64_t lastdrawingtime = 0;
     uint64_t physicstimestamp = time_GetMilliseconds();
     while (!wantquit) {
+        doConsoleLog(); 
         uint64_t timeNow = time_GetMilliseconds();
 
         // this is a hack for SDL bug http://bugzilla.libsdl.org/show_bug.cgi?id=1422
@@ -991,6 +996,7 @@ int main(int argc, char** argv) {
         // check and trigger all sort of input events
         graphics_CheckEvents(&quitevent, &mousebuttonevent, &mousemoveevent, &keyboardevent, &textevent, &putinbackground);
 #endif
+        doConsoleLog();
 
         // call the step function and advance physics
         int physicsiterations = 0;
@@ -1017,6 +1023,7 @@ int main(int argc, char** argv) {
                 }
                 // call logic functions of all objects:
                 int i = luacfuncs_object_doAllSteps(k);
+                doConsoleLog();
 
                 // advance time step:
                 logictimestamp += i * TIMESTEP;
@@ -1071,6 +1078,7 @@ int main(int argc, char** argv) {
 
         // update object graphics:
         luacfuncs_object_updateGraphics();
+        doConsoleLog();
 
 #ifdef USE_GRAPHICS
         if (graphics_AreGraphicsRunning()) {

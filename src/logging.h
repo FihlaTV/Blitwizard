@@ -34,7 +34,7 @@ void printwarning(const char* fmt, ...);
 void printinfo(const char* fmt, ...);
 
 // once the Lua state is ready, enable blitwizard.onLog:
-void enableConsoleLog(void);
+void doConsoleLog(void);
 
 #ifdef __cplusplus
 }
