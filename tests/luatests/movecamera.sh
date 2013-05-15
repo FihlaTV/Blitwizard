@@ -6,7 +6,8 @@
 source preparetest.sh
 
 # Run blitwizard test:
-echo "local camera = blitwizard.graphics.getCameras()[1]
+echo "blitwizard.onLog = nil
+local camera = blitwizard.graphics.getCameras()[1]
 camera:set2dCenter(5, 5)
 print(\"success\")
 " > ./test.lua

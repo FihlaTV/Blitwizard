@@ -260,3 +260,24 @@ int luafuncs_templatedir(lua_State* l) {
     }
     return 1;
 }
+
+/// Set the template folder to a given path if not previously set.
+// You will most likely never use this function, the templates need
+// them to work in some cases.
+// @function forcetemplatedir
+// @tparam string path template directory
+int luafuncs_forcetemplatedir(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TSTRING) {
+        return haveluaerror(l, badargument1, 1,
+        "os.forcetemplatedir", "string", lua_strtype(l, 1));
+    }
+
+    if (templatepath) {
+        return haveluaerror(l, "template path already detected");
+    } else {
+        templatepath = file_GetAbsolutePathFromRelativePath(
+        lua_tostring(l, 1));
+    }
+    return 0;
+}
+

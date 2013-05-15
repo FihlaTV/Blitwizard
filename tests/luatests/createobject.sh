@@ -3,10 +3,11 @@
 # This test confirms blitiwzard.object:new works.
 # It will also test the init event function.
 
-source preparetest.sh
+source ./preparetest.sh
 
 # Run blitwizard test:
-echo "local obj = blitwizard.object:new(false)
+echo "blitwizard.onLog = nil
+local obj = blitwizard.object:new(false)
 obj:setPosition(1, 2)
 print(\"success\")
 " > ./test.lua

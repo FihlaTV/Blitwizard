@@ -38,15 +38,20 @@ yoffset = 150
 yspacing = 1
 menufocus = 1
 
-function blitwizard.onInit()
-    print "Launching blitwizard sample browser"
+if browser == nil then
+    browser = {}
+end
+
+dofile("startscreen.lua")
+
+function browser.launchSelection()
     blitwizard.graphics.setMode(640, 480, "blitwizard game engine", false)
     local white = blitwizard.object:new(false, "white.png")
     white:setPosition(0, 0)
     white:setScale(50, 50)
     local title = blitwizard.object:new(false, "title.png")
     title:setPosition(0, -2.5)
-    --[[blitwiz.graphics.loadImage("title.png")
+    --[[
     local i = 1
     while i <= #examples do
         blitwiz.graphics.loadImage("menu" .. i .. ".png")
@@ -55,7 +60,7 @@ function blitwizard.onInit()
     blitwiz.graphics.loadImage("return.png")]]
 end
 
-function getbuttonpos(index)
+function browser.getButtonPos(index)
     local w,h = blitwiz.graphics.getWindowSize()
     imgw,imgh = blitwiz.graphics.getImageSize("menu" .. index .. ".png")
     local x = w/2 - imgw/2
@@ -82,10 +87,10 @@ end
     end
 end]]
 
-function blitwizard.onMouseMove(mousex, mousey)
-    updatemenufocus(mousex, mousey)
+function browser.onMouseMove(mousex, mousey)
+    browser.updateMenuFocus(mousex, mousey)
 end
-function updatemenufocus(mousex, mousey)
+function browser.updateMenuFocus(mousex, mousey)
     menufocus = 0
     --[[local i = 1
     while i <= #examples do
@@ -132,8 +137,8 @@ function find_and_delete_physics_objects(t)
     end
 end
 
-function blitwizard.onMouseDown(button, mousex, mousey)
-    updatemenufocus(mousex, mousey)
+function browser.onMouseDown(button, mousex, mousey)
+    browser.updateMenuFocus(mousex, mousey)
     if menufocus > 0 then
         os.chdir("../../examples/" .. examples[menufocus] .. "/")
 

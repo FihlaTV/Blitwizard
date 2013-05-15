@@ -6,9 +6,9 @@
 if os.exists("samplebrowser/browser.lua") then
 	-- Templates are indeed one folder up, as it seems
 	local olddir = os.getcwd()
-	os.chdir("../templates/")
+	os.chdir("../")
 	local function calltemplates()
-		dofile("init.lua")
+		dofile("templates/init.lua")
 	end
 	calltemplates()
 	os.chdir(olddir)

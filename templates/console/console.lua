@@ -37,6 +37,12 @@ Permission is granted to anyone to use this software for any purpose, including 
  @module blitwizard.console
 ]]
 
+--[[
+ This will load blitwizard.font twice, but that's not
+ really an issue and it ensures we can use it here:
+ ]]
+dofile(os.templatedir() .. "/font/font.lua")
+
 do
     blitwizard.console = {}
 
@@ -134,6 +140,10 @@ do
         print(tostring(var))
     end
 
+    function blitwizard.onLog(msgtype, msg)
+        addConsoleLine("[LOG:" .. msgtype .. "] " .. msg)
+    end
+
     local oldprint = print
     function print(...)
         -- bake everything into one string:
@@ -148,13 +158,69 @@ do
             i = i + 1
         end
 
-        -- uncomment to send stuff to stdout too:
-        --oldprint(str)
+        -- send stuff to stdout too:
+        oldprint(str)
 
         -- add line to console:
         addConsoleLine(str)
     end
     addConsoleLine(_VERSION .. ", developer console")
+
+    local function isassignment(text)
+        -- see if a specific code line starts with an assignment or not
+        local i = 1
+        local endingWasVariable = true
+        local insideQuotation = nil
+        local escaped = false
+        while i <= #text do
+            local part = text:sub(i)
+
+            -- handle quotations:
+            if part:startswith("\"") or part:startswith("'")
+            or part:startswith("[[") then
+                if insideQuotation == nil then
+                    -- start quotation:
+                    if part:startswith("[[") then
+                        insideQuotation = "]]"
+                    else
+                        insideQuotation = part:sub(1, 1)
+                    end
+                else
+                    -- leave quotation:
+                    if part:startswith(insideQuotation) then
+                        i = i + (#insideQuotation - 1)
+                        insideQuotation = nil
+                    end
+                end
+            elseif part:startswith(";") and insideQuotation == nil then
+                -- command ends here. no assignment found up to here!
+                return false
+            elseif (part:startswith(" end") or part:startswith(" do") or
+            part:startswith(" if") or part:startswith(" function") or
+            part:startswith(" for") or part:startswith(" until") or
+            part:startswith(" while") or part:startswith(" return"))
+            and insideQuotation == nil then
+                -- next command starts here. no assignment found so far!
+                return false
+            elseif part:startswith("=") and insideQuotation == nil then
+                if i < #text then
+                    if text[i+1] == '=' then
+                        -- it is a comparison wth ==
+                        return false
+                    else
+                        -- looks like a legitimate assignment!
+                        return true
+                    end
+                end
+                return true
+            elseif part:startswith("\\") and insideQuotation then
+                -- skip next char since it is escaped
+                i = i + 1
+            end
+            i = i + 1
+        end
+        return false
+    end
 
     function consoleBg:doAlways()
         if consoleOpened then
@@ -341,7 +407,7 @@ do
                         end
                         -- if it is not a known keyword, prepend with
                         -- return to get return value:
-                        if not iskeyword then
+                        if not iskeyword and not isassignment(cmd) then
                             cmd = "return " .. cmd
                         end
                         -- execute command:

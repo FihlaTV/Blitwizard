@@ -57,8 +57,8 @@ blitwizard.font.text = {}
 
   @function new
   @tparam string text the text you want to display
-  @tparam string font the path to the bitmap of the bitmap font you want to use. You can also use "default" for the default font
-  @tparam number scale the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!
+  @tparam string (optional) font the path to the bitmap of the bitmap font you want to use. You can also specify nil or "default" for the default font
+  @tparam number (optional) scale the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!
   @tparam userdata camera the game camera to show the text on. Specify nil for the default camera (first one from @{blitwizard.graphics.getCameras})
   @tparam number width (optional, pass nil if you don't want to specify) the intended maximum width of the text in game units. If the rendered text was to exceed that width, line wraps will be applied to prevent that - it turns into a multi line text with multiple lines.
   @tparam number glyphWidth width of a glyph in the bitmap font in pixels. <b>Optional for the "default" font.</b>
@@ -75,12 +75,20 @@ glyphWidth, glyphHeight, glyphsPerLine)
         "string")
     end
     if type(fontPath) ~= "string" then
-        error("bad parameter #2 to blitwizard.font.text:create: expected " ..
-        "string")
+        if fontPath == nil then
+            fontPath = "default"
+        else
+            error("bad parameter #2 to blitwizard.font.text:create: " ..
+            "expected string")
+        end
     end
     if type(scale) ~= "number" then
-        error("bad parameter #3 to blitwizard.font.text:create: expected " ..
-        "number")
+        if scale == nil then
+            scale = 1
+        else
+            error("bad parameter #3 to blitwizard.font.text:create: " ..
+            "expected number")
+        end
     end
     if type(width) ~= "number" and type(width) ~= "nil" then
         error("bad parameter #4 to blitwizard.font.text:create: expected " ..
