@@ -164,6 +164,12 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Open a window with 800 x 600 pixel size and title "Test"
+</span> blitwizard.graphics.setMode(<span class="number">800</span>, <span class="number">600</span>, <span class="string">"Test"</span>)</pre>
+    </ul>
 
 </dd>
     <dt>
@@ -275,6 +281,13 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- make the default camera look at position 3, 3:
+</span> <span class="keyword">local</span> camera = blitwizard.graphics.getCameras()[<span class="number">1</span>]
+ camera:set2dCenter(<span class="number">3</span>, <span class="number">3</span>)</pre>
+    </ul>
 
 </dd>
     <dt>
@@ -437,7 +450,7 @@
     <ul>
         <pre class="example">
  <span class="comment">-- Get the amount of pixels for one game unit for the first (=default) camera:
-</span> <span class="keyword">local</span> pixels = blitwizard.graphics.getCameras()[<span class="number">1</span>]:gameUnitsToPixel()</pre>
+</span> <span class="keyword">local</span> pixels = blitwizard.graphics.getCameras()[<span class="number">1</span>]:gameUnitToPixels()</pre>
     </ul>
 
 </dd>

@@ -283,6 +283,10 @@ int luafuncs_camera_new(lua_State* l) {
 // @function set2dCenter
 // @tparam number x_position X position of the 2d point to look at
 // @tparam number y_position Y position of the 2d point to look at
+// @usage
+// -- make the default camera look at position 3, 3:
+// local camera = blitwizard.graphics.getCameras()[1]
+// camera:set2dCenter(3, 3)
 int luafuncs_camera_set2dCenter(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
     l, 1, 0, "blitwizard.graphics.camera:set2dCenter");
@@ -423,10 +427,10 @@ int luafuncs_camera_set2dZoomFactor(lua_State* l) {
 // @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
 // @usage
 // -- Get the amount of pixels for one game unit for the first (=default) camera:
-// local pixels = blitwizard.graphics.getCameras()[1]:gameUnitsToPixel()
+// local pixels = blitwizard.graphics.getCameras()[1]:gameUnitToPixels()
 int luafuncs_camera_gameUnitToPixels(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:gameUnitsToPixel");
+    l, 1, 0, "blitwizard.graphics.camera:gameUnitToPixels");
     lua_pushnumber(l, UNIT_TO_PIXELS);
     return 1;
 }

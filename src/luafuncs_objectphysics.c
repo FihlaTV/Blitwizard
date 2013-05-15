@@ -504,10 +504,30 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 
 /// This is how you should submit shape info to @{object:enableStaticCollision} and @{object:enableMovableCollision} (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
 //
+// All shape sizes, dimensions etc are specified in game units.
+//
+// <b>Note on object scaling:</b>
+//
+// When you @{blitwizard.object:enableMovableCollision|enable collision},
+//the collision shape will be exactly as large
+// as specified on creation, no matter how large the current
+// @{blitwizard.object:setScale|scaling} is
+// (that is, you can directly set any sizes from
+// @{blitwizard.object:getDimensions|object:getDimensions} if you want).
+//
+// As soon as your object is scaled after collision was enabled, the
+// physics collision shape will be scaled accordingly.
+// (e.g. if your object scale goes from 2 to 4, the physics hull will
+// double in size aswell)
+//
+// <b>Special notes on various shapes:</b>
+//
 // Please note the shapes "edge list" and "triangle mesh" may only be used
 // for static collision. They don't work with movable collision objects.
 //
-// Also keep in mind you can combine shapes when enabling collision,
+// <b>Combining shapes:</b>
+//
+// You can combine shapes when enabling collision,
 // by specifying multiple shapes (the final collision shape will be
 // all those shapes merged into one).
 // @tfield string type The shape type, for 2d shapes: "rectangle", "circle", "oval", "polygon" (needs to be convex!), "edge list" (simply a list of lines that don't need to be necessarily connected as it is for the polygon), for 3d shapes: "decal" (= 3d rectangle), "box", "ball", "elliptic ball" (deformed ball with possibly non-uniform radius, e.g. rather a capsule), "triangle mesh" (a list of 3d triangles)
@@ -528,24 +548,16 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 // @tfield number rotation_tilt (optional) rotation of any 3d shape 0..360 degree up and down, applied after horizontal rotation
 // @tfield number rotation_roll (optional) rotation of any 3d shape 0..360 degree around itself while remaining faced forward (basically overturning/leaning on the side), applied after the horizontal and vertical rotations
 // @table shape_info
-// @usage -- Specify a square 2d box as collision shape:
-// local myshape = {
-//   width = 1,
-//   height = 1,
-// }
+// @usage
 // -- Create a new 2d object from an image:
 // local myobject = blitwizard.object:new(false, "someimage.png")
-// -- (the image should be square if you don't want it to look squished)
 //
-// -- Set the dimensions of the object to a 1x1 square
-// -- (find out how large that is in pixels
-// -- at the default zoom level with
-// -- @{blitwizard.graphics.getCameras}()[1]:@{blitwizard.graphics.camera:gameUnitToPixels|gameUnitToPixels}() - multiply this
-// -- with any number of game units to get their size in pixels)
-// myobject:setScale(1, 1)
-//
-// -- Enable collision for our object:
-// myobject:enableCollision(myshape)
+// -- Enable collision for our object as soon as its size is known:
+// function myobject:onGeometryLoaded()
+//     -- set collision size exactly to the dimensions of the image:
+//     local w,h = myobject:getDimensions()
+//     myobject:enableMovableCollision({type='rectangle', width=w, height=h})
+// end
 
 /// Enable the physics simulation on the given object and make it
 // movable and collide with other movable and static objects.

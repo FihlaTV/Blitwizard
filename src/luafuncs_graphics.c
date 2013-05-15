@@ -65,7 +65,9 @@
 // @tparam string title (optional) Set the window title shown in the title bar. You can also specify nil if you want the default
 // @tparam boolean fullscreen (optional) Specify if you want to run fullscreen or windowed
 // @tparam string renderer (optional) Specify a specific renderer you want. Available renderers are "direct3d" (Windows only), "opengl" and "software". Software rendering is slow and should only be used as a fallback. It's also only available if you compiled with SDL graphics. If you don't specify a renderer, the best one will be used
-
+// @usage
+// -- Open a window with 800 x 600 pixel size and title "Test"
+// blitwizard.graphics.setMode(800, 600, "Test")
 int luafuncs_setMode(lua_State* l) {
 #ifdef USE_GRAPHICS
     if (lua_gettop(l) <= 0) {
