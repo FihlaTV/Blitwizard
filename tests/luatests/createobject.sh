@@ -7,7 +7,7 @@ source ./preparetest.sh
 
 # Run blitwizard test:
 echo "blitwizard.onLog = nil
-local obj = blitwizard.object:new(false)
+local obj = blitwizard.object:new(blitwizard.object.o2d)
 obj:setPosition(1, 2)
 print(\"success\")
 " > ./test.lua

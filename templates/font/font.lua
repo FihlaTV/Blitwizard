@@ -184,7 +184,8 @@ glyphWidth, glyphHeight, glyphsPerLine)
             end
 
             -- add new glyph:
-            local newGlyph = blitwizard.object:new(false, fontPath)
+            local newGlyph = blitwizard.object:new(
+                blitwizard.object.o2d, fontPath)
             newGlyph.offset = {x = x * scale, y = y * scale}
             newGlyph:setPosition(newGlyph.offset.x, newGlyph.offset.y)
             newGlyph:pinToCamera(camera)

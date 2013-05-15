@@ -83,7 +83,8 @@ do
     -- each line is { line = "text", text = blitwizard.font.text or nil }
 
     -- create background image for console:
-    local consoleBg = blitwizard.object:new(false, os.templatedir() ..
+    local consoleBg = blitwizard.object:new(blitwizard.object.o2d,
+        os.templatedir() ..
     "/console/console.png")
     consoleBg:setZIndex(9999)
     consoleBg:setVisible(true)

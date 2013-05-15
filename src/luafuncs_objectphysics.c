@@ -550,7 +550,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 // @table shape_info
 // @usage
 // -- Create a new 2d object from an image:
-// local myobject = blitwizard.object:new(false, "someimage.png")
+// local myobject = blitwizard.object:new(blitwizard.object.o2d, "someimage.png")
 //
 // -- Enable collision for our object as soon as its size is known:
 // function myobject:onGeometryLoaded()

@@ -180,24 +180,24 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 // Objects can have behaviour and collision info attached and move
 // around. They are what eventually makes the action in your game!
 // @function new
-// @tparam boolean 3d specify true if you wish this object to be a 3d object, or false if you want it to be a flat 2d object
+// @tparam number type specify object type: blitwizard.object.o2d or blitwizard.object.o3d
 // @tparam string resource (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.
 // @treturn userdata Returns a @{blitwizard.object|blitwizard object}
 // @usage
 // -- Create a new 2d sprite object from the image file myimage.png
-// local obj = blitwizard.object:new(false, "myimage.png")
+// local obj = blitwizard.object:new(blitwizard.object.o2d, "myimage.png")
 int luafuncs_object_new(lua_State* l) {
     // technical first argument is the object table,
     // which we don't care about in the :new function.
     // actual specified first argument is the second one
     // on the lua stack.
 
-    // first argument needs to be 2d/3d boolean:
-    if (lua_type(l, 2) != LUA_TBOOLEAN) {
+    // first argument needs to be 2d/3d type:
+    if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1, "blitwizard.object:new",
-        "boolean", lua_strtype(l, 2));
+        "number", lua_strtype(l, 2));
     }
-    int is3d = lua_toboolean(l, 2);
+    int is3d = (lua_tointeger(l, 2) == 1);
 
     // second argument, if present, needs to be the resource:
     const char* resource = NULL;
@@ -1110,7 +1110,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 // @function onGeometryLoaded
 // @usage
 //   -- create a 2d sprite and output its size:
-//   local obj = obj:new(false, "my_image.png")
+//   local obj = obj:new(blitwizard.object.o2d, "my_image.png")
 //   function obj:onGeometryLoaded()
 //     -- call @{blitwizard.object:getDimensions|self:getDimensions} to get
 //     -- its dimensions
@@ -1134,7 +1134,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 // @function doAlways
 // @usage
 // -- have a sprite move up the screen
-// local obj = obj:new(false, "my_image.png")
+// local obj = obj:new(blitwizard.object.o2d, "my_image.png")
 // function obj:doAlways()
 //   -- get old position:
 //   local pos_x, pos_y = self:getPosition()

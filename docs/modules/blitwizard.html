@@ -114,7 +114,7 @@
 <h2><a href="#Class_object">Class object </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#object:new">object:new&nbsp;(3d, resource)</a></td>
+	<td class="name" ><a href="#object:new">object:new&nbsp;(type, resource)</a></td>
 	<td class="summary">Create a new blitwizard object which is represented as a 2d or
  3d object in the game world.</td>
 	</tr>
@@ -489,7 +489,7 @@
     <dl class="function">
     <dt>
     <a name = "object:new"></a>
-    <strong>object:new&nbsp;(3d, resource)</strong>
+    <strong>object:new&nbsp;(type, resource)</strong>
     </dt>
     <dd>
     Create a new blitwizard object which is represented as a 2d or
@@ -501,9 +501,9 @@
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">3d</span>
-            <span class="types"><span class="type">boolean</span></span>
-         specify true if you wish this object to be a 3d object, or false if you want it to be a flat 2d object</li>
+        <li><span class="parameter">type</span>
+            <span class="types"><span class="type">number</span></span>
+         specify object type: blitwizard.object.o2d or blitwizard.object.o3d</li>
         <li><span class="parameter">resource</span>
             <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
          (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.</li>
@@ -522,7 +522,7 @@
     <ul>
         <pre class="example">
  <span class="comment">-- Create a new 2d sprite object from the image file myimage.png
-</span> <span class="keyword">local</span> obj = blitwizard.object:new(<span class="keyword">false</span>, <span class="string">"myimage.png"</span>)</pre>
+</span> <span class="keyword">local</span> obj = blitwizard.object:new(blitwizard.object.o2d, <span class="string">"myimage.png"</span>)</pre>
     </ul>
 
 </dd>
@@ -977,7 +977,7 @@
     <ul>
         <pre class="example">
    <span class="comment">-- create a 2d sprite and output its size:
-</span>   <span class="keyword">local</span> obj = obj:new(<span class="keyword">false</span>, <span class="string">"my_image.png"</span>)
+</span>   <span class="keyword">local</span> obj = obj:new(blitwizard.object.o2d, <span class="string">"my_image.png"</span>)
    <span class="keyword">function</span> obj:onGeometryLoaded()
      <span class="comment">-- call <a href="../modules/blitwizard.html#object:getDimensions">self:getDimensions</a> to get
 </span>     <span class="comment">-- its dimensions
@@ -1012,7 +1012,7 @@
     <ul>
         <pre class="example">
  <span class="comment">-- have a sprite move up the screen
-</span> <span class="keyword">local</span> obj = obj:new(<span class="keyword">false</span>, <span class="string">"my_image.png"</span>)
+</span> <span class="keyword">local</span> obj = obj:new(blitwizard.object.o2d, <span class="string">"my_image.png"</span>)
  <span class="keyword">function</span> obj:doAlways()
    <span class="comment">-- get old position:
 </span>   <span class="keyword">local</span> pos_x, pos_y = self:getPosition()
@@ -1126,7 +1126,7 @@ the collision shape will be exactly as large
     <ul>
         <pre class="example">
  <span class="comment">-- Create a new 2d object from an image:
-</span> <span class="keyword">local</span> myobject = blitwizard.object:new(<span class="keyword">false</span>, <span class="string">"someimage.png"</span>)
+</span> <span class="keyword">local</span> myobject = blitwizard.object:new(blitwizard.object.o2d, <span class="string">"someimage.png"</span>)
 
  <span class="comment">-- Enable collision for our object as soon as its size is known:
 </span> <span class="keyword">function</span> myobject:onGeometryLoaded()

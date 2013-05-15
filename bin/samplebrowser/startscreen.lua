@@ -50,7 +50,8 @@ function blitwizard.onInit()
     text:setZIndex(2)
 
     -- Create top bar:
-    local bar = blitwizard.object:new(false, "topbar.png")
+    local bar = blitwizard.object:new(
+        blitwizard.object.o2d, "topbar.png")
     bar:setRotationAngle(0)
 
     -- Pin top bar to camera:
@@ -73,7 +74,8 @@ function blitwizard.onInit()
     end
 
     -- button for showing sample browser selection
-    local button = blitwizard.object:new(false, "browse.png")
+    local button = blitwizard.object:new(
+        blitwizard.object.o2d, "browse.png")
     button:pinToCamera(cameras[1])
 
     -- move to a nice position:
@@ -109,7 +111,8 @@ function spawnOrb()
     end
 
     -- spawn blue orb at random position:
-    local obj = blitwizard.object:new(false, "orb.png")
+    local obj = blitwizard.object:new(
+        blitwizard.object.o2d, "orb.png")
 
     -- random position, scale and alpha:
     obj:setPosition(math.random() * 6 - 3, math.random() * 6 - 3)
