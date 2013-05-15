@@ -116,6 +116,8 @@ do
         line = line:gsub("\r", "")
 
         lines[#lines+1] = { line = line, text = nil }
+    end
+    local function trimConsole()
         while #lines > consoleLinesShown do
             -- remove first line:
             if lines[1].text then
@@ -127,13 +129,6 @@ do
                 i = i + 1
             end
             table.remove(lines, #lines)
-        end
-
-        -- refresh console instantly:
-        if consoleYPos > -consoleHeight then
-            if consoleBg.doAlways then
-                consoleBg:doAlways()
-            end
         end
     end
 
@@ -224,6 +219,7 @@ do
     end
 
     function consoleBg:doAlways()
+        trimConsole()
         if consoleOpened then
             local x,y = consoleBg:getPosition()
             if y < 0 then -- slide down

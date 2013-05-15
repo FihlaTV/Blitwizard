@@ -74,6 +74,10 @@
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
+	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
+	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#loadResourceArchive">loadResourceArchive&nbsp;(Path)</a></td>
 	<td class="summary">Load a .zip file as a resource archive.</td>
 	</tr>
@@ -254,6 +258,33 @@
 
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
+    <dt>
+    <a name = "getAllObjects"></a>
+    <strong>getAllObjects&nbsp;()</strong>
+    </dt>
+    <dd>
+    Iterate through all existing objects, no matter if 2d or 3d.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">function</span></span>
+        returns an iterator function
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">for</span> obj <span class="keyword">in</span> blitwizard.getAllObjects() <span class="keyword">do</span>
+     <span class="keyword">local</span> x, y = obj:getPosition()
+     <span class="global">print</span>(<span class="string">"object at: "</span> .. x .. <span class="string">", "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
     <dt>
     <a name = "loadResourceArchive"></a>
     <strong>loadResourceArchive&nbsp;(Path)</strong>

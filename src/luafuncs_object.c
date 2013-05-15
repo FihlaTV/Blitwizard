@@ -36,6 +36,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <stdint.h>
 
 #include "os.h"
 #ifdef USE_SDL_GRAPHICS
@@ -57,6 +58,81 @@
 
 struct blitwizardobject* objects = NULL;
 struct blitwizardobject* deletedobjects = NULL;
+
+// an iterator change will cause all iterators to be come invalid.
+static uint64_t iteratorChangeId = 0;
+
+struct objectiteratordata {
+    struct blitwizardobject* currentObj;
+    uint64_t iteratorChangeId;
+};
+
+static int luacfuncs_getObjectsIterator(lua_State* l) {
+    // check if iterator info is empty:
+    if (lua_type(l, lua_upvalueindex(1)) == LUA_TNIL) {
+        // we reached the end of the object list.
+        // return nil:
+        lua_pushnil(l);
+        return 1;
+    }
+    // get iterator info:
+    struct objectiteratordata* oid = lua_touserdata(l,
+        lua_upvalueindex(1));
+    // if object list changed, stop iterator:
+    if (iteratorChangeId != oid->iteratorChangeId) {
+        return haveluaerror(l, "object was created or destroyed, "
+        "iterator is outdated");
+    }
+    // iterate further:
+    oid->currentObj = oid->currentObj->next;
+    struct blitwizardobject* o = oid->currentObj;
+    // pop iterator data:
+    lua_pop(l, 1);
+    if (o) {
+        // push & return iterated object:
+        luacfuncs_pushbobjidref(l, o);
+        return 1;
+    } else {
+        // end of list reached. clear object data:
+        lua_pushnil(l);
+        lua_replace(l, lua_upvalueindex(1));
+        // return nil:
+        lua_pushnil(l);
+        return 1;
+    }
+}
+
+/// Iterate through all existing objects, no matter if 2d or 3d.
+// @function getAllObjects
+// @treturn function returns an iterator function
+// @usage
+// for obj in blitwizard.getAllObjects() do
+//     local x, y = obj:getPosition()
+//     print("object at: " .. x .. ", " .. y)
+// end
+int luafuncs_getAllObjects(lua_State* l) {
+    // prepare iterator data:
+    struct objectiteratordata* oid = lua_newuserdata(l, sizeof(*oid));
+    memset(oid, 0, sizeof(*oid));
+    oid->iteratorChangeId = iteratorChangeId;
+    oid->currentObj = objects;
+
+    // create closure:
+    lua_pushcclosure(l, luacfuncs_getObjectsIterator, 1);
+
+    // return iterator:
+    return 1;
+}
+
+void luacfuncs_objectAddedDeleted(struct blitwizardobject* o, int added) {
+    if (!added) {
+        iteratorChangeId++;
+        // wrap over:
+        if (iteratorChangeId >= UINT64_MAX-2) {
+            iteratorChangeId = 0;
+        }
+    }
+}
 
 /// Blitwizard object which represents an 'entity' in the game world
 // with visual representation, behaviour code and collision shape.
@@ -231,6 +307,8 @@ int luafuncs_object_new(lua_State* l) {
             "object");
         }
     }
+
+    luacfuncs_objectAddedDeleted(o, 1);
 
     // add us to the object list:
     o->next = objects;
@@ -410,7 +488,6 @@ int args, int* boolreturn) {
     // pop error handling function from stack again:
     lua_pop(l, 1);
 
-    //printf("t7: %llu\n", time_GetMicroseconds());
     luastate_resumeGC();
     return (errorHappened == 0);
 }
@@ -441,6 +518,8 @@ struct blitwizardobject* o, const char* eventName) {
 int luafuncs_object_destroy(lua_State* l) {
     // delete the given object
     struct blitwizardobject* o = toblitwizardobject(l, 1, 1, "blitwiz.object.delete");
+
+    luacfuncs_objectAddedDeleted(o, 0);
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
@@ -1074,6 +1153,7 @@ void luacfuncs_object_updateGraphics() {
         o = o->next;
     }
 }
+
 
 /// Change whether an object is shown at all, or whether it is hidden.
 // If you know objects aren't going to be needed at some point or

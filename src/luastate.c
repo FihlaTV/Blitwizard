@@ -345,6 +345,11 @@ static lua_State* luastate_New(void) {
     luastate_CreateObjectTable(l);
     lua_settable(l, -3);
 
+    // blitwizard.getObjects():
+    lua_pushstring(l, "getAllObjects");
+    lua_pushcfunction(l, &luafuncs_getAllObjects);
+    lua_settable(l, -3);
+
     // blitwiz.setStep:
     lua_pushstring(l, "setStep");
     lua_pushcfunction(l, &luafuncs_setstep);
