@@ -38,6 +38,7 @@ int luafuncs_sysname(lua_State* l);
 int luafuncs_sysversion(lua_State* l);
 int luafuncs_templatedir(lua_State* l);
 int luafuncs_forcetemplatedir(lua_State* l);
+int luafuncs_gameluapath(lua_State* l);
 
 #endif  // BLITWIZARD_LUAFUNCS_OS_H_
 

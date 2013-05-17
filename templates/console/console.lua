@@ -50,12 +50,12 @@ do
     local consoleText = ""
     local consoleTextObj = nil
     local consoleOpened = false
-    local consoleYPos = 0
     local slideSpeed = 0.1
     local consoleDisabled = false
     local consoleLineHeight = 0
     local consoleHeight = 240 / blitwizard.graphics.getCameras()[1]
         :gameUnitToPixels()
+    local consoleYPos = -consoleHeight
     local consoleLinesShown = (function()
         local text = blitwizard.font.text:new("Hello", "default", 0.8)
         consoleLineHeight = text:height()
@@ -345,6 +345,14 @@ do
         consoleOpened = false
         consoleDisabled = true
     end
+    
+    --[[--
+      Print something to the console:
+    ]] 
+
+    function blitwizard.console.print(str)
+        addConsoleLine(str)
+    end
 
     -- listening for keyboard events here:
     function blitwizard._onKeyDown_Templates(key)
@@ -505,5 +513,21 @@ do
     end
 end
 
-
+--[[
+ @module os
+]]
+--[[--
+  Reload the whole game.lua script.
+  
+  If your game.lua is written accordingly, this will reload
+  the whole game code without affecting the game state.
+  
+  (for a badly written game.lua, it will probably screw up the game state)
+  @function reload
+]]
+if not reload then
+    reload = function()
+        dofile(os.gameluapath())
+    end
+end
 

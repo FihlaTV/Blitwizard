@@ -27,4 +27,4 @@ void* main_DefaultPhysics2dPtr(void);  // pointer to 2d physics world
 void* main_DefaultPhysics3dPtr(void);  // pointer to 3d physics world
 void main_SetTimestep(int timestep);
 extern char* templatepath;  // template path as determined at runtime
-
+extern char* gameluapath;  // loaded game.lua path as determined at runtime
