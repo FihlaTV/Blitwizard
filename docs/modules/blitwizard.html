@@ -202,6 +202,22 @@
  over and over again.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:onMouseClick">object:onMouseClick&nbsp;()</a></td>
+	<td class="summary">Set this event function to get notified when
+ a mouse click is done on your object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseEnter">object:onMouseEnter&nbsp;()</a></td>
+	<td class="summary">Set this event function to get notified when
+ the mouse is moved onto your object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onMouseLeave">object:onMouseLeave&nbsp;()</a></td>
+	<td class="summary">Set this event function to get notified when
+ the mouse was moved onto your object and has now moved
+ away again.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:disableCollision">object:disableCollision&nbsp;()</a></td>
 	<td class="summary">Disable the physics simulation on an object.</td>
 	</tr>
@@ -748,8 +764,10 @@
     <dd>
     Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.
  This allows to stretch/shrink an object. If physics are enabled
- with <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>
- or <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a>,
+ with <a href="../modules/blitwizard.html#object:enableMovableCollision">
+ object:enableMovableCollision</a>
+ or <a href="../modules/blitwizard.html#object:enableStaticCollision">
+ object:enableStaticCollision</a>,
  the physics hull will be scaled accordingly aswell.
 <p> Please note if you want to scale up a unit to precisely
  match a specific size in game units (instead of just making
@@ -1053,6 +1071,60 @@
 </span>   self:setPosition(pos_x, pos_y)
  <span class="keyword">end</span></pre>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseClick"></a>
+    <strong>object:onMouseClick&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to get notified when
+ a mouse click is done on your object.
+<p> A double-click will be reported as two onMouseClick events
+ in short succession.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:onMouseEnter"></a>
+    <strong>object:onMouseEnter&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to get notified when
+ the mouse is moved onto your object.  (this will also be triggered
+ if the object itself moves in a way so it ends up under the mouse
+ cursor)
+<p> Please note with lots of <a href="../modules/blitwizard.html#Class_object">objects</a>, enabling this
+ on objects with a low Z index (with many others above them) can have
+ an impact on performance.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:onMouseLeave"></a>
+    <strong>object:onMouseLeave&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to get notified when
+ the mouse was moved onto your object and has now moved
+ away again.  (this will also be triggered if the object itself
+ moves away from the mouse position)
+<p> Please note with lots of <a href="../modules/blitwizard.html#Class_object">objects</a>, enabling this
+ on objects with a low Z index (with many others above them) can have
+ an impact on performance.
+
+
+
+
+
 
 </dd>
     <dt>

@@ -120,6 +120,15 @@
 	<td class="name" ><a href="#forcetemplatedir">forcetemplatedir&nbsp;(path)</a></td>
 	<td class="summary">Set the template folder to a given path if not previously set.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#gameluapath">gameluapath&nbsp;()</a></td>
+	<td class="summary">Get the path of the game.lua file which has been loaded at startup.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#reload">reload&nbsp;()</a></td>
+	<td class="summary">This function reloads the game.lua file that has been initially loaded
+ by blitwizard on startup.</td>
+	</tr>
 </table>
 
 <br/>
@@ -324,7 +333,8 @@
     <ol>
 
           <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-        absolute folder path of template directory (or nil if none)
+        absolute folder path of template directory (or nil if none).
+ Can be a relative path if loaded from a .zip archive
     </ol>
 
 
@@ -346,6 +356,44 @@
             <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
          template directory</li>
     </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "gameluapath"></a>
+    <strong>gameluapath&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the path of the game.lua file which has been loaded at startup.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+        absolute file path to game.lua if a file on disk,
+ relative path to game.lua if loaded from a .zip archive
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "reload"></a>
+    <strong>reload&nbsp;()</strong>
+    </dt>
+    <dd>
+    This function reloads the game.lua file that has been initially loaded
+ by blitwizard on startup.
+<p> For a well-written game.lua, this will reload the game code without affecting
+ the game state (the game will continue to run from where it left off).
+<p> <b>This function is provided by the templates and only present if you
+ use them.</b>
+
 
 
 

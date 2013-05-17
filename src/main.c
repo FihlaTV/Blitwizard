@@ -727,6 +727,56 @@ int main(int argc, char** argv) {
 #endif
 #endif
 
+    // check if provided script path is a folder:
+    if (file_IsDirectory(script)) {
+        // make sure it isn't inside a resource file as a proper file:
+        if (!resources_LocateResource(script, NULL)) {
+            // it isn't, so we can safely assume it is a folder.
+            // -> append "game.lua" to the path
+            if (filenamebuf) {
+                free(filenamebuf);
+            }
+            filenamebuf = file_AddComponentToPath(script, "game.lua");
+            if (!filenamebuf) {
+                printerror("Error: failed to add component to script path");
+                main_Quit(1);
+                return 1;
+            }
+            script = filenamebuf;
+        }
+    }
+
+    // check if script file is internal resource or disk file
+    int scriptdiskfile = 0;
+    struct resourcelocation s;
+    if (!resources_LocateResource(script, &s)) {
+        printerror("Error: cannot locate script file \"%s\"", script);
+        main_Quit(1);
+        return 1;
+    } else {
+        if (s.type == LOCATION_TYPE_ZIP) {
+            scriptdiskfile = 0;
+        } else{
+            scriptdiskfile = 1;
+        }
+    }
+ 
+    // compose game.lua path variable (for os.gameluapath())
+    if (scriptdiskfile) {
+        gameluapath = file_GetAbsolutePathFromRelativePath(script);
+    } else {
+        gameluapath = strdup(script);
+    }
+    if (!gameluapath) { // string allocation failed
+        printerror("Error: failed to allocate script path (gameluapath)");
+        main_Quit(1);
+        return 1;
+    } else {
+        if (gameluapath) {
+            file_MakeSlashesCrossplatform(gameluapath);
+        }
+    }
+
     // check if we want to change directory to the provided script path:
     if (option_changedir) {
         char* p = file_GetAbsoluteDirectoryPathFromFilePath(script);
@@ -756,54 +806,7 @@ int main(int argc, char** argv) {
         free(p);
         script = filenamebuf;
     }
-    
-    // check if provided script path is a folder:
-    if (file_IsDirectory(script)) {
-        // make sure it isn't inside a resource file as a proper file:
-        if (!resources_LocateResource(script, NULL)) {
-            // it isn't, so we can safely assume it is a folder.
-            // -> append "game.lua" to the path
-            filenamebuf = file_AddComponentToPath(script, "game.lua");
-            if (!filenamebuf) {
-                printerror("Error: failed to add component to script path");
-                main_Quit(1);
-                return 1;
-            }
-            script = filenamebuf;
-        }
-    }
-    
-    // check if script file is internal resource or disk file
-    int scriptdiskfile = 0;
-    struct resourcelocation s;
-    if (!resources_LocateResource(script, &s)) {
-        printerror("Error: cannot locate script file \"%s\"", script);
-        main_Quit(1);
-        return 1;
-    } else {
-        if (s.type == LOCATION_TYPE_ZIP) {
-            scriptdiskfile = 0;
-        } else{
-            scriptdiskfile = 1;
-        }
-    }
-    
-    // compose game.lua path variable (for os.gameluapath())
-    if (scriptdiskfile) {
-        gameluapath = file_GetAbsolutePathFromRelativePath(script);
-    } else {
-        gameluapath = strdup(script);
-    }
-    if (!gameluapath) { // string allocation failed
-        printerror("Error: failed to allocate script path (gameluapath)");
-        main_Quit(1);
-        return 1;
-    } else {
-        if (gameluapath) {
-            file_MakeSlashesCrossplatform(gameluapath);
-        }
-    }
-
+      
 /*#if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Preparing graphics framework...");
 #endif

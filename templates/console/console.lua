@@ -347,7 +347,8 @@ do
     end
     
     --[[--
-      Print something to the console:
+      Print something to the console (works similar to Lua's print)
+      @function print
     ]] 
 
     function blitwizard.console.print(str)
@@ -513,21 +514,5 @@ do
     end
 end
 
---[[
- @module os
-]]
---[[--
-  Reload the whole game.lua script.
-  
-  If your game.lua is written accordingly, this will reload
-  the whole game code without affecting the game state.
-  
-  (for a badly written game.lua, it will probably screw up the game state)
-  @function reload
-]]
-if not reload then
-    reload = function()
-        dofile(os.gameluapath())
-    end
-end
+dofile(os.templatedir() .. "/console/reload.lua")
 

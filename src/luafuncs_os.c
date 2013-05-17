@@ -283,7 +283,7 @@ int luafuncs_forcetemplatedir(lua_State* l) {
 }
 
 /// Get the path of the game.lua file which has been loaded at startup.
-// @function luafuncs_gameluapath
+// @function gameluapath
 // @treturn string absolute file path to game.lua if a file on disk,
 // relative path to game.lua if loaded from a .zip archive
 int luafuncs_gameluapath(lua_State* l) {
@@ -295,4 +295,13 @@ int luafuncs_gameluapath(lua_State* l) {
     return 1;
 }
 
+/// This function reloads the game.lua file that has been initially loaded
+// by blitwizard on startup.
+//
+// For a well-written game.lua, this will reload the game code without affecting
+// the game state (the game will continue to run from where it left off).
+//
+// <b>This function is provided by the templates and only present if you
+// use them.</b>
+// @function reload
 
