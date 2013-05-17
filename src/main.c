@@ -43,7 +43,7 @@
 void luacfuncs_object_initialisePhysicsCallbacks(void);
 
 // report sprite visibility:
-void graphics2dsprites_ReportVisibility(void);
+void graphics2dsprites_reportVisibility(void);
 
 // lua funcs doStep processing function:
 int luacfuncs_object_doAllSteps(int count);
@@ -1071,7 +1071,7 @@ int main(int argc, char** argv) {
         }
 
         // report visibility of sprites to texture manager:
-        graphics2dsprites_ReportVisibility();
+        graphics2dsprites_reportVisibility();
 
         // texture manager tick:
         texturemanager_Tick();

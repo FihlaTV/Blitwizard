@@ -722,8 +722,10 @@ int luafuncs_object_getScale(lua_State* l) {
 
 /// Change an object's scale, also see @{blitwizard.object:getScale}.
 // This allows to stretch/shrink an object. If physics are enabled
-// with @{blitwizard.object:enableMovableCollision|object:enableMovableCollision}
-// or @{blitwizard.object:enableStaticCollision|object:enableStaticCollision},
+// with @{blitwizard.object:enableMovableCollision|
+// object:enableMovableCollision}
+// or @{blitwizard.object:enableStaticCollision|
+// object:enableStaticCollision},
 // the physics hull will be scaled accordingly aswell.
 //
 // Please note if you want to scale up a unit to precisely
@@ -1223,4 +1225,32 @@ int luafuncs_object_setVisible(lua_State* l) {
 //   -- set position again:
 //   self:setPosition(pos_x, pos_y)
 // end
+
+/// Set this event function to get notified when
+// a mouse click is done on your object.
+//
+// A double-click will be reported as two onMouseClick events
+// in short succession.
+// @function onMouseClick
+
+/// Set this event function to get notified when
+// the mouse is moved onto your object. (this will also be triggered
+// if the object itself moves in a way so it ends up under the mouse
+// cursor)
+//
+// Please note with lots of @{blitwizard.object|objects}, enabling this
+// on objects with a low Z index (with many others above them) can have
+// an impact on performance.
+// @function onMouseEnter
+
+/// Set this event function to get notified when
+// the mouse was moved onto your object and has now moved
+// away again. (this will also be triggered if the object itself
+// moves away from the mouse position)
+//
+// Please note with lots of @{blitwizard.object|objects}, enabling this
+// on objects with a low Z index (with many others above them) can have
+// an impact on performance.
+// @function onMouseLeave
+
 

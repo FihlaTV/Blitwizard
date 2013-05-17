@@ -168,7 +168,25 @@ void graphics2dsprites_setPinnedToCamera(struct graphics2dsprite* sprite,
 int cameraId);
 
 // Report visibility to texture manager
-void graphics2dsprites_ReportVisibility(void);
+void graphics2dsprites_reportVisibility(void);
+
+#define SPRITE_EVENT_TYPE_CLICK 1
+#define SPRITE_EVENT_TYPE_MOTION 2
+#define SPRITE_EVENT_TYPE_COUNT 3
+// Get sprite at the given screen position
+// (e.g. mouse position) with the given camera
+// if event >= 0, then only sprites relevant for the
+// given event will be searched (-> faster).
+struct graphics2dsprite* 
+graphics2dsprites_getSpriteAtScreenPos(
+int cameraId, int x, int y, int event);
+
+// enable or disable a sprite for a given event
+// search:
+int graphics2dsprites_enableForEvent(
+struct graphics2dsprite* sprite, int event, int enabled);
+// event will be one of SPRITE_EVENT_TYPE_*
+// (enable can be 1 for yes or 0 for no)
 
 #ifdef __cplusplus
 }
