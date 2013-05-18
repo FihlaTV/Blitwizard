@@ -761,7 +761,6 @@ void physics_set2dShapeRectangle(struct physicsobjectshape* shape, double width,
 #ifdef USE_PHYSICS2D
 #define OVALVERTICES 8
 void physics_set2dShapeOval(struct physicsobjectshape* shape, double width, double height) {
-    /* FIXME: Order might the "wrong way round", then again this shouldn't really matter. */
     if (fabs(width - height) < EPSILON) {
         physics_set2dShapeCircle(shape, width);
         return;
