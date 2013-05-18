@@ -132,6 +132,15 @@ struct physicsobject2d {
     int movable;
     b2World* world;
     b2Body* body;
+    
+    // needed for scaling, NULL on creation, init on scale
+    // Array of pointers
+    b2Shape* orig_shapes[];
+    int orig_shape_count;
+    // XXX Is currently only allocated for shapes that need it (ugly as fuck).
+    // I.e. length(orig_shape_info) <= length(orig_shapes)
+    struct b2_shape_info* orig_shape_info;
+    
     int gravityset;
     double gravityx,gravityy;
     void* userdata;
@@ -147,6 +156,10 @@ struct physicsobject2d {
 #endif
 };
 
+/* This is not actually used for finalised objects, but only while setting up
+ the shapes that will later be used to construct the final object. Maybe rename
+ to reflect this fact.
+ */
 struct physicsobjectshape2d {
 #ifdef USE_PHYSICS2D
     union specific_type_of_shape {
@@ -237,6 +250,12 @@ struct physicsobjectshape {
         struct physicsobjectshape3d* pe3d;
     } sha;
     int is3d;
+};
+
+struct b2_shape_info {
+    // b2ChainShape only
+    int is_loop; // or chain if not
+    //no: struct b2_shape_info* next;
 };
 
 class mycontactlistener : public b2ContactListener {
@@ -1058,7 +1077,7 @@ struct physicsobject* object, void* userdata, int movable) {
 // TODO: Weaken coupling, i.e. no direct reference to physicsobject2d,
 // instead take edges and return b2 chains
 // (goal: common code for fixture etc. in outer function)
-// problem: memory mgmt., variable number of returned edge shapes
+// problem: memory mgmt., variable number of returned edge shapes, scaling sh-t
 void _physics_create2dObjectEdges_End(struct edge* edges,
  struct physicsobject2d* object, struct physicsobjectshape2d* shape2d) {
     /* not sure if this is needed anymore, probably not
@@ -1067,7 +1086,8 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
         free(context);
         return NULL;
     }*/
-
+    
+    int num_shapes = 0;
     struct edge* e = edges;
     while (e) {
         //skip edges we already processed
@@ -1137,12 +1157,23 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
         
         // Rotate and offset every vector in varray
         _physics_apply2dOffsetRotation(shape2d, varray, varraysize);
-    
+        
+        // Needed for scaling lolmao good coding 10/10
+        // TODO: put into a separate fn, make the whole thing more oop
+        num_shapes++;
+        object->orig_shape_count = num_shapes;
+        object->orig_shape_info = realloc (object->orig_shape_info,
+         sizeof(*(object->orig_shape_info)) * num_shapes);
+        
         //construct an edge shape from this
         if (e->inaloop) {
             chain.CreateLoop(varray, e->adjacentcount);
+            // More scaling workaround stuff
+            object->orig_shape_info[num_shapes].is_loop = 1;
         } else {
             chain.CreateChain(varray, e->adjacentcount+1);
+            // And again
+            object->orig_shape_info[num_shapes].is_loop = 0;
         }
 
         //add it to our body
@@ -1325,6 +1356,131 @@ void* physics_getObjectUserdata(struct physicsobject* object) {
     return NULL;
 }
 
+
+#ifdef USE_PHYSICS2D
+b2ChainShape* _physics_copyb2ChainShape(b2ChainShape* src, b2_shape_info*
+ shape_info) {
+    b2ChainShape* dest;
+    dest = new b2ChainShape();
+    if (shape_info->is_loop)
+        dest->CreateLoop(src->m_vertices, src->m_count);
+    else
+        dest->CreateChain(src->m_vertices, src->m_count);
+    return dest;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+b2CircleShape* _physics_copyb2CircleShape(b2CircleShape* src, b2_shape_info*
+ shape_info) {
+    b2CircleShape* dest;
+    dest = new b2CircleShape();
+    dest->m_p = src->m_p;
+    dest->m_radius = src->m_radius;
+    return dest;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+b2PolygonShape* _physics_copyb2PolygonShape(b2PolygonShape* src, b2_shape_info*
+ shape_info) {
+    b2PolygonShape* dest;
+    dest = new new b2PolygonShape();
+    dest->Set(src->m_vertices, src->m_vertexCount);
+    return dest;
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void _physics_fill2dOrigShapeCache(struct physicsobject* object) {
+    b2Body* body = object->object2d->body;
+    b2Fixture* f = body->GetFixtureList();
+    union specific_shape { b2ChainShape* chain, b2CircleShape* circle,
+     b2EdgeShape* edge, b2PolygonShape* poly };
+    /* XXX IMPORTANT: This relies on b2Body.GetFixtureList() returning
+     fixtures in the reverse order they were added in.
+     */
+#warning "Code relies on b2Body.GetFixtureList() returning fixtures in the \
+reverse order they were added in."
+    int fixture_count = 0;
+    int orig_shape_info_count = 0;
+    while (f != NULL) {
+        if (f->GetType() == b2Shape::e_chain)
+            ++orig_shape_info_count;
+        ++fixture_count;
+        f = f->GetNext();
+    }
+    object->orig_shapes = malloc(sizeof(b2Shape*)*fixture_count);
+    object->orig_shape_count = fixture_count;
+    
+    int orig_shape_info_index = orig_shape_info_count-1;
+    int fixture_index = fixture_count-1;
+    f = body->GetFixtureList();
+    while (f != NULL) {
+        switch (f->GetType()) {
+            case b2Shape::e_chain:
+                chain = _physics_copyb2ChainShape(
+                 (b2ChainShape*)(f->GetShape()),
+                 object->orig_shape_info[orig_shape_info_index]);
+                object->orig_shapes[fixture_index] = malloc(
+                 sizeof(b2ChainShape*));
+                object->orig_shapes[fixture_index] = chain;
+                --orig_shape_info_index;
+            break;
+            case b2Shape::e_circle:
+                circle = _physics_copyb2CircleShape(
+                 (b2CircleShape*)(f->GetShape()), NULL);
+                object->orig_shapes[fixture_index] = malloc(
+                 sizeof(b2CircleShape*));
+                object->orig_shapes[fixture_index] = circle;
+            break;
+            case b2Shape::e_edge:
+                //never happens
+                //edge = f->GetShape();
+            break;
+            case b2Shape::e_polygon:
+                poly = _physics_copyb2PolygonShape(
+                 (b2PolygonShape*)(f->GetShape()), NULL);
+                object->orig_shapes[fixture_index] = malloc(
+                 sizeof(b2PolygonShape*));
+                object->orig_shapes[fixture_index] = poly;
+            break;
+            default:
+                printerror("fatal.");
+            break;
+        }
+        --fixture_index;
+        f = f->GetNext();
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void _physics_delete2dOrigShapeCache(struct physicsobject* object) {
+    for (int i = 0; i < object->orig_shape_count; ++i) {
+        delete object->orig_shapes[i]; // delete shape
+    }
+    free(object->orig_shapes); // delete array of pointers to shapes
+    free(object->orig_shape_info); // delete array of shape info structs
+    // Just in case:
+    object->orig_shape_count = 0;
+}
+#endif
+
+
+void physics_set2dScale(struct physicsobject* object, double scalex,
+ double scaley) {
+    // First, make sure the original shape cache thingy is initialised
+    if (object->orig_shape_count == 0) {
+        _physics_fill2dOrigShapeCache(object);
+    }
+    /* TODO: Write the rest of this function.
+     PROTIP: In order to do just that, we should first clean up the shape
+     creation functions we already have so we can re-use the one for ovals
+     when scaling circles. Also, the way orig_shape_info is filled in the one
+     on edges->chains might not be correct, so look into it.
+    */
+}
 
 // Everything about "various properties" starts here
 void physics_setMass(struct physicsobject* obj, double mass) {
