@@ -105,6 +105,16 @@ int shapecount);
 void physics_destroyObject(struct physicsobject* object);
 void* physics_getObjectUserdata(struct physicsobject* object);
 
+// Scale object
+#ifdef USE_PHYSICS2D
+void physics_set2dScale(struct physicsobject* object, double scalex,
+ double scaley);
+#endif
+#ifdef USE_PHYSICS3D
+void physics_set3dScale(struct physicsobject* object, double scalex,
+ double scaley, double scalez);
+#endif
+
 // Get/set various properties
 void physics_setMass(struct physicsobject* obj, double mass);
 double physics_getMass(struct physicsobject* obj);
