@@ -21,8 +21,8 @@
 
 */
 
-#ifndef BLITWIZARD_PHYSICS_H_
-#define BLITWIZARD_PHYSICS_H_
+#ifndef BLITWIZARD_PHYSICSINTERNAL_H_
+#define BLITWIZARD_PHYSICSINTERNAL_H_
 
 #include "config.h"
 #include "os.h"
@@ -191,5 +191,5 @@ int physics_ray3d(struct physicsworld* world, double startx, double starty, doub
 
 #endif  // USE_PHYSICS2D || USE_PHYSICS3D
 
-#endif  // BLITWIZARD_PHYSICS_H_
+#endif  // BLITWIZARD_PHYSICSINTERNAL_H_
 
