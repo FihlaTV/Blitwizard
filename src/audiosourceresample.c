@@ -25,7 +25,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
 #include "os.h"
+
 #include "audiosource.h"
 #include "audiosourceresample.h"
 
