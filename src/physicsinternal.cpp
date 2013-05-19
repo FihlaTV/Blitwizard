@@ -97,22 +97,6 @@ struct physicsobject3d;
 struct physicsworld3d;
 struct physicsobjectshape3d;
 
-
-/*
-    Purely internal functions
-*/
-void _physics_destroy2dShape(struct physicsobjectshape2d* shape);
-int _physics_check2dEdgeLoop(struct edge* edge, struct edge* target);
-void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
-inline void _physics_rotateThenOffset2dPoint(double xoffset, double yoffset,
- double rotation, double* x, double* y);
-void _physics_apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
- b2Vec2* targets, int count);
-static int _physics_create2dObj(struct physicsworld2d* world,
-struct physicsobject* object, void* userdata, int movable);
-void _physics_create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
-void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
-
 /*
     Structs
 */
@@ -263,6 +247,34 @@ struct b2_shape_info {
     int is_loop; // or chain if not
     //no: struct b2_shape_info* next;
 };
+
+
+/*
+    Purely internal functions
+*/
+
+void _physics_destroy2dShape(struct physicsobjectshape2d* shape);
+int _physics_check2dEdgeLoop(struct edge* edge, struct edge* target);
+void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2);
+inline void _physics_rotateThenOffset2dPoint(double xoffset, double yoffset,
+ double rotation, double* x, double* y);
+void _physics_apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
+ b2Vec2* targets, int count);
+static int _physics_create2dObj(struct physicsworld2d* world,
+struct physicsobject* object, void* userdata, int movable);
+void _physics_create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
+void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
+// Scaling aux
+void _physics_setb2ShapeOval(b2Shape* shape, double width, double height);
+b2ChainShape* _physics_copyb2ChainShape(b2ChainShape* src, b2_shape_info*
+ shape_info);
+b2CircleShape* _physics_copyb2CircleShape(b2CircleShape* src, b2_shape_info*
+ shape_info);
+b2PolygonShape* _physics_copyb2PolygonShape(b2PolygonShape* src, b2_shape_info*
+ shape_info);
+void _physics_fill2dOrigShapeCache(struct physicsobject2d* object);
+void _physics_delete2dOrigShapeCache(struct physicsobject2d* object);
+
 
 class mycontactlistener : public b2ContactListener {
 public:
@@ -1312,6 +1324,7 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
 static void _physics_destroyObjectDo(struct physicsobject* obj) {
     if (!obj->is3d) {
 #ifdef USE_PHYSICS2D
+        _physics_delete2dOrigShapeCache(&(obj->object2d));
         if (obj->object2d.body) {
             obj->object2d.world->DestroyBody(obj->object2d.body);
         }
@@ -1510,7 +1523,7 @@ void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
 }
 #endif
 
-
+#ifdef USE_PHYSICS2D
 void physics_set2dScale(struct physicsobject* object, double scalex,
  double scaley) {
     // TODO maybe (though it's stupid): do nothing when old_scale == new_scale
@@ -1620,6 +1633,7 @@ re-allocation of memory for m_vertices."
     } // while
     physics_setMass(object, mass);
 }
+#endif
 
 // Everything about "various properties" starts here
 void physics_setMass(struct physicsobject* obj, double mass) {
