@@ -1363,6 +1363,42 @@ void* physics_getObjectUserdata(struct physicsobject* object) {
     return NULL;
 }
 
+// Scaling aux functions begin here
+
+#ifdef USE_PHYSICS2D
+// Alternate version of physics_set2dShapeOval which outputs a new b2 shape
+void _physics_setb2ShapeOval(b2Shape* shape, double width, double height) {
+    if (fabs(width - height) < EPSILON) {
+        shape = new b2CircleShape();
+        ((b2CircleShape*)shape)->m_radius = width;
+        return;
+    }
+
+    //construct oval shape - by manually calculating the vertices
+    b2Vec2* vertices = new b2Vec2[OVALVERTICES];
+    
+    //go around with the angle in one full circle:
+    int i = 0;
+    double angle = 0;
+    while (angle < 2*M_PI && i < OVALVERTICES) {
+        //calculate and set vertex point
+        double x,y;
+        ovalpoint(angle, width, height, &x, &y);
+        
+        vertices[i].x = x;
+        vertices[i].y = -y;
+        
+        //advance to next position
+        angle -= (2*M_PI)/((double)OVALVERTICES);
+        i++;
+    }
+    
+    shape = new b2PolygonShape();
+    ((b2PolygonShape*)shape)->Set(vertices, OVALVERTICES);
+    
+    delete[] vertices;
+}
+#endif
 
 #ifdef USE_PHYSICS2D
 b2ChainShape* _physics_copyb2ChainShape(b2ChainShape* src, b2_shape_info*
@@ -1477,14 +1513,22 @@ void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
 
 void physics_set2dScale(struct physicsobject* object, double scalex,
  double scaley) {
+    // TODO maybe (though it's stupid): do nothing when old_scale == new_scale
     struct physicsobject2d* object2d = &(object->object2d);
-    //b2Body* body = object2d->body;
-    //b2Fixture* f = body->GetFixtureList();
+    b2Body* body = object2d->body;
+    b2Fixture* f = body->GetFixtureList();
+    double mass = physics_getMass(object);
     union { b2ChainShape* chain; b2CircleShape* circle;
      b2EdgeShape* edge; b2PolygonShape* poly; };
-    // First, make sure the original shape cache thingy is initialised
+    
+    // Firstly, make sure the original shape cache thingy is initialised
     if (object2d->orig_shape_count == 0) {
         _physics_fill2dOrigShapeCache(object2d);
+    }
+    // Secondly, delete all the old fixtures+
+    while (f != NULL) {
+        body->DestroyFixture(f);
+        f = body->GetFixtureList();
     }
     /* TODO: Write the rest of this function.
      PROTIP: In order to do just that, we should first clean up the shape
@@ -1492,34 +1536,90 @@ void physics_set2dScale(struct physicsobject* object, double scalex,
      when scaling circles. Also, the way orig_shape_info is filled in the one
      on edges->chains might not be correct, so look into it.
     */
+    
+    // Should be able to re-use this
+    b2FixtureDef fixtureDef;
+    fixtureDef.friction = 0.5; // TODO: ???
+    fixtureDef.density = 1; // TODO: ???
+    
     int i = 0; // orig_shapes[i]
     int j = 0; // orig_shape_info[j]
     b2Shape* s = NULL;
     b2Shape* new_shape = NULL;
     while (i < object2d->orig_shape_count) {
-        s = &(object2d->orig_shapes[i]);
-        switch (s->GetType()) {
-            case b2Shape::e_chain:
-                // TODO
-                ++j;
-            break;
-            case b2Shape::e_circle:
-                // TODO
-            break;
-            case b2Shape::e_edge:
-                //never happens
-            break;
-            case b2Shape::e_polygon:
-                // TODO
-            break;
-            default:
-                printerror("fatal.");
-            break;
-        }
-        }
-        
+        s = object2d->orig_shapes[i];
+        if (scalex == 1 and scaley == 1) {
+            fixtureDef.shape = s;
+            object2d->body->CreateFixture(&fixtureDef);
+        } else {
+            switch (s->GetType()) {
+                case b2Shape::e_chain:
+                    chain = _physics_copyb2ChainShape((b2ChainShape*)s,
+                     &(object2d->orig_shape_info[j]));
+                    // Actual scaling:
+                    for (int k = 0; k < chain->m_count; ++k) {
+                        chain->m_vertices[k].x *= scalex;
+                        chain->m_vertices[k].y *= scaley;
+                    }
+                    fixtureDef.shape = chain;
+                    object2d->body->CreateFixture(&fixtureDef);
+                    delete chain;
+                    ++j;
+                break;
+                case b2Shape::e_circle: // Re-use functions for ovals
+                    _physics_setb2ShapeOval(new_shape, (s->m_radius) * scalex,
+                     (s->m_radius) * scaley);
+                    if (new_shape->GetType() == b2Shape::e_circle) {
+                        circle = (b2CircleShape*)new_shape;
+                        circle->m_p = ((b2CircleShape*)s)->m_p;
+                        circle->m_p.x *= scalex;
+                        circle->m_p.y *= scaley;
+                    } else { // polygon-approximated oval
+                        poly = (b2PolygonShape*)new_shape;
+                        // Adjust vertices for m_p; normals are unaffected.
+                        for (int k = 0; k < poly->m_vertexCount; ++k) {
+                            poly->m_vertices[k].x +=
+                             (((b2CircleShape*)s)->m_p.x) * scalex;
+                            poly->m_vertices[k].y +=
+                             (((b2CircleShape*)s)->m_p.y) * scaley;
+                            poly->m_centroid = ((b2CircleShape*)s)->m_p;
+                            poly->m_centroid.x *= scalex;
+                            poly->m_centroid.y *= scaley;
+                            fixtureDef.shape = poly;
+                        }
+                    }
+                    fixtureDef.shape = new_shape;
+                    object2d->body->CreateFixture(&fixtureDef);
+                    delete new_shape;
+                break;
+                case b2Shape::e_edge:
+                    //never happens
+                break;
+                case b2Shape::e_polygon:
+                    /* Here, normals do change. */
+                    poly = _physics_copyb2PolygonShape((b2PolygonShape*)s,
+                     NULL);
+                    for (int k = 0; k < poly->m_vertexCount; ++k) {
+                        poly->m_vertices[k].x *= scalex;
+                        poly->m_vertices[k].y *= scaley;
+                    }
+                    // Hilarious way to have Box2D recalculate normals:
+#warning "Code relies on b2PolygonShape just copying vertices during Set() \
+without re-allocation of memory for m_vertices."
+                    poly->Set(poly->m_vertices,
+                     poly->m_vertexCount);
+                    fixtureDef.shape = poly;
+                    object2d->body->CreateFixture(&fixtureDef);
+                    delete poly;
+                break;
+                default:
+                    printerror("fatal.");
+                break;
+            } // switch
+        } // else
         ++i;
-    }
+    } // while
+    physics_setMass(object, mass);
 }
 
 // Everything about "various properties" starts here
