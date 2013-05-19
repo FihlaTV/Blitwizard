@@ -56,6 +56,7 @@ extern "C" {
 #define EPSILON 0.0001
 
 #include "physics.h"
+#include "physicsinternal.h"
 #include "mathhelpers.h"
 #include "logging.h"
 
