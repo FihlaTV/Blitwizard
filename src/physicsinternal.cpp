@@ -1606,8 +1606,7 @@ void physics_set2dScale(struct physicsobject* object, double scalex,
                     // Hilarious way to have Box2D recalculate normals:
 #warning "Code relies on b2PolygonShape::Set() just copying vertices without \
 re-allocation of memory for m_vertices."
-                    poly->Set(poly->m_vertices,
-                     poly->m_vertexCount);
+                    poly->Set(poly->m_vertices, poly->m_vertexCount);
                     fixtureDef.shape = poly;
                     object2d->body->CreateFixture(&fixtureDef);
                     delete poly;
