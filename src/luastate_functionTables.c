@@ -21,7 +21,9 @@
 
 */
 
+#include "config.h"
 #include "os.h"
+
 #include "luaheader.h"
 #include "luastate.h"
 #include "luafuncs.h"
@@ -213,6 +215,14 @@ void luastate_CreateGraphicsTable(lua_State* l) {
 void luastate_CreateObjectTable(lua_State* l) {
     // create a lua table populated with all object functions (blitwizard.object)
     lua_newtable(l);
+
+    // o2d/o3d constant:
+    lua_pushstring(l, "o2d");
+    lua_pushnumber(l, 0);
+    lua_settable(l, -3);
+    lua_pushstring(l, "o3d");
+    lua_pushnumber(l, 1);
+    lua_settable(l, -3);
 
     // "regular" functions:
     luastate_registerfunc(l, &luafuncs_object_new, "new");

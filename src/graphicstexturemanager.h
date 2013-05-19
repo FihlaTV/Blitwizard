@@ -24,6 +24,7 @@
 #ifndef BLITWIZARD_GRAPHICSTEXTUREMANAGER_H_
 #define BLITWIZARD_GRAPHICSTEXTUREMANAGER_H_
 
+#include "config.h"
 #include "os.h"
 
 // This is the texture manager.

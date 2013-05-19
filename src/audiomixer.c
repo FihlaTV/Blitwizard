@@ -21,6 +21,9 @@
 
 */
 
+#include "config.h"
+#include "os.h"
+
 #ifdef USE_AUDIO
 
 #include <string.h>
@@ -29,7 +32,6 @@
 #include <limits.h>
 #include <stdint.h>
 
-#include "os.h"
 #include "audio.h"
 #include "audiosource.h"
 #include "audiosourcefadepanvol.h"
@@ -57,12 +59,16 @@
 int lastusedsoundid = 0;
 
 struct soundchannel {
+    int priority;
+    int id;
+    
+    // all the audio sources we use:
     struct audiosource* mixsource;
     struct audiosource* fadepanvolsource;
     struct audiosource* loopsource;
 
-    int priority;
-    int id;
+    // is this sound just fading out?
+    int fadeoutandstop;
 };
 struct soundchannel channels[MAXCHANNELS];
 
@@ -167,10 +173,33 @@ void audiomixer_StopSound(int id) {
     audio_UnlockAudioThread();
 }
 
+void audiomixer_StopSoundWithFadeout(int id, float fadeoutseconds) {
+    if (fadeoutseconds <= 0) {
+        audiomixer_StopSound(id);
+        return;
+    }
+    audio_LockAudioThread();
+    
+    int slot = audiomixer_GetChannelSlotById(id);
+    if (channels[slot].fadeoutandstop) {
+        // already fading out!
+        audio_UnlockAudioThread();
+        return;
+    }
+    if (slot >= 0) {
+        // start fadeout:
+        audiosourcefadepanvol_StartFade(channels[slot].fadepanvolsource,
+            fadeoutseconds, 0, 1);
+        // make sure it doesn't loop:
+        audiosourceloop_SetLooping(channels[slot].loopsource, 0);
+    }
+    audio_UnlockAudioThread();
+}
+
 void audiomixer_AdjustSound(int id, float volume, float panning, int noamplify) {
     audio_LockAudioThread();
     int slot = audiomixer_GetChannelSlotById(id);
-    if (slot >= 0 && channels[slot].fadepanvolsource) {
+    if (slot >= 0 && channels[slot].fadepanvolsource && !channels[slot].fadeoutandstop) {
         audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning, noamplify);
     }
     audio_UnlockAudioThread();
@@ -270,6 +299,10 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
 
     // remember that loop audio source as final processed audio
     channels[slot].mixsource = channels[slot].loopsource;
+    
+    // initialise various things
+    channels[slot].id = id;
+    channels[slot].fadeoutandstop = 0;
 
     // we're done, unlock audio thread:
     audio_UnlockAudioThread();

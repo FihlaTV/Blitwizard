@@ -51,6 +51,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 struct mediaobject* mediaObjects = NULL;
 
@@ -131,40 +132,64 @@ int luafuncs_media_object_new(lua_State* l, int type) {
     if (!m->mediainfo.sound.soundname) {
         // string alloc failed
         lua_pop(l, 1);
+        free(m);
         return haveluaerror(l, "allocating sound path failed");
     }
-
-    // set meta table __index field to class table
-    lua_checkstack(l, 8);  // ensure some stack space
-    lua_getmetatable(l, -1);  // on stack now: metatable
-    lua_getglobal(l, "blitwizard");
-    lua_pushstring(l, "audio");
-    lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio
-    switch (type) {
-    case MEDIA_TYPE_AUDIO_SIMPLE:
-        lua_pushstring(l, "simpleSound");
-        break;
-    case MEDIA_TYPE_AUDIO_PANNED:
-        lua_pushstring(l, "pannedSound");
-        break;
-    case MEDIA_TYPE_AUDIO_POSITIONED:
-        lua_pushstring(l, "positionedSound");
-        break;
-    }
-    lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio, simpleSound
-    lua_insert(l, -3);  // on stack now: metatable, simpleSound, blitwizard, audio
-    lua_pop(l, 2);  // on stack now: metatable, simpleSound
-    lua_pushstring(l, "__index");  // on stack now: metatable, simpleSound, "__index"
-    lua_insert(l, -2);  // on stack now: metatable, "__index", simpleSound
-    lua_settable(l, -3);  // on stack now: metatable
-    lua_pop(l, 1);  // done!
-
+    
     // add to media object list:
     if (mediaObjects) {
         mediaObjects->prev = m;
     }
     m->next = mediaObjects;
     mediaObjects = m;
+
+    // set meta table __index field to class table
+    lua_checkstack(l, 8);  // ensure some stack space
+    lua_getmetatable(l, -1);  // on stack now: metatable
+    if (lua_type(l, -1) == LUA_TNIL) {
+        // no metatable so far, set one:
+        lua_newtable(l);
+        lua_setmetatable(l, -2);
+        
+        // obtain it again:
+        lua_getmetatable(l, -1);
+    }
+    lua_getglobal(l, "blitwizard");
+    if (lua_type(l, -1) != LUA_TTABLE) {
+        return haveluaerror(l, "blitwizard namespace not a table");
+    } else {
+        lua_pushstring(l, "audio");
+        lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio
+        if (lua_type(l, -1) != LUA_TTABLE) {
+            return haveluaerror(l, "blitwizard.audio namespace not a table");
+        } else {
+            char namespace[50];
+            switch (type) {
+            case MEDIA_TYPE_AUDIO_SIMPLE:
+                strcpy(namespace, "simpleSound");
+                break;
+            case MEDIA_TYPE_AUDIO_PANNED:
+                strcpy(namespace, "pannedSound");
+                break;
+            case MEDIA_TYPE_AUDIO_POSITIONED:
+                strcpy(namespace, "positionedSound");
+                break;
+            }
+            lua_pushstring(l, namespace);
+            lua_gettable(l, -2);  // on stack now: metatable, blitwizard, audio, simpleSound
+            if (lua_type(l, -1) != LUA_TTABLE) {
+                return haveluaerror(l,
+                    "blitwizard.audio.%s namespace not a table", namespace);
+            } else {
+                lua_insert(l, -3);  // on stack now: metatable, simpleSound, blitwizard, audio
+                lua_pop(l, 2);  // on stack now: metatable, simpleSound
+                lua_pushstring(l, "__index");  // on stack now: metatable, simpleSound, "__index"
+                lua_insert(l, -2);  // on stack now: metatable, "__index", simpleSound
+                lua_settable(l, -3);  // on stack now: metatable
+                lua_pop(l, 1);  // done!
+            }
+        }
+    }
     return 1;
 #else
     return haveluaerror(l, compiled_without_audio);
@@ -277,7 +302,57 @@ int luafuncs_media_object_play(lua_State* l, int type) {
 }
 
 int luafuncs_media_object_stop(lua_State* l, int type) {
+#ifdef USE_AUDIO
+    // check which function called us:
+    char funcname_simple[] = "blitwizard.audio.simpleSound:stop";
+    char funcname_panned[] = "blitwizard.audio.pannedSound:stop";
+    char funcname_positioned[] = "blitwizard.audio.positionedSound:stop";
+    char funcname_unknown[] = "???";
+    char* funcname = funcname_unknown;
+    switch (type) {
+    case MEDIA_TYPE_AUDIO_SIMPLE:
+        funcname = funcname_simple;
+        break;
+    case MEDIA_TYPE_AUDIO_PANNED:
+        funcname = funcname_panned;
+        break;
+    case MEDIA_TYPE_AUDIO_POSITIONED:
+        funcname = funcname_positioned;
+        return haveluaerror(l,
+        "positioned audio objects are not implemented yet");
+        break;
+    }
+    
+    // obtain sound object:
+    struct mediaobject* m = tomediaobject(l,
+    type, 1, 0, funcname);
+
+    // update current playing state:
+    mediaobject_UpdateIsPlaying(m);
+    if (!m->isPlaying ||
+    m->mediainfo.sound.soundid < 0) {return 0;}
+    
+    // extract fadeout length
+    double fadeoutseconds = 0;
+    if (lua_type(l, 2) != LUA_TNUMBER &&
+    lua_type(l, 2) != LUA_TNIL) {
+        return haveluaerror(l, badargument1, 1,
+        funcname, "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 2) == LUA_TNUMBER) {
+        fadeoutseconds = lua_tonumber(l, 2);
+        if (fadeoutseconds < 0) {
+            fadeoutseconds = 0;
+        }
+    }
+    
+    // stop sound:
+    audiomixer_StopSoundWithFadeout(
+        m->mediainfo.sound.soundid, fadeoutseconds);
     return 0;
+#else
+    return haveluaerror(l, compiled_without_audio);
+#endif
 }
 
 int luafuncs_media_object_setPriority(lua_State* l, int type) {
@@ -334,8 +409,9 @@ int luafuncs_media_simpleSound_play(lua_State* l) {
 /// Stop the sound represented by the simple sound object.
 // Does nothing if the sound doesn't currently play
 // @function stop
-// @tparam number fadeout (optional) If specified, the sound will fade out for the specified amount in seconds. Otherwise it will stop instantly
-
+// @tparam number fadeout (optional) If specified, the sound will
+// fade out for the specified amount in seconds.
+// Otherwise it will stop instantly
 int luafuncs_media_simpleSound_stop(lua_State* l) {
     return luafuncs_media_object_stop(l, MEDIA_TYPE_AUDIO_SIMPLE);
 }

@@ -25,9 +25,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "os.h"
+
 #include "audiosource.h"
 #include "audiosourceresourcefile.h"
+
+#ifdef USE_PHYSFS
 
 struct audiosourceresourcefile_internaldata {
     struct zipfilereader* file;
@@ -167,3 +171,6 @@ struct zipfile* archive, const char* path) {
 
     return a;
 }
+
+#endif  // USE_PHYSFS
+

@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,6 +20,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
 */
+
+#ifndef BLITWIZARD_MATHHELPERS_H_
+#define BLITWIZARD_MATHHELPERS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,4 +62,6 @@ static inline int fastdoubletoint32(double i) {
 #ifdef __cplusplus
 }
 #endif
+
+#endif  // BLITWIZARD_MATHHELPERS_H_
 

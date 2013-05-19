@@ -7,7 +7,7 @@ AC_PREREQ([2.60])
 
 AC_INIT([blitwizard], [0.4], [jonasthiem@googlemail.com])
 
-# Checks for programs:
+# Checks for programs, various options:
 
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
@@ -20,6 +20,7 @@ AC_PROG_OBJC
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 STRIP="strip"
+AC_CONFIG_HEADERS([config.h])
 
 # Evaluate target os:
 
@@ -805,6 +806,7 @@ AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
         FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Isdl/include"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS"
+    AC_DEFINE([USE_SDL_GRAPHICS], [], [Enable SDL graphics subsystem])
 ])
 AS_IF([test "x$ZIP_FEATURE_ENABLED" = xyes],[
     statictest=`echo $STATIC_LIBS_USE | grep PhysFS`
@@ -815,6 +817,8 @@ AS_IF([test "x$ZIP_FEATURE_ENABLED" = xyes],[
         FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iphysfs/src"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_PHYSFS"
+    AC_DEFINE([USE_PHYSFS], [],
+    [Enable .zip archive loading support based on PhysFS])
 ])
 AS_IF([test "x$OGRE_GRAPHICS_FEATURE_ENABLED" = xyes],[
     statictest=`echo $STATIC_LIBS_USE | grep Ogre3D`
@@ -847,6 +851,7 @@ AS_IF([test "x$OGRE_GRAPHICS_FEATURE_ENABLED" = xyes],[
     ])
 
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_OGRE_GRAPHICS"
+    AC_DEFINE([USE_OGRE_GRAPHICS], [], [Enable 3d graphics based on OGRE])
 ])
 AS_IF([test "x$AUDIO_FEATURE_ENABLED" = xyes],[
     AS_IF([test "x$AUDIO_FEATURE_ENABLED_TYPE" = xSDL2],[
@@ -882,6 +887,7 @@ AS_IF([test "x$NULL_GRAPHICS_FEATURE_ENABLED" = xyes],[
         FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardzlib"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_GRAPHICS"
+    AC_DEFINE([USE_GRAPHICS], [], [Enable basic graphics subsystem])
 ])
 
 AS_IF([test "x$NULL_AUDIO_FEATURE_ENABLED" = xyes],[
@@ -901,6 +907,7 @@ AS_IF([test "x$NULL_AUDIO_FEATURE_ENABLED" = xyes],[
         FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iogg/include"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_AUDIO"
+    AC_DEFINE([USE_AUDIO], [], [Enable basic audio subsystem])
 ])
 
 statictest=`echo $STATIC_LIBS_USE | grep lua`
@@ -926,6 +933,7 @@ AS_IF([test "x$NULL_AUDIO_FEATURE_ENABLED" = xyes],[
             FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iflac/include"
         ])
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_FLAC_AUDIO"
+        AC_DEFINE([USE_FLAC_AUDIO], [], [Enable decoding of FLAC audio files])
     ])
 
     # Checking on Speex status:
@@ -938,12 +946,15 @@ AS_IF([test "x$NULL_AUDIO_FEATURE_ENABLED" = xyes],[
             FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Ispeex/include"
         ])
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SPEEX_RESAMPLING"
+        AC_DEFINE([USE_SPEEX_RESAMPLING], [],
+        [Enable audio resampling based on libspeex])
     ])
 
     # Checking on FFmpeg status:
     AS_IF([test "x$FFMPEG_FEATURE_ENABLED" = xyes],[
         FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iffmpeg/"
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_FFMPEG_AUDIO"
+        AC_DEFINE([USE_FFMPEG_AUDIO], [], [Enable audio decoding with FFmpeg])
     ])
 
 ]) # AUDIO_FEATURE_ENABLED
@@ -957,6 +968,7 @@ AS_IF([test "x$PHYSICS2D_FEATURE_ENABLED" = xyes],[
         FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Ibox2d/ -Ibox2d/Box2D/"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_PHYSICS2D"
+    AC_DEFINE([USE_PHYSICS2D], [], [Enable 2d physics based on Box2D])
 ])
 AS_IF([test "x$PHYSICS3D_FEATURE_ENABLED" = xyes],[
     statictest=`echo $STATIC_LIBS_USE | grep bullet`
@@ -967,6 +979,7 @@ AS_IF([test "x$PHYSICS3D_FEATURE_ENABLED" = xyes],[
         FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Ibullet/src/"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_PHYSICS3D"
+    AC_DEFINE([USE_PHYSICS3D], [], [Enable 3d physics based on bullet])
 ])
 
 # Get the scripts/ dir (absolute path):
@@ -1096,6 +1109,8 @@ Build flags:
 AC_SUBST(FINAL_INCLUDE_FLAGS)
 AC_SUBST(FINAL_USE_LIB_FLAGS)
 AC_SUBST(FINAL_LD_FLAGS)
+AC_DEFINE([SYSTEM_TEMPLATE_PATH], "\"${datadir}/blitwizard/templates/\"",
+[The path to the system-wide installed templates])
 AS_IF([test "x$enable_debug" = xyes],[
     AM_CONDITIONAL([ENABLE_DEBUG], [test 1 = 1])
 ],[

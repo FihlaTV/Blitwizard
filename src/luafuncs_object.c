@@ -36,6 +36,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <stdint.h>
 
 #include "os.h"
 #ifdef USE_SDL_GRAPHICS
@@ -57,6 +58,81 @@
 
 struct blitwizardobject* objects = NULL;
 struct blitwizardobject* deletedobjects = NULL;
+
+// an iterator change will cause all iterators to be come invalid.
+static uint64_t iteratorChangeId = 0;
+
+struct objectiteratordata {
+    struct blitwizardobject* currentObj;
+    uint64_t iteratorChangeId;
+};
+
+static int luacfuncs_getObjectsIterator(lua_State* l) {
+    // check if iterator info is empty:
+    if (lua_type(l, lua_upvalueindex(1)) == LUA_TNIL) {
+        // we reached the end of the object list.
+        // return nil:
+        lua_pushnil(l);
+        return 1;
+    }
+    // get iterator info:
+    struct objectiteratordata* oid = lua_touserdata(l,
+        lua_upvalueindex(1));
+    // if object list changed, stop iterator:
+    if (iteratorChangeId != oid->iteratorChangeId) {
+        return haveluaerror(l, "object was created or destroyed, "
+        "iterator is outdated");
+    }
+    // iterate further:
+    oid->currentObj = oid->currentObj->next;
+    struct blitwizardobject* o = oid->currentObj;
+    // pop iterator data:
+    lua_pop(l, 1);
+    if (o) {
+        // push & return iterated object:
+        luacfuncs_pushbobjidref(l, o);
+        return 1;
+    } else {
+        // end of list reached. clear object data:
+        lua_pushnil(l);
+        lua_replace(l, lua_upvalueindex(1));
+        // return nil:
+        lua_pushnil(l);
+        return 1;
+    }
+}
+
+/// Iterate through all existing objects, no matter if 2d or 3d.
+// @function getAllObjects
+// @treturn function returns an iterator function
+// @usage
+// for obj in blitwizard.getAllObjects() do
+//     local x, y = obj:getPosition()
+//     print("object at: " .. x .. ", " .. y)
+// end
+int luafuncs_getAllObjects(lua_State* l) {
+    // prepare iterator data:
+    struct objectiteratordata* oid = lua_newuserdata(l, sizeof(*oid));
+    memset(oid, 0, sizeof(*oid));
+    oid->iteratorChangeId = iteratorChangeId;
+    oid->currentObj = objects;
+
+    // create closure:
+    lua_pushcclosure(l, luacfuncs_getObjectsIterator, 1);
+
+    // return iterator:
+    return 1;
+}
+
+void luacfuncs_objectAddedDeleted(struct blitwizardobject* o, int added) {
+    if (!added) {
+        iteratorChangeId++;
+        // wrap over:
+        if (iteratorChangeId >= UINT64_MAX-2) {
+            iteratorChangeId = 0;
+        }
+    }
+}
 
 /// Blitwizard object which represents an 'entity' in the game world
 // with visual representation, behaviour code and collision shape.
@@ -180,24 +256,24 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 // Objects can have behaviour and collision info attached and move
 // around. They are what eventually makes the action in your game!
 // @function new
-// @tparam boolean 3d specify true if you wish this object to be a 3d object, or false if you want it to be a flat 2d object
+// @tparam number type specify object type: blitwizard.object.o2d or blitwizard.object.o3d
 // @tparam string resource (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.
 // @treturn userdata Returns a @{blitwizard.object|blitwizard object}
 // @usage
 // -- Create a new 2d sprite object from the image file myimage.png
-// local obj = blitwizard.object:new(false, "myimage.png")
+// local obj = blitwizard.object:new(blitwizard.object.o2d, "myimage.png")
 int luafuncs_object_new(lua_State* l) {
     // technical first argument is the object table,
     // which we don't care about in the :new function.
     // actual specified first argument is the second one
     // on the lua stack.
 
-    // first argument needs to be 2d/3d boolean:
-    if (lua_type(l, 2) != LUA_TBOOLEAN) {
+    // first argument needs to be 2d/3d type:
+    if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1, "blitwizard.object:new",
-        "boolean", lua_strtype(l, 2));
+        "number", lua_strtype(l, 2));
     }
-    int is3d = lua_toboolean(l, 2);
+    int is3d = (lua_tointeger(l, 2) == 1);
 
     // second argument, if present, needs to be the resource:
     const char* resource = NULL;
@@ -231,6 +307,8 @@ int luafuncs_object_new(lua_State* l) {
             "object");
         }
     }
+
+    luacfuncs_objectAddedDeleted(o, 1);
 
     // add us to the object list:
     o->next = objects;
@@ -410,7 +488,6 @@ int args, int* boolreturn) {
     // pop error handling function from stack again:
     lua_pop(l, 1);
 
-    //printf("t7: %llu\n", time_GetMicroseconds());
     luastate_resumeGC();
     return (errorHappened == 0);
 }
@@ -441,6 +518,8 @@ struct blitwizardobject* o, const char* eventName) {
 int luafuncs_object_destroy(lua_State* l) {
     // delete the given object
     struct blitwizardobject* o = toblitwizardobject(l, 1, 1, "blitwiz.object.delete");
+
+    luacfuncs_objectAddedDeleted(o, 0);
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
@@ -643,8 +722,10 @@ int luafuncs_object_getScale(lua_State* l) {
 
 /// Change an object's scale, also see @{blitwizard.object:getScale}.
 // This allows to stretch/shrink an object. If physics are enabled
-// with @{blitwizard.object:enableMovableCollision|object:enableMovableCollision}
-// or @{blitwizard.object:enableStaticCollision|object:enableStaticCollision},
+// with @{blitwizard.object:enableMovableCollision|
+// object:enableMovableCollision}
+// or @{blitwizard.object:enableStaticCollision|
+// object:enableStaticCollision},
 // the physics hull will be scaled accordingly aswell.
 //
 // Please note if you want to scale up a unit to precisely
@@ -854,9 +935,13 @@ int luafuncs_object_setZIndex(lua_State* l) {
     if (obj->is3d) {
         return haveluaerror(l, "z index can only be set for 2d objects");
     } else {
+#ifdef USE_GRAPHICS
         if (obj->graphics && obj->graphics->sprite) {
             graphics2dsprites_setZIndex(obj->graphics->sprite, lua_tointeger(l, 2));
         }
+#else
+        return haveluaerror(l, error_nographics);
+#endif
     }
     return 0;
 }
@@ -1075,6 +1160,7 @@ void luacfuncs_object_updateGraphics() {
     }
 }
 
+
 /// Change whether an object is shown at all, or whether it is hidden.
 // If you know objects aren't going to be needed at some point or
 // if you want to hide them until something specific happens,
@@ -1110,7 +1196,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 // @function onGeometryLoaded
 // @usage
 //   -- create a 2d sprite and output its size:
-//   local obj = obj:new(false, "my_image.png")
+//   local obj = obj:new(blitwizard.object.o2d, "my_image.png")
 //   function obj:onGeometryLoaded()
 //     -- call @{blitwizard.object:getDimensions|self:getDimensions} to get
 //     -- its dimensions
@@ -1134,7 +1220,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 // @function doAlways
 // @usage
 // -- have a sprite move up the screen
-// local obj = obj:new(false, "my_image.png")
+// local obj = obj:new(blitwizard.object.o2d, "my_image.png")
 // function obj:doAlways()
 //   -- get old position:
 //   local pos_x, pos_y = self:getPosition()
@@ -1143,4 +1229,32 @@ int luafuncs_object_setVisible(lua_State* l) {
 //   -- set position again:
 //   self:setPosition(pos_x, pos_y)
 // end
+
+/// Set this event function to get notified when
+// a mouse click is done on your object.
+//
+// A double-click will be reported as two onMouseClick events
+// in short succession.
+// @function onMouseClick
+
+/// Set this event function to get notified when
+// the mouse is moved onto your object. (this will also be triggered
+// if the object itself moves in a way so it ends up under the mouse
+// cursor)
+//
+// Please note with lots of @{blitwizard.object|objects}, enabling this
+// on objects with a low Z index (with many others above them) can have
+// an impact on performance.
+// @function onMouseEnter
+
+/// Set this event function to get notified when
+// the mouse was moved onto your object and has now moved
+// away again. (this will also be triggered if the object itself
+// moves away from the mouse position)
+//
+// Please note with lots of @{blitwizard.object|objects}, enabling this
+// on objects with a low Z index (with many others above them) can have
+// an impact on performance.
+// @function onMouseLeave
+
 

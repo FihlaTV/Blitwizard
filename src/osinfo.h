@@ -21,6 +21,9 @@
 
 */
 
+#ifndef BLITWIZARD_OSINFO_H_
+#define BLITWIZARD_OSINFO_H_
+
 // get various system info:
 const char* osinfo_GetSystemName(void);
 const char* osinfo_GetSystemVersion(void);
@@ -37,4 +40,6 @@ const char* osinfo_ShowMessageTool(int error);
 // show a simple message:
 void osinfo_ShowMessage(const char* msg, int error);
 // specify 1 for error message, 0 for info message.
+
+#endif  // BLITWIZARD_OSINFO_H_
 

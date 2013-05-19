@@ -250,7 +250,8 @@ int luafuncs_exit(lua_State* l) {
 // The template directory contains common Lua extensions
 // for blitwizard which offer font rendering and more.
 // @function templatedir
-// @treturn string absolute folder path of template directory (or nil if none)
+// @treturn string absolute folder path of template directory (or nil if none).
+// Can be a relative path if loaded from a .zip archive
 extern char* templatepath;
 int luafuncs_templatedir(lua_State* l) {
     if (!templatepath) {
@@ -280,4 +281,27 @@ int luafuncs_forcetemplatedir(lua_State* l) {
     }
     return 0;
 }
+
+/// Get the path of the game.lua file which has been loaded at startup.
+// @function gameluapath
+// @treturn string absolute file path to game.lua if a file on disk,
+// relative path to game.lua if loaded from a .zip archive
+int luafuncs_gameluapath(lua_State* l) {
+    if (!gameluapath) {
+        lua_pushnil(l);
+    } else {
+        lua_pushstring(l, gameluapath);
+    }
+    return 1;
+}
+
+/// This function reloads the game.lua file that has been initially loaded
+// by blitwizard on startup.
+//
+// For a well-written game.lua, this will reload the game code without affecting
+// the game state (the game will continue to run from where it left off).
+//
+// <b>This function is provided by the templates and only present if you
+// use them.</b>
+// @function reload
 

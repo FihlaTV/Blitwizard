@@ -21,6 +21,7 @@
 
 */
 
+#include "config.h"
 #include "os.h"
 
 #include <stdio.h>
@@ -76,6 +77,9 @@ struct graphics2dsprite {
     // z index:
     int zindex;
 
+    // enabled for sprite events:
+    int enabledForEvent[SPRITE_EVENT_TYPE_COUNT];
+
     // pointers for global linear sprite list:
     struct graphics2dsprite* next,* prev;
 };
@@ -83,9 +87,22 @@ struct graphics2dsprite {
 static struct graphics2dsprite* spritelist = NULL;
 static struct graphics2dsprite* spritelistEnd = NULL;
 
-// initialise threading mutex:
+// the "lowest" sprites enabled for each event:
+static struct graphics2dsprite* firstEventSprite[SPRITE_EVENT_TYPE_COUNT];
+// all the sprites enabled for a given event (which are visible):
+int eventSpriteCount[SPRITE_EVENT_TYPE_COUNT];
+
+// initialise threading mutex and sprite event info:
 __attribute__((constructor)) static void graphics2dsprites_init(void) {
     m = mutex_Create();
+
+    // reset event info:
+    int i = 0;
+    while (i < SPRITE_EVENT_TYPE_COUNT) {
+        firstEventSprite[i] = NULL;
+        eventSpriteCount[i] = 0;
+        i++;
+    }
 }
 
 static void graphics2dsprites_fixClippingWindow(struct
@@ -474,7 +491,52 @@ int visible) {
     mutex_Release(m);
 }
 
-void graphics2dsprites_ReportVisibility(void) {
+void graphics2dsprite_calculateSizeOnScreen(
+struct graphics2dsprite* sprite,
+int cameraId,
+int* screen_x, int* screen_y, int* screen_w,
+int* screen_h) {
+    // get camera settings:
+    double zoom = graphics_GetCamera2DZoom(cameraId);
+    double ratio = graphics_GetCamera2DAspectRatio(cameraId);
+    double centerx = graphics_GetCamera2DCenterX(cameraId);
+    double centery = graphics_GetCamera2DCenterY(cameraId);
+    double w = graphics_GetCameraWidth(cameraId);
+    double h = graphics_GetCameraHeight(cameraId);
+
+    // calculate visible area on screen:
+    double x,y;
+    if (sprite->pinnedToCamera < 0) {
+        x = ((sprite->x - centerx + (w/2) /
+            UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
+        y = ((sprite->y - centery + (h/2) /
+            UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
+    } else {
+        x = sprite->x * UNIT_TO_PIXELS;
+        y = sprite->y * UNIT_TO_PIXELS;
+    }
+    double width = sprite->width;
+    double height = sprite->height;
+    if (width == 0 && height == 0) {
+        width = sprite->texWidth;
+        height = sprite->texHeight;
+        if (sprite->clippingWidth > 0) {
+            width = sprite->clippingWidth;
+            height = sprite->clippingHeight;
+        }
+    } else {
+        width *= UNIT_TO_PIXELS;
+        height *= UNIT_TO_PIXELS;
+    }   
+
+    // set visible area:
+    *screen_x = x;
+    *screen_y = y;
+    *screen_w = w;
+    *screen_h = h;
+}
+
+void graphics2dsprites_reportVisibility(void) {
     int c = graphics_GetCameraCount();
     mutex_Lock(m);
     struct graphics2dsprite* sprite = spritelist;
@@ -487,54 +549,29 @@ void graphics2dsprites_ReportVisibility(void) {
         // cycle through all cameras:
         int i = 0;
         while (i < c) {
-            if (i != sprite->pinnedToCamera && sprite->pinnedToCamera >= 0) {
+            if (i != sprite->pinnedToCamera
+            && sprite->pinnedToCamera >= 0) {
                 // not visible on this camera.
                 i++;
                 continue;
             }
 
             // get camera settings:
-            double w = graphics_GetCameraWidth(i);
-            double h = graphics_GetCameraHeight(i);
-            double zoom = graphics_GetCamera2DZoom(i);
-            double ratio = graphics_GetCamera2DAspectRatio(i);
-            double centerx = graphics_GetCamera2DCenterX(i);
-            double centery = graphics_GetCamera2DCenterY(i);
+            int sw = graphics_GetCameraWidth(i);
+            int sh = graphics_GetCameraHeight(i);
 
-            // calculate visible area on screen:
-            double x,y;
-            if (sprite->pinnedToCamera < 0) {
-                x = ((sprite->x - centerx + (w/2) /
-                    UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
-                y = ((sprite->y - centery + (h/2) /
-                    UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
-            } else {
-                x = sprite->x * UNIT_TO_PIXELS;
-                y = sprite->y * UNIT_TO_PIXELS;
-            }
-            double width = sprite->width;
-            double height = sprite->height;
-            if (width == 0 && height == 0) {
-                width = sprite->texWidth;
-                height = sprite->texHeight;
-                if (sprite->clippingWidth > 0) {
-                    width = sprite->clippingWidth;
-                    height = sprite->clippingHeight;
-                }
-            } else {
-                width *= UNIT_TO_PIXELS;
-                height *= UNIT_TO_PIXELS;
-            }
+            // get sprite pos on screen:
+            int x, y, w, h;
+            graphics2dsprite_calculateSizeOnScreen(sprite,
+            i, &x, &y, &w, &h);
 
             // now check if rectangle is on screen:
-            if (((x >= 0 && x < w) || (x + width >= 0 && x + width < w))
-            && ((y >= 0 && y < h) || (y + height >= 0 && y + height < h))) {
+            if (((x >= 0 && x < sw) || (x + w >= 0 && x + w < sw))
+            &&
+            ((y >= 0 && y < sh) || (y + h >= 0 && y + h < sh))) {
                 // it is.
                 texturemanager_UsingRequest(sprite->request,
                 USING_AT_VISIBILITY_DETAIL);
-                // printf("on screen: %s\n", sprite->path);
-            } else {
-                // printf("not on screen: %s\n", sprite->path);
             }
 
             i++;
@@ -544,6 +581,33 @@ void graphics2dsprites_ReportVisibility(void) {
     }
     mutex_Release(m); 
 }
+
+struct graphics2dsprite*
+graphics2dsprites_getSpriteAtScreenPos(
+int cameraId, int mx, int my, int event) {
+    // go through sprite list from end
+    // (on top) to beginning (below)
+    mutex_Lock(m);
+    struct graphics2dsprite* sprite = spritelistEnd;
+    while (sprite) {
+        // get sprite pos on screen:
+        int x, y, w, h;
+        graphics2dsprite_calculateSizeOnScreen(sprite,
+        cameraId, &x, &y, &w, &h);
+
+        // check if sprite pos is under mouse pos:
+        if (mx >= x && mx < x + w &&
+        my >= y && my < y + h) {
+            // mouse on this sprite
+            return sprite;
+        }
+
+        sprite = sprite->prev;
+    }
+    mutex_Release(m);
+    return NULL;
+}
+
 
 #endif
 

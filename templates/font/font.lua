@@ -57,8 +57,8 @@ blitwizard.font.text = {}
 
   @function new
   @tparam string text the text you want to display
-  @tparam string (optional) font the path to the bitmap of the bitmap font you want to use. You can also specify nil or "default" for the default font
-  @tparam number (optional) scale the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!
+  @tparam string font(optional) the path to the bitmap of the bitmap font you want to use. You can also specify nil or "default" for the default font
+  @tparam number scale (optional) the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!
   @tparam userdata camera the game camera to show the text on. Specify nil for the default camera (first one from @{blitwizard.graphics.getCameras})
   @tparam number width (optional, pass nil if you don't want to specify) the intended maximum width of the text in game units. If the rendered text was to exceed that width, line wraps will be applied to prevent that - it turns into a multi line text with multiple lines.
   @tparam number glyphWidth width of a glyph in the bitmap font in pixels. <b>Optional for the "default" font.</b>
@@ -145,23 +145,49 @@ glyphWidth, glyphHeight, glyphsPerLine)
     local charsPerLine = #text
     if type(width) ~= "nil" or (width or 0) < 0 then
         -- calculate horizontal char limit:
-        charsPerLine = math.floor(width / glyphWidth)
+        charsPerLine = math.floor(
+            (width * camera:gameUnitToPixels()) / glyphWidth)
     end
-
-    -- see if we need to insert line breaks:
-
-
-    -- now create all glyph objects:
-    local i = 1
-    local x = 0
-    local y = 0
-    local gameUnitsInPixels =
-    blitwizard.graphics.getCameras()[1]:gameUnitToPixels()
+    charsPerLine = math.max(1, charsPerLine)
+    
+    -- various information
+    local gameUnitsInPixels = camera:gameUnitToPixels()
     local glyphXShift = glyphWidth / gameUnitsInPixels
     local glyphYShift = glyphHeight / gameUnitsInPixels
     t._glyphDimensionX = glyphXShift
     t._glyphDimensionY = glyphYShift
+    
+    -- convert line breaks:
+    text = text:gsub("\r\n", "\n")
+    text = text:gsub("\r", "\n")
+
+    -- see if we need to insert line breaks:
+    local maxLineLength = width
+    local lines = {text:split("\n")}
+    text = ""
+    for i,line in ipairs(lines) do
+        while #line > charsPerLine do
+            local str = line:sub(1, charsPerLine)
+            str = str:reverse()
+            local spacePos = str:find(" ")
+            if spacePos == nil or spacePos <= 0 then
+                spacePos = charsPerLine
+            else
+                spacePos = (1 + #str) - spacePos
+            end
+            text = text .. line:sub(1, spacePos-1) .. "\n"
+            line = line:sub(spacePos+1)
+        end
+        if #text > 0 then
+            text = text .. "\n"
+        end
+        text = text .. line
+    end
+
     -- walk through all glyphs:
+    local i = 1
+    local x = 0
+    local y = 0
     while i <= #text do
         local character = string.sub(text, i, i)
         if character == "\r" or character == "\n" then
@@ -184,7 +210,8 @@ glyphWidth, glyphHeight, glyphsPerLine)
             end
 
             -- add new glyph:
-            local newGlyph = blitwizard.object:new(false, fontPath)
+            local newGlyph = blitwizard.object:new(
+                blitwizard.object.o2d, fontPath)
             newGlyph.offset = {x = x * scale, y = y * scale}
             newGlyph:setPosition(newGlyph.offset.x, newGlyph.offset.y)
             newGlyph:pinToCamera(camera)
@@ -296,76 +323,4 @@ end
 function blitwizard.font.text:height()
     return self._height
 end
-
---[[
-    -- calculate wrap width:
-    local maxperline = nil
-    if wrapwidth ~= nil then
-        maxperline = math.floor(wrapwidth/font[2])
-        if maxperline < 1 then
-            maxperline = 1
-        end
-    end
-    -- draw the font char by char
-    local i = 1
-    local charsperline = 0
-    while i <= #text do
-        local character = string.byte(string.sub(text, i, i))
-        if character == string.byte("\n") then
-            -- user defined line breaks should be possible:
-            posx = origposx
-            posy = posy + font[3]
-            charsperline = 0
-        else 
-            -- adhere to maximum line length
-            local linefull = false
-            if maxperline then
-                if charsperline >= maxperline then
-                    charsperline = -1
-                    linefull = true
-                    posx = origposx
-                    posy = posy + font[3]
-                    i = i - 1 -- revoke later skipping of current char
-                end
-            end
-            -- draw char:
-            if not linefull then
-                local slot = (character - string.byte(" "))+1
-                drawfontslot(font, slot, posx, posy, r, g, b, a, clipx, clipy, clipw, cliph)
-                posx = posx + font[2]
-            end
-        end
-        i = i + 1
-        charsperline = charsperline + 1
-    end
-end
-
-function blitwiz.font.addToString_inner(str, line, maxlinelength, maxlinecount)
-    -- Split line when horizontally too long
-    while #line > maxlinelen do
-        str = str .. string.sub(line, 1, maxlinelen) .. "\n"
-        line = "  " .. string.sub(line, maxlinelen + 1)
-    end
-    str = str .. line .. "\n"
-
-    -- Scroll text when too many vertical lines
-    local linecount = #{string.split(str, "\n")}
-    while linecount > maxlines do
-        local throwaway = ""
-        throwaway,str = string.split(str, "\n", 1)
-        linecount = linecount - 1
-    end
-    return str
-end
-
-function blitwiz.font.addToString(str, line, maxlinelength, maxlinecount)
-    local lines = {string.split(line, "\n")}
-    for key,value in ipairs(lines) do
-        str = blitwiz.font.addToString_inner(str, value, maxlinelength, maxlinecount)
-    end
-    return str
-end
-
-blitwiz.font.register("font/default.png", "default", 7, 14, 32, "iso-8859-15")
-]]
 

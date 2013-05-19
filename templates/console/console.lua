@@ -50,12 +50,12 @@ do
     local consoleText = ""
     local consoleTextObj = nil
     local consoleOpened = false
-    local consoleYPos = 0
     local slideSpeed = 0.1
     local consoleDisabled = false
     local consoleLineHeight = 0
     local consoleHeight = 240 / blitwizard.graphics.getCameras()[1]
         :gameUnitToPixels()
+    local consoleYPos = -consoleHeight
     local consoleLinesShown = (function()
         local text = blitwizard.font.text:new("Hello", "default", 0.8)
         consoleLineHeight = text:height()
@@ -83,7 +83,8 @@ do
     -- each line is { line = "text", text = blitwizard.font.text or nil }
 
     -- create background image for console:
-    local consoleBg = blitwizard.object:new(false, os.templatedir() ..
+    local consoleBg = blitwizard.object:new(blitwizard.object.o2d,
+        os.templatedir() ..
     "/console/console.png")
     consoleBg:setZIndex(9999)
     consoleBg:setVisible(true)
@@ -115,6 +116,8 @@ do
         line = line:gsub("\r", "")
 
         lines[#lines+1] = { line = line, text = nil }
+    end
+    local function trimConsole()
         while #lines > consoleLinesShown do
             -- remove first line:
             if lines[1].text then
@@ -126,13 +129,6 @@ do
                 i = i + 1
             end
             table.remove(lines, #lines)
-        end
-
-        -- refresh console instantly:
-        if consoleYPos > -consoleHeight then
-            if consoleBg.doAlways then
-                consoleBg:doAlways()
-            end
         end
     end
 
@@ -223,6 +219,7 @@ do
     end
 
     function consoleBg:doAlways()
+        trimConsole()
         if consoleOpened then
             local x,y = consoleBg:getPosition()
             if y < 0 then -- slide down
@@ -347,6 +344,15 @@ do
     function blitwizard.console.disable()
         consoleOpened = false
         consoleDisabled = true
+    end
+    
+    --[[--
+      Print something to the console (works similar to Lua's print)
+      @function print
+    ]] 
+
+    function blitwizard.console.print(str)
+        addConsoleLine(str)
     end
 
     -- listening for keyboard events here:
@@ -508,5 +514,5 @@ do
     end
 end
 
-
+dofile(os.templatedir() .. "/console/reload.lua")
 

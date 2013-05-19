@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Nicolas Haunold, Jonas Thiem
+  Copyright (C) 2012-2013 Nicolas Haunold, Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,6 +21,10 @@
 
 */
 
+#ifndef BLITWIZARD_MACAPPPATHS_H_
+#define BLITWIZARD_MACAPPPATHS_H_
+
 const char* mac_GetPathForApplication(const char* app);
 
+#endif  // BLITWIZARD_MACAPPPATHS_H_
 

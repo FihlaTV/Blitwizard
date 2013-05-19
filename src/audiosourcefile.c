@@ -25,7 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "os.h"
+
 #include "audiosource.h"
 #include "audiosourcefile.h"
 #include "audiosourceresourcefile.h"
@@ -187,11 +189,13 @@ struct audiosource* audiosourcefile_Create(const char* path) {
     // to the appropriate audio source:
     if (l.type != LOCATION_TYPE_DISK) {
         switch (l.type) {
+#ifdef USE_PHYSFS
         case LOCATION_TYPE_ZIP:
             return audiosourceresourcefile_Create(
             l.location.ziplocation.archive,
             l.location.ziplocation.filepath);
         break;
+#endif
         default:
         // unknown location type
         return NULL;

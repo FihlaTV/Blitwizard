@@ -24,6 +24,9 @@
 #ifndef BLITWIZARD_GRAPHICS_H_
 #define BLITWIZARD_GRAPHICS_H_
 
+#include "config.h"
+#include "os.h"
+
 #ifdef USE_GRAPHICS
 
 #ifdef __cplusplus

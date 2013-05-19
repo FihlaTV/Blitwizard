@@ -21,7 +21,9 @@
 
 */
 
+#include "config.h"
 #include "os.h"
+
 #include "resources.h"
 #include <time.h>
 #include <stdlib.h>
@@ -43,7 +45,7 @@
 void luacfuncs_object_initialisePhysicsCallbacks(void);
 
 // report sprite visibility:
-void graphics2dsprites_ReportVisibility(void);
+void graphics2dsprites_reportVisibility(void);
 
 // lua funcs doStep processing function:
 int luacfuncs_object_doAllSteps(int count);
@@ -63,7 +65,7 @@ int windowisfocussed = 0;
 int appinbackground = 0; // app is in background (mobile/Android)
 static int sdlinitialised = 0; // sdl was initialised and needs to be quit
 char* templatepath = NULL; // global template directory path as determined at runtime
-
+char* gameluapath = NULL; // game.lua path as determined at runtime
 char* binpath = NULL;  // path to blitwizard binary
 
 #include "threading.h"
@@ -657,8 +659,10 @@ int main(int argc, char** argv) {
                     printf("\nVarious build options:\n");
                     printf("  SYSTEM_TEMPLATE_PATH:\n   %s\n",
                     SYSTEM_TEMPLATE_PATH);
+                    #if defined(USE_LIB_FLAGS)
                     printf("  FINAL_USE_LIB_FLAGS:\n   %s\n",
                     USE_LIB_FLAGS);
+                    #endif
 
                     printf("\nCheck out http://www.blitwizard.de/"
                     " for info about blitwizard.\n");
@@ -733,6 +737,9 @@ int main(int argc, char** argv) {
         if (!resources_LocateResource(script, NULL)) {
             // it isn't, so we can safely assume it is a folder.
             // -> append "game.lua" to the path
+            if (filenamebuf) {
+                free(filenamebuf);
+            }
             filenamebuf = file_AddComponentToPath(script, "game.lua");
             if (!filenamebuf) {
                 printerror("Error: failed to add component to script path");
@@ -740,6 +747,37 @@ int main(int argc, char** argv) {
                 return 1;
             }
             script = filenamebuf;
+        }
+    }
+
+    // check if script file is internal resource or disk file
+    int scriptdiskfile = 0;
+    struct resourcelocation s;
+    if (!resources_LocateResource(script, &s)) {
+        printerror("Error: cannot locate script file \"%s\"", script);
+        main_Quit(1);
+        return 1;
+    } else {
+        if (s.type == LOCATION_TYPE_ZIP) {
+            scriptdiskfile = 0;
+        } else{
+            scriptdiskfile = 1;
+        }
+    }
+ 
+    // compose game.lua path variable (for os.gameluapath())
+    if (scriptdiskfile) {
+        gameluapath = file_GetAbsolutePathFromRelativePath(script);
+    } else {
+        gameluapath = strdup(script);
+    }
+    if (!gameluapath) { // string allocation failed
+        printerror("Error: failed to allocate script path (gameluapath)");
+        main_Quit(1);
+        return 1;
+    } else {
+        if (gameluapath) {
+            file_MakeSlashesCrossplatform(gameluapath);
         }
     }
 
@@ -772,7 +810,7 @@ int main(int argc, char** argv) {
         free(p);
         script = filenamebuf;
     }
-
+      
 /*#if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Preparing graphics framework...");
 #endif
@@ -878,6 +916,7 @@ int main(int argc, char** argv) {
     }
 
     // open and run provided script file and pass the command line arguments:
+    
     if (!luastate_DoInitialFile(script, scriptargcount, &error)) {
         if (error == NULL) {
             error = outofmem;
@@ -1071,7 +1110,7 @@ int main(int argc, char** argv) {
         }
 
         // report visibility of sprites to texture manager:
-        graphics2dsprites_ReportVisibility();
+        graphics2dsprites_reportVisibility();
 
         // texture manager tick:
         texturemanager_Tick();

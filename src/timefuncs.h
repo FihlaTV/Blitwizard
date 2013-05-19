@@ -24,6 +24,9 @@
 #ifndef BLITWIZARD_TIMEFUNCS_H_
 #define BLITWIZARD_TIMEFUNCS_H_
 
+#include "config.h"
+#include "os.h"
+
 uint64_t time_GetMilliseconds(void);
 // Timestamp derived from SDL_GetTicks(),
 // but deals with wraps (SDL_GetTicks() is originally

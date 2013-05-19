@@ -21,7 +21,9 @@
 
 */
 
+#include "config.h"
 #include "os.h"
+
 #include "luaheader.h"
 #include "luastate.h"
 #include "luafuncs.h"
@@ -345,6 +347,11 @@ static lua_State* luastate_New(void) {
     luastate_CreateObjectTable(l);
     lua_settable(l, -3);
 
+    // blitwizard.getObjects():
+    lua_pushstring(l, "getAllObjects");
+    lua_pushcfunction(l, &luafuncs_getAllObjects);
+    lua_settable(l, -3);
+
     // blitwiz.setStep:
     lua_pushstring(l, "setStep");
     lua_pushcfunction(l, &luafuncs_setstep);
@@ -414,6 +421,9 @@ static lua_State* luastate_New(void) {
     lua_settable(l, -3);
     lua_pushstring(l, "templatedir");
     lua_pushcfunction(l, &luafuncs_templatedir);
+    lua_settable(l, -3);
+    lua_pushstring(l, "gameluapath");
+    lua_pushcfunction(l, &luafuncs_gameluapath);
     lua_settable(l, -3);
     lua_pushstring(l, "forcetemplatedir");
     lua_pushcfunction(l, &luafuncs_forcetemplatedir);

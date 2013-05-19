@@ -41,6 +41,9 @@ int luafuncs_object_getScale(lua_State* l);
 int luafuncs_object_setScale(lua_State* l);
 int luafuncs_object_scaleToDimensions(lua_State* l);
 
+// iterate through all objects:
+int luafuncs_getAllObjects(lua_State* l);
+
 // set the function on top of the stack as event function:
 // (put nil on top of the stack if you want to clear the event)
 void luacfuncs_object_setEvent(lua_State* l,

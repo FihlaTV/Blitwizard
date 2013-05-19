@@ -21,7 +21,9 @@
 
 */
 
+#include "config.h"
 #include "os.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include "logging.h"

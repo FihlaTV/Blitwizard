@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2011 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,6 +21,9 @@
 
 */
 
+#ifndef BLITWIZARD_HASH_H_
+#define BLITWIZARD_HASH_H_
+
 typedef struct hashmap {
         uint32_t size;
         void** items;
@@ -29,3 +32,6 @@ typedef struct hashmap {
 hashmap* hashmap_New(uint32_t size);
 uint32_t hashmap_GetIndex(hashmap* h, const char* buf, size_t len, int ignorecase);
 void hashmap_Free(hashmap* h);
+
+#endif  // BLITWIZARD_HASH_H_
+

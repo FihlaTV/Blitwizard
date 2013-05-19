@@ -32,6 +32,7 @@ void audiomixer_StopSound(int id);
 void audiomixer_AdjustSound(int id, float volume, float panning, int noamplify);
 int audiomixer_IsSoundPlaying(int id);
 int audiomixer_NoSoundsPlaying(void);
+void audiomixer_StopSoundWithFadeout(int id, float fadeoutseconds);
 
 #endif  // BLITWIZARD_AUDIOMIXER_H_
 

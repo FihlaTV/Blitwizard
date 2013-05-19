@@ -26,7 +26,10 @@
 //#define DEBUGTEXTURELOADER
 #endif
 
+#include "config.h"
 #include "os.h"
+
+#ifdef USE_GRAPHICS
 
 #include <stdio.h>
 #include <string.h>
@@ -324,4 +327,6 @@ void* userdata) {
     thread_Spawn(ti, graphicstextureloader_InitialLoaderThread, info);
     thread_FreeInfo(ti);
 }
+
+#endif  // USE_GRAPHICS
 

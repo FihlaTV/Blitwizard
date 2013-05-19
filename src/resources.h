@@ -24,6 +24,9 @@
 #ifndef BLITWIZARD_RESOURCES_H_
 #define BLITWIZARD_RESOURCES_H_
 
+#include "config.h"
+#include "os.h"
+
 #include <stdlib.h>
 
 // The resources code manages all loaded resource zip files
@@ -48,12 +51,14 @@ struct resourcelocation {
     union {
         // specified for LOCATION_TYPE_ZIP
         // (= resource is inside a zip archive)
+#ifdef USE_PHYSFS
         struct {
             // zip archive the resource is in:
             struct zipfile* archive;
             // file path of the file inside the archive:
             char filepath[MAX_RESOURCE_PATH];
         } ziplocation;
+#endif
         // specified for LOCATION_TYPE_DISK:
         // (= resource is at a regular hard disk location)
         struct {

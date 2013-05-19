@@ -9,7 +9,7 @@ source preparetest.sh
 # Get output from blitwizard
 echo "
 -- create a static 3d and a movable 2d object
-local obj1 = blitwizard.object:new(true)
+local obj1 = blitwizard.object:new(blitwizard.object.o3d)
 local success = pcall(function()
     -- attempt to activate 3d collision:
     obj1:enableStaticCollision({type="box",x_size=1,y_size=1,z_size=1})
@@ -19,7 +19,7 @@ if not success then
     print(\"WARNING: This build has no 3d collision, test cannot run meaningfully.\")
     os.exit(0)
 end
-local obj2 = blitwizard.object:new(false)
+local obj2 = blitwizard.object:new(blitwizard.object.o2d)
 local success = pcall(function()
     obj2:enableMovableCollision({type="rectangle",width=2,height=2})
 end)

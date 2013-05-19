@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,9 +21,8 @@
 
 */
 
-#ifndef _BLITWIZARD_CONNECTIONS_H
-
-#define _BLITWIZARD_CONECTIONS_H
+#ifndef BLITWIZARD_CONNECTIONS_H
+#define BLITWIZARD_CONECTIONS_H
 
 #define CONNECTIONINBUFSIZE (1024*10)
 #define CONNECTIONOUTBUFSIZE (1024*50)
@@ -97,5 +96,5 @@ int connections_NoConnectionsOpen(void);
 // Check if a connection is properly connected to a server and ready for normal use
 int connections_CheckIfConnected(struct connection* c);
 
-#endif // _BLITWIZARD_CONNECTIONS_H
+#endif // BLITWIZARD_CONNECTIONS_H
 
