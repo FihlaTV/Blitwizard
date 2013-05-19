@@ -1440,10 +1440,10 @@ void _physics_fill2dOrigShapeCache(struct physicsobject2d* object) {
     b2Fixture* f = body->GetFixtureList();
     union { b2ChainShape* chain; b2CircleShape* circle;
      b2EdgeShape* edge; b2PolygonShape* poly; };
-    /* XXX IMPORTANT: This relies on b2Body.GetFixtureList() returning
+    /* XXX IMPORTANT: This relies on b2Body::GetFixtureList() returning
      fixtures in the reverse order they were added in.
      */
-#warning "Code relies on b2Body.GetFixtureList() returning fixtures in the \
+#warning "Code relies on b2Body::GetFixtureList() returning fixtures in the \
 reverse order they were added in."
     int fixture_count = 0;
     int orig_shape_info_count = 0;
@@ -1604,8 +1604,8 @@ void physics_set2dScale(struct physicsobject* object, double scalex,
                         poly->m_vertices[k].y *= scaley;
                     }
                     // Hilarious way to have Box2D recalculate normals:
-#warning "Code relies on b2PolygonShape just copying vertices during Set() \
-without re-allocation of memory for m_vertices."
+#warning "Code relies on b2PolygonShape::Set() just copying vertices without \
+re-allocation of memory for m_vertices."
                     poly->Set(poly->m_vertices,
                      poly->m_vertexCount);
                     fixtureDef.shape = poly;
