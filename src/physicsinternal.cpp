@@ -1478,6 +1478,10 @@ void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
 void physics_set2dScale(struct physicsobject* object, double scalex,
  double scaley) {
     struct physicsobject2d* object2d = &(object->object2d);
+    //b2Body* body = object2d->body;
+    //b2Fixture* f = body->GetFixtureList();
+    union { b2ChainShape* chain; b2CircleShape* circle;
+     b2EdgeShape* edge; b2PolygonShape* poly; };
     // First, make sure the original shape cache thingy is initialised
     if (object2d->orig_shape_count == 0) {
         _physics_fill2dOrigShapeCache(object2d);
@@ -1488,6 +1492,34 @@ void physics_set2dScale(struct physicsobject* object, double scalex,
      when scaling circles. Also, the way orig_shape_info is filled in the one
      on edges->chains might not be correct, so look into it.
     */
+    int i = 0; // orig_shapes[i]
+    int j = 0; // orig_shape_info[j]
+    b2Shape* s = NULL;
+    b2Shape* new_shape = NULL;
+    while (i < object2d->orig_shape_count) {
+        s = &(object2d->orig_shapes[i]);
+        switch (s->GetType()) {
+            case b2Shape::e_chain:
+                // TODO
+                ++j;
+            break;
+            case b2Shape::e_circle:
+                // TODO
+            break;
+            case b2Shape::e_edge:
+                //never happens
+            break;
+            case b2Shape::e_polygon:
+                // TODO
+            break;
+            default:
+                printerror("fatal.");
+            break;
+        }
+        }
+        
+        ++i;
+    }
 }
 
 // Everything about "various properties" starts here
