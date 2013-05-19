@@ -1,8 +1,7 @@
 
+/* blitwizard game engine - source code file
 
-/* blitwizard 2d engine - source code file
-
-  Copyright (C) 2012 Nicolas Haunold, Jonas Thiem
+  Copyright (C) 2012-2013 Nicolas Haunold, Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -22,6 +21,11 @@
 
 */
 
+#ifndef BLITWIZARD_WIN32APPPATHS_H_
+#define BLITWIZARD_WIN32APPPATHS_H_
+
 const char* win32_GetPathForSteam();
 const char* win32_GetPathForChrome();
+
+#endif  // BLITWIZARD_WIN32APPPATHS_H_
 

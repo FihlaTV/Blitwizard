@@ -37,6 +37,11 @@
     - Add guard clauses for validating parameters (or don't)
 */
 
+extern "C" {
+#include "config.h"
+#include "os.h"
+}
+
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
 
 #ifdef USE_PHYSICS2D

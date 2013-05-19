@@ -21,11 +21,15 @@
 
 */
 
-///
+/// The blitwizard graphics namespace allows to set up the graphics device
+// for graphical 2d/3d output.
 // @author Jonas Thiem  (jonas.thiem@gmail.com)
 // @copyright 2011-2013
 // @license zlib
 // @module blitwizard.graphics
+
+#include "config.h"
+#include "os.h"
 
 #if (defined(USE_GRAPHICS))
 

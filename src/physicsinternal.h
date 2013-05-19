@@ -24,6 +24,9 @@
 #ifndef BLITWIZARD_PHYSICS_H_
 #define BLITWIZARD_PHYSICS_H_
 
+#include "config.h"
+#include "os.h"
+
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
 
 #ifdef __cplusplus

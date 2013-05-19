@@ -21,8 +21,8 @@ else
 blitwizard_STRIP=strip blitwizard$(EXEEXT)
 endif
 
-AM_CFLAGS = $(FINAL_INCLUDE_FLAGS) -fno-PIC -DSYSTEM_TEMPLATE_PATH="\"${datadir}/blitwizard/templates/\"" -DUSE_LIB_FLAGS="\"$(FINAL_USE_LIB_FLAGS)\"" -finline-functions -fno-strict-aliasing -Werror-implicit-function-declaration -Wstrict-prototypes -Wall -Wextra -fno-omit-frame-pointer -L../libs/ $(FINAL_USE_LIB_FLAGS)
-AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -DSYSTEM_TEMPLATE_PATH="\"${datadir}/blitwizard/templates/\"" -DUSE_LIB_FLAGS="\"$(FINAL_USE_LIB_FLAGS)\"" -finline-functions -fno-strict-aliasing -Wall -Wextra -fexceptions -fno-omit-frame-pointer -L../libs/ $(FINAL_USE_LIB_FLAGS)
+AM_CFLAGS = $(FINAL_INCLUDE_FLAGS) -fno-PIC -finline-functions -fno-strict-aliasing -Werror-implicit-function-declaration -Wstrict-prototypes -Wall -Wextra -fno-omit-frame-pointer -L../libs/
+AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -finline-functions -fno-strict-aliasing -Wall -Wextra -fexceptions -fno-omit-frame-pointer -L../libs/
 AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 
 # -fno-PIC is only added for some extra speed, same as -O3.

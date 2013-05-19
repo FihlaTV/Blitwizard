@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,6 +21,10 @@
 
 */
 
+#ifndef BLITWIZARD_SOCKETS_H_
+#define BLITWIZARD_SOCKETS_H_
+
+#include "config.h"
 #include "os.h"
 
 #ifdef USE_SOCKETS
@@ -144,4 +148,6 @@ void so_CloseSSLSocket(int socket, void** sslptr);
 #define IPTYPE_IPV6 2
 
 #endif  // USE_SOCKETS
+
+#endif  // BLITWIZARD_SOCKETS_H_
 

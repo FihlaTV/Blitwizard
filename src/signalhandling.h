@@ -21,6 +21,11 @@
 
 */
 
+#ifndef BLITWIZARD_SIGNALHANDLING_H_
+#define BLITWIZARD_SIGNALHANDLING_H_
+
 // Set signal handling for crash handlers etc:
 void signalhandling_Init(void);
+
+#endif  // BLITWIZARD_SIGNALHANDLING_H_
 

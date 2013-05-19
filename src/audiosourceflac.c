@@ -21,7 +21,8 @@
 
 */
 
-// #include "os.h"
+#include "config.h"
+#include "os.h"
 
 #ifdef USE_AUDIO
 

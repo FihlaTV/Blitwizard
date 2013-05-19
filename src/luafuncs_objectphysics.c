@@ -30,6 +30,9 @@
 // @license zlib
 // @module blitwizard
 
+#include "config.h"
+#include "os.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

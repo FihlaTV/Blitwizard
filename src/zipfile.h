@@ -31,6 +31,9 @@
 #ifndef BLITWIZARD_ZIPFILE_H_
 #define BLITWIZARD_ZIPFILE_H_
 
+#include "config.h"
+#include "os.h"
+
 #ifdef USE_PHYSFS
 
 #include <stdint.h>

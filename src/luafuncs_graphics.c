@@ -28,6 +28,9 @@
 // @license zlib
 // @module blitwizard.graphics
 
+#include "config.h"
+#include "os.h"
+
 #if (defined(USE_GRAPHICS))
 
 #include <string.h>

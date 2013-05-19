@@ -21,6 +21,7 @@
 
 */
 
+#include "config.h"
 #include "os.h"
 
 #include <stdio.h>

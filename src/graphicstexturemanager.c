@@ -27,7 +27,9 @@
 #define DEBUGTEXTUREMANAGERTHREADS
 #endif
 
+#include "config.h"
 #include "os.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>

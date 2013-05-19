@@ -26,12 +26,16 @@
 
 #include "zipfile.h"
 
+#ifdef USE_PHYSFS
+
 struct audiosource* audiosourceresourcefile_Create(
 struct zipfile* archive, const char* path);
 // Create an audio source from a resource file.
 // Use audiosourcefile!
 // It will automatically use this audio source internally,
 // if appropriate.
+
+#endif
 
 #endif  // BLITWIZARD_AUDIOSOURCERESOURCEFILE_H_
 

@@ -24,6 +24,10 @@
 #ifndef BLITWIZARD_GRAPHICSTEXTURELOADER_H_
 #define BLITIZARD_GRAPHICSTEXTURELOADER_H_
 
+#include "os.h"
+
+#ifdef USE_GRAPHICS
+
 #include "graphics.h"
 #include "graphicstexturelist.h"
 
@@ -36,5 +40,7 @@ void* userdata),
 void (*callbackData)(struct graphicstexturemanaged* gtm, int success,
 void* userdata),
 void* userdata);
+
+#endif  // USE_GRAPHICS
 
 #endif  // BLITWIZARD_GRAPHICSTEXTURELOADER_H_

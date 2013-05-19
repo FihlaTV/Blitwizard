@@ -21,5 +21,11 @@
 
 */
 
+#ifndef BLITWIZARD_WIN32CONSOLE_H_
+#define BLITWIZARD_WIN32CONSOLE_H_
+
 void win32console_Launch(void);
 void win32console_Close(void);
+
+#endif  // BLITWIZARD_WIN32CONSOLE_H_
+

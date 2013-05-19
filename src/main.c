@@ -21,7 +21,9 @@
 
 */
 
+#include "config.h"
 #include "os.h"
+
 #include "resources.h"
 #include <time.h>
 #include <stdlib.h>
@@ -657,8 +659,10 @@ int main(int argc, char** argv) {
                     printf("\nVarious build options:\n");
                     printf("  SYSTEM_TEMPLATE_PATH:\n   %s\n",
                     SYSTEM_TEMPLATE_PATH);
+                    #if defined(USE_LIB_FLAGS)
                     printf("  FINAL_USE_LIB_FLAGS:\n   %s\n",
                     USE_LIB_FLAGS);
+                    #endif
 
                     printf("\nCheck out http://www.blitwizard.de/"
                     " for info about blitwizard.\n");

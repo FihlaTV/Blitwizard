@@ -21,6 +21,9 @@
 
 */
 
+#include "config.h"
+#include "os.h"
+
 #ifdef USE_AUDIO
 
 #include <string.h>
@@ -29,7 +32,6 @@
 #include <limits.h>
 #include <stdint.h>
 
-#include "os.h"
 #include "audio.h"
 #include "audiosource.h"
 #include "audiosourcefadepanvol.h"
