@@ -24,6 +24,7 @@
 #ifndef BLITWIZARD_OBJECTGRAPHICSDATA_H_
 #define BLITWIZARD_OBJECTGRAPHICSDATA_H_
 
+#include "config.h"
 #include "os.h"
 
 struct objectgraphicsdata {

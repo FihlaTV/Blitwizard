@@ -21,6 +21,7 @@
 
 */
 
+#include "config.h"
 #include "os.h"
 
 #ifdef USE_GRAPHICS

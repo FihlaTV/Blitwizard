@@ -24,6 +24,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "config.h"
 #include "os.h"
 
 #ifdef USE_PHYSFS

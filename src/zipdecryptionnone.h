@@ -24,6 +24,11 @@
 #ifndef BLITWIZARD_ZIPDECRYPTION_NONE_H_
 #define BLITWIZARD_ZIPDECRYPTION_NONE_H_
 
+#include "config.h"
+#include "os.h"
+
+#ifdef USE_PHYSFS
+
 #include "zipdecryption.h"
 
 // This zip decryption does nothing and just passes on
@@ -31,6 +36,8 @@
 
 struct zipdecrypter* zipdecryption_None(
 struct zipdecryptionfileaccess* fileaccess);
+
+#endif  // USE_PHYSFS
 
 #endif  // BLITWIZARD_ZIPDECRYPTION_NONE_H_
 

@@ -162,7 +162,7 @@ glyphWidth, glyphHeight, glyphsPerLine)
     text = text:gsub("\r", "\n")
 
     -- see if we need to insert line breaks:
-    local maxLineLength = widht
+    local maxLineLength = width
     local lines = {text:split("\n")}
     text = ""
     for i,line in ipairs(lines) do
@@ -177,6 +177,9 @@ glyphWidth, glyphHeight, glyphsPerLine)
             end
             text = text .. line:sub(1, spacePos-1) .. "\n"
             line = line:sub(spacePos+1)
+        end
+        if #text > 0 then
+            text = text .. "\n"
         end
         text = text .. line
     end

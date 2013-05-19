@@ -935,9 +935,13 @@ int luafuncs_object_setZIndex(lua_State* l) {
     if (obj->is3d) {
         return haveluaerror(l, "z index can only be set for 2d objects");
     } else {
+#ifdef USE_GRAPHICS
         if (obj->graphics && obj->graphics->sprite) {
             graphics2dsprites_setZIndex(obj->graphics->sprite, lua_tointeger(l, 2));
         }
+#else
+        return haveluaerror(l, error_nographics);
+#endif
     }
     return 0;
 }

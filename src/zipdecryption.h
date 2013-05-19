@@ -29,6 +29,11 @@
 #ifndef BLITWIZARD_ZIPDECRYPTION_H_
 #define BLITWIZARD_ZIPDECRYPTION_H_
 
+#include "config.h"
+#include "os.h"
+
+#ifdef USE_PHYSFS
+
 #include <unistd.h>
 
 struct zipdecryptionfileaccess;
@@ -117,6 +122,8 @@ struct zipdecrypter {
     // internal data of the decrypter, don't touch:
     void* internaldata;
 };
+
+#endif  // USE_PHYSFS
 
 #endif  // BLITWIZARD_ZIPDECRYPTION_H_
 

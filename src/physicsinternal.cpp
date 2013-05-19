@@ -37,6 +37,11 @@
     - Add guard clauses for validating parameters (or don't)
 */
 
+extern "C" {
+#include "config.h"
+#include "os.h"
+}
+
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
 
 #ifdef USE_PHYSICS2D
@@ -51,6 +56,7 @@
 #define EPSILON 0.0001
 
 #include "physics.h"
+#include "physicsinternal.h"
 #include "mathhelpers.h"
 #include "logging.h"
 

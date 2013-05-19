@@ -21,6 +21,9 @@
 
 */
 
+#include "config.h"
+#include "os.h"
+
 #ifdef USE_AUDIO
 
 // #define FFMPEGDEBUG
@@ -34,7 +37,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "os.h"
 #include "logging.h"
 #include "audiosource.h"
 #include "audiosourceffmpeg.h"

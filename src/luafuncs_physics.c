@@ -30,6 +30,9 @@
 // @license zlib
 // @module blitwizard.physics
 
+#include "config.h"
+#include "os.h"
+
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
 
 #include <string.h>

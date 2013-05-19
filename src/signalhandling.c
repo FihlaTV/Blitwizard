@@ -21,6 +21,7 @@
 
 */
 
+#include "config.h"
 #include "os.h"
 #include "osinfo.h"
 #ifdef UNIX

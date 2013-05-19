@@ -149,6 +149,7 @@ int luafuncs_getTemplateDirectory(lua_State* l) {
     return 1;
 }
 
+#ifdef USE_PHYSFS
 // this lua reader reads from a zip resourcelocation:
 static struct zipfilereader* zfr = NULL;
 static char zfrbuf[256];
@@ -174,6 +175,7 @@ const char* luazipreader(lua_State* l, void* data, size_t* size) {
     *size = r;
     return zfrbuf;
 }
+#endif
 
 int luafuncs_loadfile(lua_State* l) {
     /* our load-file is NOT thread-safe !! */
@@ -226,6 +228,7 @@ int luafuncs_loadfile(lua_State* l) {
     // the location type:
     int r;
     switch (s.type) {
+#ifdef USE_PHYSFS
     case LOCATION_TYPE_ZIP:
         // load with our own internal zip reader:
         if (zfr) {
@@ -242,6 +245,7 @@ int luafuncs_loadfile(lua_State* l) {
             zfr = NULL;
         }
         break;
+#endif
     case LOCATION_TYPE_DISK:
         // regular file loading done by Lua
         r = luaL_loadfile(l, p);

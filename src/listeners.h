@@ -1,7 +1,7 @@
 
-/* blitwizard 2d engine - source code file
+/* blitwizard game engine - source code file
 
-  Copyright (C) 2012 Jonas Thiem
+  Copyright (C) 2012-2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,9 +21,14 @@
 
 */
 
+#ifndef BLITWIZARD_LISTENERS_H_
+#define BLITWIZARD_LISTENERS_H_
+
 int listeners_Create(int port, int ssl, void* userdata);
 int listeners_CheckForConnections(int (*newconnection)(int port, int socket, const char* ip, void* sslptr, void* userdata));
 int listeners_CloseByPort(int port);
 int listeners_HaveActiveListeners(void); // 1: yes, at least one, 0: no, none
 void listeners_CloseAll(void);
+
+#endif  // BLITWIZARD_LISTENERS_H_
 

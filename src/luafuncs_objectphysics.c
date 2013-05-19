@@ -30,6 +30,9 @@
 // @license zlib
 // @module blitwizard
 
+#include "config.h"
+#include "os.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,8 +50,6 @@
 #include "luafuncs_object.h"
 #include "luafuncs_objectphysics.h"
 #include "main.h"
-
-int noEnableCollision = 0;
 
 /// Blitwizard object which represents an 'entity' in the game world
 /// with visual representation, behaviour code and collision shape.
@@ -85,15 +86,12 @@ static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct bl
 
     // attempt callback:
     int boolreturn;
-    noEnableCollision = 1;
     int r = luacfuncs_object_callEvent(l,
     obj, "onCollision", 6 + 2 * use3d, &boolreturn);
     if (!r) {
-        noEnableCollision = 0;
         *enabled = 0;
         return 0;
     }
-    noEnableCollision = 0;
     *enabled = boolreturn;
     return 1;
 }
@@ -217,12 +215,6 @@ int luafuncs_object_disableCollision(lua_State* l) {
 int luafuncs_enableCollision(lua_State* l, int movable) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 1,
     "blitwizard.object:enableCollision");
-
-
-    if (noEnableCollision) {
-        return haveluaerror(l, "cannot enable object collision from inside"
-        " an object:onCollision() callback");
-    }
 
     // validate: parameters need to be a list of shape info tables
     int argcount = lua_gettop(l)-1;
