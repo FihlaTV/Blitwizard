@@ -141,7 +141,7 @@ struct physicsobject2d {
     
     // needed for scaling, NULL on creation, init on scale
     // Array of pointers
-    b2Shape* orig_shapes[];
+    b2Shape** orig_shapes;
     int orig_shape_count;
     // XXX Is currently only allocated for shapes that need it (ugly as fuck).
     // I.e. length(orig_shape_info) <= length(orig_shapes)
@@ -1168,8 +1168,9 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
         // TODO: put into a separate fn, make the whole thing more oop
         num_shapes++;
         object->orig_shape_count = num_shapes;
-        object->orig_shape_info = realloc (object->orig_shape_info,
-         sizeof(*(object->orig_shape_info)) * num_shapes);
+        object->orig_shape_info = (b2_shape_info*) realloc(
+         object->orig_shape_info, sizeof(*(object->orig_shape_info)) *
+         num_shapes);
         
         //construct an edge shape from this
         if (e->inaloop) {
@@ -1391,18 +1392,18 @@ b2CircleShape* _physics_copyb2CircleShape(b2CircleShape* src, b2_shape_info*
 b2PolygonShape* _physics_copyb2PolygonShape(b2PolygonShape* src, b2_shape_info*
  shape_info) {
     b2PolygonShape* dest;
-    dest = new new b2PolygonShape();
+    dest = new b2PolygonShape();
     dest->Set(src->m_vertices, src->m_vertexCount);
     return dest;
 }
 #endif
 
 #ifdef USE_PHYSICS2D
-void _physics_fill2dOrigShapeCache(struct physicsobject* object) {
-    b2Body* body = object->object2d->body;
+void _physics_fill2dOrigShapeCache(struct physicsobject2d* object) {
+    b2Body* body = object->body;
     b2Fixture* f = body->GetFixtureList();
-    union specific_shape { b2ChainShape* chain, b2CircleShape* circle,
-     b2EdgeShape* edge, b2PolygonShape* poly };
+    union { b2ChainShape* chain; b2CircleShape* circle;
+     b2EdgeShape* edge; b2PolygonShape* poly; };
     /* XXX IMPORTANT: This relies on b2Body.GetFixtureList() returning
      fixtures in the reverse order they were added in.
      */
@@ -1416,7 +1417,7 @@ reverse order they were added in."
         ++fixture_count;
         f = f->GetNext();
     }
-    object->orig_shapes = malloc(sizeof(b2Shape*)*fixture_count);
+    object->orig_shapes = (b2Shape**)malloc(sizeof(b2Shape*)*fixture_count);
     object->orig_shape_count = fixture_count;
     
     int orig_shape_info_index = orig_shape_info_count-1;
@@ -1427,18 +1428,18 @@ reverse order they were added in."
             case b2Shape::e_chain:
                 chain = _physics_copyb2ChainShape(
                  (b2ChainShape*)(f->GetShape()),
-                 object->orig_shape_info[orig_shape_info_index]);
-                object->orig_shapes[fixture_index] = malloc(
+                 &(object->orig_shape_info[orig_shape_info_index]));
+                object->orig_shapes[fixture_index] = (b2Shape*)malloc(
                  sizeof(b2ChainShape*));
-                object->orig_shapes[fixture_index] = chain;
+                object->orig_shapes[fixture_index] = (b2Shape*)chain;
                 --orig_shape_info_index;
             break;
             case b2Shape::e_circle:
                 circle = _physics_copyb2CircleShape(
                  (b2CircleShape*)(f->GetShape()), NULL);
-                object->orig_shapes[fixture_index] = malloc(
+                object->orig_shapes[fixture_index] = (b2Shape*)malloc(
                  sizeof(b2CircleShape*));
-                object->orig_shapes[fixture_index] = circle;
+                object->orig_shapes[fixture_index] = (b2Shape*)circle;
             break;
             case b2Shape::e_edge:
                 //never happens
@@ -1447,9 +1448,9 @@ reverse order they were added in."
             case b2Shape::e_polygon:
                 poly = _physics_copyb2PolygonShape(
                  (b2PolygonShape*)(f->GetShape()), NULL);
-                object->orig_shapes[fixture_index] = malloc(
+                object->orig_shapes[fixture_index] = (b2Shape*)malloc(
                  sizeof(b2PolygonShape*));
-                object->orig_shapes[fixture_index] = poly;
+                object->orig_shapes[fixture_index] = (b2Shape*)poly;
             break;
             default:
                 printerror("fatal.");
@@ -1462,7 +1463,7 @@ reverse order they were added in."
 #endif
 
 #ifdef USE_PHYSICS2D
-void _physics_delete2dOrigShapeCache(struct physicsobject* object) {
+void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
     for (int i = 0; i < object->orig_shape_count; ++i) {
         delete object->orig_shapes[i]; // delete shape
     }
@@ -1476,9 +1477,10 @@ void _physics_delete2dOrigShapeCache(struct physicsobject* object) {
 
 void physics_set2dScale(struct physicsobject* object, double scalex,
  double scaley) {
+    struct physicsobject2d* object2d = &(object->object2d);
     // First, make sure the original shape cache thingy is initialised
-    if (object->orig_shape_count == 0) {
-        _physics_fill2dOrigShapeCache(object);
+    if (object2d->orig_shape_count == 0) {
+        _physics_fill2dOrigShapeCache(object2d);
     }
     /* TODO: Write the rest of this function.
      PROTIP: In order to do just that, we should first clean up the shape
