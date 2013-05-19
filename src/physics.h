@@ -48,7 +48,7 @@ struct physicsworld* world,
 int (*callback)(void* userdata, struct physicsobject* a,
     struct physicsobject* b, double x, double y,
     double normalx, double normaly, double force),
-   void* userdata);
+void* userdata);
 #endif
 #ifdef USE_PHYSICS3D
 void physics_set3dCollisionCallback(
@@ -86,8 +86,8 @@ double height);
 void physics_set2dShapeOval(
 struct physicsobjectshape* shape, double width,
 double height);
-void physics_set2dShapeCircle(s
-truct physicsobjectshape* shape, double diameter);
+void physics_set2dShapeCircle(
+struct physicsobjectshape* shape, double diameter);
 // Use those commands multiple times to construct those more complex shapes:
 void physics_add2dShapePolygonPoint(
 struct physicsobjectshape* shape, double xoffset, double yoffset);

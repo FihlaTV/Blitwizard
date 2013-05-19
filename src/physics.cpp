@@ -21,6 +21,17 @@
 
 */
 
+#include "config.h"
+#include "os.h"
+
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "physics.h"
+#include "physicsinternal.h"
+
 struct cachedimpulse {
     double sourcex, sourcey, sourcez;
     double forcex, forcey, forcez;
@@ -51,7 +62,7 @@ struct cachedphysicsobject {
     int rotationrestriction2d;
     int rotationrestriction3daxis;
     double rotationrestriction3dx, rotationrestriction3dy,
-    rotationrestriction3dy;
+    rotationrestriction3dz;
     double rotationrestriction3dfull;
     
     int frictionisset;
@@ -90,3 +101,5 @@ struct cachedphysicsobject* cachedObjects = NULL;
 static void physics_createCachedObjects() {
     
 }
+
+#endif  // defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
