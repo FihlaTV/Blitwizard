@@ -118,6 +118,10 @@
 <h2><a href="#Class_object">Class object </a></h2>
 <table class="function_list">
 	<tr>
+	<td class="name" ><a href="#object:setInvisibleToMouse">object:setInvisibleToMouse&nbsp;(invisible)</a></td>
+	<td class="summary">Set an object to be invisible for mouse handling.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:new">object:new&nbsp;(type, resource)</a></td>
 	<td class="summary">Create a new blitwizard object which is represented as a 2d or
  3d object in the game world.</td>
@@ -534,6 +538,34 @@
         Blitwizard object which represents an 'entity' in the game world
  with visual representation, behaviour code and collision shape.
     <dl class="function">
+    <dt>
+    <a name = "object:setInvisibleToMouse"></a>
+    <strong>object:setInvisibleToMouse&nbsp;(invisible)</strong>
+    </dt>
+    <dd>
+    Set an object to be invisible for mouse handling.
+ Other objects below this particular object may therefore
+ receive the according <a href="../modules/blitwizard.html#object:onMouseEnter">object:onMouseEnter</a>,
+ <a href="../modules/blitwizard.html#object:onMouseLeave">object:onMouseLeave</a> and
+ <a href="../modules/blitwizard.html#object:onMouseClick">object:onMouseClick</a> events instead.
+<p> This is useful e.g. for text that isn't supposed to "steal" the events
+ from the button it is on, or a fade-in sprite that covers the whole
+ <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a>
+ which shouldn't block the mouse events.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">invisible</span>
+            <span class="types"><span class="type">boolean</span></span>
+         Set to true to make it invisible to mouse events,
+ or false to make it receive or block mouse events (default: false)</li>
+    </ul>
+
+
+
+
+
+</dd>
     <dt>
     <a name = "object:new"></a>
     <strong>object:new&nbsp;(type, resource)</strong>
@@ -1082,6 +1114,11 @@
  a mouse click is done on your object.
 <p> A double-click will be reported as two onMouseClick events
  in short succession.
+<p> Any object above this object (higher z-index) can cover this one
+ and steal its mouse events, even if it doesn't have any handlers
+ for mouse events itself. To prevent that, set such covering objects
+ to <a href="../modules/blitwizard.html#object:setInvisibleToMouse">
+ ignore mouse events (object:setInvisibleToMouse)</a>.
 
 
 

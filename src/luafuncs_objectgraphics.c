@@ -29,8 +29,11 @@
 #include <string.h>
 
 #include "graphics.h"
+#include "luaheader.h"
 #include "luafuncs_objectgraphics.h"
 #include "luafuncs_objectphysics.h"
+#include "luafuncs_object.h"
+#include "luastate.h"
 #include "graphics2dsprites.h"
 
 
@@ -68,6 +71,7 @@ const char* resource) {
     if (!o->is3d && !o->graphics->sprite) {
         o->graphics->sprite = graphics2dsprites_create(
         resource, x, y, 0, 0);
+        graphics2dsprites_setUserdata(o->graphics->sprite, o);
         o->scale2d.x = 1;
         o->scale2d.y = 1;
         requestsperframe++;
@@ -293,6 +297,101 @@ int visible) {
             (visible != 0));
         }
     }
+}
+
+void luacfuncs_objectgraphics_enableMouseClickEvent(struct blitwizardobject* o,
+int enabled) {
+    if (!object_checkgraphics(o)) {
+        return;
+    }
+    if (!o->is3d) {
+        if (o->graphics->sprite) {
+            graphics2dsprites_enableForEvent(o->graphics->sprite,
+            SPRITE_EVENT_TYPE_CLICK,
+            enabled);
+        }
+    }
+}
+
+void luacfuncs_objectgraphics_enableMouseMoveEvent(struct blitwizardobject* o,
+int enabled) {
+    if (!object_checkgraphics(o)) {
+        return;
+    }
+    if (!o->is3d) {
+        if (o->graphics->sprite) {
+            graphics2dsprites_enableForEvent(o->graphics->sprite,
+            SPRITE_EVENT_TYPE_MOTION,
+            enabled);
+        }
+    }
+}
+
+void luacfuncs_objectgraphics_setInvisibleToMouseEvents(
+struct blitwizardobject* o, int enabled) {
+    if (!object_checkgraphics(o)) {
+        return;
+    }
+    if (!o->is3d) {
+        if (o->graphics->sprite) {
+            graphics2dsprites_setInvisibleForEvent(o->graphics->sprite,
+            SPRITE_EVENT_TYPE_MOTION,
+            enabled);
+            graphics2dsprites_setInvisibleForEvent(o->graphics->sprite,
+            SPRITE_EVENT_TYPE_CLICK,
+            enabled);
+            if (enabled) {
+                // we should be invisible to event ->
+                // we need to disable us for the events in addition.
+                luacfuncs_objectgraphics_enableMouseMoveEvent(o, 0);
+                luacfuncs_objectgraphics_enableMouseClickEvent(o, 0);
+            } else {
+                // we shall no longer be invisible ->
+                // re-enable us for events.
+                if (o->haveOnMouseEnter || o->haveOnMouseLeave) {
+                    luacfuncs_objectgraphics_enableMouseMoveEvent(o, 1);
+                }
+                if (o->haveOnMouseClick) {
+                    luacfuncs_objectgraphics_enableMouseClickEvent(o, 1);
+                }
+            }
+        }
+    }
+}
+
+void luacfuncs_objectgraphics_processMouseClick(int x, int y,
+int button) {
+    // find out which camera was clicked on:
+    int cameraid = -1;
+#ifdef USE_SDL_GRAPHICS
+    cameraid = 0;
+#else
+#error "Unimplemented code path"
+#endif
+    if (cameraid < 0) {
+        // no viewport/camera was clicked on.
+        return;
+    }
+
+    // process mouse click for 2d objects:
+    struct graphics2dsprite* s = graphics2dsprites_getSpriteAtScreenPos(
+    cameraid, x, y, SPRITE_EVENT_TYPE_CLICK);
+    if (s) {
+        // get associated blitwizard 2d object:
+        struct blitwizardobject* o = graphics2dsprites_getUserdata(s);
+
+        // trigger onMouseClick event:
+        lua_State* l = luastate_GetStatePtr();
+        lua_pushnumber(l, x);
+        lua_pushnumber(l, y);
+        lua_pushnumber(l, button);
+        luacfuncs_object_callEvent(l, o, "onMouseClick",
+        3, 0);
+    }
+}
+
+void luacfuncs_objectgraphics_processMouseMove(int x, int y) {
+
 }
 
 #endif

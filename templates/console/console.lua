@@ -274,30 +274,37 @@ do
                 i = i + 1
             end
         end
-        if consoleTextObj == nil then
-            consoleTextObj = blitwizard.font.text:new(
-            "> " .. consoleText, "default", 1)
-            consoleTextObj:setZIndex(10000)
-        end
-        -- move the console input line object if it exists:
-        if consoleTextObj then
-            -- get a bit of info about screen size etc:
-            local cw,ch = blitwizard.graphics.getCameras()[1]:
-            getVisible2dAreaDimensions(false)
-
-            -- shift to the right when entering very long lines:
-            local shiftleft = 0        
-            if consoleTextObj:width() > cw - 0.1 then
-                shiftleft = consoleTextObj:width() - (cw - 0.1)
+        if consoleOpened or y > -consoleHeight then
+            if consoleTextObj == nil then
+                consoleTextObj = blitwizard.font.text:new(
+                "> " .. consoleText, "default", 1)
+                consoleTextObj:setZIndex(10000)
             end
+            -- move the console input line object if it exists:
+            if consoleTextObj then
+                -- get a bit of info about screen size etc:
+                local cw,ch = blitwizard.graphics.getCameras()[1]:
+                getVisible2dAreaDimensions(false)
 
-            -- move console text to calculated position:
-            consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
-            - consoleLineHeight - 0.1)
+                -- shift to the right when entering very long lines:
+                local shiftleft = 0        
+                if consoleTextObj:width() > cw - 0.1 then
+                    shiftleft = consoleTextObj:width() - (cw - 0.1)
+                end
 
-            -- remember text ending for blinking cursor:
-            local tx,ty = consoleTextObj:getPosition()
-            textEndPos = tx + consoleTextObj:width()
+                -- move console text to calculated position:
+                consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
+                - consoleLineHeight - 0.1)
+
+                -- remember text ending for blinking cursor:
+                local tx,ty = consoleTextObj:getPosition()
+                textEndPos = tx + consoleTextObj:width()
+            end
+        else
+            if consoleTextObj then
+                consoleTextObj:destroy()
+                consoleTextObj = nil
+            end
         end
 
         -- handle blinking cursor
@@ -319,6 +326,8 @@ do
             else
                 blinkCursorText:setVisible(false)
             end
+        else
+            blinkCursorText:setVisible(false)
         end
     end
 

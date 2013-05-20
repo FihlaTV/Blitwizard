@@ -74,7 +74,7 @@
 <h2><a href="#Class_text">Class text </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#text:new">text:new&nbsp;(text, optional, optional, camera, width, glyphWidth, glyphHeight, glyphsPerLine)</a></td>
+	<td class="name" ><a href="#text:new">text:new&nbsp;(text, font, scale, camera, width, glyphWidth, glyphHeight, glyphsPerLine)</a></td>
 	<td class="summary">Create a text object.</td>
 	</tr>
 	<tr>
@@ -133,7 +133,7 @@
     <dl class="function">
     <dt>
     <a name = "text:new"></a>
-    <strong>text:new&nbsp;(text, optional, optional, camera, width, glyphWidth, glyphHeight, glyphsPerLine)</strong>
+    <strong>text:new&nbsp;(text, font, scale, camera, width, glyphWidth, glyphHeight, glyphsPerLine)</strong>
     </dt>
     <dd>
     Create a text object.  You submit a string, a font bitmap path
@@ -147,12 +147,12 @@
         <li><span class="parameter">text</span>
             <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
          the text you want to display</li>
-        <li><span class="parameter">optional</span>
+        <li><span class="parameter">font</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+        (optional) the path to the bitmap of the bitmap font you want to use. You can also specify nil or "default" for the default font</li>
+        <li><span class="parameter">scale</span>
             <span class="types"><span class="type">number</span></span>
-        ) scale the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!</li>
-        <li><span class="parameter">optional</span>
-            <span class="types"><span class="type">number</span></span>
-        ) scale the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!</li>
+         (optional) the scale of the font. 1 for normal scale, anything else for scaling up (larger)/down (smaller). How large that turns out depends on how large the font originally was - give it a try!</li>
         <li><span class="parameter">camera</span>
             <span class="types"><span class="type">userdata</span></span>
          the game camera to show the text on. Specify nil for the default camera (first one from <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a>)</li>

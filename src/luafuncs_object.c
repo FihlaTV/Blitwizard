@@ -205,7 +205,100 @@ static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
 void luacfuncs_object_obtainRegistryTable(lua_State* l,
 struct blitwizardobject* o);
 
+static void luafuncs_checkObjFunc(lua_State* l, const char* name,
+int* result) {
+    lua_pushstring(l, name);
+    lua_gettable(l, -2);
+    if (lua_type(l, -1) == LUA_TFUNCTION) {
+        lua_pop(l, 1);
+        *result = 1;
+        return;
+    }
+    lua_pop(l, 1);
+    *result = 0;
+}
+
+static void luacfuncs_updateObjectHandlers(lua_State* l,
+struct blitwizardobject* o) {
+    luacfuncs_object_obtainRegistryTable(l, o);
+    luafuncs_checkObjFunc(l, "onMouseEnter", &o->haveOnMouseEnter);
+    luafuncs_checkObjFunc(l, "onMouseLeave", &o->haveOnMouseLeave);
+    luafuncs_checkObjFunc(l, "onMouseClick", &o->haveOnMouseClick);
+    luafuncs_checkObjFunc(l, "doAlways", &o->haveDoAlways);
+    luafuncs_checkObjFunc(l, "onCollision", &o->haveOnCollision);
+
+    // enable mouse event handling:
+    if (!o->invisibleToMouse) {
+        if (o->haveOnMouseEnter || o->haveOnMouseLeave) {
+            luacfuncs_objectgraphics_enableMouseMoveEvent(o, 1);
+        } else {
+            luacfuncs_objectgraphics_enableMouseMoveEvent(o, 0);
+        }
+        if (o->haveOnMouseClick) {
+            luacfuncs_objectgraphics_enableMouseClickEvent(o, 1);
+        } else {
+            luacfuncs_objectgraphics_enableMouseClickEvent(o, 0);
+        }
+    }
+
+    lua_pop(l, 1);  // pop registry table
+}
+
+// __newindex handler for blitwizard object refs:
+static int luafuncs_bobjnewindex(lua_State* l) {
+    int checkForEventHandlers = 0;
+    // first, get blitwizard object:
+    if (lua_type(l, 1) != LUA_TUSERDATA) {
+        return haveluaerror(l, "__newindex handler wasn't passed a "
+        "blitwizard object");
+    }
+    struct blitwizardobject* o = toblitwizardobject(l, 1, 0,
+        "blitwizard.object:__newindex"); 
+    // see if this handler affects anything that is of interest to us:
+    if (lua_type(l, 2) == LUA_TSTRING) {
+        const char* p = lua_tostring(l, 2);
+        if (strcmp(p, "onMouseClick") == 0 ||
+        strcmp(p, "onMouseEnter") == 0 ||
+        strcmp(p, "onMouseLeave") == 0 ||
+        strcmp(p, "doAlways") == 0 ||
+        strcmp(p, "onCollision") == 0) {
+            checkForEventHandlers = 1;
+        }
+    }
+    // with a stupid key, there is nothing to do:
+    if (lua_type(l, 2) != LUA_TSTRING && lua_type(l, 2) != LUA_TNUMBER) {
+        return 0;
+    }
+    // throw everything above arg 3 away:
+    if (lua_gettop(l) > 3) {
+        lua_pop(l, lua_gettop(l)-3);
+    }
+    // make sure we have 3 args (= value):
+    while (lua_gettop(l) < 3) {
+        lua_pushnil(l);
+    }
+    // now simply do it:
+    luacfuncs_object_obtainRegistryTable(l, o);
+    lua_insert(l, -3);
+    lua_rawset(l, -3);
+    lua_pop(l, 1);  // remaining blitwizard object on stack
+    // assuming we made it this far, notify of changed event handlers:
+    if (checkForEventHandlers) {
+        luacfuncs_updateObjectHandlers(l, o);
+    }
+    return 0;
+} 
+
 void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
+    // attempt to obtain ref from registry:
+    lua_pushstring(l, o->selfRefName);
+    lua_gettable(l, LUA_REGISTRYINDEX);
+    if (lua_type(l, -1) == LUA_TUSERDATA) {
+        // reference present in registry!
+        return;
+    }
+    lua_pop(l, 1); // pop again whatever that was
+    
     // create luaidref userdata struct which points to the blitwizard object
     struct luaidref* ref = lua_newuserdata(l, sizeof(*ref));
     memset(ref, 0, sizeof(*ref));
@@ -223,7 +316,7 @@ void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
     luacfuncs_object_obtainRegistryTable(l, o);
     lua_settable(l, -3);
     lua_pushstring(l, "__newindex");
-    luacfuncs_object_obtainRegistryTable(l, o);
+    lua_pushcfunction(l, &luafuncs_bobjnewindex);
     lua_settable(l, -3);
     lua_setmetatable(l, -2);
 
@@ -247,6 +340,32 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
         haveluaerror(l, badargument2, arg, func, "this blitwizard object was deleted");
     }
     return o;
+}
+
+/// Set an object to be invisible for mouse handling.
+// Other objects below this particular object may therefore
+// receive the according @{blitwizard.object:onMouseEnter|object:onMouseEnter},
+// @{blitwizard.object:onMouseLeave|object:onMouseLeave} and
+// @{blitwizard.object:onMouseClick|object:onMouseClick} events instead.
+//
+// This is useful e.g. for text that isn't supposed to "steal" the events
+// from the button it is on, or a fade-in sprite that covers the whole
+// @{blitwizard.graphics.camera|camera}
+// which shouldn't block the mouse events.
+// @function setInvisibleToMouse
+// @tparam boolean invisible Set to true to make it invisible to mouse events,
+// or false to make it receive or block mouse events (default: false)
+int luafuncs_object_setInvisibleToMouse(lua_State* l) {
+    struct blitwizardobject* o =
+    toblitwizardobject(l, 1, 1, "blitwiz.object:setInvisibleToMouse");
+
+    if (lua_type(l, 2) != LUA_TBOOLEAN) {
+        haveluaerror(l, badargument1, 1,
+        "blitwizard.object:setInvisibleToMouse", "boolean", lua_strtype(l, 2));
+    }
+    int b = lua_toboolean(l, 2);
+    luacfuncs_objectgraphics_setInvisibleToMouseEvents(o, b);
+    return 0;
 }
 
 /// Create a new blitwizard object which is represented as a 2d or
@@ -317,11 +436,19 @@ int luafuncs_object_new(lua_State* l) {
     }
     objects = o;
 
+    // prepare registry entry name for self reference:
+    snprintf(o->selfRefName, sizeof(o->selfRefName), "bobj_self_%p", o);
+
     // if resource is present, start loading it:
     luafuncs_objectgraphics_load(o, o->respath);
 
-    // push idref to object onto stack as return value:
+    // create idref to object, which we will store up to object deletion:
+    lua_pushstring(l, o->selfRefName);
     luacfuncs_pushbobjidref(l, o);
+    lua_settable(l, LUA_REGISTRYINDEX);
+
+    // obtain ref again:
+    luacfuncs_pushbobjidref(l, o); 
     return 1;
 }
 
@@ -492,23 +619,6 @@ int args, int* boolreturn) {
     return (errorHappened == 0);
 }
 
-void luacfuncs_object_setEvent(lua_State* l,
-struct blitwizardobject* o, const char* eventName) {
-    // set the event function on top of the stack
-    // to the blitwizard object
-
-    // obtain registry table for object:
-    luacfuncs_object_obtainRegistryTable(l, o);
-    lua_insert(l, -2);  // move it below event func on stack
-
-    // set function to table:
-    char func[512];
-    snprintf(func, sizeof(func), "eventfunc_%s", eventName);
-    lua_pushstring(l, func);
-    lua_insert(l, -2);  // move string below event func
-    lua_settable(l, -3); 
-}
-
 /// Destroy the given object explicitely, to make it instantly disappear
 // from the game world.
 //
@@ -517,9 +627,16 @@ struct blitwizardobject* o, const char* eventName) {
 // @function destroy
 int luafuncs_object_destroy(lua_State* l) {
     // delete the given object
-    struct blitwizardobject* o = toblitwizardobject(l, 1, 1, "blitwiz.object.delete");
+    struct blitwizardobject* o =
+    toblitwizardobject(l, 1, 1, "blitwiz.object:destroy");
 
+    // tell getAllObjects() iterator of change:
     luacfuncs_objectAddedDeleted(o, 0);
+
+    // remove self ref in registry:
+    lua_pushstring(l, o->selfRefName);
+    lua_pushnil(l);
+    lua_settable(l, LUA_REGISTRYINDEX);
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
@@ -1235,6 +1352,12 @@ int luafuncs_object_setVisible(lua_State* l) {
 //
 // A double-click will be reported as two onMouseClick events
 // in short succession.
+//
+// Any object above this object (higher z-index) can cover this one
+// and steal its mouse events, even if it doesn't have any handlers
+// for mouse events itself. To prevent that, set such covering objects
+// to @{blitwizard.object:setInvisibleToMouse|
+// ignore mouse events (object:setInvisibleToMouse)}.
 // @function onMouseClick
 
 /// Set this event function to get notified when

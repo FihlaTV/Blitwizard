@@ -40,14 +40,14 @@ function blitwizard.onInit()
     blitwizard.graphics.getCameras()[1]:set2dZoomFactor(2) -- zoom into things
 
     -- Introduction text:
-    local text = blitwizard.font.text:new("Welcome to " .. _VERSION .. "!" ..
+    --[[local text = blitwizard.font.text:new("Welcome to " .. _VERSION .. "!" ..
     "\n\n  Press F9 for developer console." ..
     "\n\n  Visit http://www.blitwizard.de/doc-files/api-stable " ..
     "for documentation." ..
     "\n\n  Need help? Check out the forums: http://www.blitwizard.de/forum/"
     , "default", 1.3)
     text:move(1.5, 3.5) -- move a bit away from top/left corner
-    text:setZIndex(2)
+    text:setZIndex(2)]]
 
     -- Create top bar:
     local bar = blitwizard.object:new(
@@ -87,7 +87,7 @@ function blitwizard.onInit()
     end
 
     -- when clicking, open sample browser:
-    function button:onClick()
+    function button:onMouseClick()
         -- destroy all orbs:
         noOrbs = true
 
@@ -98,7 +98,7 @@ function blitwizard.onInit()
     -- spawn a few orbs (see spawnOrb code below):
     local i = 0
     while i < 50 do
-        spawnOrb()
+        --spawnOrb()
         i = i + 1
     end
 end
@@ -116,10 +116,9 @@ function spawnOrb()
 
     -- random position, scale and alpha:
     obj:setPosition(math.random() * 6 - 3, math.random() * 6 - 3)
-    local v = 0.2 + 5*math.random()
+    local v = 0.2 + 6*math.random()
     obj:setScale(v, v)
     obj:setTransparency(math.random())    
-    obj:enableMovableCollision({type="circle", diameter=0.1})
 
     -- initialise physics:
     function obj:onGeometryLoaded()
@@ -132,15 +131,13 @@ function spawnOrb()
         self:impulse(math.random() * 100 - 50, -math.random() * 1)
     end
     function obj:onCollision(obj)
-        -- ignore all collisions,
-        -- so that the orbs will nicely fall down
-        -- without pushing each other away:
+        -- ignore all collisions with other orbs:
         return false
     end
 
     function obj:doAlways()
         -- if too far from visible area, delete and spawn new:
-        local x,y = self:getPosition()
+        local x, y = self:getPosition()
         if y > 3 or x > 4 or x < -4 then
             self:destroy()
             spawnOrb()

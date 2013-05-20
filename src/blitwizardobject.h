@@ -36,7 +36,20 @@ struct blitwizardobject {
     int deleted;  // 1: deleted (deletedobjects), 0: regular (objects)
     int refcount;  // refcount of luaidref references
     int doStepDone;  // used by luacfuncs_object_doAllSteps()
-    char regTableName[64];
+
+    // stuff we stored in the registry:
+    char regTableName[64];  // registry table with custom user data
+    char selfRefName[64];  // self ref
+
+    // some event info:
+    int haveDoAlways;
+    int haveOnCollision;
+    int haveOnMouseEnter;
+    int haveOnMouseLeave;
+    int haveOnMouseClick;
+    int mouseWasReportedOnObject;  // for mouse enter/leave
+    int invisibleToMouse;  // 1: invisible to mouse events, 0: normal
+
     union {
         double z;
         int zindex;
