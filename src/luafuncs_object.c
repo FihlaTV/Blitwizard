@@ -187,6 +187,19 @@ void cleanupobject(struct blitwizardobject* o, int fullclean) {
             o->physics = NULL;
         }
 #endif
+        // remove from important object list:
+        if (o->importantPrev || o->importantNext || importantObjects == o) {
+            if (o->importantPrev) {
+                o->importantPrev->importantNext = o->importantNext;
+            } else {
+                importantObjects = o->importantNext;
+            }
+            if (o->importantNext) {
+                o->importantNext->importantPrev = o->importantPrev;
+            }
+        }
+
+        // clear table in registry:
         luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
     } else {
         luacfuncs_objectgraphics_setVisible(o, 0);
@@ -588,7 +601,7 @@ int args, int* boolreturn) {
     }
 
     // for speed reasons, disable GC:
-    luastate_suspendGC();
+    //luastate_suspendGC();
 
     // ensure sufficient stack size:
     lua_checkstack(l, 4+args);
@@ -664,7 +677,7 @@ int args, int* boolreturn) {
     // pop error handling function from stack again:
     lua_pop(l, 1);
 
-    luastate_resumeGC();
+    //luastate_resumeGC();
     return (errorHappened == 0);
 }
 
