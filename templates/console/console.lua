@@ -137,9 +137,9 @@ do
         print(tostring(var))
     end
 
-    function blitwizard.onLog(msgtype, msg)
-        addConsoleLine("[LOG:" .. msgtype .. "] " .. msg)
-    end
+    --function blitwizard.onLog(msgtype, msg)
+    --    addConsoleLine("[LOG:" .. msgtype .. "] " .. msg)
+    --end
 
     local oldprint = print
     function print(...)
