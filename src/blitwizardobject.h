@@ -43,6 +43,7 @@ struct blitwizardobject {
 
     // some event info:
     int haveDoAlways;
+    int haveDoOften;
     int haveOnCollision;
     int haveOnMouseEnter;
     int haveOnMouseLeave;
@@ -74,7 +75,15 @@ struct blitwizardobject {
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
     struct objectphysicsdata* physics;
 #endif
-    struct blitwizardobject* prev,*next;
+
+    // list pointers for regular objects list:
+    struct blitwizardobject* prev, *next;
+
+    // list pointers for importantObjects list:
+    struct blitwizardobject* importantPrev, *importantNext;
+
+    // remember whether we already marked this object as important:
+    int markedImportant;
 
     // temporarily disabled events
     // (due to errors in event handlers)

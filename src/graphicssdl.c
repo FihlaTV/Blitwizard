@@ -157,7 +157,7 @@ void graphics_Close(int preservetextures) {
 #ifdef ANDROID
 void graphics_ReopenForAndroid() {
     // throw away hardware textures:
-    graphicstexturelist_InvalidateHWTextures();
+    graphicstexturemanager_DeviceLost();
 
     // preserve old window size:
     int w,h;
@@ -192,7 +192,7 @@ void graphics_ReopenForAndroid() {
     graphics_SetMode(w, h, 1, 0, title, renderer, &e);
 
     // transfer textures back to hardware:
-    graphicstexturelist_TransferTexturesToHW();
+    graphicstexturemanager_DeviceReopened();
 }
 #endif
 
@@ -397,7 +397,8 @@ HWND graphics_GetWindowHWND() {
 }
 #endif
 
-int graphics_SetMode(int width, int height, int fullscreen, int resizable, const char* title, const char* renderer, char** error) {
+int graphics_SetMode(int width, int height, int fullscreen,
+int resizable, const char* title, const char* renderer, char** error) {
 
 #if defined(ANDROID)
     if (!fullscreen) {
@@ -474,7 +475,8 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
     unsigned int oldw = 0;
     unsigned int oldh = 0;
     graphics_GetWindowDimensions(&oldw,&oldh);
-    if (mainwindow && mainrenderer && width == (int)oldw && height == (int)oldh) {
+    if (mainwindow && mainrenderer &&
+    width == (int)oldw && height == (int)oldh) {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(mainrenderer, &info);
         if (strcasecmp(preferredrenderer, info.name) == 0) {
@@ -518,13 +520,13 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
         }
     }
 
-    //  preserve textures by managing them on our own for now
-    graphicstexturelist_TransferTexturesFromHW();
+    // notify texture manager of device shutdown
+    graphicstexturemanager_DeviceLost();
 
-    //  destroy old window/renderer if we got one
+    // destroy old window/renderer if we got one
     graphics_Close(1);
 
-    //  create window
+    // create window
     if (fullscreen) {
         mainwindow = SDL_CreateWindow(title, 0,0, width, height, SDL_WINDOW_FULLSCREEN);
         mainwindowfullscreen = 1;
@@ -575,6 +577,9 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
         SDL_RendererInfo info;
         SDL_GetRendererInfo(mainrenderer, &info);
     }
+
+    // notify texture manager that device is back
+    graphicstexturemanager_DeviceRestored();
 
     // Transfer textures back to SDL
     /*if (!graphicstexturelist_TransferTexturesToHW()) {

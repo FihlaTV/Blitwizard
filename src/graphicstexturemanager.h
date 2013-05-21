@@ -206,6 +206,13 @@ void texturemanager_ReleaseFromTextureAccess(void);
 // Query the current GPU memory use by the texture manager in bytes:
 uint64_t texturemanager_getGpuMemoryUse(void);
 
+// Report that the device was lost and that all GPU textures are now
+// declared garbage:
+void graphicstexturemanager_DeviceLost(void);
+
+// Report that device was restored and GPU textures may be reuploaded:
+void graphicstexturemanager_DeviceRestored(void);
+
 #endif  // USE_GRAPHICS
 
 #endif  // BLITWIZARD_GRAPHICSTEXTUREMANAGER_H_

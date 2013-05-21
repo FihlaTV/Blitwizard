@@ -85,16 +85,18 @@ static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct bl
     lua_pushnumber(l, force);
 
     // attempt callback:
-    int boolreturn;
-    int r = luacfuncs_object_callEvent(l,
-    obj, "onCollision", 6 + 2 * use3d, &boolreturn);
-    if (!r) {
-        // an error happened.
-        // enable the collision per default:
-        *enabled = 1;
-        return 0;
+    if (obj->haveOnCollision) {
+        int boolreturn;
+        int r = luacfuncs_object_callEvent(l,
+        obj, "onCollision", 6 + 2 * use3d, &boolreturn);
+        if (!r) {
+            // an error happened.
+            // enable the collision per default:
+            *enabled = 1;
+            return 0;
+        }
+        *enabled = boolreturn;
     }
-    *enabled = boolreturn;
     return 1;
 }
 

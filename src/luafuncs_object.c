@@ -56,8 +56,22 @@
 #include "graphics2dsprites.h"
 #include "luafuncs_graphics_camera.h"
 
+// list of all objects (non-deleted):
 struct blitwizardobject* objects = NULL;
+// deleted objects:
 struct blitwizardobject* deletedobjects = NULL;
+
+// list of all "important" objects:
+struct blitwizardobject* importantObjects = NULL;
+// (=doAlways or other per-logic-frame stuff)
+
+// list of objects to add or remove from importantObjects list:
+struct addRemoveObject {
+    int remove;
+    struct blitwizardobject* obj;
+    struct addRemoveObject* next;
+};
+struct addRemoveObject* addRemoveImportantObjects = NULL;
 
 // an iterator change will cause all iterators to be come invalid.
 static uint64_t iteratorChangeId = 0;
@@ -124,6 +138,10 @@ int luafuncs_getAllObjects(lua_State* l) {
     return 1;
 }
 
+// objectAddedDeleted function which gets informed of all created
+// and deleted objects.
+// This is mainly for invalidating all iterators (see luafuncs_getAllObjects)
+// because they would otherwise run through a now inconsistent object list.
 void luacfuncs_objectAddedDeleted(struct blitwizardobject* o, int added) {
     if (!added) {
         iteratorChangeId++;
@@ -132,6 +150,26 @@ void luacfuncs_objectAddedDeleted(struct blitwizardobject* o, int added) {
             iteratorChangeId = 0;
         }
     }
+}
+
+static void luacfuncs_object_setImportant(struct blitwizardobject* o,
+int important) {
+    if ((important != 0) == o->markedImportant) {
+        // already marked as intended.
+        return;
+    }
+    o->markedImportant = (important != 0);
+
+    struct addRemoveObject* a = malloc(sizeof(*a));
+    if (!a) {
+        // nothing we can do
+        return;
+    }
+    memset(a, 0, sizeof(*a));
+    a->obj = o;
+    a->remove = (important == 0);
+    a->next = addRemoveImportantObjects;
+    addRemoveImportantObjects = a;
 }
 
 /// Blitwizard object which represents an 'entity' in the game world
@@ -225,6 +263,7 @@ struct blitwizardobject* o) {
     luafuncs_checkObjFunc(l, "onMouseLeave", &o->haveOnMouseLeave);
     luafuncs_checkObjFunc(l, "onMouseClick", &o->haveOnMouseClick);
     luafuncs_checkObjFunc(l, "doAlways", &o->haveDoAlways);
+    luafuncs_checkObjFunc(l, "doOften", &o->haveDoOften);
     luafuncs_checkObjFunc(l, "onCollision", &o->haveOnCollision);
 
     // enable mouse event handling:
@@ -239,6 +278,15 @@ struct blitwizardobject* o) {
         } else {
             luacfuncs_objectgraphics_enableMouseClickEvent(o, 0);
         }
+    }
+
+    // set as important object if doAlways is set:
+    if (o->haveDoAlways) {
+        // important (= needs to be processed each logic frame)
+        luacfuncs_object_setImportant(o, 1);
+    } else {
+        // unimportant (= processing 4 times a second is sufficient)
+        luacfuncs_object_setImportant(o, 0);
     }
 
     lua_pop(l, 1);  // pop registry table
@@ -261,7 +309,8 @@ static int luafuncs_bobjnewindex(lua_State* l) {
         strcmp(p, "onMouseEnter") == 0 ||
         strcmp(p, "onMouseLeave") == 0 ||
         strcmp(p, "doAlways") == 0 ||
-        strcmp(p, "onCollision") == 0) {
+        strcmp(p, "onCollision") == 0 ||
+        strcmp(p, "doOften") == 0) {
             checkForEventHandlers = 1;
         }
     }
@@ -555,7 +604,7 @@ int args, int* boolreturn) {
     if (lua_type(l, -1) != LUA_TFUNCTION) {
         lua_pop(l, 2);  // pop function, registry table
         lua_pop(l, args);  // remove args
-        luastate_resumeGC();
+        //luastate_resumeGC();
         return 1;
     }
 
@@ -1194,28 +1243,59 @@ int luafuncs_object_pinToCamera(lua_State* l) {
 #endif
 
 static void luacfuncs_object_doStep(lua_State* l,
-struct blitwizardobject* o) {
+struct blitwizardobject* o, int doOften) {
     if (o->deleted) {
         return;
     }
 
-    luacfuncs_object_callEvent(l, o, "doAlways", 0, NULL);
+    if (doOften && o->haveDoOften) {
+        luacfuncs_object_callEvent(l, o, "doOften", 0, NULL);
+    }
+    if (o->haveDoAlways) {
+        luacfuncs_object_callEvent(l, o, "doAlways", 0, NULL);
+    }
 }
 
+uint64_t lastFullStep = 0;
 int luacfuncs_object_doAllSteps(int count) {
-    if (count < 1) {count = 1;}
+    if (count < 1) {
+        count = 1;
+    }
     struct blitwizardobject* o;
     lua_State* l = luastate_GetStatePtr();
 
+    // see if we want to do a full step (consider all objects)
+    // or a non-full one (consider just the important objects).
+    // we want to do a full one 4 times a second.
+    uint64_t now = time_GetMilliseconds();
+    int full = 0;
+    if (lastFullStep + 2000 < now) {
+        // we missed so many full steps, it makes no sense to catch up:
+        lastFullStep = now;
+    } else {
+        if (lastFullStep < now) {
+            lastFullStep += 250;
+            full = 1;
+        }
+    }
+
     // mark all objects as not yet stepped:
-    o = objects;
+    if (full) {
+        o = objects;
+    } else {
+        o = importantObjects;
+    }
     while (o) {
         o->doStepDone = 0;
         o = o->next;
     }
 
     // cycle through all objects:
-    o = objects;
+    if (full) {
+        o = objects;
+    } else {
+        o = importantObjects;
+    }
     int newAllSteps = 1;
     while (newAllSteps) {
         newAllSteps = 0;
@@ -1239,15 +1319,48 @@ int luacfuncs_object_doAllSteps(int count) {
             struct blitwizardobject* onext = o->next;
             int i = 0;
             while (i < count && !o->deleted) {
-                luacfuncs_object_doStep(l, o);
+                luacfuncs_object_doStep(l, o, full);
                 i++;
             }
             o = onext;
         }
     }
 
-    // delete objects:
-    o = deletedobjects;
+    // remove/add objects to importantObjects list:
+    struct addRemoveObject* a = addRemoveImportantObjects;
+    while (a) {
+        struct addRemoveObject* anext = a->next;
+        if (a->remove) {
+            if (a->obj->importantPrev || a->obj->importantNext ||
+            importantObjects == a->obj) {
+                if (a->obj->importantPrev) {
+                    a->obj->importantPrev->importantNext = a->obj->
+                        importantNext;
+                } else {
+                    importantObjects = a->obj->importantNext;
+                }
+                if (a->obj->importantNext) {
+                    a->obj->importantNext->importantPrev = a->obj->
+                        importantPrev;
+                }
+            }
+        } else {
+            if (!a->obj->importantPrev && !a->obj->importantNext &&
+            importantObjects != a->obj) {
+                a->obj->importantNext = importantObjects;
+                if (a->obj->importantNext) {
+                    a->obj->importantNext->importantPrev = a;
+                }
+                importantObjects = a->obj;
+            }
+        }
+        // free data struct:
+        free(a);
+        a = anext;
+    }
+    addRemoveImportantObjects = NULL;
+
+    // actually delete any objects marked as deleted:
     while (o) {
         struct blitwizardobject* onext = o->next;
         if (luacfuncs_object_deleteIfOk(o)) {
@@ -1321,11 +1434,28 @@ int luafuncs_object_setVisible(lua_State* l) {
 //     self:getDimensions()[2])
 //   end
 
+/// Set this event function to a custom function of yours
+// to have the object do something
+// over and over again moderately fast (4 times a second).
+//
+// You might want to use this function for things where a small
+// reaction time is acceptable but which need to happen constantly,
+// e.g. an enemy checking if it can see the player (to start an attack).
+//
+// <b>This function does not exist</b> before you
+// set it on a particular object.
+//
+// This function is called with all objects with a
+// frequency of 4 times a second.
+// @function doOften
+
 /// Set this event function to a custom
 // function of yours to have the object do something
-// over and over again. E.g. for an elevator, you might
-// want to move the elevator one bit each time this
-// function is called.
+// over and over again (very rapidly).
+//
+// This function is mainly useful for fluid movements, e.g.
+// for an elevator, you might want to move the elevator
+// one bit each time this function is called.
 //
 // <b>This function does not exist</b> before you
 // set it on a particular object.
@@ -1334,6 +1464,10 @@ int luafuncs_object_setVisible(lua_State* l) {
 // frequency of 60 times a second (it can be changed
 // globally with @{blitwizard.setStep} if you know
 // what you're doing).
+//
+// For decisions and changes that don't need to be done so fast,
+// use @{blitwizard.object:doOften|object:doOften} which runs
+// 4 times a second (which is still very often).
 // @function doAlways
 // @usage
 // -- have a sprite move up the screen
@@ -1342,7 +1476,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 //   -- get old position:
 //   local pos_x, pos_y = self:getPosition()
 //   -- move position up a bit:
-//   pos_y = pos_y - 1
+//   pos_y = pos_y - 0.01
 //   -- set position again:
 //   self:setPosition(pos_x, pos_y)
 // end

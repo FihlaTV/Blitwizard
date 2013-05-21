@@ -200,10 +200,16 @@
  object has been fully loaded.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:doOften">object:doOften&nbsp;()</a></td>
+	<td class="summary">Set this event function to a custom function of yours
+ to have the object do something
+ over and over again moderately fast (4 times a second).</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:doAlways">object:doAlways&nbsp;()</a></td>
 	<td class="summary">Set this event function to a custom
  function of yours to have the object do something
- over and over again.</td>
+ over and over again (very rapidly).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:onMouseClick">object:onMouseClick&nbsp;()</a></td>
@@ -1069,21 +1075,47 @@
 
 </dd>
     <dt>
+    <a name = "object:doOften"></a>
+    <strong>object:doOften&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to a custom function of yours
+ to have the object do something
+ over and over again moderately fast (4 times a second).
+<p> You might want to use this function for things where a small
+ reaction time is acceptable but which need to happen constantly,
+ e.g. an enemy checking if it can see the player (to start an attack).
+<p> <b>This function does not exist</b> before you
+ set it on a particular object.
+<p> This function is called with all objects with a
+ frequency of 4 times a second.
+
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "object:doAlways"></a>
     <strong>object:doAlways&nbsp;()</strong>
     </dt>
     <dd>
     Set this event function to a custom
  function of yours to have the object do something
- over and over again.  E.g. for an elevator, you might
- want to move the elevator one bit each time this
- function is called.
+ over and over again (very rapidly).
+<p> This function is mainly useful for fluid movements, e.g.
+ for an elevator, you might want to move the elevator
+ one bit each time this function is called.
 <p> <b>This function does not exist</b> before you
  set it on a particular object.
 <p> This function is called with all objects with a
  frequency of 60 times a second (it can be changed
  globally with <a href="../modules/blitwizard.html#setStep">blitwizard.setStep</a> if you know
  what you're doing).
+<p> For decisions and changes that don't need to be done so fast,
+ use <a href="../modules/blitwizard.html#object:doOften">object:doOften</a> which runs
+ 4 times a second (which is still very often).
 
 
 
@@ -1098,7 +1130,7 @@
    <span class="comment">-- get old position:
 </span>   <span class="keyword">local</span> pos_x, pos_y = self:getPosition()
    <span class="comment">-- move position up a bit:
-</span>   pos_y = pos_y - <span class="number">1</span>
+</span>   pos_y = pos_y - <span class="number">0.01</span>
    <span class="comment">-- set position again:
 </span>   self:setPosition(pos_x, pos_y)
  <span class="keyword">end</span></pre>

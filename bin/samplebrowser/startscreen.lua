@@ -40,14 +40,14 @@ function blitwizard.onInit()
     blitwizard.graphics.getCameras()[1]:set2dZoomFactor(2) -- zoom into things
 
     -- Introduction text:
-    --[[local text = blitwizard.font.text:new("Welcome to " .. _VERSION .. "!" ..
+    local text = blitwizard.font.text:new("Welcome to " .. _VERSION .. "!" ..
     "\n\n  Press F9 for developer console." ..
     "\n\n  Visit http://www.blitwizard.de/doc-files/api-stable " ..
     "for documentation." ..
     "\n\n  Need help? Check out the forums: http://www.blitwizard.de/forum/"
     , "default", 1.3)
     text:move(1.5, 3.5) -- move a bit away from top/left corner
-    text:setZIndex(2)]]
+    text:setZIndex(2)
 
     -- Create top bar:
     local bar = blitwizard.object:new(
@@ -97,8 +97,8 @@ function blitwizard.onInit()
 
     -- spawn a few orbs (see spawnOrb code below):
     local i = 0
-    while i < 50 do
-        --spawnOrb()
+    while i < 200 do
+        spawnOrb()
         i = i + 1
     end
 end
@@ -118,7 +118,7 @@ function spawnOrb()
     obj:setPosition(math.random() * 6 - 3, math.random() * 6 - 3)
     local v = 0.2 + 6*math.random()
     obj:setScale(v, v)
-    obj:setTransparency(math.random())    
+    obj:setTransparency(math.random() * 0.5 + 0.5)
 
     -- initialise physics:
     function obj:onGeometryLoaded()
@@ -135,10 +135,10 @@ function spawnOrb()
         return false
     end
 
-    function obj:doAlways()
+    function obj:doOften()
         -- if too far from visible area, delete and spawn new:
         local x, y = self:getPosition()
-        if y > 3 or x > 4 or x < -4 then
+        if y > 4 or x > 5 or x < -5 then
             self:destroy()
             spawnOrb()
         end

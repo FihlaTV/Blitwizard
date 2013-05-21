@@ -47,6 +47,7 @@ do
     blitwizard.console = {}
 
     -- calculate a few things:
+    local updateInputLine = false
     local consoleText = ""
     local consoleTextObj = nil
     local consoleOpened = false
@@ -275,6 +276,11 @@ do
             end
         end
         if consoleOpened or y > -consoleHeight then
+            if updateInputLine then
+                updateInputLine = false
+                consoleTextObj:destroy()
+                consoleTextObj = nil
+            end
             if consoleTextObj == nil then
                 consoleTextObj = blitwizard.font.text:new(
                 "> " .. consoleText, "default", 1)
@@ -382,10 +388,7 @@ do
                         consoleText = consoleText:sub(1,
                         #consoleText - blinkCursorOffset - 1) ..
                         consoleText:sub(#consoleText - blinkCursorOffset +1)
-                        if consoleTextObj then
-                            consoleTextObj:destroy()
-                            consoleTextObj = nil
-                        end
+                        updateInputLine = true
                     end
                 end
                 if key == "return" then
@@ -399,10 +402,7 @@ do
                         commandHistory[#commandHistory+1] = ""
                         inCommandHistory = #commandHistory
                     end
-                    if consoleTextObj then
-                        consoleTextObj:destroy()
-                        consoleTextObj = nil
-                    end
+                    updateInputLine = true
                     blinkCursorOffset = 0
                     -- run the entered command:
                     local result = nil
@@ -457,10 +457,7 @@ do
                         inCommandHistory = 1
                     end
                     consoleText = commandHistory[inCommandHistory]
-                    if consoleTextObj then
-                        consoleTextObj:destroy()
-                        consoleTextObj = nil
-                    end
+                    updateInputLine = true
                     blinkCursorOffset = 0
                     return true
                 end
@@ -486,10 +483,7 @@ do
                         inCommandHistory = #commandHistory
                     end
                     consoleText = commandHistory[inCommandHistory]
-                    if consoleTextObj then
-                        consoleTextObj:destroy()
-                        consoleTextObj = nil
-                    end
+                    updateInputLine = true
                     blinkCursorOffset = 0
                     return true
                 end
@@ -513,10 +507,7 @@ do
 
             consoleText = consoleText:sub(1, #consoleText - blinkCursorOffset)
              .. text .. consoleText:sub(#consoleText + 1 - blinkCursorOffset)
-            if consoleTextObj then
-                consoleTextObj:destroy()
-                consoleTextObj = nil
-            end
+            updateInputLine = true
             -- this text is for the console
             return true
         end
