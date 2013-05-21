@@ -61,6 +61,9 @@ uint64_t textureGpuMemoryBudgetMax = 100;
 uint64_t sysMemUse = 0;
 uint64_t gpuMemUse = 0;
 
+// no texture uploads (e.g. device is currently lost)
+int noTextureUploads = 0;
+
 mutex* textureReqListMutex = NULL;
 struct texturerequesthandle {
     // the respective texture list entry:
@@ -360,6 +363,13 @@ struct graphicstexturemanaged* gtm, int slot) {
             return gtm->scalelist[i].gt;
         } else {
             if (gtm->scalelist[i].pixels) {
+                if (noTextureUploads) {
+#ifdef DEBUGTEXTUREMANAGER
+                    printinfo("[TEXMAN] GPU upload of %s size %d DELAYED "
+                    "(no device)", gtm->path, i);
+#endif
+                    return texturemanager_GetRandomGPUTexture(gtm);
+                }
 #ifdef DEBUGTEXTUREMANAGER
                 printinfo("[TEXMAN] GPU upload texture size %d of %s", i, gtm->path);
 #endif
@@ -936,6 +946,56 @@ uint64_t texturemanager_getGpuMemoryUse() {
     return v;
 }
 
+void graphicstexturemanager_DeviceLost(void) {
+#ifdef DEBUGTEXTUREMANAGER
+    printinfo("[TEXMAN] [DEVICE] Graphics device was closed.");
+#endif
+    mutex_Lock(textureReqListMutex);
+
+    // forbid further GPU uploads:
+    noTextureUploads = 1;
+
+    // now, strip all requests of their textures:
+
+    // regular requests:
+    struct texturerequesthandle* req = textureRequestList; 
+    while (req) {
+        if (req->handedTexture) {
+            req->textureSwitchCallback(req, NULL, req->userdata);
+            req->handedTexture = NULL;
+            req->handedTextureScaledEntry = NULL;
+        }
+        req = req->next;
+    }
+
+    // unhandled requests:
+    req = unhandledRequestList;
+    while (req) {
+        if (req->handedTexture) {
+            req->textureSwitchCallback(req, NULL, req->userdata);
+            req->handedTexture = NULL;
+            req->handedTextureScaledEntry = NULL;
+        }
+        req = req->unhandledNext;
+    }
+
+    // now throw all GPU textures away:
+    graphicstexturelist_InvalidateHWTextures();
+
+    mutex_Release(textureReqListMutex);
+}
+
+void graphicstexturemanager_DeviceRestored(void) {
+#ifdef DEBUGTEXTUREMANAGER
+    printinfo("[TEXMAN] [DEVICE] Graphics device was opened.");
+#endif
+    mutex_Lock(textureReqListMutex);
+
+    // re-enable GPU uploads:
+    noTextureUploads = 0;
+
+    mutex_Release(textureReqListMutex);
+}
 
 #endif  // USE_GRAPHICS
 

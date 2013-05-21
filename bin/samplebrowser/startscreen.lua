@@ -87,7 +87,7 @@ function blitwizard.onInit()
     end
 
     -- when clicking, open sample browser:
-    function button:onClick()
+    function button:onMouseClick()
         -- destroy all orbs:
         noOrbs = true
 
@@ -97,7 +97,7 @@ function blitwizard.onInit()
 
     -- spawn a few orbs (see spawnOrb code below):
     local i = 0
-    while i < 50 do
+    while i < 500 do
         spawnOrb()
         i = i + 1
     end
@@ -116,10 +116,9 @@ function spawnOrb()
 
     -- random position, scale and alpha:
     obj:setPosition(math.random() * 6 - 3, math.random() * 6 - 3)
-    local v = 0.2 + 5*math.random()
+    local v = 0.2 + 6*math.random()
     obj:setScale(v, v)
-    obj:setTransparency(math.random())    
-    obj:enableMovableCollision({type="circle", diameter=0.1})
+    obj:setTransparency(math.random() * 0.5 + 0.5)
 
     -- initialise physics:
     function obj:onGeometryLoaded()
@@ -132,16 +131,14 @@ function spawnOrb()
         self:impulse(math.random() * 100 - 50, -math.random() * 1)
     end
     function obj:onCollision(obj)
-        -- ignore all collisions,
-        -- so that the orbs will nicely fall down
-        -- without pushing each other away:
+        -- ignore all collisions with other orbs:
         return false
     end
 
-    function obj:doAlways()
+    function obj:doOften()
         -- if too far from visible area, delete and spawn new:
-        local x,y = self:getPosition()
-        if y > 3 or x > 4 or x < -4 then
+        local x, y = self:getPosition()
+        if y > 4 or x > 5 or x < -5 then
             self:destroy()
             spawnOrb()
         end

@@ -215,6 +215,7 @@ glyphWidth, glyphHeight, glyphsPerLine)
             newGlyph.offset = {x = x * scale, y = y * scale}
             newGlyph:setPosition(newGlyph.offset.x, newGlyph.offset.y)
             newGlyph:pinToCamera(camera)
+            newGlyph:setInvisibleToMouse(true)
             newGlyph:setScale(scale, scale)
             newGlyph:set2dTextureClipping((charxslot - 1) * glyphWidth, 
             (charyslot - 1) * glyphHeight, glyphWidth, glyphHeight)

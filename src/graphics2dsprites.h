@@ -47,6 +47,10 @@ struct graphics2dsprite;
 struct graphics2dsprite* graphics2dsprites_create(
 const char* texturePath, double x, double y, double width, double height);
 
+// Get/set userdata on a sprite:
+void graphics2dsprites_setUserdata(struct graphics2dsprite* sprite, void* data);
+void* graphics2dsprites_getUserdata(struct graphics2dsprite* sprite);
+
 // Check for sprite pixel geometry dimensions.
 // If 0 is returned, the geometry isn't known yet (texture still
 // being loaded).
@@ -186,10 +190,17 @@ int cameraId, int x, int y, int event);
 
 // enable or disable a sprite for a given event
 // search:
-int graphics2dsprites_enableForEvent(
+void graphics2dsprites_enableForEvent(
 struct graphics2dsprite* sprite, int event, int enabled);
 // event will be one of SPRITE_EVENT_TYPE_*
 // (enable can be 1 for yes or 0 for no)
+
+// set invisible/transparent to event so other sprites below
+// won't be obstructed.
+// IMPORTANT: this is ignored if enableForEvent is set!
+int graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
+int event, int invisible);
+// set invisible to 1 for invisible, 0 for visible/regular (default)
 
 #ifdef __cplusplus
 }

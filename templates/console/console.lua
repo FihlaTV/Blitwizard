@@ -47,6 +47,7 @@ do
     blitwizard.console = {}
 
     -- calculate a few things:
+    local updateInputLine = false
     local consoleText = ""
     local consoleTextObj = nil
     local consoleOpened = false
@@ -274,30 +275,42 @@ do
                 i = i + 1
             end
         end
-        if consoleTextObj == nil then
-            consoleTextObj = blitwizard.font.text:new(
-            "> " .. consoleText, "default", 1)
-            consoleTextObj:setZIndex(10000)
-        end
-        -- move the console input line object if it exists:
-        if consoleTextObj then
-            -- get a bit of info about screen size etc:
-            local cw,ch = blitwizard.graphics.getCameras()[1]:
-            getVisible2dAreaDimensions(false)
-
-            -- shift to the right when entering very long lines:
-            local shiftleft = 0        
-            if consoleTextObj:width() > cw - 0.1 then
-                shiftleft = consoleTextObj:width() - (cw - 0.1)
+        if consoleOpened or y > -consoleHeight then
+            if updateInputLine then
+                updateInputLine = false
+                consoleTextObj:destroy()
+                consoleTextObj = nil
             end
+            if consoleTextObj == nil then
+                consoleTextObj = blitwizard.font.text:new(
+                "> " .. consoleText, "default", 1)
+                consoleTextObj:setZIndex(10000)
+            end
+            -- move the console input line object if it exists:
+            if consoleTextObj then
+                -- get a bit of info about screen size etc:
+                local cw,ch = blitwizard.graphics.getCameras()[1]:
+                getVisible2dAreaDimensions(false)
 
-            -- move console text to calculated position:
-            consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
-            - consoleLineHeight - 0.1)
+                -- shift to the right when entering very long lines:
+                local shiftleft = 0        
+                if consoleTextObj:width() > cw - 0.1 then
+                    shiftleft = consoleTextObj:width() - (cw - 0.1)
+                end
 
-            -- remember text ending for blinking cursor:
-            local tx,ty = consoleTextObj:getPosition()
-            textEndPos = tx + consoleTextObj:width()
+                -- move console text to calculated position:
+                consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
+                - consoleLineHeight - 0.1)
+
+                -- remember text ending for blinking cursor:
+                local tx,ty = consoleTextObj:getPosition()
+                textEndPos = tx + consoleTextObj:width()
+            end
+        else
+            if consoleTextObj then
+                consoleTextObj:destroy()
+                consoleTextObj = nil
+            end
         end
 
         -- handle blinking cursor
@@ -319,6 +332,8 @@ do
             else
                 blinkCursorText:setVisible(false)
             end
+        else
+            blinkCursorText:setVisible(false)
         end
     end
 
@@ -373,10 +388,7 @@ do
                         consoleText = consoleText:sub(1,
                         #consoleText - blinkCursorOffset - 1) ..
                         consoleText:sub(#consoleText - blinkCursorOffset +1)
-                        if consoleTextObj then
-                            consoleTextObj:destroy()
-                            consoleTextObj = nil
-                        end
+                        updateInputLine = true
                     end
                 end
                 if key == "return" then
@@ -390,10 +402,7 @@ do
                         commandHistory[#commandHistory+1] = ""
                         inCommandHistory = #commandHistory
                     end
-                    if consoleTextObj then
-                        consoleTextObj:destroy()
-                        consoleTextObj = nil
-                    end
+                    updateInputLine = true
                     blinkCursorOffset = 0
                     -- run the entered command:
                     local result = nil
@@ -448,10 +457,7 @@ do
                         inCommandHistory = 1
                     end
                     consoleText = commandHistory[inCommandHistory]
-                    if consoleTextObj then
-                        consoleTextObj:destroy()
-                        consoleTextObj = nil
-                    end
+                    updateInputLine = true
                     blinkCursorOffset = 0
                     return true
                 end
@@ -477,10 +483,7 @@ do
                         inCommandHistory = #commandHistory
                     end
                     consoleText = commandHistory[inCommandHistory]
-                    if consoleTextObj then
-                        consoleTextObj:destroy()
-                        consoleTextObj = nil
-                    end
+                    updateInputLine = true
                     blinkCursorOffset = 0
                     return true
                 end
@@ -504,10 +507,7 @@ do
 
             consoleText = consoleText:sub(1, #consoleText - blinkCursorOffset)
              .. text .. consoleText:sub(#consoleText + 1 - blinkCursorOffset)
-            if consoleTextObj then
-                consoleTextObj:destroy()
-                consoleTextObj = nil
-            end
+            updateInputLine = true
             -- this text is for the console
             return true
         end

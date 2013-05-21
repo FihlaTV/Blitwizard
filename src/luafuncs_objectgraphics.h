@@ -76,5 +76,29 @@ int id);
 void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
 int visible);
 
+// enable/disable mouse events for object:
+void luacfuncs_objectgraphics_enableMouseClickEvent(struct blitwizardobject* o,
+int enabled);
+void luacfuncs_objectgraphics_enableMouseMoveEvent(struct blitwizardobject* o,
+int enabled);
+
+// Set an object invisible to mouse events so they will "pass through" to
+// obstructed lower objects (with lower z index).
+//
+// Unlike the invisibility in graphics2dsprites.h, invisible objects will
+// actually have their events disabled, and re-enabled when you make them
+// visible again.
+// (graphics2dsprites.h ignores invisibility when a sprite has events set)
+//
+// So this can be easily used to make objects temporarily "transparent" to
+// mouse events!
+void luacfuncs_objectgraphics_setInvisibleToMouseEvents(
+struct blitwizardobject* o, int enabled);
+
+// Process mouse events:
+void luacfuncs_objectgraphics_processMouseClick(int x, int y,
+int button);
+void luacfuncs_objectgraphics_processMouseMove(int x, int y);
+
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTGRAPHICS_H_
 

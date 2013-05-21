@@ -40,6 +40,7 @@ int luafuncs_object_getDimensions(lua_State* l);
 int luafuncs_object_getScale(lua_State* l);
 int luafuncs_object_setScale(lua_State* l);
 int luafuncs_object_scaleToDimensions(lua_State* l);
+int luafuncs_object_setInvisibleToMouse(lua_State* l);
 
 // iterate through all objects:
 int luafuncs_getAllObjects(lua_State* l);

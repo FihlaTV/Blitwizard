@@ -59,6 +59,11 @@ void luacfuncs_objectgraphics_newFrame(void);
 // media cleanup callback:
 void checkAllMediaObjectsForCleanup(void);
 
+// per-object mouse event handling:
+void luacfuncs_objectgraphics_processMouseClick(int x, int y,
+int button);
+void luacfuncs_objectgraphics_processMouseMove(int x, int y);
+
 int wantquit = 0; // set to 1 if there was a quit event
 int suppressfurthererrors = 0; // a critical error was shown, don't show more
 int windowisfocussed = 0;
@@ -237,7 +242,9 @@ static void mousebuttonevent(int button, int release, int x, int y) {
         if (error) {
             free(error);
         }
-        return;
+    }
+    if (!release) {
+        luacfuncs_objectgraphics_processMouseClick(x, y, button);
     }
 }
 static void mousemoveevent(int x, int y) {
@@ -260,8 +267,8 @@ static void mousemoveevent(int x, int y) {
         if (error) {
             free(error);
         }
-        return;
     }
+    luacfuncs_objectgraphics_processMouseMove(x, y);
 }
 
 static void keyboardevent(const char* key, int release) {

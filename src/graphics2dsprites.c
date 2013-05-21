@@ -80,15 +80,21 @@ struct graphics2dsprite {
     // enabled for sprite events:
     int enabledForEvent[SPRITE_EVENT_TYPE_COUNT];
 
+    // untouchable/transparent for sprite event:
+    int invisibleForEvent[SPRITE_EVENT_TYPE_COUNT];
+
     // pointers for global linear sprite list:
     struct graphics2dsprite* next,* prev;
+
+    // custom userdata:
+    void* userdata;
 };
 // global linear sprite list:
 static struct graphics2dsprite* spritelist = NULL;
 static struct graphics2dsprite* spritelistEnd = NULL;
 
 // the "lowest" sprites enabled for each event:
-static struct graphics2dsprite* firstEventSprite[SPRITE_EVENT_TYPE_COUNT];
+static struct graphics2dsprite* lastEventSprite[SPRITE_EVENT_TYPE_COUNT];
 // all the sprites enabled for a given event (which are visible):
 int eventSpriteCount[SPRITE_EVENT_TYPE_COUNT];
 
@@ -99,8 +105,28 @@ __attribute__((constructor)) static void graphics2dsprites_init(void) {
     // reset event info:
     int i = 0;
     while (i < SPRITE_EVENT_TYPE_COUNT) {
-        firstEventSprite[i] = NULL;
+        lastEventSprite[i] = NULL;
         eventSpriteCount[i] = 0;
+        i++;
+    }
+}
+
+static void graphics2dsprites_findLastEventSprites(void) {
+    int i = 0;
+    while (i < SPRITE_EVENT_TYPE_COUNT) {
+        if (!lastEventSprite[i]) {
+            if (eventSpriteCount[i] > 0) {
+                // search for first sprite that is enabled for this event:
+                struct graphics2dsprite* s = spritelist;
+                while (s) {
+                    if (s->enabledForEvent[i] && s->visible) {
+                        lastEventSprite[i] = s;
+                        return;
+                    }
+                    s = s->next;
+                }
+            }
+        }
         i++;
     }
 }
@@ -334,6 +360,17 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     // remove sprite from list:
     graphics2dsprites_removeFromList(sprite);
 
+    // check if we're enabled for any event:
+    int i = 0;
+    while (i < SPRITE_EVENT_TYPE_COUNT) {
+        if (sprite->enabledForEvent[i]) {
+            eventSpriteCount[i]++;
+            // last event sprite needs to be recalculated:
+            lastEventSprite[i] = NULL;
+        }
+        i++;
+    }
+
     // destroy texture manager request
     sprite->deleted = 1;
     if (sprite->request) {
@@ -414,6 +451,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->b = 1;
     s->pinnedToCamera = -1;
     s->alpha = 1;
+    s->visible = 1;
     s->width = width;
     s->height = height;
     s->path = strdup(texturePath);
@@ -488,6 +526,29 @@ void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
 int visible) {
     mutex_Lock(m);
     sprite->visible = (visible != 0);
+    if (!sprite->visible) {
+        // check if we were enabled for any event:
+        int i = 0;
+        while (i < SPRITE_EVENT_TYPE_COUNT) {
+            if (sprite->enabledForEvent[i]) {
+                eventSpriteCount[i]--;
+                // last event sprite needs to be recalculated:
+                lastEventSprite[i] = NULL;
+            }
+            i++;
+        }
+    } else {
+        // check if we're enabled for any event:
+        int i = 0;
+        while (i < SPRITE_EVENT_TYPE_COUNT) {
+            if (sprite->enabledForEvent[i]) {
+                eventSpriteCount[i]++;
+                // last event sprite needs to be recalculated:
+                lastEventSprite[i] = NULL;
+            }
+            i++;
+        }
+    }
     mutex_Release(m);
 }
 
@@ -532,8 +593,8 @@ int* screen_h) {
     // set visible area:
     *screen_x = x;
     *screen_y = y;
-    *screen_w = w;
-    *screen_h = h;
+    *screen_w = width;
+    *screen_h = height;
 }
 
 void graphics2dsprites_reportVisibility(void) {
@@ -582,14 +643,61 @@ void graphics2dsprites_reportVisibility(void) {
     mutex_Release(m); 
 }
 
+int graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
+int event, int invisible) {
+    mutex_Lock(m);
+    sprite->invisibleForEvent[event] = invisible;
+    mutex_Release(m);
+}
+
+void graphics2dsprites_enableForEvent(
+struct graphics2dsprite* sprite, int event, int enabled) {
+    mutex_Lock(m);
+    if (enabled == sprite->enabledForEvent[event]) {
+        // nothing changes.
+        mutex_Release(m);
+        return;
+    }
+    sprite->enabledForEvent[event] = enabled;
+    int recalculate = 0;
+    if (enabled) {
+        if (sprite->visible) {
+            eventSpriteCount[event]++;
+            recalculate = 1;
+        }
+    } else {
+        if (sprite->visible) {
+            eventSpriteCount[event]--;
+            recalculate = 1;
+        }
+    }
+    if (recalculate) {
+        // recalculate last event sprite:
+        lastEventSprite[event] = NULL;
+        graphics2dsprites_findLastEventSprites();
+    }
+    mutex_Release(m);
+}
+
 struct graphics2dsprite*
 graphics2dsprites_getSpriteAtScreenPos(
 int cameraId, int mx, int my, int event) {
+    mutex_Lock(m);
+
+    // first, update lastEventSprite entries if necessary:
+    graphics2dsprites_findLastEventSprites();
+
     // go through sprite list from end
     // (on top) to beginning (below)
-    mutex_Lock(m);
     struct graphics2dsprite* sprite = spritelistEnd;
     while (sprite) {
+        // skip sprite if disabled for event:
+        if ((!sprite->enabledForEvent[event] && 
+        sprite->invisibleForEvent[event]) || !sprite->visible) {
+            sprite = sprite->prev;
+            continue;
+        }
+
         // get sprite pos on screen:
         int x, y, w, h;
         graphics2dsprite_calculateSizeOnScreen(sprite,
@@ -599,15 +707,34 @@ int cameraId, int mx, int my, int event) {
         if (mx >= x && mx < x + w &&
         my >= y && my < y + h) {
             // mouse on this sprite
+            mutex_Release(m);
             return sprite;
         }
 
+        if (sprite == lastEventSprite[event]) {
+            // this was the last one we needed to check!
+            mutex_Release(m);
+            return NULL;
+        }
         sprite = sprite->prev;
     }
     mutex_Release(m);
     return NULL;
 }
 
+void graphics2dsprites_setUserdata(struct graphics2dsprite* sprite,
+void* data) {
+    mutex_Lock(m);
+    sprite->userdata = data;
+    mutex_Release(m);
+}
+
+void* graphics2dsprites_getUserdata(struct graphics2dsprite* sprite) {
+    mutex_Lock(m);
+    void* udata = sprite->userdata;
+    mutex_Release(m);
+    return udata;
+}
 
 #endif
 

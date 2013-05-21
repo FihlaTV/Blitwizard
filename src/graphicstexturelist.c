@@ -199,6 +199,7 @@ struct graphicstexturemanaged* gt) {
             graphicstexture_Destroy(s->gt);
             s->gt = NULL;
         }
+        s->refcount = 0;
         i++;
     }
 }

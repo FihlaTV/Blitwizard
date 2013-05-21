@@ -239,6 +239,8 @@ void luastate_CreateObjectTable(lua_State* l) {
     "setRotationAngle");
     luastate_registerfunc(l, &luafuncs_object_getRotationAngle,
     "getRotationAngle");
+    luastate_registerfunc(l, &luafuncs_object_setInvisibleToMouse,
+    "setInvisibleToMouse");
 
     // graphics/visual stuff:
     luastate_registergraphics(l, &luafuncs_object_setTransparency,
