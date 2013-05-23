@@ -405,7 +405,7 @@ do
                     updateInputLine = true
                     blinkCursorOffset = 0
                     -- run the entered command:
-                    local result = nil
+                    local results = nil
                     local resultcount = 0;
                     local success,msg = pcall(
                     function()
@@ -426,14 +426,37 @@ do
                             cmd = "return " .. cmd
                         end
                         -- execute command:
-                        resultcount, result =
-                        dostring_returnvalues(cmd)
+                        local values =
+                        {dostring_returnvalues(cmd)}
+                        -- analyse results:
+                        resultcount = values[1]
+                        if resultcount > 0 then
+                            results = {}
+                            local i = 2
+                            while i <= resultcount + 1 do
+                                results[i-1] = values[i]
+                                i = i + 1
+                            end
+                        end
                     end
                     )
 
                     -- if that worked, print return value if present:
                     if success and resultcount > 0 then
-                        printvar(result)
+                        -- print list of all results:
+                        local s = ""
+                        local i = 1
+                        while i <= resultcount do
+                            if i > 1 then
+                                s = s .. ", "
+                            end
+                            local f = function()
+                                s = s .. tostring(results[i])
+                            end
+                            pcall(f)
+                            i = i + 1
+                        end
+                        printvar(s)
                     end
 
                     -- if that didn't work, see if we can do other things:

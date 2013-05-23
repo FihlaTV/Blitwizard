@@ -56,6 +56,15 @@
 #include "graphics2dsprites.h"
 #include "luafuncs_graphics_camera.h"
 
+// some statistics:
+int processedTotalImportantObjects = 0;
+int processedUniqueImportantObjects = 0;
+int processedTotalNormalObjects = 0;
+int processedUniqueNormalObjects = 0;
+int processedTotalBoringObjects = 0;
+int processedUniqueBoringObjects = 0;
+
+
 // list of all objects (non-deleted):
 struct blitwizardobject* objects = NULL;
 // deleted objects:
@@ -1306,8 +1315,12 @@ int luacfuncs_object_doAllSteps(int count) {
     // cycle through all objects:
     if (full) {
         o = objects;
+        processedTotalNormalObjects = 0;
+        processedUniqueNormalObjects = 0;
     } else {
         o = importantObjects;
+        processedTotalImportantObjects = 0;
+        processedUniqueImportantObjects = 0;
     }
     int newAllSteps = 1;
     while (newAllSteps) {
@@ -1321,6 +1334,11 @@ int luacfuncs_object_doAllSteps(int count) {
                 // relaunch this run and start over from beginning
                 // of non-deleted objects.
                 newAllSteps = 1;
+                if (full) {
+                    processedUniqueNormalObjects = 0;
+                } else {
+                    processedUniqueImportantObjects = 0;
+                }
                 break;
             }
             if (o->doStepDone) {
@@ -1334,6 +1352,13 @@ int luacfuncs_object_doAllSteps(int count) {
             while (i < count && !o->deleted) {
                 luacfuncs_object_doStep(l, o, full);
                 i++;
+            }
+            if (full) {
+                processedUniqueNormalObjects++;
+                processedTotalNormalObjects++;
+            } else {
+                processedUniqueImportantObjects++;
+                processedTotalImportantObjects++;
             }
             o = onext;
         }

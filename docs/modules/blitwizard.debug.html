@@ -88,6 +88,11 @@
 	<td class="summary">Get information of whether a texture is currently
  loaded into GPU memory, and at which size.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#getLogicStats">getLogicStats&nbsp;()</a></td>
+	<td class="summary">Get some metrics of the logic processing pipeline
+ of blitwizard (see return values).</td>
+	</tr>
 </table>
 
 <br/>
@@ -104,6 +109,12 @@
     Get GPU memory used for all textures loaded by blitwizard in bytes.
 
 
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        GPU memory used up in bytes
+    </ol>
 
 
 
@@ -158,6 +169,41 @@
          the file name which was used when loading the texture, e.g. "myImage.png"</li>
     </ul>
 
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getLogicStats"></a>
+    <strong>getLogicStats&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get some metrics of the logic processing pipeline
+ of blitwizard (see return values).
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        processedUniqueImportantObjects</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        processedTotalImportantObjects</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        procesedUniqueNormalObjects</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        processedTotalNormalObjects</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        processedUniqueBoringObjects</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        processedTotalBoringObjects</li>
+    </ol>
 
 
 
