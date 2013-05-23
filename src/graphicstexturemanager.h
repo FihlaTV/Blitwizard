@@ -70,7 +70,10 @@ struct texturerequesthandle;
 // DIMENSIONS THEN THE ONE YOU GOT. Also, the callback can be
 // called again any time, at which point it will provide a new
 // texture and THE OLD ONE WILL GET INVALID with the next call
-// of texturemanager_InvalidateTextures().
+// of texturemanager_tick().
+// (Exception: when texturemanager_deviceLost() is called, it
+// becomes invalid right with the callback. This can currently
+// not be solved differently, sorry)
 //
 // The textureSwitch texture passed to you can be NULL aswell!
 // (you must stop using the old one and not draw anything until
@@ -99,7 +102,7 @@ struct texturerequesthandle;
 //
 // BEWARE OF THE CALLBACKS: Inside the callbacks, don't
 // call the texture manager api. This will break things.
-struct texturerequesthandle* texturemanager_RequestTexture(
+struct texturerequesthandle* texturemanager_requestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
 size_t width, size_t height, void* userdata),
@@ -128,7 +131,7 @@ void* userdata);
 // judging from their distance, because they will otherwise
 // pop up with ugly low res textures when suddenly getting
 // visible again in close range :-)
-void texturemanager_UsingRequest(
+void texturemanager_usingRequest(
 struct texturerequesthandle* request, int visibility);
 #define USING_AT_VISIBILITY_DETAIL 0
 #define USING_AT_VISIBILITY_NORMAL 1
@@ -181,7 +184,7 @@ struct texturerequesthandle* request, int visibility);
 //
 // When this function returns, you will be guaranteed to no
 // longer receive any callbacks related to this texture request.
-void texturemanager_DestroyRequest(
+void texturemanager_destroyRequest(
 struct texturerequesthandle* request);
 
 // Call this as often as possible (preferrably right before rendering)
@@ -195,23 +198,35 @@ struct texturerequesthandle* request);
 // Hence, call this at a point where your drawing operations are
 // complete and it won't crash your drawing code when textures
 // become unavailable and new ones need to be used.
-void texturemanager_Tick(void);
+void texturemanager_tick(void);
 
 // Use those if you need to access a graphicstexturemanaged directly
 // and you need to be sure the texture manager is not messing around
 // with it while you're doing that:
-void texturemanager_LockForTextureAccess(void);
-void texturemanager_ReleaseFromTextureAccess(void);
+void texturemanager_lockForTextureAccess(void);
+void texturemanager_releaseFromTextureAccess(void);
+
+// Report that the device was lost and that all GPU textures are now
+// declared garbage:
+void texturemanager_deviceLost(void);
+
+// Report that device was restored and GPU textures may be reuploaded:
+void texturemanager_deviceRestored(void);
+
+// INFO FUNCTIONS //
 
 // Query the current GPU memory use by the texture manager in bytes:
 uint64_t texturemanager_getGpuMemoryUse(void);
 
-// Report that the device was lost and that all GPU textures are now
-// declared garbage:
-void graphicstexturemanager_DeviceLost(void);
+// Query the most notable use level of the given texture.
+// Returns USING_AT_* info.
+int texturemanager_getTextureUsageInfo(const char* texture);
 
-// Report that device was restored and GPU textures may be reuploaded:
-void graphicstexturemanager_DeviceRestored(void);
+// Query the highest texture size loaded onto the GPU for the
+// given texture.
+// Returns 4 (high) to 1 (tiny), or 0 for original size.
+// -1 means the texture isn't currently on the GPU.
+int texturemanager_getTextureGpuSizeInfo(const char* texture); 
 
 #endif  // USE_GRAPHICS
 

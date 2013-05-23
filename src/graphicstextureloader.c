@@ -81,7 +81,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
     userdata;
 
     if (imgdata) {
-        texturemanager_LockForTextureAccess();
+        texturemanager_lockForTextureAccess();
         info->gtm->width = info->width;
         info->gtm->height = info->height;
         if (!info->gtm->scalelist) {
@@ -130,7 +130,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
             if (!info->gtm->scalelist) {
                 // allocation failed.
                 free(imgdata);
-                texturemanager_ReleaseFromTextureAccess();
+                texturemanager_releaseFromTextureAccess();
                 info->callbackData(info->gtm, (imgdata != NULL), info->userdata);
                 return;
             }
@@ -197,7 +197,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
             free(imgdata);
             imgdata = NULL;
         }
-        texturemanager_ReleaseFromTextureAccess();
+        texturemanager_releaseFromTextureAccess();
     } else {
 #ifdef DEBUGTEXTURELOADER
         printinfo("[TEXLOAD] imgloader reported failure for: %s",

@@ -1120,7 +1120,7 @@ int main(int argc, char** argv) {
         graphics2dsprites_reportVisibility();
 
         // texture manager tick:
-        texturemanager_Tick();
+        texturemanager_tick();
 
         // update object graphics:
         luacfuncs_object_updateGraphics();

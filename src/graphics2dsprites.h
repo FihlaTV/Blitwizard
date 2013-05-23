@@ -198,7 +198,7 @@ struct graphics2dsprite* sprite, int event, int enabled);
 // set invisible/transparent to event so other sprites below
 // won't be obstructed.
 // IMPORTANT: this is ignored if enableForEvent is set!
-int graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
+void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
 int event, int invisible);
 // set invisible to 1 for invisible, 0 for visible/regular (default)
 

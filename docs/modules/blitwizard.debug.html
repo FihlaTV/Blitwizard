@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Blitwizard API reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>blitwizard</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul>
+  <li><a href="../modules/blitwizard.html">blitwizard</a></li>
+  <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
+  <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
+  <li><strong>blitwizard.debug</strong></li>
+  <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
+  <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
+  <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
+  <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
+  <li><a href="../modules/os.html">os</a></li>
+  <li><a href="../modules/string.html">string</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>blitwizard.debug</code></h1>
+
+<p>This namespace contains various functions to obtain information
+ about the many complex subsystems working in blitwizard.</p>
+<p>
+<p> This is mainly useful for blitwizard developers or if you want
+ to report a back and intend to add some additional information
+ to your blitwizard bug report.
+<p> Your regular blitwizard game will probably not need any of the information
+ available here.</p>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Copyright</strong>: 2013</li>
+        <li><strong>License</strong>: zlib</li>
+        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
+    </ul>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#gpuMemoryUse">gpuMemoryUse&nbsp;()</a></td>
+	<td class="summary">Get GPU memory used for all textures loaded by blitwizard in bytes.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getTextureUsageInfo">getTextureUsageInfo&nbsp;(name)</a></td>
+	<td class="summary">Get usage information on a given texture.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getTextureGpuSizeInfo">getTextureGpuSizeInfo&nbsp;(name)</a></td>
+	<td class="summary">Get information of whether a texture is currently
+ loaded into GPU memory, and at which size.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Functions"></a>Functions</h2>
+    <dl class="function">
+    <dt>
+    <a name = "gpuMemoryUse"></a>
+    <strong>gpuMemoryUse&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get GPU memory used for all textures loaded by blitwizard in bytes.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getTextureUsageInfo"></a>
+    <strong>getTextureUsageInfo&nbsp;(name)</strong>
+    </dt>
+    <dd>
+    Get usage information on a given texture.
+ This represents an indication of how much a texture
+ is currently drawn on screen.
+<p> If it's not used at all, you'll get -1.
+ Otherwise you'll get a number >= 0, and a smaller
+ number indicates higher usage/more detail usage.
+<p> This usage information is used by blitwizard to decide
+ on which textures to unload.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the file name which was used for loading the texture, e.g. "myImage.png"</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getTextureGpuSizeInfo"></a>
+    <strong>getTextureGpuSizeInfo&nbsp;(name)</strong>
+    </dt>
+    <dd>
+    Get information of whether a texture is currently
+ loaded into GPU memory, and at which size.
+<p> Returns -1 if the texture isn't in GPU memory at all,
+ 0 if it's loaded in original size, otherwise
+ a number from 1 upwards with 1 being tiny, larger number
+ being larger versions.
+<p> There is currently no way to influence the size
+ of the loaded texture. If you use a texture prominently
+ and it only shows in a scaled down version or not at all,
+ please report a bug: https://github.com/JonasT/blitwizard/issues
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the file name which was used when loading the texture, e.g. "myImage.png"</li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.11</a></i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

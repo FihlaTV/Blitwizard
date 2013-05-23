@@ -28,4 +28,5 @@ void luastate_CreateObjectTable(lua_State* l);
 void luastate_CreateGraphicsTable(lua_State* l);
 void luastate_CreateNetTable(lua_State* l);
 void luastate_CreatePhysicsTable(lua_State* l);
+void luastate_CreateDebugTable(lua_State* l);
 

@@ -90,7 +90,8 @@ static int graphics_InitVideoSubsystem(char** error) {
     return 1;
 }
 
-__attribute__((constructor)) static void graphics_SetInitialHints() {
+__attribute__((constructor))
+static void graphics_setInitialHints(void) {
     SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
    "1", SDL_HINT_OVERRIDE);
 }
@@ -157,7 +158,7 @@ void graphics_Close(int preservetextures) {
 #ifdef ANDROID
 void graphics_ReopenForAndroid() {
     // throw away hardware textures:
-    graphicstexturemanager_DeviceLost();
+    texturemanager_deviceLost();
 
     // preserve old window size:
     int w,h;
@@ -521,7 +522,7 @@ int resizable, const char* title, const char* renderer, char** error) {
     }
 
     // notify texture manager of device shutdown
-    graphicstexturemanager_DeviceLost();
+    texturemanager_deviceLost();
 
     // destroy old window/renderer if we got one
     graphics_Close(1);
@@ -579,7 +580,7 @@ int resizable, const char* title, const char* renderer, char** error) {
     }
 
     // notify texture manager that device is back
-    graphicstexturemanager_DeviceRestored();
+    texturemanager_deviceRestored();
 
     // Transfer textures back to SDL
     /*if (!graphicstexturelist_TransferTexturesToHW()) {

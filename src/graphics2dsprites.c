@@ -375,7 +375,7 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     sprite->deleted = 1;
     if (sprite->request) {
         mutex_Release(m);
-        texturemanager_DestroyRequest(sprite->request);
+        texturemanager_destroyRequest(sprite->request);
         mutex_Lock(m);
         sprite->request = NULL;
     }
@@ -465,7 +465,7 @@ const char* texturePath, double x, double y, double width, double height) {
 
     mutex_Release(m);
     // get a texture request:
-    s->request = texturemanager_RequestTexture(
+    s->request = texturemanager_requestTexture(
     s->path, graphics2dsprites_dimensionInfoCallback,
     graphics2dsprites_textureSwitchCallback,
     s);
@@ -631,7 +631,7 @@ void graphics2dsprites_reportVisibility(void) {
             &&
             ((y >= 0 && y < sh) || (y + h >= 0 && y + h < sh))) {
                 // it is.
-                texturemanager_UsingRequest(sprite->request,
+                texturemanager_usingRequest(sprite->request,
                 USING_AT_VISIBILITY_DETAIL);
             }
 
@@ -643,7 +643,7 @@ void graphics2dsprites_reportVisibility(void) {
     mutex_Release(m); 
 }
 
-int graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
+void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
 int event, int invisible) {
     mutex_Lock(m);
     sprite->invisibleForEvent[event] = invisible;
