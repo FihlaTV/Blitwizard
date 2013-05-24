@@ -678,11 +678,11 @@ int main(int argc, char** argv) {
                     exit(0);
                 }
                 printwarning("Warning: Unknown Blitwizard option: %s", argv[i]);
-            }else{
+            } else {
                 scriptargfound = 1;
                 script = argv[i];
             }
-        }else{
+        } else {
             // post-scriptname arguments -> store them for Lua
             if (scriptargcount < MAXSCRIPTARGS) {
                 scriptargs[scriptargcount] = strdup(argv[i]);
@@ -922,8 +922,15 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // free arguments:
+    i = 0;
+    while (i < scriptargcount) {
+        free(scriptargs[i]);
+        i++;
+    }
+    free(scriptargs);
+
     // open and run provided script file and pass the command line arguments:
-    
     if (!luastate_DoInitialFile(script, scriptargcount, &error)) {
         if (error == NULL) {
             error = outofmem;
@@ -1155,7 +1162,9 @@ int main(int argc, char** argv) {
 #ifdef USE_GRAPHICS
         // be very sleepy if in background
         if (appinbackground) {
+#ifdef ANDROID
             time_Sleep(40);
+#endif
         }
 #endif
 

@@ -1373,13 +1373,13 @@ int luacfuncs_object_doAllSteps(int count) {
             importantObjects == a->obj) {
                 if (a->obj->importantPrev) {
                     a->obj->importantPrev->importantNext = a->obj->
-                        importantNext;
+                    importantNext;
                 } else {
                     importantObjects = a->obj->importantNext;
                 }
                 if (a->obj->importantNext) {
                     a->obj->importantNext->importantPrev = a->obj->
-                        importantPrev;
+                    importantPrev;
                 }
             }
         } else {

@@ -118,3 +118,12 @@ int luafuncs_debug_getLogicStats(lua_State* l) {
     return 6;
 }
 
+/// Get the total number of texture requests currently
+// managed by the texture manager.
+// @function getTextureRequestsCount
+// @treturn number total number of texture requests
+int luafuncs_debug_getTextureRequestsCount(lua_State* l) {
+    lua_pushnumber(l, texturemanager_getRequestCount());
+    return 1;
+}
+

@@ -228,6 +228,9 @@ int texturemanager_getTextureUsageInfo(const char* texture);
 // -1 means the texture isn't currently on the GPU.
 int texturemanager_getTextureGpuSizeInfo(const char* texture); 
 
+// Get the total amount of texture requests.
+size_t texturemanager_getRequestCount(void);
+
 #endif  // USE_GRAPHICS
 
 #endif  // BLITWIZARD_GRAPHICSTEXTUREMANAGER_H_

@@ -1047,6 +1047,23 @@ int texturemanager_getTextureGpuSizeInfo(const char* texture) {
     return loaded;
 }
 
+size_t texturemanager_getRequestCount() {
+    size_t count = 0;
+    mutex_Lock(textureReqListMutex);
+    struct texturerequesthandle* req = textureRequestList;
+    while (req) {
+        count++;
+        req = req->next;
+    }
+    req = unhandledRequestList;
+    while (req) {
+        count++;
+        req = req->next;
+    }
+    mutex_Release(textureReqListMutex);
+    return count;
+}
+
 #endif  // USE_GRAPHICS
 
 
