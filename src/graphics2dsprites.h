@@ -202,6 +202,9 @@ void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
 int event, int invisible);
 // set invisible to 1 for invisible, 0 for visible/regular (default)
 
+// Return the total amount of 2d sprites.
+size_t graphics2dsprites_Count(void);
+
 #ifdef __cplusplus
 }
 #endif

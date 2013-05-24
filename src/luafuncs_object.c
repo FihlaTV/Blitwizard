@@ -1343,6 +1343,11 @@ int luacfuncs_object_doAllSteps(int count) {
             }
             if (o->doStepDone) {
                 // we already did doStep on this one.
+                if (full) {
+                    processedTotalNormalObjects++;
+                } else {
+                    processedTotalImportantObjects++;
+                }
                 o = o->next;
                 continue;
             }
@@ -1399,6 +1404,7 @@ int luacfuncs_object_doAllSteps(int count) {
     addRemoveImportantObjects = NULL;
 
     // actually delete any objects marked as deleted:
+    o = deletedobjects;
     while (o) {
         struct blitwizardobject* onext = o->next;
         if (luacfuncs_object_deleteIfOk(o)) {

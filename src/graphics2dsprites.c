@@ -736,6 +736,18 @@ void* graphics2dsprites_getUserdata(struct graphics2dsprite* sprite) {
     return udata;
 }
 
+size_t graphics2dsprites_Count(void) {
+    size_t count = 0;
+    mutex_Lock(m);
+    struct graphics2dsprite* sprite = spritelist;
+    while (sprite) {
+        count++;
+        sprite = sprite->next;
+    }
+    mutex_Release(m);
+    return count;
+}
+
 #endif
 
 

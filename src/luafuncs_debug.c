@@ -43,6 +43,7 @@
 #include "graphicstexturemanager.h"
 #include "luafuncs_debug.h"
 #include "luafuncs_object.h"
+#include "graphics2dsprites.h"
 
 /// Get GPU memory used for all textures loaded by blitwizard in bytes.
 // @function gpuMemoryUse
@@ -120,10 +121,19 @@ int luafuncs_debug_getLogicStats(lua_State* l) {
 
 /// Get the total number of texture requests currently
 // managed by the texture manager.
-// @function getTextureRequestsCount
+// @function getTextureRequestCount
 // @treturn number total number of texture requests
-int luafuncs_debug_getTextureRequestsCount(lua_State* l) {
+int luafuncs_debug_getTextureRequestCount(lua_State* l) {
     lua_pushnumber(l, texturemanager_getRequestCount());
     return 1;
 }
+
+/// Get the total number of 2d sprites which are currently
+// active.
+// @function get2dSpriteCount
+// @treturn number total number of 2d sprites
+int luafuncs_debug_get2dSpriteCount(lua_State* l) {
+    lua_pushnumber(l, graphics2dsprites_Count());
+    return 1;
+} 
 

@@ -30,7 +30,8 @@ int luafuncs_debug_getGpuMemoryUse(lua_State* l);
 int luafuncs_debug_getTextureUsageInfo(lua_State* l);
 int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l);
 int luafuncs_debug_getLogicStats(lua_State* l);
-int luafuncs_debug_getTextureRequestsCount(lua_State* l);
+int luafuncs_debug_getTextureRequestCount(lua_State* l);
+int luafuncs_debug_get2dSpriteCount(lua_State* l);
 
 #endif  // BLITWIZARD_LUAFUNCS_DEBUG_H_
 

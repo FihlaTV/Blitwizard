@@ -290,8 +290,10 @@ void luastate_CreateDebugTable(lua_State* l) {
     "getGpuMemoryUse");
     luastate_registerfunc(l, &luafuncs_debug_getLogicStats,
     "getLogicStats");
-    luastate_registerfunc(l, &luafuncs_debug_getTextureRequestsCount,
-    "getTextureRequestsCount");
+    luastate_registerfunc(l, &luafuncs_debug_getTextureRequestCount,
+    "getTextureRequestCount");
+    luastate_registerfunc(l, &luafuncs_debug_get2dSpriteCount,
+    "get2dSpriteCount");
 }
 
 void luastate_CreateSimpleSoundTable(lua_State* l) {
