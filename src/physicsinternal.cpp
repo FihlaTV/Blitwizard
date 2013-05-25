@@ -444,7 +444,8 @@ static void physics_handleContact(b2Contact* contact) {
     // return the information through the callback
     contact->SetEnabled(false);
     if (w->callback) {
-        if (!w->callback(w->callbackuserdata, obj1, obj2, collidex, collidey, normalx, normaly, impact)) {
+        if (!w->callback(w->callbackuserdata, obj1, obj2,
+        collidex, collidey, normalx, normaly, impact)) {
             // contact should be disabled:
             contact->SetEnabled(false);
 
