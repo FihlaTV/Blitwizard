@@ -73,6 +73,7 @@ struct graphicstexturemanaged {
     int beingInitiallyLoaded;  // the texture is just being initiially loaded
         // from disk (= wait until loading is complete)
     int failedToLoad;  // the texture failed to load (e.g. file not found)
+    time_t failedToLoadTime;
     int handedOutLast;  // the scaled index of the last handed out size
     int preferredSize;
 
