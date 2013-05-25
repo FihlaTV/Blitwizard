@@ -1376,6 +1376,7 @@ int luacfuncs_object_doAllSteps(int count) {
         if (a->remove) {
             if (a->obj->importantPrev || a->obj->importantNext ||
             importantObjects == a->obj) {
+                // object is in important list -> remove it
                 if (a->obj->importantPrev) {
                     a->obj->importantPrev->importantNext = a->obj->
                     importantNext;
@@ -1390,9 +1391,10 @@ int luacfuncs_object_doAllSteps(int count) {
         } else {
             if (!a->obj->importantPrev && !a->obj->importantNext &&
             importantObjects != a->obj) {
+                // object isn't in important list -> add it
                 a->obj->importantNext = importantObjects;
                 if (a->obj->importantNext) {
-                    a->obj->importantNext->importantPrev = a;
+                    a->obj->importantNext->importantPrev = a->obj;
                 }
                 importantObjects = a->obj;
             }
