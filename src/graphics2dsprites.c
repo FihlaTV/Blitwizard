@@ -627,9 +627,11 @@ void graphics2dsprites_reportVisibility(void) {
             i, &x, &y, &w, &h);
 
             // now check if rectangle is on screen:
-            if (((x >= 0 && x < sw) || (x + w >= 0 && x + w < sw))
+            if (((x >= 0 && x < sw) || (x + w >= 0 && x + w < sw) ||
+            (x < 0 && x + w >= sw))
             &&
-            ((y >= 0 && y < sh) || (y + h >= 0 && y + h < sh))) {
+            ((y >= 0 && y < sh) || (y + h >= 0 && y + h < sh) ||
+            (y < 0 && y + h >= sh))) {
                 // it is.
                 texturemanager_usingRequest(sprite->request,
                 USING_AT_VISIBILITY_DETAIL);

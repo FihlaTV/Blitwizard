@@ -23,8 +23,8 @@
 
 #ifndef NDEBUG
 // comment this line if you don't want debug output:
-#define DEBUGTEXTUREMANAGER
-#define DEBUGTEXTUREMANAGERTHREADS
+//#define DEBUGTEXTUREMANAGER
+//#define DEBUGTEXTUREMANAGERTHREADS
 #endif
 
 #include "config.h"
@@ -323,21 +323,28 @@ int* index) {
     if (gtm->beingInitiallyLoaded) {
         // texture is being loaded, don't touch.
 #ifdef DEBUGTEXTUREMANAGER
-        printinfo("[TEXMAN/GPU request] texture still being loaded: %s",
-        gtm->path);
+        //printinfo("[TEXMAN/GPU request] texture still being loaded: %s",
+        //gtm->path);
 #endif
+        return NULL;
+    }
+    if (gtm->failedToLoad) {
         return NULL;
     }
 
     int i = texturemanager_decideOnPreferredSize(gtm,
     time(NULL), texturemanager_saveGPUMemory());
+    if (i == -1) {
+        // we aren't supposed to offer a texture right now.
+        return NULL;
+    }
 
     if (i < 0 || i >= gtm->scalelistcount) {
 #ifdef DEBUGTEXTUREMANAGER
         printinfo("[TEXMAN/GPU request] preferred size %d invalid for %s",
         i, gtm->path);
 #endif
-        // it suggests an invisible or nonexistant texture.
+        // it suggests a nonexistant texture.
         // that is odd.
         return texturemanager_getRandomGPUTexture(gtm);
     }
@@ -577,7 +584,7 @@ request, int listLocked) {
     gtm, width, height, &index);
     if (!gt) {
 #ifdef DEBUGTEXTUREMANAGER
-        printinfo("[TEXMAN] No GPU texture found for %s", gtm->path);
+        //printinfo("[TEXMAN] No GPU texture found for %s", gtm->path);
 #endif
     }
 
@@ -642,6 +649,7 @@ int success, void* userdata) {
 #endif
     if (!success) {
         gtm->failedToLoad = 1;
+        gtm->failedToLoadTime = time(NULL);
         width = 0;
         height = 0;
         gtm->beingInitiallyLoaded = 0;
@@ -662,6 +670,7 @@ static void texturemanager_initialLoadingDataCallback
     printinfo("[TEXMAN] texture loading fail: %s", gtm->path);
 #endif
         gtm->failedToLoad = 1;
+        gtm->failedToLoadTime = time(NULL);
         request->textureDimensionInfoCallback(request,
         0, 0, request->userdata);
         mutex_Release(textureReqListMutex);
@@ -707,6 +716,12 @@ void* userdata) {
         gtm);
     }
     request->gtm = gtm;
+
+    // if it failed to load and this was long ago,
+    // schedule reload:
+    if (gtm->failedToLoad && gtm->failedToLoadTime + 10 < time(NULL)) {
+        gtm->failedToLoad = 0;
+    }
 
     // assume initial usage:
     request->gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] =

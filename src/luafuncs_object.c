@@ -57,12 +57,9 @@
 #include "luafuncs_graphics_camera.h"
 
 // some statistics:
-int processedTotalImportantObjects = 0;
-int processedUniqueImportantObjects = 0;
-int processedTotalNormalObjects = 0;
-int processedUniqueNormalObjects = 0;
-int processedTotalBoringObjects = 0;
-int processedUniqueBoringObjects = 0;
+int processedImportantObjects = 0;
+int processedNormalObjects = 0;
+int processedBoringObjects = 0;
 
 
 // list of all objects (non-deleted):
@@ -711,22 +708,6 @@ int luafuncs_object_destroy(lua_State* l) {
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
-    // remove from old list:
-    if (o->prev) {
-      o->prev->next = o->next;
-    } else {
-      objects = o->next;
-    }
-    if (o->next) {
-      o->next->prev = o->prev;
-    }
-    // add to deleted list:
-    o->next = deletedobjects;
-    if (o->next) {
-        o->next->prev = o;
-    }
-    deletedobjects = o;
-    o->prev = NULL;
 
     // do a first temp cleanup:
     cleanupobject(o, 0);
@@ -1301,81 +1282,78 @@ int luacfuncs_object_doAllSteps(int count) {
         }
     }
 
-    // mark all objects as not yet stepped:
-    if (full) {
-        o = objects;
-    } else {
-        o = importantObjects;
-    }
-    while (o) {
-        o->doStepDone = 0;
-        o = o->next;
-    }
-
     // cycle through all objects:
     if (full) {
         o = objects;
-        processedTotalNormalObjects = 0;
-        processedUniqueNormalObjects = 0;
+        processedNormalObjects = 0;
     } else {
         o = importantObjects;
-        processedTotalImportantObjects = 0;
-        processedUniqueImportantObjects = 0;
+        processedImportantObjects = 0;
     }
-    int newAllSteps = 1;
-    while (newAllSteps) {
-        newAllSteps = 0;
-        // we might need to repeat this inner loop when
-        // objects get deleted while we doStep them
-        while (o) {
-            if (o->deleted) {
-                // we ran into a deleted object (likely deleted by
-                // a DoStep() of another object).
-                // relaunch this run and start over from beginning
-                // of non-deleted objects.
-                newAllSteps = 1;
-                if (full) {
-                    processedUniqueNormalObjects = 0;
-                } else {
-                    processedUniqueImportantObjects = 0;
-                }
-                break;
-            }
-            if (o->doStepDone) {
-                // we already did doStep on this one.
-                if (full) {
-                    processedTotalNormalObjects++;
-                } else {
-                    processedTotalImportantObjects++;
-                }
-                o = o->next;
-                continue;
-            }
-            // call doStep on object:
-            struct blitwizardobject* onext = o->next;
-            int i = 0;
-            while (i < count && !o->deleted) {
-                luacfuncs_object_doStep(l, o, full);
-                i++;
-            }
-            if (full) {
-                processedUniqueNormalObjects++;
-                processedTotalNormalObjects++;
-            } else {
-                processedUniqueImportantObjects++;
-                processedTotalImportantObjects++;
-            }
-            o = onext;
+    while (o) {
+        // call doStep on object:
+        struct blitwizardobject* onext = o->next;
+        if (!full) {
+            onext = o->importantNext;
         }
+        int i = 0;
+        while (i < count && !o->deleted) {
+            luacfuncs_object_doStep(l, o, full);
+            i++;
+        }
+        // if object is deleted, move to deletedobjects:
+        if (o->deleted) {
+            // remove from objects list:
+            if (o->prev) {
+              o->prev->next = o->next;
+            } else {
+              objects = o->next;
+            }
+            if (o->next) {
+              o->next->prev = o->prev;
+            }
+
+            // remove from important list:
+            if (o->importantPrev || o->importantNext ||
+            importantObjects == o) {
+                // object is in important list -> remove it
+                if (o->importantPrev) {
+                    o->importantPrev->importantNext = o->
+                    importantNext;
+                } else {
+                    importantObjects = o->importantNext;
+                }
+                if (o->importantNext) {
+                    o->importantNext->importantPrev = o->
+                    importantPrev;
+                }
+            }
+
+            // add to deleted list:
+            o->next = deletedobjects;
+            if (o->next) {
+                o->next->prev = o;
+            }
+            deletedobjects = o;
+            o->prev = NULL;
+        }
+        // advance counters
+        if (full) {
+            processedNormalObjects++;
+        } else {
+            processedImportantObjects++;
+        }
+        o = onext;
     }
 
     // remove/add objects to importantObjects list:
     struct addRemoveObject* a = addRemoveImportantObjects;
     while (a) {
         struct addRemoveObject* anext = a->next;
-        if (a->remove) {
+        if (a->remove || a->obj->deleted) {
             if (a->obj->importantPrev || a->obj->importantNext ||
             importantObjects == a->obj) {
+                // object is in important list -> remove it
                 if (a->obj->importantPrev) {
                     a->obj->importantPrev->importantNext = a->obj->
                     importantNext;
@@ -1390,9 +1368,10 @@ int luacfuncs_object_doAllSteps(int count) {
         } else {
             if (!a->obj->importantPrev && !a->obj->importantNext &&
             importantObjects != a->obj) {
+                // object isn't in important list -> add it
                 a->obj->importantNext = importantObjects;
                 if (a->obj->importantNext) {
-                    a->obj->importantNext->importantPrev = a;
+                    a->obj->importantNext->importantPrev = a->obj;
                 }
                 importantObjects = a->obj;
             }

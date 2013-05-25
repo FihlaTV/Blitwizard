@@ -97,12 +97,9 @@ int luafuncs_object_setRotationAngle(lua_State* l);
 int luafuncs_object_getRotationAngle(lua_State* l);
 
 // statistics for debugging:
-extern int processedTotalImportantObjects;
-extern int processedUniqueImportantObjects;
-extern int processedTotalNormalObjects;
-extern int processedUniqueNormalObjects;
-extern int processedTotalBoringObjects;
-extern int processedUniqueBoringObjects;
+extern int processedImportantObjects;
+extern int processedNormalObjects;
+extern int processedBoringObjects;
 
 #ifdef __cplusplus
 }
