@@ -103,19 +103,13 @@ int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l) {
 /// Get some metrics of the logic processing pipeline
 // of blitwizard (see return values).
 // @function getLogicStats
-// @treturn number processedUniqueImportantObjects
-// @treturn number processedTotalImportantObjects
-// @treturn number processedUniqueNormalObjects
-// @treturn number processedTotalNormalObjects
-// @treturn number processedUniqueBoringObjects
-// @treturn number processedTotalBoringObjects
+// @treturn number processedImportantObjects
+// @treturn number processedNormalObjects
+// @treturn number processedBoringObjects
 int luafuncs_debug_getLogicStats(lua_State* l) {
-    lua_pushnumber(l, processedUniqueImportantObjects);
-    lua_pushnumber(l, processedTotalImportantObjects);
-    lua_pushnumber(l, processedUniqueNormalObjects);
-    lua_pushnumber(l, processedTotalNormalObjects);
-    lua_pushnumber(l, processedUniqueBoringObjects);
-    lua_pushnumber(l, processedTotalBoringObjects);
+    lua_pushnumber(l, processedImportantObjects);
+    lua_pushnumber(l, processedNormalObjects);
+    lua_pushnumber(l, processedBoringObjects);
     return 6;
 }
 

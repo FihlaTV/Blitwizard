@@ -57,12 +57,9 @@
 #include "luafuncs_graphics_camera.h"
 
 // some statistics:
-int processedTotalImportantObjects = 0;
-int processedUniqueImportantObjects = 0;
-int processedTotalNormalObjects = 0;
-int processedUniqueNormalObjects = 0;
-int processedTotalBoringObjects = 0;
-int processedUniqueBoringObjects = 0;
+int processedImportantObjects = 0;
+int processedNormalObjects = 0;
+int processedBoringObjects = 0;
 
 
 // list of all objects (non-deleted):
@@ -1285,42 +1282,15 @@ int luacfuncs_object_doAllSteps(int count) {
         }
     }
 
-    // mark all objects as not yet stepped:
-    if (full) {
-        o = objects;
-    } else {
-        o = importantObjects;
-    }
-    while (o) {
-        o->doStepDone = 0;
-        o = o->next;
-    }
-
     // cycle through all objects:
     if (full) {
         o = objects;
-        processedTotalNormalObjects = 0;
-        processedUniqueNormalObjects = 0;
+        processedNormalObjects = 0;
     } else {
         o = importantObjects;
-        processedTotalImportantObjects = 0;
-        processedUniqueImportantObjects = 0;
+        processedImportantObjects = 0;
     }
     while (o) {
-        if (o->doStepDone) {
-            // we already did doStep on this one.
-            if (full) {
-                processedTotalNormalObjects++;
-            } else {
-                processedTotalImportantObjects++;
-            }
-            if (full) {
-                o = o->next;
-            } else {
-                o = o->importantNext;
-            }
-            continue;
-        }
         // call doStep on object:
         struct blitwizardobject* onext = o->next;
         if (!full) {
@@ -1369,11 +1339,9 @@ int luacfuncs_object_doAllSteps(int count) {
         }
         // advance counters
         if (full) {
-            processedUniqueNormalObjects++;
-            processedTotalNormalObjects++;
+            processedNormalObjects++;
         } else {
-            processedUniqueImportantObjects++;
-            processedTotalImportantObjects++;
+            processedImportantObjects++;
         }
         o = onext;
     }
