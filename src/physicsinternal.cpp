@@ -228,6 +228,7 @@ struct physicsworld {
         struct physicsworld2d world2d;
         struct physicsworld3d world3d;
     };
+    float stepsize;
     int is3d;
     void* callbackuserdata;
     int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
@@ -1292,9 +1293,9 @@ struct physicsobject* physics_createObject_internal(struct physicsworld* world,
     if (!obj) return NULL;
     // Dimension-independent
     if (movable)
-        physics_setMass(obj, 1);
+        physics_setMass_internal(obj, 1);
     else
-        physics_setMass(obj, 0);
+        physics_setMass_internal(obj, 0);
     obj->pworld = world;
     return obj;
 }
@@ -1497,7 +1498,7 @@ void physics_set2dScale(struct physicsobject* object, double scalex,
     struct physicsobject2d* object2d = &(object->object2d);
     b2Body* body = object2d->body;
     b2Fixture* f = body->GetFixtureList();
-    double mass = physics_getMass(object);
+    double mass = physics_getMass_internal(object);
     union { b2ChainShape* chain; b2CircleShape* circle;
      b2EdgeShape* edge; b2PolygonShape* poly; };
     
@@ -1598,7 +1599,7 @@ re-allocation of memory for m_vertices."
         } // else
         ++i;
     } // while
-    physics_setMass(object, mass);
+    physics_setMass_internal(object, mass);
 }
 #endif
 
@@ -1678,7 +1679,7 @@ void physics_set2dGravity_internal(struct physicsobject* obj, double x, double y
 
 #ifdef USE_PHYSICS2D
 void physics_set2dWorldGravity_internal(struct physicsworld* world, double x, double y) {
-    struct physicsworld2d* world2d = world->wor.ld2d;
+    struct physicsworld2d* world2d = &(world->world2d);
     world2d->gravityx = x;
     world2d->gravityy = y;
 }
@@ -1861,7 +1862,7 @@ public:
 
 #ifdef USE_PHYSICS2D
 int physics_ray2d_internal(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly) {
-    struct physicsworld2d* world2d = world->wor.ld2d;    
+    struct physicsworld2d* world2d = &(world->world2d);    
     
     // create callback object which finds the closest impact
     mycallback callbackobj;
