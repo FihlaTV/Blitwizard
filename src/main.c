@@ -1055,6 +1055,9 @@ int main(int argc, char** argv) {
         int physicsiterations = 0;
         int logiciterations = 0;
         time_t iterationStart = time(NULL);
+        int psteps_max = ((float)TIMESTEP/
+        (float)physics_getStepSize(physics2ddefaultworld));
+        psteps_max++;
         while (
         // allow maximum of iterations in an attempt to keep up:
         (logictimestamp < timeNow || physicstimestamp < timeNow) &&
@@ -1086,11 +1089,7 @@ int main(int argc, char** argv) {
             if (physicsiterations < MAXPHYSICSITERATIONS &&
             physicstimestamp < timeNow && (physicstimestamp <= logictimestamp
             || logiciterations >= MAXLOGICITERATIONS)) {
-                int psteps = ((float)TIMESTEP/
-                (float)physics_getStepSize(physics2ddefaultworld));
-                if (psteps < 1) {
-                    psteps = 1;
-                }
+                int psteps = psteps_max;
                 while (psteps > 0) {
                     physics_step(physics2ddefaultworld);
                     physicstimestamp += physics_getStepSize(
