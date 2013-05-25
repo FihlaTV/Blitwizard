@@ -352,7 +352,7 @@ static lua_State* luastate_New(void) {
     lua_pushcfunction(l, &luafuncs_getAllObjects);
     lua_settable(l, -3);
 
-    // blitwiz.setStep:
+    // blitwizard.setStep:
     lua_pushstring(l, "setStep");
     lua_pushcfunction(l, &luafuncs_setstep);
     lua_settable(l, -3);
@@ -362,12 +362,12 @@ static lua_State* luastate_New(void) {
     lua_pushcfunction(l, &luafuncs_loadResourceArchive);
     lua_settable(l, -3);
 
-    // blitwiz.getTemplateDirectory:
+    // blitwizard.getTemplateDirectory:
     lua_pushstring(l, "getTemplateDirectory");
     lua_pushcfunction(l, &luafuncs_getTemplateDirectory);
     lua_settable(l, -3);
 
-    // blitwiz namespaces
+    // blitwizard namespaces
     lua_pushstring(l, "graphics");
     luastate_CreateGraphicsTable(l);
     lua_settable(l, -3);
@@ -378,6 +378,10 @@ static lua_State* luastate_New(void) {
 
     lua_pushstring(l, "audio");
     luastate_CreateAudioTable(l);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "debug");
+    luastate_CreateDebugTable(l);
     lua_settable(l, -3);
 
     lua_pushstring(l, "callback");

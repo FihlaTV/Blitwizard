@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,12 +21,17 @@
 
 */
 
-void luastate_CreateTimeTable(lua_State* l);
-void luastate_CreateAudioTable(lua_State* l);
-void luastate_CreateSimpleSoundTable(lua_State* l);
-void luastate_CreateObjectTable(lua_State* l);
-void luastate_CreateGraphicsTable(lua_State* l);
-void luastate_CreateNetTable(lua_State* l);
-void luastate_CreatePhysicsTable(lua_State* l);
-void luastate_CreateDebugTable(lua_State* l);
+#ifndef BLITWIZARD_LUAFUNCS_DEBUG_H_
+#define BLITWIZARD_LUAFUNCS_DEBUG_H_
+
+#include "luaheader.h"
+
+int luafuncs_debug_getGpuMemoryUse(lua_State* l);
+int luafuncs_debug_getTextureUsageInfo(lua_State* l);
+int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l);
+int luafuncs_debug_getLogicStats(lua_State* l);
+int luafuncs_debug_getTextureRequestCount(lua_State* l);
+int luafuncs_debug_get2dSpriteCount(lua_State* l);
+
+#endif  // BLITWIZARD_LUAFUNCS_DEBUG_H_
 

@@ -46,10 +46,12 @@ dofile("startscreen.lua")
 
 function browser.launchSelection()
     blitwizard.graphics.setMode(640, 480, "blitwizard game engine", false)
-    local white = blitwizard.object:new(false, "white.png")
+    local camera = blitwizard.graphics.getCameras()[1]
+    camera:set2dZoomFactor(1)
+    local white = blitwizard.object:new(blitwizard.object.o2d, "white.png")
     white:setPosition(0, 0)
     white:setScale(50, 50)
-    local title = blitwizard.object:new(false, "title.png")
+    local title = blitwizard.object:new(blitwizard.object.o2d, "title.png")
     title:setPosition(0, -2.5)
     --[[
     local i = 1

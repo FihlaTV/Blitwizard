@@ -229,6 +229,7 @@ struct physicsworld {
         struct physicsworld2d* ld2d;
         struct physicsworld3d* ld3d;
     } wor;
+    float stepsize;
     int is3d;
     void* callbackuserdata;
     int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
@@ -542,6 +543,9 @@ struct physicsworld* physics_createWorld(int use3dphysics) {
         world2d->w->SetContactListener(world2d->listener);
         world->wor.ld2d = world2d;
         _physics_setWorldIs3D(world, 0);
+        
+        // set step size now that everything else is initialised:
+        world->stepsize = 1.0f/(1000.0f/(float)physics_getStepSize(world));
         return world;
 #else
         printerror("Error: Trying to create 2D physics world, but USE_PHYSICS2D is disabled.");
@@ -601,10 +605,10 @@ void physics_step(struct physicsworld* world) {
             int it2 = 2;
 #else
             // more accurate on desktop
-            int it1 = 10;
+            int it1 = 8;
             int it2 = 3;
 #endif
-            world2d->w->Step(1.0 /(1000.0f/physics_getStepSize(world)), it1, it2);
+            world2d->w->Step(world->stepsize, it1, it2);
             i++;
         }
         insidecollisioncallback = 0; // we are no longer inside a step

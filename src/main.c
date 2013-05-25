@@ -678,11 +678,11 @@ int main(int argc, char** argv) {
                     exit(0);
                 }
                 printwarning("Warning: Unknown Blitwizard option: %s", argv[i]);
-            }else{
+            } else {
                 scriptargfound = 1;
                 script = argv[i];
             }
-        }else{
+        } else {
             // post-scriptname arguments -> store them for Lua
             if (scriptargcount < MAXSCRIPTARGS) {
                 scriptargs[scriptargcount] = strdup(argv[i]);
@@ -922,8 +922,15 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // free arguments:
+    i = 0;
+    while (i < scriptargcount) {
+        free(scriptargs[i]);
+        i++;
+    }
+    free(scriptargs);
+
     // open and run provided script file and pass the command line arguments:
-    
     if (!luastate_DoInitialFile(script, scriptargcount, &error)) {
         if (error == NULL) {
             error = outofmem;
@@ -1048,6 +1055,9 @@ int main(int argc, char** argv) {
         int physicsiterations = 0;
         int logiciterations = 0;
         time_t iterationStart = time(NULL);
+        int psteps_max = ((float)TIMESTEP/
+        (float)physics_getStepSize(physics2ddefaultworld));
+        psteps_max++;
         while (
         // allow maximum of iterations in an attempt to keep up:
         (logictimestamp < timeNow || physicstimestamp < timeNow) &&
@@ -1079,11 +1089,7 @@ int main(int argc, char** argv) {
             if (physicsiterations < MAXPHYSICSITERATIONS &&
             physicstimestamp < timeNow && (physicstimestamp <= logictimestamp
             || logiciterations >= MAXLOGICITERATIONS)) {
-                int psteps = ((float)TIMESTEP/
-                (float)physics_getStepSize(physics2ddefaultworld));
-                if (psteps < 1) {
-                    psteps = 1;
-                }
+                int psteps = psteps_max;
                 while (psteps > 0) {
                     physics_step(physics2ddefaultworld);
                     physicstimestamp += physics_getStepSize(
@@ -1120,7 +1126,7 @@ int main(int argc, char** argv) {
         graphics2dsprites_reportVisibility();
 
         // texture manager tick:
-        texturemanager_Tick();
+        texturemanager_tick();
 
         // update object graphics:
         luacfuncs_object_updateGraphics();
@@ -1155,7 +1161,9 @@ int main(int argc, char** argv) {
 #ifdef USE_GRAPHICS
         // be very sleepy if in background
         if (appinbackground) {
+#ifdef ANDROID
             time_Sleep(40);
+#endif
         }
 #endif
 

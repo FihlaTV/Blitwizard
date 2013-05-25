@@ -28,6 +28,7 @@
 #include "luastate.h"
 #include "luafuncs.h"
 #include "physics.h"
+#include "luafuncs_debug.h"
 #include "luafuncs_graphics.h"
 #include "luafuncs_graphics_camera.h"
 #include "luafuncs_object.h"
@@ -277,6 +278,22 @@ void luastate_CreateObjectTable(lua_State* l) {
     "setLinearDamping");
     luastate_register2d3dphysics(l, &luafuncs_object_setGravity,
     "setGravity");
+}
+
+void luastate_CreateDebugTable(lua_State* l) {
+    lua_newtable(l);
+    luastate_registerfunc(l, &luafuncs_debug_getTextureUsageInfo,
+    "getTextureUsageInfo");
+    luastate_registerfunc(l, &luafuncs_debug_getTextureGpuSizeInfo,
+    "getTextureGpuSizeInfo");
+    luastate_registerfunc(l, &luafuncs_debug_getGpuMemoryUse,
+    "getGpuMemoryUse");
+    luastate_registerfunc(l, &luafuncs_debug_getLogicStats,
+    "getLogicStats");
+    luastate_registerfunc(l, &luafuncs_debug_getTextureRequestCount,
+    "getTextureRequestCount");
+    luastate_registerfunc(l, &luafuncs_debug_get2dSpriteCount,
+    "get2dSpriteCount");
 }
 
 void luastate_CreateSimpleSoundTable(lua_State* l) {

@@ -175,7 +175,10 @@ glyphWidth, glyphHeight, glyphsPerLine)
             else
                 spacePos = (1 + #str) - spacePos
             end
-            text = text .. line:sub(1, spacePos-1) .. "\n"
+            if #text > 0 then
+                text = text .. "\n"
+            end
+            text = text .. line:sub(1, spacePos-1) 
             line = line:sub(spacePos+1)
         end
         if #text > 0 then
