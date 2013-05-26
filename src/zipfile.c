@@ -605,5 +605,42 @@ int zipfile_FileEof(struct zipfilereader* f) {
     return PHYSFS_eof(f->f);
 }
 
+struct zipfileiter {
+    int index;
+    char** filelist;
+};
+struct zipfileiter* zipfile_Iterate(struct zipfile* f,
+const char* dir) {
+    if (!f) {
+        return NULL;
+    }
+    struct zipfileiter* iter = malloc(sizeof(*iter));
+    if (!iter) {
+        return NULL;
+    }
+    memset(iter, 0, sizeof(*iter));
+    iter->filelist = PHYSFS_enumerateFiles("savegames");
+    return iter;
+}
+
+const char* zipfile_NextFile(struct zipfileiter* f) {
+    if (!f) {
+        return NULL;
+    }
+    if (f->filelist[f->index]) {
+        char* s = f->filelist[f->index];
+        f->index++;
+        return s;
+    }
+    return NULL;
+}
+
+void zipfile_FinishIteration(struct zipfileiter* f) {
+    if (f) {
+        PHYSFS_freeList(f->filelist);
+        free(f);
+    }
+}
+
 #endif  // USE_PHYSFS
 

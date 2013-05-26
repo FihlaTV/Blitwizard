@@ -93,7 +93,7 @@
 	<td class="summary">Check if the given path points to a directory or not.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#ls">ls&nbsp;(directory)</a></td>
+	<td class="name" ><a href="#ls">ls&nbsp;(directory, virtual_files)</a></td>
 	<td class="summary">Returns a table array containing all the file names of the
  files in the specified directory.</td>
 	</tr>
@@ -234,17 +234,28 @@
 </dd>
     <dt>
     <a name = "ls"></a>
-    <strong>ls&nbsp;(directory)</strong>
+    <strong>ls&nbsp;(directory, virtual_files)</strong>
     </dt>
     <dd>
     Returns a table array containing all the file names of the
  files in the specified directory.
+<p> <b>Important</b>: this lists both files from actual directories on
+ hard disk, and virtual directories loaded through
+ <a href="../modules/blitwizard.html#loadResourceArchive">loaded zip resource archives</a>.
+ Virtual files will take precedence over real files (you won't
+ receive duplicates).
+<p> If you don't want virtual files listed (e.g. because you want
+ to examine any directory supplied by the user and not part of your
+ project)
 
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">directory</span>
             <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
          path, empty string ("") for current directory</li>
+        <li><span class="parameter">virtual_files</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) Specify true to list virtual files inside virtual directories aswell (the default behaviour), false to list only files in the actual file system on disk</li>
     </ul>
 
 

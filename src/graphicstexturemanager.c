@@ -23,8 +23,8 @@
 
 #ifndef NDEBUG
 // comment this line if you don't want debug output:
-//#define DEBUGTEXTUREMANAGER
-//#define DEBUGTEXTUREMANAGERTHREADS
+#define DEBUGTEXTUREMANAGER
+#define DEBUGTEXTUREMANAGERTHREADS
 #endif
 
 #include "config.h"

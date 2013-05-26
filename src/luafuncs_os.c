@@ -132,8 +132,19 @@ int luafuncs_isdir(lua_State* l) {
 
 /// Returns a table array containing all the file names of the
 // files in the specified directory.
+//
+// <b>Important</b>: this function lists both files from actual directories on
+// hard disk, and virtual directories loaded through
+// @{blitwizard.loadResourceArchive|loaded zip resource archives}.
+// Virtual files will take precedence over real files (you won't
+// receive duplicates).
+//
+// If you don't want virtual files listed (e.g. because you want
+// to examine any directory supplied by the user and not part of your
+// project)
 // @function ls
 // @tparam string directory path, empty string ("") for current directory
+// @tparam boolean virtual_files (optional) Specify true to list virtual files inside virtual directories aswell (the default behaviour), false to list only files in the actual file system on disk
 // @usage
 //   -- list all files in current directory:
 //   for i,file in ipairs(os.ls("")) do
@@ -145,8 +156,25 @@ int luafuncs_ls(lua_State* l) {
         lua_pushstring(l, "First argument is not a valid path string");
         return lua_error(l);
     }
+    int list_virtual = 1;
+    if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
+        if (lua_type(l, 2) != LUA_TNUMBER) {
+            return haveluaerror(l, badargument1, 2, "os.ls", "boolean or nil",
+            lua_strtype(l, 2));
+        }
+        list_virtual = lua_toboolean(l, 2);
+    }
+
+    // get virtual filelist:
+    char** filelist = NULL;
+    if (list_virtual) {
+        filelist = resource_FileList(p);
+    }
+
+    // get iteration context for "real" on disk directory:
     struct filelistcontext* ctx = filelist_Create(p);
-    if (!ctx) {
+
+    if (!ctx && (!list_virtual || !filelist)) {
         char errmsg[500];
         snprintf(errmsg, sizeof(errmsg), "Failed to ls folder: %s", p);
         errmsg[sizeof(errmsg)-1] = 0;
@@ -166,6 +194,26 @@ int luafuncs_ls(lua_State* l) {
     while ((returnvalue = filelist_GetNextFile(ctx,
     filenamebuf, sizeof(filenamebuf), &isdir)) == 1) {
         i++;
+        lua_checkstack(l, 3);
+
+        int duplicate = 0;
+        // if we list against virtual folders too,
+        // check for this being a duplicate:
+        if (filelist) {
+            size_t i = 0;
+            while (filelist[i]) {
+                if (strcasecmp(filelist[i], filenamebuf) == 0) {
+                    duplicate = 1;
+                    break;
+                }
+                i++;
+            }
+            if (duplicate) {
+                // don't add this one.
+                i--;
+                continue;
+            }
+        }
         lua_pushinteger(l, i);
         lua_pushstring(l, filenamebuf);
         lua_settable(l, -3);
@@ -173,6 +221,16 @@ int luafuncs_ls(lua_State* l) {
 
     // free file list
     filelist_Free(ctx);
+
+    // free virtual file list:
+    if (filelist) {
+        size_t i = 0;
+        while (filelist[i]) {
+            free(filelist[i]);
+            i++;
+        }
+        free(filelist);
+    }
 
     // process error during listing
     if (returnvalue < 0) {
