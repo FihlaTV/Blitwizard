@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "physics.h"
 #include "physicsinternal.h"
@@ -49,6 +50,12 @@ struct cachedangularimpulse {
 struct cachedphysicsobject {
     struct physicsobjectshape* shapes;
     int shapecount;
+    
+    struct physicsworld* world;
+    
+    void* userdata;
+    
+    int movable;
     
     int massisset;
     double mass;
@@ -94,12 +101,96 @@ struct cachedphysicsobject {
     
     int impulsecount;
     struct cachedimpulse* impulses;
+    
+    struct cachedphysicsobject* next;
 };
 
 struct cachedphysicsobject* cachedObjects = NULL;
 
-static void physics_createCachedObjects() {
-    
+int isInCallback = 0;
+
+static struct cachedphysicsobject* physics_createCachedObjects(int count) {
+    struct cachedphysicsobject* c_object;
+    for (int i = 0; i < count; ++i) {
+        c_object = (struct cachedphysicsobject*)malloc(sizeof(*c_object));
+        memset (c_object, 0, sizeof(*c_object));
+        c_object->next = cachedObjects;
+        cachedObjects = c_object;
+    }
+    return c_object; // Return last element added, i.e. first element in list
+}
+
+static int physics_destroyCachedObject(struct cachedphysicsobject* c_object) {
+    struct cachedphysicsobject *c, *c_prev;
+    c = cachedObjects;
+    c_prev = NULL;
+    while (c != NULL) {
+        if (c == c_object) {
+            if (not c_prev) {
+                cachedObjects = c->next;
+            } else {
+                c_prev->next = c->next;
+            }
+            free(c);
+            return 0;
+        }
+        c_prev = c;
+        c = c->next;
+    }
+    return 1;
+}
+
+static int physics_objectIsCached(void* object) {
+    struct cachedphysicsobject* c = cachedObjects;
+    while (c != NULL) {
+        if ((void*)c == object) {
+            return 1;
+        }
+        c = c->next;
+    }
+    return 0;
+}
+
+static struct physicsobject* physics_createObjectFromCache(struct
+ cachedphysicsobject* c_object) {
+    struct physicsobject* object;
+    object = physics_createObject_internal(c_object->world, c_object->userdata,
+     c_object->movable, c_object->shapes, c_object->shapecount);
+    // TODO: something something
+    return object;
+}
+
+
+/*
+ Implementation of physics.h starts here
+ */
+
+struct physicsobject* physics_createObject(struct physicsworld* world,
+ void* userdata, int movable, struct physicsobjectshape* shapelist,
+ int shapecount) {
+    if (isInCallback) {
+        struct cachedphysicsobject* c_object = physics_createCachedObjects(1);
+        c_object->world = world;
+        c_object->userdata = userdata;
+        c_object->movable = movable;
+        c_object->shapes = shapelist;
+        c_object->shapecount = shapecount;
+        return (struct physicsobject*)c_object;
+    } else {
+        return physics_createObject_internal(world, userdata, movable,
+         shapelist, shapecount);
+    }
+}
+
+void physics_destroyObject(struct physicsobject* object) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)object;
+    // Relies on physics_destroyCachedObject() returning 1 for non-cached objs
+    /* TODO: We can make this faster by checking for isInCallback instead if
+     [cached objects exist] <=> [isInCallBack] holds.
+     */
+    if (physics_destroyCachedObject(c_object)) {
+        physics_destroyObject_internal(object);
+    }
 }
 
 #endif  // defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
