@@ -97,7 +97,13 @@ int luafuncs_exists(lua_State* l) {
     }
     if (file_DoesFileExist(p)) {
         lua_pushboolean(l, 1);
-    }else{
+    } else {
+#ifdef USE_PHYSFS
+        if (resources_LocateResource(p, NULL)) {
+            lua_pushboolean(l, 1);
+            return 1;
+        }
+#endif
         lua_pushboolean(l, 0);
     }
     return 1;
@@ -116,6 +122,12 @@ int luafuncs_isdir(lua_State* l) {
         return lua_error(l);
     }
     if (!file_DoesFileExist(p)) {
+#ifdef USE_PHYSFS
+        if (resource_IsFolderInZip(p)) {
+            lua_pushboolean(l, 1);
+            return 1;
+        }
+#endif
         char errmsg[500];
         snprintf(errmsg, sizeof(errmsg), "No such file or directory: %s\n", p);
         errmsg[sizeof(errmsg)-1] = 0;
@@ -124,7 +136,7 @@ int luafuncs_isdir(lua_State* l) {
     }
     if (file_IsDirectory(p)) {
         lua_pushboolean(l, 1);
-    }else{
+    } else {
         lua_pushboolean(l, 0);
     }
     return 1;
@@ -167,9 +179,11 @@ int luafuncs_ls(lua_State* l) {
 
     // get virtual filelist:
     char** filelist = NULL;
+#ifdef USE_PHYSFS
     if (list_virtual) {
         filelist = resource_FileList(p);
     }
+#endif
 
     // get iteration context for "real" on disk directory:
     struct filelistcontext* ctx = filelist_Create(p);
@@ -208,11 +222,11 @@ int luafuncs_ls(lua_State* l) {
                 }
                 i++;
             }
-            if (duplicate) {
-                // don't add this one.
-                i--;
-                continue;
-            }
+        }
+        if (duplicate) {
+            // don't add this one.
+            i--;
+            continue;
         }
         lua_pushinteger(l, i);
         lua_pushstring(l, filenamebuf);
@@ -270,7 +284,8 @@ int luafuncs_chdir(lua_State* l) {
     }
     if (!file_Cwd(p)) {
         char errmsg[512];
-        snprintf(errmsg,sizeof(errmsg)-1,"Failed to change directory to: %s",p);
+        snprintf(errmsg,sizeof(errmsg)-1,
+            "Failed to change directory to: %s",p);
         errmsg[sizeof(errmsg)-1] = 0;
         lua_pushstring(l, errmsg);
         return lua_error(l);
