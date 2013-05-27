@@ -571,6 +571,10 @@ void physics_destroyWorld(struct physicsworld* world) {
     }
 }
 
+int physics_worldIs3d_internal(struct physicsworld* world) {
+    return _physics_worldIs3D(world);
+}
+
 void physics_step(struct physicsworld* world) {
     if (!world->is3d) {
 #ifdef USE_PHYSICS2D
@@ -626,14 +630,14 @@ int physics_getStepSize(struct physicsworld* world) {
 
 
 #ifdef USE_PHYSICS2D
-void physics_set2dCollisionCallback_internal(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
+void physics_set2dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
     world->callback = callback;
     world->callbackuserdata = userdata;
 }
 #endif
 
 #ifdef USE_PHYSICS3D
-void physics_set3dCollisionCallback_internal(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double z, double normalx, double normaly, double normalz, double force), void* userdata) {
+void physics_set3dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double z, double normalx, double normaly, double normalz, double force), void* userdata) {
     printerror(BW_E_NO3DYET);
 }
 #endif
@@ -1330,7 +1334,7 @@ void physics_destroyObject_internal(struct physicsobject* obj) {
 }
 
 
-void* physics_getObjectUserdata(struct physicsobject* object) {
+void* physics_getObjectUserdata_internal(struct physicsobject* object) {
     if (not object->is3d) {
 #ifdef USE_PHYSICS2D
         return ((struct bodyuserdata*)object->object2d.body->
@@ -1493,7 +1497,7 @@ void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_set2dScale(struct physicsobject* object, double scalex,
+void physics_set2dScale_internal(struct physicsobject* object, double scalex,
  double scaley) {
     // TODO maybe (though it's stupid): do nothing when old_scale == new_scale
     struct physicsobject2d* object2d = &(object->object2d);
@@ -1679,7 +1683,7 @@ void physics_set2dGravity_internal(struct physicsobject* obj, double x, double y
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_set2dWorldGravity_internal(struct physicsworld* world, double x, double y) {
+void physics_set2dWorldGravity(struct physicsworld* world, double x, double y) {
     struct physicsworld2d* world2d = &(world->world2d);
     world2d->gravityx = x;
     world2d->gravityy = y;
@@ -1862,7 +1866,7 @@ public:
 #endif
 
 #ifdef USE_PHYSICS2D
-int physics_ray2d_internal(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly) {
+int physics_ray2d(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly) {
     struct physicsworld2d* world2d = &(world->world2d);    
     
     // create callback object which finds the closest impact

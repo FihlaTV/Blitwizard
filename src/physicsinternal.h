@@ -33,8 +33,13 @@
 extern "C" {
 #endif
 
+// Aux functions needed for caching:
+int physics_worldIs3d_internal(struct physicsworld* world);
+
+// Actual functions:
+
 #ifdef USE_PHYSICS2D
-void physics_set2dCollisionCallback_internal(
+void physics_set2dCollisionCallback(
 struct physicsworld* world,
 int (*callback)(void* userdata, struct physicsobject* a,
     struct physicsobject* b, double x, double y, double normalx,
@@ -55,6 +60,16 @@ struct physicsworld* world, void* userdata, int movable,
 struct physicsobjectshape* shapelist, int shapecount);
 
 void physics_destroyObject_internal(struct physicsobject* object);
+void* physics_getObjectUserdata_internal(struct physicsobject* object);
+
+#ifdef USE_PHYSICS2D
+void physics_set2dScale_internal(struct physicsobject* object, double scalex,
+ double scaley);
+#endif
+#ifdef USE_PHYSICS3D
+void physics_set3dScale_internal(struct physicsobject* object, double scalex,
+ double scaley, double scalez);
+#endif
 
 void physics_setMass_internal(struct physicsobject* obj, double mass);
 double physics_getMass_internal(struct physicsobject* obj);
@@ -76,7 +91,7 @@ double* offsety, double* offsetz);
 void physics_set2dGravity_internal(
 struct physicsobject* obj,
 double x, double y);
-void physics_set2dWorldGravity_internal(
+void physics_set2dWorldGravity(
 struct physicsworld* world, double x,
 double y);
 #endif
@@ -84,7 +99,7 @@ double y);
 void physics_set3dGravity_internal(
 struct physicsobject* obj, double x,
 double y, double z);
-void physics_set3dWorldGravity_internal(
+void physics_set3dWorldGravity(
 struct physicsworld* world,
 double x, double y,
  double z);
@@ -109,7 +124,7 @@ void physics_setRestitution_internal(struct physicsobject* obj, double restituti
 #ifdef USE_PHYSICS2D
 void physics_get2dPosition_internal(struct physicsobject* obj, double* x, double* y);
 void physics_get2dRotation_internal(struct physicsobject* obj, double* angle);
-void physics_warp2d(struct physicsobject* obj, double x, double y, double angle);
+void physics_warp2d_internal(struct physicsobject* obj, double x, double y, double angle);
 void physics_apply2dImpulse_internal(struct physicsobject* obj, double forcex, double forcey, double sourcex, double sourcey);
 #endif
 #ifdef USE_PHYSICS3D
@@ -142,10 +157,10 @@ void physics_apply3dAngularImpulse_internal(struct physicsobject* obj,
 
 // Collision test ray
 #ifdef USE_PHYSICS2D
-int physics_ray2d_internal(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly); // returns 1 when something is hit, otherwise 0  -- XXX: not thread-safe!
+int physics_ray2d(struct physicsworld* world, double startx, double starty, double targetx, double targety, double* hitpointx, double* hitpointy, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly); // returns 1 when something is hit, otherwise 0  -- XXX: not thread-safe!
 #endif
 #ifdef USE_PHYSICS3D
-int physics_ray3d_internal(struct physicsworld* world, double startx, double starty, double startz, double targetx, double targety, double targetz, double* hitpointx, double* hitpointy, double* hitpointz, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly, double* hitnormalz); // returns 1 when something is hit, otherwise 0  -- XXX: not thread-safe!
+int physics_ray3d(struct physicsworld* world, double startx, double starty, double startz, double targetx, double targety, double targetz, double* hitpointx, double* hitpointy, double* hitpointz, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly, double* hitnormalz); // returns 1 when something is hit, otherwise 0  -- XXX: not thread-safe!
 #endif
 
 #ifdef __cplusplus

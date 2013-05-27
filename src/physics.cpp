@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "physics.h"
 #include "physicsinternal.h"
@@ -48,6 +49,8 @@ struct cachedangularimpulse {
 };
 
 struct cachedphysicsobject {
+    int is3d;
+    
     struct physicsobjectshape* shapes;
     int shapecount;
     
@@ -57,14 +60,17 @@ struct cachedphysicsobject {
     
     int movable;
     
-    int massisset;
+    int mass_set;
     double mass;
     
-    int masscenterisset;
+    int masscenter_set;
     double masscenterx, masscentery, masscenterz;
     
-    int gravityisset;
-    double gravityx, gravity, gravityz;
+    int scale_set;
+    double scalex, scaley, scalez;
+    
+    int gravity_set;
+    double gravityx, gravityy, gravityz;
     
     int rotationrestriction2d;
     int rotationrestriction3daxis;
@@ -72,35 +78,40 @@ struct cachedphysicsobject {
     rotationrestriction3dz;
     double rotationrestriction3dfull;
     
-    int frictionisset;
+    int friction_set;
     double friction;
     
-    int angulardampingset;
+    int angulardamping_set;
     double angulardamping;
     
-    int lineardampingset;
+    int lineardamping_set;
     double lineardamping;
     
-    int restitutionset;
+    int restitution_set;
     double restitution;
     
-    int positionset;
+    int position_set;
     double positionx, positiony, positionz;
     
-    int rotation2dset;
+    int rotation2d_set;
     double rotation2d;
     
-    int rotation3dset;
+    int rotation3d_set;
     double rotation3dx, rotation3dy, rotation3dz, rotation3dr;
     
-    int velocityset;
+    int velocity_set;
     double velocityx, velocityy, velocityz;
     
-    int angularvelocityset;
-    double angularvelocity;
+    int angularvelocity2d_set;
+    double angularvelocity2d;
+    
+    // TODO: angular velocity 3D quaternion
     
     int impulsecount;
     struct cachedimpulse* impulses;
+    
+    int angularimpulsecount;
+    struct cachedangularimpulse* angularimpulses;
     
     struct cachedphysicsobject* next;
 };
@@ -121,6 +132,9 @@ static struct cachedphysicsobject* physics_createCachedObjects(int count) {
 }
 
 static int physics_destroyCachedObject(struct cachedphysicsobject* c_object) {
+    if (not c_object) {
+        return -1;
+    }
     struct cachedphysicsobject *c, *c_prev;
     c = cachedObjects;
     c_prev = NULL;
@@ -131,6 +145,8 @@ static int physics_destroyCachedObject(struct cachedphysicsobject* c_object) {
             } else {
                 c_prev->next = c->next;
             }
+            free(c_object->impulses);
+            free(c_object->angularimpulses);
             free(c);
             return 0;
         }
@@ -140,7 +156,7 @@ static int physics_destroyCachedObject(struct cachedphysicsobject* c_object) {
     return 1;
 }
 
-static int physics_objectIsCached(void* object) {
+static inline int physics_objectIsCached(void* object) {
     struct cachedphysicsobject* c = cachedObjects;
     while (c != NULL) {
         if ((void*)c == object) {
@@ -156,7 +172,130 @@ static struct physicsobject* physics_createObjectFromCache(struct
     struct physicsobject* object;
     object = physics_createObject_internal(c_object->world, c_object->userdata,
      c_object->movable, c_object->shapes, c_object->shapecount);
-    // TODO: something something
+    
+    // Apply all params to the newly created object
+    struct cachedphysicsobject* c = c_object; // Shorter alias
+    if (c->mass_set) {
+        physics_setMass_internal(object, c->mass);
+    }
+    if (c->masscenter_set) {
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_set2dMassCenterOffset_internal(object, c->masscenterx,
+             c->masscentery);
+#endif
+        }
+    }
+    if (c->scale_set) {
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_set2dScale_internal(object, c->scalex, c->scaley);
+#endif
+        }
+    }
+    if (c->gravity_set) {
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_set2dGravity_internal(object, c->gravityx, c->gravityy);
+#endif
+        }
+    }
+    if (c->rotationrestriction2d) {
+        physics_set2dRotationRestriction_internal(object,
+         c->rotationrestriction2d);
+    }
+    
+    // TODO: 3D rotation restriction
+    
+    if (c->friction_set) {
+        physics_setFriction_internal(object, c->friction);
+    }
+    if (c->angulardamping_set) {
+        physics_setAngularDamping_internal(object, c->angulardamping);
+    }
+    if (c->lineardamping_set) {
+        physics_setLinearDamping_internal(object, c->lineardamping);
+    }
+    if (c->restitution_set) {
+        physics_setRestitution_internal(object, c->restitution);
+    }
+    if (c->position_set || c->rotation2d_set) {
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_warp2d_internal(object, c->positionx, c->positiony,
+             c->rotation2d);
+#endif
+        }
+    }
+    
+    // TODO: 3D rotation
+    
+    if (c->velocity_set) {
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_set2dVelocity_internal(object, c->velocityx, c->velocityy);
+#endif
+        }
+    }
+    if (c->angularvelocity2d_set) {
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_set2dAngularVelocity_internal(object, c->angularvelocity2d);
+#endif
+        }
+    }
+    
+    for (int i = 0; i < c->impulsecount; ++i) {
+        struct cachedimpulse* imp = &(c->impulses[i]);
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_apply2dImpulse_internal(object, imp->forcex, imp->forcey,
+             imp->sourcex, imp->sourcey);
+#endif
+        }
+    }
+    
+    for (int i = 0; i < c->angularimpulsecount; ++i) {
+        struct cachedangularimpulse* imp = &(c->angularimpulses[i]);
+        if (c->is3d) {
+#ifdef USE_PHYSICS3D
+            // TBD
+#endif
+        } else {
+#ifdef USE_PHYSICS2D
+            physics_apply2dAngularImpulse_internal(object, imp->angle2d);
+#endif
+        }
+    }
+    
     return object;
 }
 
@@ -171,6 +310,7 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
     if (isInCallback) {
         struct cachedphysicsobject* c_object = physics_createCachedObjects(1);
         c_object->world = world;
+        c_object->is3d = physics_worldIs3d_internal(world);
         c_object->userdata = userdata;
         c_object->movable = movable;
         c_object->shapes = shapelist;
@@ -192,5 +332,274 @@ void physics_destroyObject(struct physicsobject* object) {
         physics_destroyObject_internal(object);
     }
 }
+
+void* physics_getObjectUserdata(struct physicsobject* object) {
+    if (physics_objectIsCached(object)) {
+        return ((struct cachedphysicsobject*)object)->userdata;
+    } else {
+        return physics_getObjectUserdata_internal(object);
+    }
+}
+
+#ifdef USE_PHYSICS2D
+void physics_set2dScale(struct physicsobject* object, double scalex,
+ double scaley) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)object;
+    if (physics_objectIsCached(object)) {
+        c_object->scalex = scalex;
+        c_object->scaley = scaley;
+        c_object->scale_set = 1;
+    } else {
+        physics_set2dScale_internal(object, scalex, scaley);
+    }
+}
+#endif
+
+void physics_setMass(struct physicsobject* obj, double mass) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->mass = mass;
+        c_object->mass_set = 1;
+    } else {
+        physics_setMass_internal(obj, mass);
+    }
+}
+
+double physics_getMass(struct physicsobject* obj) {
+    if (physics_objectIsCached(obj)) {
+        return ((struct cachedphysicsobject*)obj)->mass;
+    } else {
+        return physics_getMass_internal(obj);
+    }
+}
+
+#ifdef USE_PHYSICS2D
+void physics_set2dMassCenterOffset(struct physicsobject* obj,
+ double offsetx, double offsety) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->masscenterx = offsetx;
+        c_object->masscentery = offsety;
+        c_object->masscenter_set = 1;
+    } else {
+        physics_set2dMassCenterOffset_internal(obj, offsetx, offsety);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_get2dMassCenterOffset(struct physicsobject* obj,
+ double* offsetx, double* offsety) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        *offsetx = c_object->masscenterx;
+        *offsety = c_object->masscentery;
+    } else {
+        physics_get2dMassCenterOffset_internal(obj, offsetx, offsety);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_set2dGravity(struct physicsobject* obj, double x, double y) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->gravityx = x;
+        c_object->gravityy = y;
+        c_object->gravity_set = 1;
+    } else {
+        physics_set2dGravity_internal(obj, x, y);
+    }
+}
+#endif
+
+void physics_unsetGravity(struct physicsobject* obj) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->gravityx = 0;
+        c_object->gravityy = 0;
+        c_object->gravity_set = 0;
+    } else {
+        physics_unsetGravity_internal(obj);
+    }
+}
+
+#ifdef USE_PHYSICS2D
+void physics_set2dRotationRestriction(struct physicsobject* obj,
+ int restricted) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->rotationrestriction2d = restricted;
+    } else {
+        physics_set2dRotationRestriction_internal(obj, restricted);
+    }
+}
+#endif
+
+void physics_setFriction(struct physicsobject* obj, double friction) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->friction = friction;
+        c_object->friction_set = 1;
+    } else {
+        physics_setFriction_internal(obj, friction);
+    }
+}
+
+void physics_setAngularDamping(struct physicsobject* obj, double damping) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->angulardamping = damping;
+        c_object->angulardamping_set = 1;
+    } else {
+        physics_setAngularDamping_internal(obj, damping);
+    }
+}
+
+void physics_setLinearDamping(struct physicsobject* obj, double damping) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->lineardamping = damping;
+        c_object->lineardamping_set = 1;
+    } else {
+        physics_setLinearDamping_internal(obj, damping);
+    }
+}
+
+void physics_setRestitution(struct physicsobject* obj, double restitution) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->restitution = restitution;
+        c_object->restitution_set = 1;
+    } else {
+        physics_setRestitution_internal(obj, restitution);
+    }
+}
+
+#ifdef USE_PHYSICS2D
+void physics_get2dPosition(struct physicsobject* obj, double* x, double* y) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        *x = c_object->positionx;
+        *y = c_object->positiony;
+    } else {
+        physics_get2dPosition_internal(obj, x, y);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_get2dRotation(struct physicsobject* obj, double* angle) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        *angle = c_object->rotation2d;
+    } else {
+        physics_get2dRotation_internal(obj, angle);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_warp2d(struct physicsobject* obj, double x, double y,
+ double angle) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->positionx = x;
+        c_object->positiony = y;
+        c_object->rotation2d = angle;
+        c_object->position_set = 1;
+        c_object->rotation2d_set = 1;
+    } else {
+        physics_warp2d_internal(obj, x, y, angle);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_apply2dImpulse(struct physicsobject* obj, double forcex,
+ double forcey, double sourcex, double sourcey) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->impulsecount++;
+        c_object->impulses = (struct cachedimpulse*)realloc(c_object->impulses,
+         sizeof(struct cachedimpulse*) * (c_object->impulsecount));
+        struct cachedimpulse* imp = &(c_object->impulses[
+         c_object->impulsecount-1]);
+        imp->forcex = forcex;
+        imp->forcey = forcey;
+        imp->sourcex = sourcex;
+        imp->sourcey = sourcey;
+    } else {
+        physics_apply2dImpulse_internal(obj, forcex, forcey, sourcex, sourcey);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        *vx = c_object->velocityx;
+        *vy = c_object->velocityy;
+    } else {
+        physics_get2dVelocity_internal(obj, vx, vy);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        *omega = c_object->angularvelocity2d;
+    } else {
+        physics_get2dAngularVelocity_internal(obj, omega);
+    }
+    return *omega;
+    // WTF @ this function FIXME FIXME FIXME
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->velocityx = vx;
+        c_object->velocityy = vy;
+        c_object->velocity_set = 1;
+    } else {
+        physics_set2dVelocity_internal(obj, vx, vy);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_set2dAngularVelocity(struct physicsobject* obj, double omega) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->angularvelocity2d = omega;
+        c_object->angularvelocity2d_set = 1;
+    } else {
+        physics_set2dAngularVelocity_internal(obj, omega);
+    }
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse) {
+    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    if (physics_objectIsCached(obj)) {
+        c_object->angularimpulsecount++;
+        c_object->angularimpulses = (struct cachedangularimpulse*)realloc(
+         c_object->angularimpulses, sizeof(struct cachedangularimpulse*) * \
+         (c_object->angularimpulsecount));
+        struct cachedangularimpulse* imp = &(c_object->angularimpulses[
+         c_object->angularimpulsecount-1]);
+        imp->angle2d = impulse;
+    } else {
+        physics_apply2dAngularImpulse_internal(obj, impulse);
+    }
+}
+#endif
 
 #endif  // defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)

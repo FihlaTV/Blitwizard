@@ -159,10 +159,8 @@ void physics_get3dMassCenterOffset(struct physicsobject* obj,
 double* offsetx, double* offsety, double* offsetz);
 #endif
 #ifdef USE_PHYSICS2D
-void physics_set2dGravity(struct physicsobject* obj,
-double x, double y);
-void physics_set2dWorldGravity(struct physicsworld* world,
-double x, double y);
+void physics_set2dGravity(struct physicsobject* obj, double x, double y);
+void physics_set2dWorldGravity(struct physicsworld* world, double x, double y);
 #endif
 #ifdef USE_PHYSICS3D
 void physics_set3dGravity(struct physicsobject* obj,
@@ -183,7 +181,7 @@ void physics_set3dRotationRestrictionAllAxis(
 struct physicsobject* obj);
 void physics_set3dNoRotationRestriction(void);
 #endif
-void physics_setFriction(struct physicsobject* obj,double friction);
+void physics_setFriction(struct physicsobject* obj, double friction);
 void physics_setAngularDamping(struct physicsobject* obj, double damping);
 void physics_setLinearDamping(struct physicsobject* obj, double damping);
 void physics_setRestitution(struct physicsobject* obj, double restitution);
