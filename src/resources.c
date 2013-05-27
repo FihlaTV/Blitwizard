@@ -395,6 +395,119 @@ int resource_IsFolderInZip(const char* path) {
     return 0;
 }
 
+char** resource_FileList(const char* path) {
+    char** p = NULL;
+    size_t filecount = 0;
+    int directoryexists = 0;
+
+    struct resourcearchive* a = resourcearchives;
+    while (a) {
+        // check if path maps to a directory in this archive:
+        if (zipfile_PathExists(a->z, path)) {
+            if (zipfile_IsDirectory(a->z, path)) {
+                directoryexists = 1;
+
+                // get file list:
+                struct zipfileiter* iter = zipfile_Iterate(
+                a->z, path);
+                if (!iter) {  // cannot iterate directory.
+                    a = a->next;
+                    continue;
+                }
+                // go through all files (if there are any):
+                const char* fname = zipfile_NextFile(iter);
+                while (fname) {
+                    filecount++;
+                    // add file name to list:
+                    char** p2 = realloc(p, sizeof(char*) * (filecount+1));
+                    if (!p2) {
+                        // whoops.
+                        zipfile_FinishIteration(iter);
+                        free(p);
+                        return NULL;
+                    }
+                    p = p2;
+                    p[filecount-1] = strdup(fname);
+                    p[filecount] = NULL;
+
+                    fname = zipfile_NextFile(iter);
+                }
+                zipfile_FinishIteration(iter);
+            }
+        }
+        a = a->next;
+    }
+    if (filecount == 0) {
+        if (p) {
+            // throw away whatever we have here
+            free(p);
+        }
+        if (directoryexists) {
+            // return an empty list:
+            p = malloc(sizeof(char*)*1);
+            if (p) {
+                p[0] = 0;
+            }
+            return p;
+        }
+        // return failure:
+        return NULL;
+    }
+    // construct a new list without duplicates:
+    char** p2 = malloc(sizeof(char*) * (filecount+1));
+    size_t filecount2 = 0;
+    if (!p2) {
+        size_t i = 0;
+        while (i < filecount) {
+            free(p[i]);
+            i++;
+        }
+        free(p);
+        return NULL;
+    }
+    size_t i = 0;
+    while (i < filecount) {
+        int duplicate = 0;
+        // check if file is already in list:
+        size_t i2 = 0;
+        while (i2 < filecount2) {
+            if (strcasecmp(p2[i2], p[i]) == 0) {
+                // already present.
+                duplicate = 1;
+                break;
+            }
+            i2++;
+        }
+        // add if not a duplicate:
+        if (!duplicate) {
+            filecount2++;
+            char** p3 = malloc(sizeof(char*) * (filecount2+1));
+            if (!p3) {
+                i = 0;
+                while (i < filecount) {
+                    free(p[i]);
+                    i++;
+                }
+                free(p);
+                free(p2);
+                return NULL;
+            }
+            p2 = p3;
+            p2[filecount2-1] = p[i];
+            p2[filecount] = NULL;
+        } else {
+            // free duplicate entry, we won't use it:
+            free(p[i]);
+            p[i] = NULL;
+        }
+        i++;
+    }
+    // free old list:
+    free(p);
+    // return result:
+    return p2;
+}
+
 int resources_LocateResource(const char* path,
 struct resourcelocation* location) {
 #ifdef USE_PHYSFS

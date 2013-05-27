@@ -80,5 +80,8 @@ struct resourcelocation* location);
 // Returns 1 if yes, otherwise 0.
 int resource_IsFolderInZip(const char* path);
 
+// Get a list of files in a given virtual folder:
+char** resource_FileList(const char* path);
+
 #endif  // BLITWIZARD_RESOURCES_H_
 
