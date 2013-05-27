@@ -21,6 +21,17 @@
 
 */
 
+
+/*
+
+    TODO:
+    
+    - Upon entering a callback, set isInCallback
+    - Upon leaving a callback, make the cache -> real transition and delete
+     all cached objects afterwards.
+
+*/
+
 #include "config.h"
 #include "os.h"
 
