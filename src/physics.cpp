@@ -127,6 +127,11 @@ struct cachedphysicsobject {
     struct cachedphysicsobject* next;
 };
 
+struct deletedphysicsobject {
+    struct physicsobject* object;
+    struct deletedphysicsobject* next;
+};
+
 // Internal function declarations
 static struct cachedphysicsobject* physics_createCachedObjects(int count);
 static int physics_destroyCachedObject(struct cachedphysicsobject* c_object);
@@ -138,6 +143,8 @@ static struct physicsobject* physics_createObjectFromCache(struct
 
 // Globals
 struct cachedphysicsobject* cachedObjects = NULL;
+
+struct deletedphysicsobject* deletedObjects = NULL;
 
 int isInCallback = 0;
 
@@ -164,13 +171,22 @@ static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, st
         physics_createObjectFromCache(c);
         c = c->next;
     }
-    // ... and delete them.
+    // ... and delete the former.
     while (c != NULL) {
         c = cachedObjects;
         physics_destroyCachedObject(c);
     }
     
     isInCallback = 0;
+    
+    // Also delete the objects that were mock-deleted during the callback
+    struct deletedphysicsobject* d = deletedObjects;
+    while (deletedObjects != NULL) {
+        physics_destroyObject(deletedObjects->object); // TODO maybe _internal?
+        d = deletedObjects->next;
+        free(deletedObjects);
+        deletedObjects = d;
+    }
 }
 #endif
 
@@ -370,7 +386,6 @@ static struct physicsobject* physics_createObjectFromCache(struct
     return object;
 }
 
-
 /*
  Implementation of physics.h starts here
  */
@@ -399,8 +414,17 @@ void physics_destroyObject(struct physicsobject* object) {
     /* TODO: We can make this faster by checking for isInCallback instead if
      [cached objects exist] <=> [isInCallBack] holds.
      */
-    if (physics_destroyCachedObject(c_object)) {
-        physics_destroyObject_internal(object);
+    if (isInCallback) {
+        // Just add it to the list of objects that are to be deleted later
+        struct deletedphysicsobject* d = (struct deletedphysicsobject*)malloc(
+         sizeof(*d));
+        d->object = object;
+        d->next = deletedObjects;
+        deletedObjects = d;
+    } else {
+        if (physics_destroyCachedObject(c_object)) {
+            physics_destroyObject_internal(object);
+        }
     }
 }
 
