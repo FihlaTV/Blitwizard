@@ -155,7 +155,7 @@ void main_InitAudio(void) {
     // load FFmpeg if we happen to want it
     if (luastate_GetWantFFmpeg()) {
         audiosourceffmpeg_LoadFFmpeg();
-    }else{
+    } else {
         audiosourceffmpeg_DisableFFmpeg();
     }
 
