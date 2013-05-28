@@ -127,9 +127,69 @@ struct cachedphysicsobject {
     struct cachedphysicsobject* next;
 };
 
+// Internal function declarations
+static struct cachedphysicsobject* physics_createCachedObjects(int count);
+static int physics_destroyCachedObject(struct cachedphysicsobject* c_object);
+static inline int physics_objectIsCached(void* object);
+static struct physicsobject* physics_createObjectFromCache(struct
+ cachedphysicsobject* c_object);
+
+
+
+// Globals
 struct cachedphysicsobject* cachedObjects = NULL;
 
 int isInCallback = 0;
+
+struct userdata_wrapper {
+    int (*callback2d)(void* userdata, struct physicsobject* a,
+     struct physicsobject* b, double x, double y, double normalx,
+     double normaly, double force);
+    // TODO: 3D
+    void* userdata;
+} userdata_wrapper;
+
+// Functions necessary for activating the caching stuff
+#ifdef USE_PHYSICS2D
+static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force) {
+    isInCallback = 1;
+    
+    ((struct userdata_wrapper*)userdata)->callback2d(
+     ((struct userdata_wrapper*)userdata)->userdata, a, b, x, y,
+     normalx, normaly, force);
+    
+    // Callback has finished, so transform all cached objects into actual ones
+    struct cachedphysicsobject* c = cachedObjects;
+    while (c != NULL) {
+        physics_createObjectFromCache(c);
+        c = c->next;
+    }
+    // ... and delete them.
+    while (c != NULL) {
+        c = cachedObjects;
+        physics_destroyCachedObject(c);
+    }
+    
+    isInCallback = 0;
+}
+#endif
+
+#ifdef USE_PHYSICS3D
+// TODO: 3D callback wrapper
+#endif
+
+void physics_set2dCollisionCallback(
+struct physicsworld* world,
+int (*callback)(void* userdata, struct physicsobject* a,
+    struct physicsobject* b, double x, double y, double normalx,
+    double normaly, double force),
+void* userdata) {
+    userdata_wrapper.callback2d = callback;
+    userdata_wrapper.userdata = userdata;
+    physics_set2dCollisionCallback_internal(world, physics_callback2dWrapper,
+     &userdata_wrapper);
+}
+
 
 static struct cachedphysicsobject* physics_createCachedObjects(int count) {
     struct cachedphysicsobject* c_object;

@@ -630,7 +630,7 @@ int physics_getStepSize(struct physicsworld* world) {
 
 
 #ifdef USE_PHYSICS2D
-void physics_set2dCollisionCallback(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
+void physics_set2dCollisionCallback_internal(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
     world->callback = callback;
     world->callbackuserdata = userdata;
 }

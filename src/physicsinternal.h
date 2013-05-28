@@ -39,7 +39,7 @@ int physics_worldIs3d_internal(struct physicsworld* world);
 // Actual functions:
 
 #ifdef USE_PHYSICS2D
-void physics_set2dCollisionCallback(
+void physics_set2dCollisionCallback_internal(
 struct physicsworld* world,
 int (*callback)(void* userdata, struct physicsobject* a,
     struct physicsobject* b, double x, double y, double normalx,

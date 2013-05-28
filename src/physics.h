@@ -58,7 +58,7 @@ int (*callback)(void* userdata, struct physicsobject* a,
     double normalx, double normaly, double normalz, double force),
 void* userdata);
 #endif
-// The callback receives your specified userdata, the collidion objects,
+// The callback receives your specified userdata, the collision objects,
 // the position in the center of the collision/overlap,
 // the collision penetration normal pointing from object b to object a,
 // and the impact force's strength.
