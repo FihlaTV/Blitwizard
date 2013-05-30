@@ -8,6 +8,7 @@ for the regular builds from the website). Alternatively, show
 the following information in a 'credits' or 'about' screen in
 your application.
 
+---------------------
 
 Blitwizard contains Speex, libogg and
 libvorbis/libvorbisfile (xiph.org):
