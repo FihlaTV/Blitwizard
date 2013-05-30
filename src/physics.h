@@ -203,7 +203,7 @@ void physics_apply3dImpulse(struct physicsobject* obj, double forcex, double for
 // Change and get velocity
 #ifdef USE_PHYSICS2D
 void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy);
-double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega);
+double physics_get2dAngularVelocity(struct physicsobject* obj);
 void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy);
 void physics_set2dAngularVelocity(struct physicsobject* obj, double omega);
 void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse);

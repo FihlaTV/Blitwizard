@@ -1822,7 +1822,7 @@ void physics_get2dVelocity_internal(struct physicsobject* obj, double *vx, doubl
 #endif
 
 #ifdef USE_PHYSICS2D
-double physics_get2dAngularVelocity_internal(struct physicsobject* obj, double* omega) {
+double physics_get2dAngularVelocity_internal(struct physicsobject* obj) {
     return obj->object2d.body->GetAngularVelocity();
 }
 #endif

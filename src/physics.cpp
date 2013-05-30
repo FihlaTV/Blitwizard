@@ -21,17 +21,6 @@
 
 */
 
-
-/*
-
-    TODO:
-    
-    - Upon entering a callback, set isInCallback
-    - Upon leaving a callback, make the cache -> real transition and delete
-     all cached objects afterwards.
-
-*/
-
 #include "config.h"
 #include "os.h"
 
@@ -643,15 +632,13 @@ void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
 #endif
 
 #ifdef USE_PHYSICS2D
-double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega) {
+double physics_get2dAngularVelocity(struct physicsobject* obj) {
     struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
-        *omega = c_object->angularvelocity2d;
+        return c_object->angularvelocity2d;
     } else {
-        physics_get2dAngularVelocity_internal(obj, omega);
+        return physics_get2dAngularVelocity_internal(obj);
     }
-    return *omega;
-    // WTF @ this function FIXME FIXME FIXME
 }
 #endif
 
