@@ -79,6 +79,11 @@
 	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#setTimeout">setTimeout&nbsp;(function, delay)</a></td>
+	<td class="summary">This function allows scheduling a function to be executed
+ later.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#loadResourceArchive">loadResourceArchive&nbsp;(Path)</a></td>
 	<td class="summary">Load a .zip file as a resource archive.</td>
 	</tr>
@@ -310,6 +315,33 @@
      <span class="global">print</span>(<span class="string">"object at: "</span> .. x .. <span class="string">", "</span> .. y)
  <span class="keyword">end</span></pre>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "setTimeout"></a>
+    <strong>setTimeout&nbsp;(function, delay)</strong>
+    </dt>
+    <dd>
+    This function allows scheduling a function to be executed
+ later.  blitwizard.setTimeout will return instantly, and lateron
+ when the specified amount of time has passed, the function will
+ be run once.
+<p> If you know JavaScript, this function should be familiar
+ to you.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">function</span>
+            <span class="types"><span class="type">function</span></span>
+         the function which shall be executed later</li>
+        <li><span class="parameter">delay</span>
+            <span class="types"><span class="type">number</span></span>
+         the delay in milliseconds before executing the function</li>
+    </ul>
+
+
+
+
 
 </dd>
     <dt>

@@ -393,19 +393,23 @@ void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o) {
 
 struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, const char* func) {
     if (lua_type(l, index) != LUA_TUSERDATA) {
-        haveluaerror(l, badargument1, arg, func, "blitwizard object", lua_strtype(l, index));
+        haveluaerror(l, badargument1, arg, func,
+        "blitwizard object", lua_strtype(l, index));
     }
     if (lua_rawlen(l, index) != sizeof(struct luaidref)) {
-        haveluaerror(l, badargument2, arg, func, "not a valid blitwizard object");
+        haveluaerror(l, badargument2, arg, func,
+        "not a valid blitwizard object");
     }
     struct luaidref* idref = lua_touserdata(l, index);
     if (!idref || idref->magic != IDREF_MAGIC
     || idref->type != IDREF_BLITWIZARDOBJECT) {
-        haveluaerror(l, badargument2, arg, func, "not a valid blitwizard object");
+        haveluaerror(l, badargument2, arg, func,
+        "not a valid blitwizard object");
     }
     struct blitwizardobject* o = idref->ref.bobj;
     if (o->deleted) {
-        haveluaerror(l, badargument2, arg, func, "this blitwizard object was deleted");
+        haveluaerror(l, badargument2, arg, func,
+        "this blitwizard object was deleted");
     }
     return o;
 }

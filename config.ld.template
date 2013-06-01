@@ -4,6 +4,7 @@ merge = true
 file = { INSERT_FILES_HERE }
 title = "Blitwizard API reference"
 project = "blitwizard"
+dir = "docs"
 description = [[
 Cross-platform 2d/3d Lua game engine
 ]]

@@ -44,6 +44,7 @@
 
 int nexttimeoutfuncid = 0;
 struct timeoutfunc {
+    int cancelled;
     int id;
     uint64_t triggerTime;
     struct timeoutfunc* next;
@@ -66,7 +67,7 @@ void luacfuncs_settimeout_Do() {
         struct timeoutfunc* tfprev = NULL;
         while (tf) {
             struct timeoutfunc* tfnext = tf->next;
-            if (tf->triggerTime <= timeoutTS) {
+            if (tf->triggerTime <= timeoutTS && !tf->cancelled) {
                 currentRelativeTS = tf->triggerTime;
                 // obtain callback:
                 char funcname[64];
@@ -101,10 +102,56 @@ void luacfuncs_settimeout_Do() {
     }
 }
 
+/// Cancel a function which was scheduled to be run with
+// @{blitwizard.setTimeout} using the handle you received
+// for it.
+//
+// If the function has already been executed, this function
+// will return false, otherwise it will return true and
+// the function won't be executed.
+int luafuncs_cancelTimeout(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TUSERDATA) {
+        return haveluaerror(l, badargument1, 1, "blitiwzard.cancelTimeout",
+        "setTimeout handle", lua_strtype(l, 1));
+    }
+    if (lua_rawlen(l, 2) != sizeof(struct luaidref)) {
+        return haveluaerror(l, badargument2, 2, "blitwizard.cancelTimeout",
+        "not a valid setTimeout handle");
+    }
+    struct luaidref* idref = lua_touserdata(l, index);
+    if (!idref || idref->magic != IDREF_MAGIC
+    || idref->type != IDREF_TIMEOUTHANDLE) {
+        return haveluaerror(l, badargument2, 2, "blitwizard.canccelTimeout",
+        "not a valid setTimeout handle");
+    }
+    int id = idref->ref.id;
+    struct timeoutfunc* tf = timeoutfuncs;
+    while (tf) {
+        if (tf->id == id) {
+            tf->cancelled = 1;
+            lua_pushboolean(l, 1);
+            return 1;
+        }
+        tf = tf->next;
+    }
+    lua_pushboolean(l, 0);
+    return 1;
+}
+
 /// This function allows scheduling a function to be executed
-// later. If you know JavaScript, this function should be familiar
+// later. blitwizard.setTimeout will return instantly, and lateron
+// when the specified amount of time has passed, the function will
+// be run once.
+//
+// If you know JavaScript, this function should be familiar
 // to you.
+//
+// The return value is a handle which you can use to cancel the
+// scheduled function run with @{blitwizard.cancelTimeout},
+// as long as it hasn't been run yet.
 // @function setTimeout
+// @tparam function function the function which shall be executed later
+// @tparam number delay the delay in milliseconds before executing the function
 int luafuncs_setTimeout(lua_State* l) {
     // check function parameter:
     if (lua_type(l, 1) != LUA_TFUNCTION) {
