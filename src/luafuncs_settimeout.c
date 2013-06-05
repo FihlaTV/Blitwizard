@@ -114,14 +114,14 @@ int luafuncs_cancelTimeout(lua_State* l) {
         return haveluaerror(l, badargument1, 1, "blitiwzard.cancelTimeout",
         "setTimeout handle", lua_strtype(l, 1));
     }
-    if (lua_rawlen(l, 2) != sizeof(struct luaidref)) {
-        return haveluaerror(l, badargument2, 2, "blitwizard.cancelTimeout",
+    if (lua_rawlen(l, 1) != sizeof(struct luaidref)) {
+        return haveluaerror(l, badargument2, 1, "blitwizard.cancelTimeout",
         "not a valid setTimeout handle");
     }
-    struct luaidref* idref = lua_touserdata(l, index);
+    struct luaidref* idref = lua_touserdata(l, 1);
     if (!idref || idref->magic != IDREF_MAGIC
     || idref->type != IDREF_TIMEOUTHANDLE) {
-        return haveluaerror(l, badargument2, 2, "blitwizard.canccelTimeout",
+        return haveluaerror(l, badargument2, 1, "blitwizard.canccelTimeout",
         "not a valid setTimeout handle");
     }
     int id = idref->ref.id;
