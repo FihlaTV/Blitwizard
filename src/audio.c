@@ -482,7 +482,7 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
 
 // no audio support
 
-const char* audio_GetCurrentBackendName() {
+const char* audio_GetCurrentBackendName(void) {
     return NULL;
 }
 

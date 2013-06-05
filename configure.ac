@@ -868,6 +868,7 @@ AS_IF([test "x$AUDIO_FEATURE_ENABLED" = xyes],[
         ])
         
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_AUDIO"
+        AC_DEFINE([USE_SDL_AUDIO], [], [Enable SDL audio subsystem]) 
     ])
 ])
 
