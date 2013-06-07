@@ -21,18 +21,14 @@
 
 */
 
-#ifndef BLITWIZARD_LUAFUNCS_DEBUG_H_
-#define BLITWIZARD_LUAFUNCS_DEBUG_H_
+#ifndef BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
+#define BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
 
 #include "luaheader.h"
 
-int luafuncs_debug_getGpuMemoryUse(lua_State* l);
-int luafuncs_debug_getTextureUsageInfo(lua_State* l);
-int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l);
-int luafuncs_debug_getLogicStats(lua_State* l);
-int luafuncs_debug_getTextureRequestCount(lua_State* l);
-int luafuncs_debug_get2dSpriteCount(lua_State* l);
-int luafuncs_debug_getAudioChannelCount(lua_State* l);
+void luacfuncs_settimeout_Do(void);
 
-#endif  // BLITWIZARD_LUAFUNCS_DEBUG_H_
+int luafuncs_setTimeout(lua_State* l);
+
+#endif  // BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
 

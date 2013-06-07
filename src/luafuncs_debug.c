@@ -44,6 +44,7 @@
 #include "luafuncs_debug.h"
 #include "luafuncs_object.h"
 #include "graphics2dsprites.h"
+#include "audiomixer.h"
 
 /// Get GPU memory used for all textures loaded by blitwizard in bytes.
 // @function gpuMemoryUse
@@ -130,4 +131,14 @@ int luafuncs_debug_get2dSpriteCount(lua_State* l) {
     lua_pushnumber(l, graphics2dsprites_Count());
     return 1;
 } 
+
+/// Get the amount of sounds which are playing at this
+// very moment.
+// @function getAudioChannelCount
+// @return number total number of active audio channels
+int luafuncs_debug_getAudioChannelCount(lua_State* l) {
+    lua_pushnumber(l, audiomixer_ChannelCount());
+    return 1;
+}
+
 

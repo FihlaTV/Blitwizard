@@ -69,6 +69,7 @@ int* functiondidnotexist, int* returnedboolean); // 1: success, 0: failure
 #define IDREF_NETSTREAM 2
 #define IDREF_BLITWIZARDOBJECT 3
 #define IDREF_CAMERA 4
+#define IDREF_TIMEOUTHANDLE 5
 
 struct blitwizardobject;
 struct mediaobject;

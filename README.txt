@@ -1,8 +1,8 @@
 
 - Blitwizard README -
 
-You got blitwizard at your hands, a 2d engine that runs Lua scripts
-you write to specify the behaviour of your game/multimedia application.
+Blitwizard is a 2d engine that runs Lua scripts which implement
+video games or multimedia applications.
 
 LICENSE:
 
@@ -10,24 +10,23 @@ LICENSE:
   The examples are public domain including graphics and the blitwizard logo,
   which was designed by uoou - thanks :-)
 
-  If you link libs statically by following the guide in README-deps.txt,
-  check README-libs.txt and their source code for license remarks.
+  Blitwizard uses various libraries. Check their licenses in README-libs.txt
   
 HOW TO USE:
 
   Run blitwizard to see a few example applications:
-  Run on Windows:
+
+  * Run on WINDOWS:
     Double-click "Run-blitwizard.bat"
-  Run on Linux/BSD/Mac:
+
+  * Run on LINUX/BSD/MAC:
     When using a local compiled copy (e.g. the linux build from the website):
-      Open a terminal
-      Change directory to the extracted blitwizard main directory:
+    Open a terminal, change directory to the extracted blitwizard main directory:
         cd /path/to/blitwizard/files/
-      Then type this to run: cd bin/ && ./blitwizard
+    Then type this to run: cd bin/ && ./blitwizard
     When using a system-wide installation (possible with an own source build
     and "sudo make install" after completing the "make" step):
-      Open a terminal
-      Type: blitwizard
+    Open a terminal and simply type: blitwizard
 
   If you don't have a binary release, you need to build blitwizard first.
   Please check out README-build.txt for this.
@@ -40,8 +39,9 @@ of the examples which are located in examples/ in separate sub
 folders. Feel free to modify those .lua files, then rerun the sample
 browser and see how the examples changed!
 
-Please check out docs/api.html for a complete documentation of the
+Check out docs/index.html for acomplete documentation of the
 provided functionality of blitwizard for advanced usage.
+(That file is only present for blitwizard releases, not for dev code)
 
 To start your own game project, copy all contents of the folder where
 this README.txt is inside into a new empty folder named after your game
