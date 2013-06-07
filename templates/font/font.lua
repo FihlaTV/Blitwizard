@@ -256,11 +256,11 @@ end
 --[[--
   Move the text object to the given screen position in game units
   (0,0 is top left).
-  @function move
+  @function setPosition
   @tparam number x new x position in game units (0 is left screen border)
   @tparam number y new y position in game units (0 is top screen border)
 ]]
-function blitwizard.font.text:move(x, y)
+function blitwizard.font.text:setPosition(x, y)
     self._x = x
     self._y = y
     for i,v in ipairs(self.glyphs) do

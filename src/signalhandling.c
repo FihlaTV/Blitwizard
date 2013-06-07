@@ -221,7 +221,6 @@ static void generatebacktrace(char* buffer, size_t buffersize) {
     // get backtrace addresses:
     void* backtraceptrs[MAX_BACKTRACE];
     int count = CaptureStackBackTrace(0, sizeof(backtraceptrs), backtraceptrs, NULL);
-    printf("trace count: %d\n", count);
 
     // initialise symbol info:
     SymInitialize(GetCurrentProcess(), NULL, TRUE);

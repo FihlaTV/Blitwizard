@@ -248,7 +248,7 @@ static void file_CutOffOneElement(char* path) {
             // just one relative item left -> empty to current dir ""
             path[0] = 0;
             return;
-        }else{
+        } else {
             if (i == (int)strlen(path)-1) {
                 // slash is at the end (directory path).
                 path[i] = 0;
@@ -266,7 +266,7 @@ static void file_CutOffOneElement(char* path) {
                         path[strlen(path)-1] = 0;
                     }
                 }
-            }else{
+            } else {
                 path[i+1] = 0;
                 return;
             }
@@ -307,7 +307,7 @@ void file_StripComponentFromPath(char* path) {
                     repeat = 1;
                 }
                 path[slashpos] = 0;
-            }else{
+            } else {
                 path[0] = 0;
             }
         }
@@ -358,7 +358,7 @@ char* file_GetAbsolutePathFromRelativePath(const char* path) {
 char* file_GetDirectoryPathFromFilePath(const char* path) {
     if (file_IsDirectory(path)) {
         return strdup(path);
-    }else{
+    } else {
         char* pathcopy = strdup(path);
         if (!pathcopy) {
             return NULL;
@@ -367,7 +367,7 @@ char* file_GetDirectoryPathFromFilePath(const char* path) {
         if (i < 0) {
             free(pathcopy);
             return strdup("");
-        }else{
+        } else {
             pathcopy[i+1] = 0;
             return pathcopy;
         }
@@ -409,7 +409,7 @@ char* file_GetFileNameFromFilePath(const char* path) {
     int i = file_LatestSlash(path);
     if (i < 0) {
         return strdup(path);
-    }else{
+    } else {
         char* filename = malloc(strlen(path)-i+1);
         if (!filename) {
             return NULL;
@@ -514,5 +514,129 @@ int file_DeleteFile(const char* name) {
 #error "No file_DeleteFile implementation present"
 #endif
 #endif
+}
+
+void file_RemoveDoubleSlashes(char* path) {
+    unsigned int i = 0;
+    int previousslash = 0;
+    while (i < strlen(path)) {
+        if (file_IsDirectorySeparator(path[i])) {
+            if (previousslash) {
+                memmove(path+i, path+i+1, strlen(path)-i);
+                continue;
+            }
+            previousslash = 1;
+        } else {
+            previousslash = 0;
+        }
+        i++;
+    }
+}
+
+unsigned int file_CountPathComponents(const char* path) {
+    unsigned int c = 0;
+    unsigned int i = 0;
+    int previousslash = 0;
+    int absolutepathslash = 0;
+    while (i < strlen(path)) {
+        if (file_IsDirectorySeparator(path[i])) {
+            if (!previousslash) {
+#ifdef WINDOWS
+                // don't increment for first absolute path slash
+                if (c > 0 || (i > 0 && path[i-1] != ':')) {
+                    c++;
+                } else {
+                    absolutepathslash = 1;
+                }
+#else
+                if (i == 0) {
+                    absolutepathslash = 1;
+                } else {
+                    c++;
+                }
+#endif
+            }
+            previousslash = 1;
+        } else {
+            previousslash = 0;
+        }
+        i++;
+    }
+    if (!previousslash) {
+        // add folder at the very end:
+        if (c > 1 || absolutepathslash) {
+            c++;
+        }
+    }
+    return c;
+}
+
+void file_MakePathRelative(char* path, const char* base) {
+    if (file_IsPathRelative(base)) {
+        return;
+    }
+    if (file_IsPathRelative(path)) {
+        return;
+    }
+    char* path_unified = strdup(path);
+    char* base_unified = strdup(base);
+    if (!path_unified || !base_unified) {
+        free(path_unified);
+        free(base_unified);
+        return;
+    }
+    file_RemoveDoubleSlashes(path_unified);
+    file_MakeSlashesCrossplatform(path_unified);
+    file_RemoveDoubleSlashes(base_unified);
+    file_MakeSlashesCrossplatform(base_unified);
+    if (strlen(path_unified) < strlen(base_unified)) {
+        // not a sub dir.
+        free(path_unified);
+        free(base_unified);
+        return;
+    }
+    if (memcmp(path_unified, base_unified, strlen(base_unified)) == 0) {
+        // path is indeed a sub-path of our base
+        // see how many components we need to strip:
+        unsigned int c = file_CountPathComponents(base_unified);
+        c++; // drive letter
+        // strip the components from the beginning of the path:
+        while (c > 0) {
+            // check for next directory separator
+            char* slashptr1 = strstr(path, "/");
+            int slashpos1 = -1;
+            if (slashptr1) {
+                slashpos1 = slashptr1 - path;
+            }
+            char* slashptr2 = NULL;
+#ifdef WINDOWS
+            slashptr2 = strstr(path, "\\");
+#endif
+            int slashpos2 = -1;
+            if (slashptr2) {
+                slashpos2 = slashptr2 - path;
+            }
+            // see which one is closest:
+            int nextslash = slashpos1;
+            if (slashpos2 >= 0 && (slashpos2 < nextslash || nextslash < 0)) {
+                nextslash = slashpos2;
+            }
+            // strip off:
+            if (nextslash >= 0) {
+                memmove(path, path+nextslash+1,
+                strlen(path)-(nextslash));
+            } else {
+                break;
+            }
+            c--;
+        }
+        // done! path should now be relative to base.
+        free(path_unified);
+        free(base_unified);
+    } else {
+        // path is not a sub-path of base, do nothing:
+        free(base_unified);
+        free(path_unified);
+    }
 }
 

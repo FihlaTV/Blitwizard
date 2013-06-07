@@ -405,18 +405,21 @@ char** resource_FileList(const char* path) {
         // check if path maps to a directory in this archive:
         if (zipfile_PathExists(a->z, path)) {
             if (zipfile_IsDirectory(a->z, path)) {
+                printf("Virtual dir %s found.\n", path);
                 directoryexists = 1;
 
                 // get file list:
                 struct zipfileiter* iter = zipfile_Iterate(
                 a->z, path);
                 if (!iter) {  // cannot iterate directory.
+                    printf("iteration failed.\n");
                     a = a->next;
                     continue;
                 }
                 // go through all files (if there are any):
                 const char* fname = zipfile_NextFile(iter);
                 while (fname) {
+                    printf("iterated file: %s\n", fname);
                     filecount++;
                     // add file name to list:
                     char** p2 = realloc(p, sizeof(char*) * (filecount+1));
@@ -432,6 +435,7 @@ char** resource_FileList(const char* path) {
 
                     fname = zipfile_NextFile(iter);
                 }
+                printf("iteration done.\n");
                 zipfile_FinishIteration(iter);
             }
         }

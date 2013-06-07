@@ -280,8 +280,8 @@ void* userdata, struct zipdecryptionfileaccess* zdf) {
 }
 
 static void zipfile_RandomMountPoint(char* buffer) {
-    buffer[0] = '/';
-    int i = 1;
+    //buffer[0] = '/';
+    int i = 0;
     while (i < MOUNT_POINT_LEN-1) {
 #ifdef WINDOWS
         double d = (double)((double)rand())/RAND_MAX;
@@ -437,6 +437,16 @@ static char* getfilepath(struct zipfile* f, const char* path) {
     memcpy(p+strlen(f->mountpoint), path, strlen(path));
     p[strlen(f->mountpoint)+strlen(path)] = 0;
     file_MakeSlashesCrossplatform(p);
+    file_RemoveDoubleSlashes(p);
+    if (strlen(p) > 0) {
+        if (p[strlen(p)-1] == '/' 
+#ifdef WINDOWS
+           || p[strlen(p)-1] == '\\'
+#endif
+        ) {
+            p[strlen(p)-1] = 0;
+        }
+    }
     return p;
 }
 
@@ -488,6 +498,7 @@ int zipfile_IsDirectory(struct zipfile* zf, const char* path) {
         }
     }    
 
+    printf("isdirectory: %d: %s\n", isdirectory, p);
     // free sanitized path:
     free(p);
 
@@ -619,7 +630,17 @@ const char* dir) {
         return NULL;
     }
     memset(iter, 0, sizeof(*iter));
-    iter->filelist = PHYSFS_enumerateFiles("savegames");
+    char* path = getfilepath(f, dir);
+    if (!path) {
+        free(iter);
+        return NULL;
+    }
+    printf("previously: PHYSFS_getLastError(): %s\n", PHYSFS_getLastError());
+    printf("now calling PHYSFS_enumerateFiles(\"%s\")\n", path);
+    iter->filelist = PHYSFS_enumerateFiles(path);
+    printf("afterwards: PHYSFS_getLastError(): %s\n", PHYSFS_getLastError());
+    printf("got file list for %s. entry filelist[0]: %s\n", path, iter->filelist[0]);
+    free(path);
     return iter;
 }
 

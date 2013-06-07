@@ -46,6 +46,8 @@ int file_ContentToBuffer(const char* path, char** buf, size_t* buflen);
 
 char* file_AddComponentToPath(const char* path, const char* component);
 
+unsigned int file_CountPathComponents(const char* path);
+
 void file_StripComponentFromPath(char* path);
 
 void file_MakeSlashesNative(char* path);
@@ -61,6 +63,10 @@ size_t file_GetSize(const char* name);
 int file_CreateDirectory(const char* name);
 
 int file_DeleteFile(const char* name);
+
+void file_MakePathRelative(char* path, const char* base);
+
+void file_RemoveDoubleSlashes(char* path);
 
 #endif  // BLITWIZARD_FILE_H_
 

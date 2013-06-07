@@ -13,7 +13,9 @@ if os.sysname() ~= "Android" then
         os.forcetemplatedir("templates/")
         templates = "templates/"
     end
+    print("template init...")
 	for index,file in ipairs(os.ls(templates)) do
+        print("file: " .. file)
 		if os.isdir(templates .. "/" .. file) then
 			local filepath = templates .. "/" .. file .. "/" .. file .. ".lua"
 			if os.exists(filepath) then
@@ -21,6 +23,7 @@ if os.sysname() ~= "Android" then
 			end
 		end
 	end
+    print("template init end")
 else
 	-- For android, we get a pre-generated Lua file
     -- (provided by the android build script in scripts/ folder
