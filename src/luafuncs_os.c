@@ -203,6 +203,8 @@ int luafuncs_ls(lua_State* l) {
 
     // get iteration context for "real" on disk directory:
     struct filelistcontext* ctx = filelist_Create(pnative);
+    printf("ctx: %p\n", ctx);
+    printf("pnative: %s\n", pnative);
 
     if (!ctx && (!list_virtual || !filelist)) {
         char errmsg[500];
@@ -248,7 +250,7 @@ int luafuncs_ls(lua_State* l) {
                         duplicate = 1;
                         break;
                     }
-                    i++;
+                    i2++;
                 }
             }
             if (duplicate) {
@@ -256,7 +258,7 @@ int luafuncs_ls(lua_State* l) {
                 i--;
                 continue;
             }
-            lua_pushinteger(l, i + 1);
+            lua_pushinteger(l, i);
             lua_pushstring(l, filenamebuf);
             lua_settable(l, -3);
         }
