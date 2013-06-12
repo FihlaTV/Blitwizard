@@ -440,7 +440,9 @@ int luafuncs_object_setInvisibleToMouse(lua_State* l) {
         "blitwizard.object:setInvisibleToMouse", "boolean", lua_strtype(l, 2));
     }
     int b = lua_toboolean(l, 2);
+#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_setInvisibleToMouseEvents(o, b);
+#endif
     return 0;
 }
 
@@ -516,7 +518,9 @@ int luafuncs_object_new(lua_State* l) {
     snprintf(o->selfRefName, sizeof(o->selfRefName), "bobj_self_%p", o);
 
     // if resource is present, start loading it:
+#ifdef USE_GRAPHICS
     luafuncs_objectgraphics_load(o, o->respath);
+#endif
 
     // create idref to object, which we will store up to object deletion:
     lua_pushstring(l, o->selfRefName);
@@ -996,14 +1000,17 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
 
     double x,y,z;
     z = 1234;
+#ifdef USE_GRAPHICS
     if (!luacfuncs_objectgraphics_getOriginalDimensions(obj,
     &x, &y, &z)) {
         return haveluaerror(l, "object dimensions not known yet, "
         "wait for onGeometryLoaded event before using this function");
     }
     if (x <= 0 || y <= 0 || z <= 0) {
+#endif
         return haveluaerror(l, "for objects with a size of zero, "
         "there is no way to scale them up to a given size");
+#ifdef USE_GRAPHICS
     }
 
     // get parameters:
@@ -1089,6 +1096,7 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
         obj->scale2d.y = yfactor;
     }
     return 0;
+#endif
 }
 
 /// Set the z-index of the object (only for 2d objects).
@@ -1405,6 +1413,7 @@ int luacfuncs_object_doAllSteps(int count) {
 }
 
 void luacfuncs_object_updateGraphics() {
+#ifdef USE_GRPAHICS
     lua_State* l = luastate_GetStatePtr();
     // update visual representations of objects:
     struct blitwizardobject* o = objects;
@@ -1419,6 +1428,7 @@ void luacfuncs_object_updateGraphics() {
         luacfuncs_objectgraphics_updatePosition(o);
         o = o->next;
     }
+#endif
 }
 
 
