@@ -210,7 +210,9 @@ void cleanupobject(struct blitwizardobject* o, int fullclean) {
         // clear table in registry:
         luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
     } else {
+#ifdef USE_GRAPHICS
         luacfuncs_objectgraphics_setVisible(o, 0);
+#endif
     }
 }
 
@@ -850,9 +852,13 @@ int luafuncs_object_getDimensions(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setPosition");
     double x, y, z;
+#ifdef USE_GRAPHICS
     if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
         return haveluaerror(l, "Object dimensions not known");
     }
+#else
+    x = 0; y = 0; z = 0;
+#endif
     double sx, sy, sz;
     if (obj->is3d) {
         sx = obj->scale3d.x;
