@@ -1124,11 +1124,15 @@ int main(int argc, char** argv) {
             }
         }
 
+#ifdef USE_GRAPHICS
         // report visibility of sprites to texture manager:
         graphics2dsprites_reportVisibility();
+#endif
 
+#ifdef USE_GRAPHICS
         // texture manager tick:
         texturemanager_tick();
+#endif
 
         // update object graphics:
         luacfuncs_object_updateGraphics();
