@@ -381,6 +381,7 @@ int resource_IsFolderInZip(const char* path) {
         return 0;
     }
 
+#ifdef USE_PHYSFS
     struct resourcearchive* a = resourcearchives;
     while (a) {
         // check if path maps to a directory in this archive:
@@ -391,6 +392,7 @@ int resource_IsFolderInZip(const char* path) {
         }
         a = a->next;
     }
+#endif
     // nope, no such directory in our archives.
     return 0;
 }
@@ -400,6 +402,7 @@ char** resource_FileList(const char* path) {
     size_t filecount = 0;
     int directoryexists = 0;
 
+#ifdef USE_PHYSFS
     struct resourcearchive* a = resourcearchives;
     while (a) {
         // check if path maps to a directory in this archive:
@@ -437,6 +440,7 @@ char** resource_FileList(const char* path) {
         }
         a = a->next;
     }
+#endif
     if (filecount == 0) {
         if (p) {
             // throw away whatever we have here
