@@ -1153,11 +1153,17 @@ int main(int argc, char** argv) {
 
         // we might want to quit if there is nothing else to do
 #ifdef USE_AUDIO
-        if (!graphics_AreGraphicsRunning() &&
+        if (
+#ifdef USE_GRAPHICS
+        !graphics_AreGraphicsRunning() &&
+#endif
         connections_NoConnectionsOpen() &&
         !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()) {
 #else
-        if (!graphics_AreGraphicsRunning() &&
+        if (
+#ifdef USE_GRAPHICS
+        !graphics_AreGraphicsRunning() &&
+#endif
         connections_NoConnectionsOpen() &&
         !listeners_HaveActiveListeners()) {
 #endif
