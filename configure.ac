@@ -1086,7 +1086,7 @@ AS_IF([test -z "$maybeos"],[
 
     CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
     CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
-    LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -ldbghelp -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lversion"
+    LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -ldbghelp -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lwbemuuid -lversion"
     FINAL_LD_FLAGS="-lmingw32 $FINAL_LD_FLAGS"
     STATICSTDCXX="-static-libstdc++"
     AC_SUBST(STATICSTDCXX)
