@@ -575,7 +575,11 @@ static void mediaobject_UpdateIsPlaying(struct mediaobject* m) {
         if (m->mediainfo.sound.soundid < 0) {
             m->isPlaying = 0;
         } else {
+#ifdef USE_AUDIO
             m->isPlaying = audiomixer_IsSoundPlaying(m->mediainfo.sound.soundid);
+#else
+            m->isPlaying = 0;
+#endif
         }
     }
 }

@@ -186,7 +186,9 @@ void cleanupobject(struct blitwizardobject* o, int fullclean) {
     // clear up all the graphics, physics, event function things
     // attached to the object:
     if (fullclean) {
+#ifdef USE_GRAPHICS
         luafuncs_objectgraphics_unload(o);
+#endif
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
         if (o->physics) {
             luafuncs_freeObjectPhysicsData(o->physics);
@@ -287,6 +289,7 @@ struct blitwizardobject* o) {
 
     // enable mouse event handling:
     if (!o->invisibleToMouse) {
+#ifdef USE_GRAPHICS
         if (o->haveOnMouseEnter || o->haveOnMouseLeave) {
             luacfuncs_objectgraphics_enableMouseMoveEvent(o, 1);
         } else {
@@ -297,6 +300,7 @@ struct blitwizardobject* o) {
         } else {
             luacfuncs_objectgraphics_enableMouseClickEvent(o, 0);
         }
+#endif
     }
 
     // set as important object if doAlways is set:
