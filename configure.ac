@@ -1092,7 +1092,7 @@ AS_IF([test -z "$maybeos"],[
     AC_MSG_CHECKING([for -lwbemuuid availability])
     echo "int main(int argc, const char** argv) {return 0;}" > ./test.c
     rm -f ./testbin
-    $CC test.c -lwbemuuid -o ./testbin > /dev/null 2>&1
+    $CC -L./ test.c -lwbemuuid -o ./testbin > /dev/null 2>&1
     rm ./test.c
     AS_IF([test ! -f ./testbin],[
         AC_MSG_RESULT([no])
