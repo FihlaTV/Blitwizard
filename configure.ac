@@ -1097,7 +1097,11 @@ AS_IF([test -z "$maybeos"],[
     AS_IF([test ! -f ./testbin],[
         AC_MSG_RESULT([no])
     ],[
-        rm -f ./testbin
+        AS_IF([test -f ./testbin.exe ],[
+            rm ./testbin.exe
+        ],[
+            rm -f ./testbin
+        ])
         AC_MSG_RESULT([yes])
         LIBS="$LIBS -lwbemuuid"
     ])

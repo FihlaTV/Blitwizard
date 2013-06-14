@@ -1419,7 +1419,7 @@ int luacfuncs_object_doAllSteps(int count) {
 }
 
 void luacfuncs_object_updateGraphics() {
-#ifdef USE_GRPAHICS
+#ifdef USE_GRAPHICS
     lua_State* l = luastate_GetStatePtr();
     // update visual representations of objects:
     struct blitwizardobject* o = objects;
