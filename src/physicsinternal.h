@@ -158,13 +158,14 @@ void physics_apply3dAngularImpulse_internal(struct physicsobject* obj,
 // Joints (constraints)
 #ifdef USE_PHYSICS2D
 // a<i><x,y>: Local anchor coordinates on obj<i>
-int physics_add2dObjectDistanceJoint_internal(struct physicsobject* obj1,
- struct physicsobject* obj2,
+physicsjoint* physics_add2dObjectDistanceJoint_internal(
+ struct physicsobject* obj1, struct physicsobject* obj2,
  double distance,
  double a1x, double a1y, double a2x, double a2y,
  double frequency, double damping);
 // a<o,w><x,y>: Anchor coordinates on object (local) and world (world)
-int physics_add2dWorldDistanceJoint_internal(struct physicsobject* obj,
+physicsjoint* physics_add2dWorldDistanceJoint_internal(
+ struct physicsobject* obj,
  double distance,
  double aox, double aoy, double awx, double awy,
  double frequency, double damping);

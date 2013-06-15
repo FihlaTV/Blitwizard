@@ -247,7 +247,7 @@ struct physicsjoint {
     union {
         struct physicsjoint2d joint2d;
         struct physicsjoint3d joint3d;
-    }
+    };
     struct physicsworld* world;
 };
 
@@ -1863,8 +1863,8 @@ void physics_apply2dAngularImpulse_internal(struct physicsobject* obj, double im
 #endif
 
 #ifdef USE_PHYSICS2D
-int physics_add2dObjectDistanceJoint_internal(struct physicsobject* obj1,
- struct physicsobject* obj2,
+physicsjoint* physics_add2dObjectDistanceJoint_internal(
+ struct physicsobject* obj1, struct physicsobject* obj2,
  double distance,
  double a1x, double a1y, double a2x, double a2y,
  double frequency, double damping) {
@@ -1876,8 +1876,10 @@ int physics_add2dObjectDistanceJoint_internal(struct physicsobject* obj1,
     def.dampingRatio = damping;
     def.bodyA = obj1->object2d.body;
     def.bodyB = obj2->object2d.body;
-    obj1->pworld->world2d.CreateJoint(&def);
+    obj1->pworld->world2d.w->CreateJoint(&def);
     // TODO? def.userData? def.collideConnected?
+    // TODO: Create physicsjoint instance etc. etc. and return it
+    return NULL; // lol
 }
 #endif
 
