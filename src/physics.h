@@ -33,9 +33,12 @@
 extern "C" {
 #endif
 
-// Create and destroy worlds:
+// Structs
 struct physicsworld;
 struct physicsobject;
+struct physicsjoint;
+
+// Create and destroy worlds:
 struct physicsworld* physics_createWorld(int use3dphysics);
 void physics_destroyWorld(struct physicsworld* world);
 void physics_step(struct physicsworld* world);
@@ -219,6 +222,22 @@ void physics_set3dAngularVelocityQuaternion(struct physicsobject* obj,
  double qx, double qy, double qz, double qrot);
 void physics_apply3dAngularImpulse(struct physicsobject* obj,
  double qx, double qy, double qz, double qrot); // ? no idea if this is correct
+#endif
+
+// Joints (constraints)
+#ifdef USE_PHYSICS2D
+// a<i><x,y>: Local anchor coordinates on obj<i>
+int physics_add2dObjectDistanceJoint(struct physicsobject* obj1,
+ struct physicsobject* obj2,
+ double distance,
+ double a1x, double a1y, double a2x, double a2y,
+ double frequency, double damping);
+// a<o,w><x,y>: Anchor coordinates on object (local) and world (world)
+// TODO: Is this possible w/ b2?
+int physics_add2dWorldDistanceJoint(struct physicsobject* obj,
+ double distance,
+ double aox, double aoy, double awx, double awy,
+ double frequency, double damping);
 #endif
 
 // Collision test ray

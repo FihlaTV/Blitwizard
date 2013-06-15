@@ -192,6 +192,11 @@ struct physicsobject2dedgecontext {
     struct edge* edgelist;
 };
 
+struct physicsjoint2d {
+    // Not much to it
+    b2Joint* b2joint;
+};
+
 
 /*
     3d-specific structs
@@ -206,6 +211,10 @@ struct physicsobjectshape3d {
 };
 
 struct physicsworld3d {
+    // TODO
+};
+
+struct physicsjoint3d {
     // TODO
 };
 
@@ -232,6 +241,14 @@ struct physicsworld {
     int is3d;
     void* callbackuserdata;
     int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
+};
+
+struct physicsjoint {
+    union {
+        struct physicsjoint2d joint2d;
+        struct physicsjoint3d joint3d;
+    }
+    struct physicsworld* world;
 };
 
 struct physicsobjectshape {
@@ -1842,6 +1859,25 @@ void physics_set2dAngularVelocity_internal(struct physicsobject* obj, double ome
 #ifdef USE_PHYSICS2D
 void physics_apply2dAngularImpulse_internal(struct physicsobject* obj, double impulse) {
     obj->object2d.body->ApplyAngularImpulse(impulse);
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+int physics_add2dObjectDistanceJoint_internal(struct physicsobject* obj1,
+ struct physicsobject* obj2,
+ double distance,
+ double a1x, double a1y, double a2x, double a2y,
+ double frequency, double damping) {
+    b2DistanceJointDef def;
+    def.localAnchorA = b2Vec2(a1x, a1y);
+    def.localAnchorB = b2Vec2(a2x, a2y);
+    def.length = distance;
+    def.frequencyHz = frequency;
+    def.dampingRatio = damping;
+    def.bodyA = obj1->object2d.body;
+    def.bodyB = obj2->object2d.body;
+    obj1->pworld->world2d.CreateJoint(&def);
+    // TODO? def.userData? def.collideConnected?
 }
 #endif
 
