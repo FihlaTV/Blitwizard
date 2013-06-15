@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+#include "blitwizardobject.h"
+
 int luafuncs_object_new(lua_State* l);
 void luacfuncs_pushbobjidref(lua_State* l, struct blitwizardobject* o);
 struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, const char* func);

@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem et al
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -1055,9 +1055,11 @@ int main(int argc, char** argv) {
         int physicsiterations = 0;
         int logiciterations = 0;
         time_t iterationStart = time(NULL);
-        int psteps_max = ((float)TIMESTEP/
+#if defined(USE_PHYSICS2D)
+        int psteps2d_max = ((float)TIMESTEP/
         (float)physics_getStepSize(physics2ddefaultworld));
-        psteps_max++;
+        psteps2d_max++;
+#endif
         while (
         // allow maximum of iterations in an attempt to keep up:
         (logictimestamp < timeNow || physicstimestamp < timeNow) &&
@@ -1089,7 +1091,7 @@ int main(int argc, char** argv) {
             if (physicsiterations < MAXPHYSICSITERATIONS &&
             physicstimestamp < timeNow && (physicstimestamp <= logictimestamp
             || logiciterations >= MAXLOGICITERATIONS)) {
-                int psteps = psteps_max;
+                int psteps = psteps2d_max;
                 while (psteps > 0) {
                     physics_step(physics2ddefaultworld);
                     physicstimestamp += physics_getStepSize(
@@ -1122,11 +1124,15 @@ int main(int argc, char** argv) {
             }
         }
 
+#ifdef USE_GRAPHICS
         // report visibility of sprites to texture manager:
         graphics2dsprites_reportVisibility();
+#endif
 
+#ifdef USE_GRAPHICS
         // texture manager tick:
         texturemanager_tick();
+#endif
 
         // update object graphics:
         luacfuncs_object_updateGraphics();
@@ -1147,11 +1153,17 @@ int main(int argc, char** argv) {
 
         // we might want to quit if there is nothing else to do
 #ifdef USE_AUDIO
-        if (!graphics_AreGraphicsRunning() &&
+        if (
+#ifdef USE_GRAPHICS
+        !graphics_AreGraphicsRunning() &&
+#endif
         connections_NoConnectionsOpen() &&
         !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()) {
 #else
-        if (!graphics_AreGraphicsRunning() &&
+        if (
+#ifdef USE_GRAPHICS
+        !graphics_AreGraphicsRunning() &&
+#endif
         connections_NoConnectionsOpen() &&
         !listeners_HaveActiveListeners()) {
 #endif
@@ -1175,7 +1187,9 @@ int main(int argc, char** argv) {
         }
 
         // new frame:
+#ifdef USE_GRAPHICS
         luacfuncs_objectgraphics_newFrame();
+#endif
     }
     main_Quit(0);
     return 0;

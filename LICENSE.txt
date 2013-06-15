@@ -1,7 +1,6 @@
+Blitwizard is zlib licensed:
 
-/* blitwizard game engine - source code file
-
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2011-2013 Jonas Thiem et al
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,20 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 
-*/
-
-#ifndef BLITWIZARD_LUAFUNCS_DEBUG_H_
-#define BLITWIZARD_LUAFUNCS_DEBUG_H_
-
-#include "luaheader.h"
-
-int luafuncs_debug_getGpuMemoryUse(lua_State* l);
-int luafuncs_debug_getTextureUsageInfo(lua_State* l);
-int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l);
-int luafuncs_debug_getLogicStats(lua_State* l);
-int luafuncs_debug_getTextureRequestCount(lua_State* l);
-int luafuncs_debug_get2dSpriteCount(lua_State* l);
-int luafuncs_debug_getAudioChannelCount(lua_State* l);
-
-#endif  // BLITWIZARD_LUAFUNCS_DEBUG_H_
+Blitwizard uses various libraries.
+Read README-libs.txt for copyright acknowledgement and license info.
+(The libraries are usually embedded into the blitwizard binary)
 

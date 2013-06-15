@@ -81,7 +81,7 @@ static int audiosourceloop_Read(struct audiosource* source, char* buffer, unsign
             buffer += i;
             bytes -= i;
             rewinded = 0;
-        }else{
+        } else {
             if (i <= 0) {
                 // EOF or error?
                 if (i < 0) {  // error!
@@ -94,12 +94,13 @@ static int audiosourceloop_Read(struct audiosource* source, char* buffer, unsign
                     idata->eof = 1;
                     if (idata->returnerroroneof) {
                         return -1;
-                    }else{
+                    } else {
                         return 0;
                     }
                 }
                 return byteswritten;
             }
+            break;
         }
     }
     return byteswritten;

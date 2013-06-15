@@ -21,12 +21,17 @@
 
 */
 
+#include "config.h"
+#include "os.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "zipdecryption.h"
+
+#ifdef USE_PHYSFS
 
 struct zipdecrypternone_data {
     struct zipdecryptionfileaccess f;
@@ -137,3 +142,6 @@ struct zipdecryptionfileaccess* fileaccess) {
     d->duplicate = zipdecryption_Duplicate;
     return d;
 }
+
+#endif  // USE_PHYSFS
+
