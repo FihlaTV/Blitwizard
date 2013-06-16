@@ -1187,7 +1187,9 @@ int main(int argc, char** argv) {
         }
 
         // new frame:
+#ifdef USE_GRAPHICS
         luacfuncs_objectgraphics_newFrame();
+#endif
     }
     main_Quit(0);
     return 0;
