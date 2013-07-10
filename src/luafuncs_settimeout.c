@@ -44,7 +44,7 @@
 
 int nexttimeoutfuncid = 0;
 struct timeoutfunc {
-    int cancelled;
+    int deleted;
     int id;
     uint64_t triggerTime;
     struct timeoutfunc* next;
@@ -52,6 +52,41 @@ struct timeoutfunc {
 struct timeoutfunc* timeoutfuncs = NULL;
 uint64_t timeoutTS = 0;
 uint64_t currentRelativeTS = 0;
+static int insideSetTimeoutCallback = 0;
+
+void luacfuncs_settimeout_CleanTimeouts(lua_State* l) {
+    if (insideSetTimeoutCallback) {
+        return;
+    }
+    struct timeoutfunc* prev = NULL;
+    struct timeoutfunc* f = timeoutfuncs;
+    while (f) {
+        struct timeoutfunc* fnext = f->next;
+        int deleted = 0;
+
+        if (f->deleted) {
+            // Remove timeout function from registry:
+            char funcname[64];
+            snprintf(funcname, sizeof(funcname),
+            "timeoutfunc%d", f->id);
+            lua_pushstring(l, funcname);
+            lua_pushnil(l);
+            lua_settable(l, LUA_REGISTRYINDEX);
+            free(f);
+        }
+
+        if (!deleted) {
+            prev = f;
+        } else {
+            if (prev) {
+                prev->next = fnext;
+            } else {
+                timeoutfuncs = fnext;
+            }
+        }
+        f = fnext;
+    } 
+}
 
 void luacfuncs_settimeout_Do() {
     lua_State* l = luastate_GetStatePtr();
@@ -67,7 +102,7 @@ void luacfuncs_settimeout_Do() {
         struct timeoutfunc* tfprev = NULL;
         while (tf) {
             struct timeoutfunc* tfnext = tf->next;
-            if (tf->triggerTime <= timeoutTS && !tf->cancelled) {
+            if (tf->triggerTime <= timeoutTS && !tf->deleted) {
                 currentRelativeTS = tf->triggerTime;
                 // obtain callback:
                 char funcname[64];
@@ -77,7 +112,7 @@ void luacfuncs_settimeout_Do() {
                 lua_gettable(l, LUA_REGISTRYINDEX);
 
                 // run callback:
-
+                
 
                 // remove callback function:
                 lua_pushstring(l, funcname);
@@ -128,7 +163,7 @@ int luafuncs_cancelTimeout(lua_State* l) {
     struct timeoutfunc* tf = timeoutfuncs;
     while (tf) {
         if (tf->id == id) {
-            tf->cancelled = 1;
+            tf->deleted = 1;
             lua_pushboolean(l, 1);
             return 1;
         }
@@ -153,6 +188,9 @@ int luafuncs_cancelTimeout(lua_State* l) {
 // @tparam function function the function which shall be executed later
 // @tparam number delay the delay in milliseconds before executing the function
 int luafuncs_setTimeout(lua_State* l) {
+    // remove previous completed setTimeout calls:
+    luacfuncs_settimeout_CleanTimeouts(l);
+
     // check function parameter:
     if (lua_type(l, 1) != LUA_TFUNCTION) {
         return haveluaerror(l, badargument1, 1, "luafuncs.setTimeout",

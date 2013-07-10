@@ -414,6 +414,7 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
         s->prev = s2;
     } else {
         s->next = spritelist;
+        s->prev = NULL;
     }
     if (s->next) {
         s->next->prev = s;

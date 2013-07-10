@@ -119,6 +119,7 @@ function spawnOrb()
     local v = 0.2 + 6*math.random()
     obj:setScale(v, v)
     obj:setTransparency(math.random() * 0.5 + 0.5)
+    obj:setZIndex(-9999)
 
     -- initialise physics:
     function obj:onGeometryLoaded()
