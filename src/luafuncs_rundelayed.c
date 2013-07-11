@@ -39,23 +39,27 @@
 
 #include "luastate.h"
 #include "luaerror.h"
-#include "luafuncs_settimeout.h"
+#include "luafuncs_rundelayed.h"
 #include "timefuncs.h"
 
-int nexttimeoutfuncid = 0;
+int nextdelayedfuncid = 0;
 struct timeoutfunc {
     int deleted;
     int id;
     uint64_t triggerTime;
     struct timeoutfunc* next;
 };
-struct timeoutfunc* timeoutfuncs = NULL;
-uint64_t timeoutTS = 0;
-uint64_t currentRelativeTS = 0;
-static int insideSetTimeoutCallback = 0;
+static struct timeoutfunc* timeoutfuncs = NULL;
+static uint64_t runDelayedTS = 0;
+static uint64_t currentRelativeTS = 0;
+static int insideRunDelayedCallback = 0;
 
-void luacfuncs_settimeout_CleanTimeouts(lua_State* l) {
-    if (insideSetTimeoutCallback) {
+__attribute__ ((constructor)) void luacfuncs_runDelayed_Init() {
+    runDelayedTS = time_GetMilliseconds();
+}
+
+void luacfuncs_runDelayed_CleanDelayedRuns(lua_State* l) {
+    if (insideRunDelayedCallback) {
         return;
     }
     struct timeoutfunc* prev = NULL;
@@ -88,21 +92,21 @@ void luacfuncs_settimeout_CleanTimeouts(lua_State* l) {
     } 
 }
 
-void luacfuncs_settimeout_Do() {
+void luacfuncs_runDelayed_Do() {
     lua_State* l = luastate_GetStatePtr();
-    if (timeoutTS == 0) {
-        timeoutTS = time_GetMilliseconds();
+    if (runDelayedTS == 0) {
+        runDelayedTS = time_GetMilliseconds();
         return;
     }
-    uint64_t oldTime = timeoutTS;
-    timeoutTS = time_GetMilliseconds();
-    if (oldTime < timeoutTS) {
+    uint64_t oldTime = runDelayedTS;
+    runDelayedTS = time_GetMilliseconds();
+    if (oldTime < runDelayedTS) {
         // time has passed, check timeouts
         struct timeoutfunc* tf = timeoutfuncs;
         struct timeoutfunc* tfprev = NULL;
         while (tf) {
             struct timeoutfunc* tfnext = tf->next;
-            if (tf->triggerTime <= timeoutTS && !tf->deleted) {
+            if (tf->triggerTime <= runDelayedTS && !tf->deleted) {
                 currentRelativeTS = tf->triggerTime;
                 // obtain callback:
                 char funcname[64];
@@ -112,7 +116,9 @@ void luacfuncs_settimeout_Do() {
                 lua_gettable(l, LUA_REGISTRYINDEX);
 
                 // run callback:
-                
+                insideRunDelayedCallback = 1;
+
+                insideRunDelayedCallback = 0; 
 
                 // remove callback function:
                 lua_pushstring(l, funcname);
@@ -138,26 +144,28 @@ void luacfuncs_settimeout_Do() {
 }
 
 /// Cancel a function which was scheduled to be run with
-// @{blitwizard.setTimeout} using the handle you received
+// @{blitwizard.runDelayed} using the handle you received
 // for it.
 //
 // If the function has already been executed, this function
 // will return false, otherwise it will return true and
 // the function won't be executed.
-int luafuncs_cancelTimeout(lua_State* l) {
+// @function cancelDelayedRun
+// @tparam userdata handle the handle returned by @{blitwizard.runDelayed}
+int luafuncs_cancelDelayedRun(lua_State* l) {
     if (lua_type(l, 1) != LUA_TUSERDATA) {
-        return haveluaerror(l, badargument1, 1, "blitiwzard.cancelTimeout",
-        "setTimeout handle", lua_strtype(l, 1));
+        return haveluaerror(l, badargument1, 1, "blitiwzard.cancelDelayedRun",
+        "runDelayed handle", lua_strtype(l, 1));
     }
     if (lua_rawlen(l, 1) != sizeof(struct luaidref)) {
-        return haveluaerror(l, badargument2, 1, "blitwizard.cancelTimeout",
-        "not a valid setTimeout handle");
+        return haveluaerror(l, badargument2, 1, "blitwizard.cancelDelayedRun",
+        "not a valid runDelayed handle");
     }
     struct luaidref* idref = lua_touserdata(l, 1);
     if (!idref || idref->magic != IDREF_MAGIC
     || idref->type != IDREF_TIMEOUTHANDLE) {
-        return haveluaerror(l, badargument2, 1, "blitwizard.canccelTimeout",
-        "not a valid setTimeout handle");
+        return haveluaerror(l, badargument2, 1, "blitwizard.cancelDelayedRun",
+        "not a valid runDelayed handle");
     }
     int id = idref->ref.id;
     struct timeoutfunc* tf = timeoutfuncs;
@@ -174,22 +182,26 @@ int luafuncs_cancelTimeout(lua_State* l) {
 }
 
 /// This function allows scheduling a function to be executed
-// later. blitwizard.setTimeout will return instantly, and lateron
+// after a specified time delay.
+//
+// blitwizard.runDelayed will return instantly, and lateron
 // when the specified amount of time has passed, the function will
 // be run once.
 //
-// If you know JavaScript, this function should be familiar
-// to you.
+// If you know JavaScript, this function works similar to
+// JavaScript's setTimeout.
 //
-// The return value is a handle which you can use to cancel the
-// scheduled function run with @{blitwizard.cancelTimeout},
+// The return value of @{blitwizard.runDelayed|runDelayed}
+// is a handle which you can use to cancel the
+// scheduled function run with @{blitwizard.cancelDelayedRun},
 // as long as it hasn't been run yet.
-// @function setTimeout
+// @function runDelayed
 // @tparam function function the function which shall be executed later
 // @tparam number delay the delay in milliseconds before executing the function
-int luafuncs_setTimeout(lua_State* l) {
-    // remove previous completed setTimeout calls:
-    luacfuncs_settimeout_CleanTimeouts(l);
+// @treturn userdata handle which can be used with @{blitwizard.cancelDelayedRun|cancelDelayedRun} 
+int luafuncs_runDelayed(lua_State* l) {
+    // remove previous completed runDelay calls:
+    luacfuncs_runDelayed_CleanDelayedRuns(l);
 
     // check function parameter:
     if (lua_type(l, 1) != LUA_TFUNCTION) {
@@ -209,11 +221,11 @@ int luafuncs_setTimeout(lua_State* l) {
     }
 
     // see which id we would want to use:
-    int useid = nexttimeoutfuncid;
-    if (nexttimeoutfuncid >= INT_MAX) {
-        nexttimeoutfuncid = 0;
+    int useid = nextdelayedfuncid;
+    if (nextdelayedfuncid >= INT_MAX) {
+        nextdelayedfuncid = 0;
     } else {
-        nexttimeoutfuncid++;
+        nextdelayedfuncid++;
     }
 
     // set function provided to registry:
@@ -240,10 +252,10 @@ int luafuncs_setTimeout(lua_State* l) {
     memset(tf, 0, sizeof(*tf));
 
     // set trigger info:
-    tf->id = nexttimeoutfuncid;
+    tf->id = nextdelayedfuncid;
     tf->triggerTime = currentRelativeTS;
     if (tf->triggerTime == 0) {
-        tf->triggerTime = timeoutTS;
+        tf->triggerTime = runDelayedTS;
     }
     tf->triggerTime += d;
 
