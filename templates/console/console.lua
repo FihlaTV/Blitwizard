@@ -57,7 +57,7 @@ do
     local consoleHeight = 240
     local consoleLoaded = false
     local consoleYPos = -consoleHeight
-    local consoleLinesShown = 99
+    blitwizard.console.consoleLinesShown = 99
 
     -- lines storage:
     local lines = {}
@@ -70,7 +70,8 @@ do
     local blinkCursorText = nil
 
     local function trimConsole()
-        while #lines > consoleLinesShown do
+        while #lines >
+        blitwizard.console.consoleLinesShown do
             -- remove first line:
             if lines[1].text then
                 lines[1].text:destroy()
@@ -84,12 +85,14 @@ do
         end
     end
     local function calculateConsoleLinesShown()
-        local text = blitwizard.font.text:new("Hello", "default", 0.8)
+        local text = blitwizard.font.text:new(
+            "Hello", "default", 0.8)
         consoleLineHeight = text:height()
-        local result = math.floor(consoleHeight/text:height())
+        local result = math.floor(
+            consoleHeight/text:height())
         text:destroy()
         consoleYPos = -consoleHeight
-        consoleLinesShown = result-2
+        blitwizard.console.consoleLinesShown = result-2
         trimConsole()
     end
     local commandHistory = { "" }
@@ -105,10 +108,6 @@ do
     -- blinking cursor timing, text input line end in game units:
     local blinkCursorTime = 0
     local textEndX = 0 -- line end on screen
-
-    -- lines storage:
-    local lines = {}
-    -- each line is { line = "text", text = blitwizard.font.text or nil }
 
     -- create background image for console:
     local consoleBg = blitwizard.object:new(blitwizard.object.o2d,
@@ -557,8 +556,10 @@ do
         if consoleOpened then
             -- if console is open, append text:
 
-            consoleText = consoleText:sub(1, #consoleText - blinkCursorOffset)
-             .. text .. consoleText:sub(#consoleText + 1 - blinkCursorOffset)
+            consoleText = consoleText:sub(1,
+                #consoleText - blinkCursorOffset)
+             .. text .. consoleText:sub(
+                #consoleText + 1 - blinkCursorOffset)
             updateInputLine = true
             -- this text is for the console
             return true
