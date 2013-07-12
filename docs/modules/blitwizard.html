@@ -58,31 +58,18 @@
 
 <h1>Module <code>blitwizard</code></h1>
 
-<p>Blitwizard namespace containing the generic
- <a href="../modules/blitwizard.html#Class_object">blitwizard game entity object</a> and various sub
- namespaces for <a href="../modules/blitwizard.physics.html#">physics</a>,
- <a href="../modules/blitwizard.graphics.html#">graphics</a> and more.</p>
-<p>
-<p> <b>Please note 3d graphics are currently <span style="color:#ff0000">not supported.</span></b></p>
+<p></p>
+<p></p>
     <h3>Info:</h3>
     <ul>
         <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
+        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@gmail.com)</li>
     </ul>
 
 
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
-	<tr>
-	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
-	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#setTimeout">setTimeout&nbsp;(function, delay)</a></td>
-	<td class="summary">This function allows scheduling a function to be executed
- later.</td>
-	</tr>
 	<tr>
 	<td class="name" ><a href="#loadResourceArchive">loadResourceArchive&nbsp;(Path)</a></td>
 	<td class="summary">Load a .zip file as a resource archive.</td>
@@ -120,9 +107,73 @@
 	<td class="summary">Specify this function if you want to receive internal
  blitwizard log messages.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#cancelDelayedRun">cancelDelayedRun&nbsp;(handle)</a></td>
+	<td class="summary">Cancel a function which was scheduled to be run with
+ <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
+ for it.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#runDelayed">runDelayed&nbsp;(function, delay)</a></td>
+	<td class="summary">This function allows scheduling a function to be executed
+ after a specified time delay.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
+	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
+	</tr>
 </table>
 <h2><a href="#Class_object">Class object </a></h2>
 <table class="function_list">
+	<tr>
+	<td class="name" ><a href="#object:disableCollision">object:disableCollision&nbsp;()</a></td>
+	<td class="summary">Disable the physics simulation on an object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object.shape_info">object.shape_info</a></td>
+	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+<p> All shape sizes, dimensions etc are specified in game units.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:enableMovableCollision">object:enableMovableCollision&nbsp;(shape_info)</a></td>
+	<td class="summary">Enable the physics simulation on the given object and make it
+ movable and collide with other movable and static objects.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:enableStaticCollision">object:enableStaticCollision&nbsp;(shape_info)</a></td>
+	<td class="summary">Enable the physics simulation on the given object and allow other
+ objects to collide with it.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:impulse">object:impulse&nbsp;(force_x, force_y, force_z, source_x, source_y, source_z)</a></td>
+	<td class="summary">Apply a physics impulse onto an object (which will make it move,
+ for example as if someone had pushed it).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:restrictRotation">object:restrictRotation&nbsp;(total_or_axis_x, axis_y, axis_z, axis_point_x, axis_point_y, axis_point_z)</a></td>
+	<td class="summary">Restrict the ability to rotate for a given object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setAngularDamping">object:setAngularDamping&nbsp;(damping)</a></td>
+	<td class="summary">Set the angular damping factor.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setFriction">object:setFriction&nbsp;(friction)</a></td>
+	<td class="summary">Set the surface friction on the given object.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setGravity">object:setGravity&nbsp;(gravity_x, gravity_y, gravity_z)</a></td>
+	<td class="summary">Set a gravity vector onto an object with movable collision enabled
+ (see <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setLinearDamping">object:setLinearDamping&nbsp;(damping)</a></td>
+	<td class="summary">Set the linear damping factor.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:setMass">object:setMass&nbsp;(mass, mass_center_x, mass_center_y, mass_center_z)</a></td>
+	<td class="summary">Set the mass and the center of an object.</td>
+	</tr>
 	<tr>
 	<td class="name" ><a href="#object:setInvisibleToMouse">object:setInvisibleToMouse&nbsp;(invisible)</a></td>
 	<td class="summary">Set an object to be invisible for mouse handling.</td>
@@ -191,8 +242,12 @@
  image source.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#object:pinToCamera">object:pinToCamera&nbsp;(camera)</a></td>
-	<td class="summary">Pin a sprite to a given <a href="../modules/blitwizard.graphics.html#Class_camera">game camera</a>.</td>
+	<td class="name" ><a href="#object:pinToCamera">object:pinToCamera&nbsp;(optional)</a></td>
+	<td class="summary">Pin a 2d object to a given <a href="../modules/blitwizard.graphics.html#Class_camera">game camera</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:unpinFromCamera">object:unpinFromCamera&nbsp;()</a></td>
+	<td class="summary">Unpin a sprite pinned with @{blitwizard.object.pinToCamera|pinToCamera.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:setVisible">object:setVisible&nbsp;(visible)</a></td>
@@ -233,55 +288,6 @@
  the mouse was moved onto your object and has now moved
  away again.</td>
 	</tr>
-	<tr>
-	<td class="name" ><a href="#object:disableCollision">object:disableCollision&nbsp;()</a></td>
-	<td class="summary">Disable the physics simulation on an object.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object.shape_info">object.shape_info</a></td>
-	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
-<p> All shape sizes, dimensions etc are specified in game units.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:enableMovableCollision">object:enableMovableCollision&nbsp;(shape_info)</a></td>
-	<td class="summary">Enable the physics simulation on the given object and make it
- movable and collide with other movable and static objects.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:enableStaticCollision">object:enableStaticCollision&nbsp;(shape_info)</a></td>
-	<td class="summary">Enable the physics simulation on the given object and allow other
- objects to collide with it.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:impulse">object:impulse&nbsp;(force_x, force_y, force_z, source_x, source_y, source_z)</a></td>
-	<td class="summary">Apply a physics impulse onto an object (which will make it move,
- for example as if someone had pushed it).</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:restrictRotation">object:restrictRotation&nbsp;(total_or_axis_x, axis_y, axis_z, axis_point_x, axis_point_y, axis_point_z)</a></td>
-	<td class="summary">Restrict the ability to rotate for a given object.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:setAngularDamping">object:setAngularDamping&nbsp;(damping)</a></td>
-	<td class="summary">Set the angular damping factor.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:setFriction">object:setFriction&nbsp;(friction)</a></td>
-	<td class="summary">Set the surface friction on the given object.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:setGravity">object:setGravity&nbsp;(gravity_x, gravity_y, gravity_z)</a></td>
-	<td class="summary">Set a gravity vector onto an object with movable collision enabled
- (see <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>).</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:setLinearDamping">object:setLinearDamping&nbsp;(damping)</a></td>
-	<td class="summary">Set the linear damping factor.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#object:setMass">object:setMass&nbsp;(mass, mass_center_x, mass_center_y, mass_center_z)</a></td>
-	<td class="summary">Set the mass and the center of an object.</td>
-	</tr>
 </table>
 
 <br/>
@@ -290,63 +296,6 @@
 
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
-    <dt>
-    <a name = "getAllObjects"></a>
-    <strong>getAllObjects&nbsp;()</strong>
-    </dt>
-    <dd>
-    Iterate through all existing objects, no matter if 2d or 3d.
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">function</span></span>
-        returns an iterator function
-    </ol>
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
- <span class="keyword">for</span> obj <span class="keyword">in</span> blitwizard.getAllObjects() <span class="keyword">do</span>
-     <span class="keyword">local</span> x, y = obj:getPosition()
-     <span class="global">print</span>(<span class="string">"object at: "</span> .. x .. <span class="string">", "</span> .. y)
- <span class="keyword">end</span></pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "setTimeout"></a>
-    <strong>setTimeout&nbsp;(function, delay)</strong>
-    </dt>
-    <dd>
-    This function allows scheduling a function to be executed
- later.  blitwizard.setTimeout will return instantly, and lateron
- when the specified amount of time has passed, the function will
- be run once.
-<p> If you know JavaScript, this function should be familiar
- to you.
-<p> The return value is a handle which you can use to cancel the
- scheduled function run with ???,
- as long as it hasn't been run yet.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">function</span>
-            <span class="types"><span class="type">function</span></span>
-         the function which shall be executed later</li>
-        <li><span class="parameter">delay</span>
-            <span class="types"><span class="type">number</span></span>
-         the delay in milliseconds before executing the function</li>
-    </ul>
-
-
-
-
-
-</dd>
     <dt>
     <a name = "loadResourceArchive"></a>
     <strong>loadResourceArchive&nbsp;(Path)</strong>
@@ -575,32 +524,23 @@
     </ul>
 
 </dd>
-</dl>
-    <h2><a name="Class_object"></a>Class object </h2>
-        Blitwizard object which represents an 'entity' in the game world
- with visual representation, behaviour code and collision shape.
-    <dl class="function">
     <dt>
-    <a name = "object:setInvisibleToMouse"></a>
-    <strong>object:setInvisibleToMouse&nbsp;(invisible)</strong>
+    <a name = "cancelDelayedRun"></a>
+    <strong>cancelDelayedRun&nbsp;(handle)</strong>
     </dt>
     <dd>
-    Set an object to be invisible for mouse handling.
- Other objects below this particular object may therefore
- receive the according <a href="../modules/blitwizard.html#object:onMouseEnter">object:onMouseEnter</a>,
- <a href="../modules/blitwizard.html#object:onMouseLeave">object:onMouseLeave</a> and
- <a href="../modules/blitwizard.html#object:onMouseClick">object:onMouseClick</a> events instead.
-<p> This is useful e.g. for text that isn't supposed to "steal" the events
- from the button it is on, or a fade-in sprite that covers the whole
- <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a>
- which shouldn't block the mouse events.
+    Cancel a function which was scheduled to be run with
+ <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
+ for it.
+<p> If the function has already been executed, this function
+ will return false, otherwise it will return true and
+ the function won't be executed.
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">invisible</span>
-            <span class="types"><span class="type">boolean</span></span>
-         Set to true to make it invisible to mouse events,
- or false to make it receive or block mouse events (default: false)</li>
+        <li><span class="parameter">handle</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the handle returned by <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a></li>
     </ul>
 
 
@@ -609,32 +549,56 @@
 
 </dd>
     <dt>
-    <a name = "object:new"></a>
-    <strong>object:new&nbsp;(type, resource)</strong>
+    <a name = "runDelayed"></a>
+    <strong>runDelayed&nbsp;(function, delay)</strong>
     </dt>
     <dd>
-    Create a new blitwizard object which is represented as a 2d or
- 3d object in the game world.
- 2d objects are on a separate 2d plane, and 3d objects are inside
- the 3d world.
- Objects can have behaviour and collision info attached and move
- around. They are what eventually makes the action in your game!
+    This function allows scheduling a function to be executed
+ after a specified time delay.
+<p> blitwizard.runDelayed will return instantly, and lateron
+ when the specified amount of time has passed, the function will
+ be run once.
+<p> If you know JavaScript, this function works similar to
+ JavaScript's setTimeout.
+<p> The return value of <a href="../modules/blitwizard.html#runDelayed">runDelayed</a>
+ is a handle which you can use to cancel the
+ scheduled function run with <a href="../modules/blitwizard.html#cancelDelayedRun">blitwizard.cancelDelayedRun</a>,
+ as long as it hasn't been run yet.
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">type</span>
+        <li><span class="parameter">function</span>
+            <span class="types"><span class="type">function</span></span>
+         the function which shall be executed later</li>
+        <li><span class="parameter">delay</span>
             <span class="types"><span class="type">number</span></span>
-         specify object type: blitwizard.object.o2d or blitwizard.object.o3d</li>
-        <li><span class="parameter">resource</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.</li>
+         the delay in milliseconds before executing the function</li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
 
           <span class="types"><span class="type">userdata</span></span>
-        Returns a <a href="../modules/blitwizard.html#Class_object">blitwizard object</a>
+        handle which can be used with <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getAllObjects"></a>
+    <strong>getAllObjects&nbsp;()</strong>
+    </dt>
+    <dd>
+    Iterate through all existing objects, no matter if 2d or 3d.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">function</span></span>
+        returns an iterator function
     </ol>
 
 
@@ -642,596 +606,18 @@
     <h3>Usage:</h3>
     <ul>
         <pre class="example">
- <span class="comment">-- Create a new 2d sprite object from the image file myimage.png
-</span> <span class="keyword">local</span> obj = blitwizard.object:new(blitwizard.object.o2d, <span class="string">"myimage.png"</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "object:destroy"></a>
-    <strong>object:destroy&nbsp;()</strong>
-    </dt>
-    <dd>
-    Destroy the given object explicitely, to make it instantly disappear
- from the game world.
-<p> If you still have references to this object, they will no longer
- work.
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:getPosition"></a>
-    <strong>object:getPosition&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the current position of the object.
- Returns two coordinates for a 2d object, and three coordinates
- for a 3d object.
-
-
-    <h3>Returns:</h3>
-    <ol>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        x coordinate</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        y coordinate</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        (if 3d object) z coordinate</li>
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:setPosition"></a>
-    <strong>object:setPosition&nbsp;(pos_x, pos_y, pos_z)</strong>
-    </dt>
-    <dd>
-    Set the object to a new position.  Specify two coordinates for 2d
- objects (x, y) and three for 3d objects (x, y, z).
-<p> Please note this game position is in <b>game units</b>, not pixels.
-<p> To find out how much pixels 1 game unit is in the 2d world with
- a default zoom of 1, check <a href="../modules/blitwizard.graphics.html#camera:gameUnitToPixels">blitwizard.graphics.camera:gameUnitToPixels</a>.
-<p> For the 3d world, one game unit should roughly equal one meter
- if your game plays in a normal human-scale environment
- (this works best for the physics).
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">pos_x</span>
-            <span class="types"><span class="type">number</span></span>
-         x coordinate</li>
-        <li><span class="parameter">pos_y</span>
-            <span class="types"><span class="type">number</span></span>
-         y coordinate</li>
-        <li><span class="parameter">pos_z</span>
-            <span class="types"><span class="type">number</span></span>
-         (only for 3d objects) z coordinate</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:setTransparency"></a>
-    <strong>object:setTransparency&nbsp;(transparency)</strong>
-    </dt>
-    <dd>
-    Set the transparency of the visual representation of this object.
- Defaults to 0 (solid).
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">transparency</span>
-            <span class="types"><span class="type">number</span></span>
-         transparency from 0 (solid) to 1 (invisible)</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:getTransparency"></a>
-    <strong>object:getTransparency&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the transparency of the visual representation of this object.
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">number</span></span>
-        transparency from 0 (solid) to 1 (invisible)
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:getDimensions"></a>
-    <strong>object:getDimensions&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the dimensions of an object in game units (with
- <a href="../modules/blitwizard.html#object:setScale">scaling</a> taken into account).
-<p> For a 2d sprite, this returns two components (x, y) which
- match the sprite's width and height, for a 3d object,
- this returns a 3d box which would encapsulate the 3d mesh
- in its first initial animation frame.
-<p> If you call this function before getting the
- <a href="../modules/blitwizard.html#object:onGeometryLoaded">geometry callback</a>,
- an error will be thrown that the information is not available
- yet.
-<p> Note with use of <a href="../modules/blitwizard.html#object:set2dTextureClipping">blitwizard.object:set2dTextureClipping</a> the dimensions
- change and they might no longer reflect the initial size of the
- texture.
-
-
-    <h3>Returns:</h3>
-    <ol>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        x_size X dimension value</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        y_size Y dimension value</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        z_size (only for 3d objects) Z dimension value</li>
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:getScale"></a>
-    <strong>object:getScale&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the object's scale, which per default is 1,1 for 2d objects
- and 1,1,1 for 3d objects.  The scale is a factor applied to the
- dimensions of an object to stretch or shrink it.
-<p> Please note if you want to scale up a unit to precisely
- match a specific size in game units (instead of just making
- it twice the size, three times the size etc with setScale),
- you might want to use <a href="../modules/blitwizard.html#object:scaleToDimensions">
- object:scaleToDimensions</a>.
-<p> Returns 2 values for 2d objects, 3 values for 3d objects.
-
-
-    <h3>Returns:</h3>
-    <ol>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        x_scale X scale factor</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        y_scale Y scale factor</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        z_scale (optional) Z scale factor</li>
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:setScale"></a>
-    <strong>object:setScale&nbsp;(x_scale, y_scale, z_scale)</strong>
-    </dt>
-    <dd>
-    Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.
- This allows to stretch/shrink an object. If physics are enabled
- with <a href="../modules/blitwizard.html#object:enableMovableCollision">
- object:enableMovableCollision</a>
- or <a href="../modules/blitwizard.html#object:enableStaticCollision">
- object:enableStaticCollision</a>,
- the physics hull will be scaled accordingly aswell.
-<p> Please note if you want to scale up a unit to precisely
- match a specific size in game units (instead of just making
- it twice the size, three times the size etc with setScale),
- you might want to use <a href="../modules/blitwizard.html#object:scaleToDimensions">
- object:scaleToDimensions</a>.
-<p> Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">x_scale</span>
-            <span class="types"><span class="type">number</span></span>
-         X scale factor</li>
-        <li><span class="parameter">y_scale</span>
-            <span class="types"><span class="type">number</span></span>
-         Y scale factor</li>
-        <li><span class="parameter">z_scale</span>
-            <span class="types"><span class="type">number</span></span>
-         (optional) Z scale factor</li>
-    </ul>
-
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
- <span class="comment">-- scale a 2d object to twice the original size
-</span> obj3d:setScale(<span class="number">2</span>, <span class="number">2</span>)
-
- <span class="comment">-- scale 3d object to half its original size
-</span> obj3d:setScale(<span class="number">0.5</span>, <span class="number">0.5</span>, <span class="number">0.5</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "object:scaleToDimensions"></a>
-    <strong>object:scaleToDimensions&nbsp;(width, height, z_size)</strong>
-    </dt>
-    <dd>
-    Scale up an object to precise boundaries in game units.
- An according <a href="../modules/blitwizard.html#object:setScale">scale factor</a>
- will be picked to achieve this.
-<p> For 2d objects, a width and a height can be specified.
- For 3d objects, the size along all three axis (x, y, z)
- can be specified.
-<p> If you want the object to be scaled up but maintain
- its aspect ratio, specify just one parameter and pass
- <i>nil</i> for the others which will then be calculated
- accordingly.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">width</span>
-            <span class="types"><span class="type">number</span></span>
-         width or x size in game units</li>
-        <li><span class="parameter">height</span>
-            <span class="types"><span class="type">number</span></span>
-         height or y size</li>
-        <li><span class="parameter">z_size</span>
-            <span class="types"><span class="type">number</span></span>
-         (only present for 3d objects) z size</li>
-    </ul>
-
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
- <span class="comment">-- Scale up a 3d object so its height matches 2 game units:
-</span> <span class="comment">-- (it's proportions will be kept)
-</span> obj3d:scaleToDimensions(<span class="keyword">nil</span>, <span class="keyword">nil</span>, <span class="number">2</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "object:setZIndex"></a>
-    <strong>object:setZIndex&nbsp;(z_index)</strong>
-    </dt>
-    <dd>
-    Set the z-index of the object (only for 2d objects).
- An object with a higher z index will be drawn above
- others with a lower z index. If two objects have the same
- z index, the newer object will be drawn on top.
-<p> The z index will be internally set to an integer,
- so use numbers like -25, 0, 1, 2, 3, 99, ...
-<p> The default z index is 0.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">z_index</span>
-            <span class="types"><span class="type">number</span></span>
-         New z index</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:setRotationAngle"></a>
-    <strong>object:setRotationAngle&nbsp;(rotation)</strong>
-    </dt>
-    <dd>
-    Set the rotation angle of a 2d object.  (You need to use
- ???,
- ???
- or ???
- for 3d objects)
-<p> An angle of 0 is the default rotation, 90 will turn it
- on its side counter-clockwise by 90° degree, etc.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">rotation</span>
-            <span class="types"><span class="type">number</span></span>
-         the rotation angle</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:getRotationAngle"></a>
-    <strong>object:getRotationAngle&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the rotation angle of a 2d object.
- (Use ??? or
- ???
- for 3d objects)
-<p> Also see <a href="../modules/blitwizard.html#object:setRotationAngle">object:setRotationAngle</a>.
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">number</span></span>
-        the current 2d rotation of the object
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:set2dTextureClipping"></a>
-    <strong>object:set2dTextureClipping&nbsp;(x, y, width, height)</strong>
-    </dt>
-    <dd>
-    For 2d sprite objects, set a clipping window inside the
- original texture used for the sprite which allows you to
- specify a sub-rectangle of the texture to be used as
- image source.
-<p> This means you can make your sprite show just a part of the
- texture, not all of it.
-<p> The clipping window defaults to full texture size. Changing
- it will also affect the size reported by
- <a href="../modules/blitwizard.html#object:getDimensions">object:getDimensions</a>.
-<p> You can omit all parameters which will reset the clipping window
- to the full texture dimensions.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">x</span>
-            <span class="types"><span class="type">number</span></span>
-         the x offset in the texture, in pixels (default: 0)</li>
-        <li><span class="parameter">y</span>
-            <span class="types"><span class="type">number</span></span>
-         the y offset in the texture, in pixels (default: 0)</li>
-        <li><span class="parameter">width</span>
-            <span class="types"><span class="type">number</span></span>
-         the clipping window width in the texture in pixels (defaults to full texture width)</li>
-        <li><span class="parameter">height</span>
-            <span class="types"><span class="type">number</span></span>
-         the clipping window height in the texture in pixels 8defaults to full texture height)</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:pinToCamera"></a>
-    <strong>object:pinToCamera&nbsp;(camera)</strong>
-    </dt>
-    <dd>
-    Pin a sprite to a given <a href="../modules/blitwizard.graphics.html#Class_camera">game camera</a>.
-
- It will only be visible on that given camera, it will ignore the
- camera's 2d position and zoom and will simply display with default zoom
- with 0,0 being the upper left corner.
-<p> It will also be above all unpinned sprites.
-<p> You might want to use this for on-top interface graphics that shouldn't
- move with the level but stick to the screen.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">camera</span>
-            <span class="types"><span class="type">userdata</span></span>
-         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to pin to, or nil to unpin</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:setVisible"></a>
-    <strong>object:setVisible&nbsp;(visible)</strong>
-    </dt>
-    <dd>
-    Change whether an object is shown at all, or whether it is hidden.
- If you know objects aren't going to be needed at some point or
- if you want to hide them until something specific happens,
- use this function to hide them temporarily.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">visible</span>
-            <span class="types"><span class="type">boolean</span></span>
-         specify true if you want the object to be shown (default), or false if you want it to be hidden. Please note this has no effect on collision</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:onGeometryLoaded"></a>
-    <strong>object:onGeometryLoaded&nbsp;()</strong>
-    </dt>
-    <dd>
-    Set this event function to a custom function
- of yours to get notified when the geometry
- (size/dimension and animation data etc) of your
- object has been fully loaded.
-<p> <b>This function does not exist</b> before you
- set it on a particular object.
-<p> See usage on how to define this function for an
- object of your choice.
-
-
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
-   <span class="comment">-- create a 2d sprite and output its size:
-</span>   <span class="keyword">local</span> obj = obj:new(blitwizard.object.o2d, <span class="string">"my_image.png"</span>)
-   <span class="keyword">function</span> obj:onGeometryLoaded()
-     <span class="comment">-- call <a href="../modules/blitwizard.html#object:getDimensions">self:getDimensions</a> to get
-</span>     <span class="comment">-- its dimensions
-</span>     <span class="global">print</span>(<span class="string">"My dimensions are: "</span> .. self:getDimensions()[<span class="number">1</span>],
-     self:getDimensions()[<span class="number">2</span>])
-   <span class="keyword">end</span></pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "object:doOften"></a>
-    <strong>object:doOften&nbsp;()</strong>
-    </dt>
-    <dd>
-    Set this event function to a custom function of yours
- to have the object do something
- over and over again moderately fast (4 times a second).
-<p> You might want to use this function for things where a small
- reaction time is acceptable but which need to happen constantly,
- e.g. an enemy checking if it can see the player (to start an attack).
-<p> <b>This function does not exist</b> before you
- set it on a particular object.
-<p> This function is called with all objects with a
- frequency of 4 times a second.
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:doAlways"></a>
-    <strong>object:doAlways&nbsp;()</strong>
-    </dt>
-    <dd>
-    Set this event function to a custom
- function of yours to have the object do something
- over and over again (very rapidly).
-<p> This function is mainly useful for fluid movements, e.g.
- for an elevator, you might want to move the elevator
- one bit each time this function is called.
-<p> <b>This function does not exist</b> before you
- set it on a particular object.
-<p> This function is called with all objects with a
- frequency of 60 times a second (it can be changed
- globally with <a href="../modules/blitwizard.html#setStep">blitwizard.setStep</a> if you know
- what you're doing).
-<p> For decisions and changes that don't need to be done so fast,
- use <a href="../modules/blitwizard.html#object:doOften">object:doOften</a> which runs
- 4 times a second (which is still very often).
-
-
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
- <span class="comment">-- have a sprite move up the screen
-</span> <span class="keyword">local</span> obj = obj:new(blitwizard.object.o2d, <span class="string">"my_image.png"</span>)
- <span class="keyword">function</span> obj:doAlways()
-   <span class="comment">-- get old position:
-</span>   <span class="keyword">local</span> pos_x, pos_y = self:getPosition()
-   <span class="comment">-- move position up a bit:
-</span>   pos_y = pos_y - <span class="number">0.01</span>
-   <span class="comment">-- set position again:
-</span>   self:setPosition(pos_x, pos_y)
+ <span class="keyword">for</span> obj <span class="keyword">in</span> blitwizard.getAllObjects() <span class="keyword">do</span>
+     <span class="keyword">local</span> x, y = obj:getPosition()
+     <span class="global">print</span>(<span class="string">"object at: "</span> .. x .. <span class="string">", "</span> .. y)
  <span class="keyword">end</span></pre>
     </ul>
 
 </dd>
-    <dt>
-    <a name = "object:onMouseClick"></a>
-    <strong>object:onMouseClick&nbsp;()</strong>
-    </dt>
-    <dd>
-    Set this event function to get notified when
- a mouse click is done on your object.
-<p> A double-click will be reported as two onMouseClick events
- in short succession.
-<p> Any object above this object (higher z-index) can cover this one
- and steal its mouse events, even if it doesn't have any handlers
- for mouse events itself. To prevent that, set such covering objects
- to <a href="../modules/blitwizard.html#object:setInvisibleToMouse">
- ignore mouse events (object:setInvisibleToMouse)</a>.
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:onMouseEnter"></a>
-    <strong>object:onMouseEnter&nbsp;()</strong>
-    </dt>
-    <dd>
-    Set this event function to get notified when
- the mouse is moved onto your object.  (this will also be triggered
- if the object itself moves in a way so it ends up under the mouse
- cursor)
-<p> Please note with lots of <a href="../modules/blitwizard.html#Class_object">objects</a>, enabling this
- on objects with a low Z index (with many others above them) can have
- an impact on performance.
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "object:onMouseLeave"></a>
-    <strong>object:onMouseLeave&nbsp;()</strong>
-    </dt>
-    <dd>
-    Set this event function to get notified when
- the mouse was moved onto your object and has now moved
- away again.  (this will also be triggered if the object itself
- moves away from the mouse position)
-<p> Please note with lots of <a href="../modules/blitwizard.html#Class_object">objects</a>, enabling this
- on objects with a low Z index (with many others above them) can have
- an impact on performance.
-
-
-
-
-
-
-</dd>
+</dl>
+    <h2><a name="Class_object"></a>Class object </h2>
+        Blitwizard object which represents an 'entity' in the game world
+ with visual representation, behaviour code and collision shape.
+    <dl class="function">
     <dt>
     <a name = "object:disableCollision"></a>
     <strong>object:disableCollision&nbsp;()</strong>
@@ -1609,13 +995,679 @@ the collision shape will be exactly as large
 
 
 </dd>
+    <dt>
+    <a name = "object:setInvisibleToMouse"></a>
+    <strong>object:setInvisibleToMouse&nbsp;(invisible)</strong>
+    </dt>
+    <dd>
+    Set an object to be invisible for mouse handling.
+ Other objects below this particular object may therefore
+ receive the according <a href="../modules/blitwizard.html#object:onMouseEnter">object:onMouseEnter</a>,
+ <a href="../modules/blitwizard.html#object:onMouseLeave">object:onMouseLeave</a> and
+ <a href="../modules/blitwizard.html#object:onMouseClick">object:onMouseClick</a> events instead.
+<p> This is useful e.g. for text that isn't supposed to "steal" the events
+ from the button it is on, or a fade-in sprite that covers the whole
+ <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a>
+ which shouldn't block the mouse events.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">invisible</span>
+            <span class="types"><span class="type">boolean</span></span>
+         Set to true to make it invisible to mouse events,
+ or false to make it receive or block mouse events (default: false)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:new"></a>
+    <strong>object:new&nbsp;(type, resource)</strong>
+    </dt>
+    <dd>
+    Create a new blitwizard object which is represented as a 2d or
+ 3d object in the game world.
+ 2d objects are on a separate 2d plane, and 3d objects are inside
+ the 3d world.
+ Objects can have behaviour and collision info attached and move
+ around. They are what eventually makes the action in your game!
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">type</span>
+            <span class="types"><span class="type">number</span></span>
+         specify object type: blitwizard.object.o2d or blitwizard.object.o3d</li>
+        <li><span class="parameter">resource</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">userdata</span></span>
+        Returns a <a href="../modules/blitwizard.html#Class_object">blitwizard object</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Create a new 2d sprite object from the image file myimage.png
+</span> <span class="keyword">local</span> obj = blitwizard.object:new(blitwizard.object.o2d, <span class="string">"myimage.png"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:destroy"></a>
+    <strong>object:destroy&nbsp;()</strong>
+    </dt>
+    <dd>
+    Destroy the given object explicitely, to make it instantly disappear
+ from the game world.
+<p> If you still have references to this object, they will no longer
+ work.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getPosition"></a>
+    <strong>object:getPosition&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the current position of the object.
+ Returns two coordinates for a 2d object, and three coordinates
+ for a 3d object.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x coordinate</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y coordinate</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        (if 3d object) z coordinate</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setPosition"></a>
+    <strong>object:setPosition&nbsp;(pos_x, pos_y, pos_z)</strong>
+    </dt>
+    <dd>
+    Set the object to a new position.  Specify two coordinates for 2d
+ objects (x, y) and three for 3d objects (x, y, z).
+<p> Please note this game position is in <b>game units</b>, not pixels.
+<p> To find out how much pixels 1 game unit is in the 2d world with
+ a default zoom of 1, check ???.
+<p> For the 3d world, one game unit should roughly equal one meter
+ if your game plays in a normal human-scale environment
+ (this works best for the physics).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pos_x</span>
+            <span class="types"><span class="type">number</span></span>
+         x coordinate</li>
+        <li><span class="parameter">pos_y</span>
+            <span class="types"><span class="type">number</span></span>
+         y coordinate</li>
+        <li><span class="parameter">pos_z</span>
+            <span class="types"><span class="type">number</span></span>
+         (only for 3d objects) z coordinate</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setTransparency"></a>
+    <strong>object:setTransparency&nbsp;(transparency)</strong>
+    </dt>
+    <dd>
+    Set the transparency of the visual representation of this object.
+ Defaults to 0 (solid).
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">transparency</span>
+            <span class="types"><span class="type">number</span></span>
+         transparency from 0 (solid) to 1 (invisible)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getTransparency"></a>
+    <strong>object:getTransparency&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the transparency of the visual representation of this object.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        transparency from 0 (solid) to 1 (invisible)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getDimensions"></a>
+    <strong>object:getDimensions&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the dimensions of an object in game units (with
+ <a href="../modules/blitwizard.html#object:setScale">scaling</a> taken into account).
+<p> For a 2d sprite, this returns two components (x, y) which
+ match the sprite's width and height, for a 3d object,
+ this returns a 3d box which would encapsulate the 3d mesh
+ in its first initial animation frame.
+<p> If you call this function before getting the
+ <a href="../modules/blitwizard.html#object:onGeometryLoaded">geometry callback</a>,
+ an error will be thrown that the information is not available
+ yet.
+<p> Note with use of <a href="../modules/blitwizard.html#object:set2dTextureClipping">blitwizard.object:set2dTextureClipping</a> the dimensions
+ change and they might no longer reflect the initial size of the
+ texture.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x_size X dimension value</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y_size Y dimension value</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        z_size (only for 3d objects) Z dimension value</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getScale"></a>
+    <strong>object:getScale&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the object's scale, which per default is 1,1 for 2d objects
+ and 1,1,1 for 3d objects.  The scale is a factor applied to the
+ dimensions of an object to stretch or shrink it.
+<p> Please note if you want to scale up a unit to precisely
+ match a specific size in game units (instead of just making
+ it twice the size, three times the size etc with setScale),
+ you might want to use <a href="../modules/blitwizard.html#object:scaleToDimensions">
+ object:scaleToDimensions</a>.
+<p> Returns 2 values for 2d objects, 3 values for 3d objects.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x_scale X scale factor</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y_scale Y scale factor</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        z_scale (optional) Z scale factor</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setScale"></a>
+    <strong>object:setScale&nbsp;(x_scale, y_scale, z_scale)</strong>
+    </dt>
+    <dd>
+    Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.
+ This allows to stretch/shrink an object. If physics are enabled
+ with <a href="../modules/blitwizard.html#object:enableMovableCollision">
+ object:enableMovableCollision</a>
+ or <a href="../modules/blitwizard.html#object:enableStaticCollision">
+ object:enableStaticCollision</a>,
+ the physics hull will be scaled accordingly aswell.
+<p> Please note if you want to scale up a unit to precisely
+ match a specific size in game units (instead of just making
+ it twice the size, three times the size etc with setScale),
+ you might want to use <a href="../modules/blitwizard.html#object:scaleToDimensions">
+ object:scaleToDimensions</a>.
+<p> Specify x, y scaling for 2d objects and x, y, z scaling for 3d objects.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x_scale</span>
+            <span class="types"><span class="type">number</span></span>
+         X scale factor</li>
+        <li><span class="parameter">y_scale</span>
+            <span class="types"><span class="type">number</span></span>
+         Y scale factor</li>
+        <li><span class="parameter">z_scale</span>
+            <span class="types"><span class="type">number</span></span>
+         (optional) Z scale factor</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- scale a 2d object to twice the original size
+</span> obj3d:setScale(<span class="number">2</span>, <span class="number">2</span>)
+
+ <span class="comment">-- scale 3d object to half its original size
+</span> obj3d:setScale(<span class="number">0.5</span>, <span class="number">0.5</span>, <span class="number">0.5</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:scaleToDimensions"></a>
+    <strong>object:scaleToDimensions&nbsp;(width, height, z_size)</strong>
+    </dt>
+    <dd>
+    Scale up an object to precise boundaries in game units.
+ An according <a href="../modules/blitwizard.html#object:setScale">scale factor</a>
+ will be picked to achieve this.
+<p> For 2d objects, a width and a height can be specified.
+ For 3d objects, the size along all three axis (x, y, z)
+ can be specified.
+<p> If you want the object to be scaled up but maintain
+ its aspect ratio, specify just one parameter and pass
+ <i>nil</i> for the others which will then be calculated
+ accordingly.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         width or x size in game units</li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         height or y size</li>
+        <li><span class="parameter">z_size</span>
+            <span class="types"><span class="type">number</span></span>
+         (only present for 3d objects) z size</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Scale up a 3d object so its height matches 2 game units:
+</span> <span class="comment">-- (it's proportions will be kept)
+</span> obj3d:scaleToDimensions(<span class="keyword">nil</span>, <span class="keyword">nil</span>, <span class="number">2</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:setZIndex"></a>
+    <strong>object:setZIndex&nbsp;(z_index)</strong>
+    </dt>
+    <dd>
+    Set the z-index of the object (only for 2d objects).
+ An object with a higher z index will be drawn above
+ others with a lower z index. If two objects have the same
+ z index, the newer object will be drawn on top.
+<p> The z index will be internally set to an integer,
+ so use numbers like -25, 0, 1, 2, 3, 99, ...
+<p> The default z index is 0.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">z_index</span>
+            <span class="types"><span class="type">number</span></span>
+         New z index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setRotationAngle"></a>
+    <strong>object:setRotationAngle&nbsp;(rotation)</strong>
+    </dt>
+    <dd>
+    Set the rotation angle of a 2d object.  (You need to use
+ ???,
+ ???
+ or ???
+ for 3d objects)
+<p> An angle of 0 is the default rotation, 90 will turn it
+ on its side counter-clockwise by 90° degree, etc.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">rotation</span>
+            <span class="types"><span class="type">number</span></span>
+         the rotation angle</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getRotationAngle"></a>
+    <strong>object:getRotationAngle&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the rotation angle of a 2d object.
+ (Use ??? or
+ ???
+ for 3d objects)
+<p> Also see <a href="../modules/blitwizard.html#object:setRotationAngle">object:setRotationAngle</a>.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        the current 2d rotation of the object
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:set2dTextureClipping"></a>
+    <strong>object:set2dTextureClipping&nbsp;(x, y, width, height)</strong>
+    </dt>
+    <dd>
+    For 2d sprite objects, set a clipping window inside the
+ original texture used for the sprite which allows you to
+ specify a sub-rectangle of the texture to be used as
+ image source.
+<p> This means you can make your sprite show just a part of the
+ texture, not all of it.
+<p> The clipping window defaults to full texture size. Changing
+ it will also affect the size reported by
+ <a href="../modules/blitwizard.html#object:getDimensions">object:getDimensions</a>.
+<p> You can omit all parameters which will reset the clipping window
+ to the full texture dimensions.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x</span>
+            <span class="types"><span class="type">number</span></span>
+         the x offset in the texture, in pixels (default: 0)</li>
+        <li><span class="parameter">y</span>
+            <span class="types"><span class="type">number</span></span>
+         the y offset in the texture, in pixels (default: 0)</li>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         the clipping window width in the texture in pixels (defaults to full texture width)</li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         the clipping window height in the texture in pixels 8defaults to full texture height)</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:pinToCamera"></a>
+    <strong>object:pinToCamera&nbsp;(optional)</strong>
+    </dt>
+    <dd>
+    Pin a 2d object to a given <a href="../modules/blitwizard.graphics.html#Class_camera">game camera</a>.
+
+ It will only be visible on that given camera, it will ignore the
+ camera's 2d position and zoom and will simply display with default zoom
+ with 0,0 being the upper left corner.
+<p> It will also be above all unpinned 2d object.
+<p> You might want to use this for on-top interface graphics that shouldn't
+ move with the level but stick to the screen.
+<p> Unpin a pinned
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">optional</span>
+            <span class="types"><span class="type">userdata</span></span>
+        ) camera the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to pin to. If you don't specify any, the default camera will be used</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:unpinFromCamera"></a>
+    <strong>object:unpinFromCamera&nbsp;()</strong>
+    </dt>
+    <dd>
+    Unpin a sprite pinned with @{blitwizard.object.pinToCamera|pinToCamera.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setVisible"></a>
+    <strong>object:setVisible&nbsp;(visible)</strong>
+    </dt>
+    <dd>
+    Change whether an object is shown at all, or whether it is hidden.
+ If you know objects aren't going to be needed at some point or
+ if you want to hide them until something specific happens,
+ use this function to hide them temporarily.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">visible</span>
+            <span class="types"><span class="type">boolean</span></span>
+         specify true if you want the object to be shown (default), or false if you want it to be hidden. Please note this has no effect on collision</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:onGeometryLoaded"></a>
+    <strong>object:onGeometryLoaded&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to a custom function
+ of yours to get notified when the geometry
+ (size/dimension and animation data etc) of your
+ object has been fully loaded.
+<p> <b>This function does not exist</b> before you
+ set it on a particular object.
+<p> See usage on how to define this function for an
+ object of your choice.
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+   <span class="comment">-- create a 2d sprite and output its size:
+</span>   <span class="keyword">local</span> obj = obj:new(blitwizard.object.o2d, <span class="string">"my_image.png"</span>)
+   <span class="keyword">function</span> obj:onGeometryLoaded()
+     <span class="comment">-- call <a href="../modules/blitwizard.html#object:getDimensions">self:getDimensions</a> to get
+</span>     <span class="comment">-- its dimensions
+</span>     <span class="global">print</span>(<span class="string">"My dimensions are: "</span> .. self:getDimensions()[<span class="number">1</span>],
+     self:getDimensions()[<span class="number">2</span>])
+   <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:doOften"></a>
+    <strong>object:doOften&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to a custom function of yours
+ to have the object do something
+ over and over again moderately fast (4 times a second).
+<p> You might want to use this function for things where a small
+ reaction time is acceptable but which need to happen constantly,
+ e.g. an enemy checking if it can see the player (to start an attack).
+<p> <b>This function does not exist</b> before you
+ set it on a particular object.
+<p> This function is called with all objects with a
+ frequency of 4 times a second.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:doAlways"></a>
+    <strong>object:doAlways&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to a custom
+ function of yours to have the object do something
+ over and over again (very rapidly).
+<p> This function is mainly useful for fluid movements, e.g.
+ for an elevator, you might want to move the elevator
+ one bit each time this function is called.
+<p> <b>This function does not exist</b> before you
+ set it on a particular object.
+<p> This function is called with all objects with a
+ frequency of 60 times a second (it can be changed
+ globally with <a href="../modules/blitwizard.html#setStep">blitwizard.setStep</a> if you know
+ what you're doing).
+<p> For decisions and changes that don't need to be done so fast,
+ use <a href="../modules/blitwizard.html#object:doOften">object:doOften</a> which runs
+ 4 times a second (which is still very often).
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- have a sprite move up the screen
+</span> <span class="keyword">local</span> obj = obj:new(blitwizard.object.o2d, <span class="string">"my_image.png"</span>)
+ <span class="keyword">function</span> obj:doAlways()
+   <span class="comment">-- get old position:
+</span>   <span class="keyword">local</span> pos_x, pos_y = self:getPosition()
+   <span class="comment">-- move position up a bit:
+</span>   pos_y = pos_y - <span class="number">0.01</span>
+   <span class="comment">-- set position again:
+</span>   self:setPosition(pos_x, pos_y)
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onMouseClick"></a>
+    <strong>object:onMouseClick&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to get notified when
+ a mouse click is done on your object.
+<p> A double-click will be reported as two onMouseClick events
+ in short succession.
+<p> Any object above this object (higher z-index) can cover this one
+ and steal its mouse events, even if it doesn't have any handlers
+ for mouse events itself. To prevent that, set such covering objects
+ to <a href="../modules/blitwizard.html#object:setInvisibleToMouse">
+ ignore mouse events (object:setInvisibleToMouse)</a>.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:onMouseEnter"></a>
+    <strong>object:onMouseEnter&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to get notified when
+ the mouse is moved onto your object.  (this will also be triggered
+ if the object itself moves in a way so it ends up under the mouse
+ cursor)
+<p> Please note with lots of <a href="../modules/blitwizard.html#Class_object">objects</a>, enabling this
+ on objects with a low Z index (with many others above them) can have
+ an impact on performance.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:onMouseLeave"></a>
+    <strong>object:onMouseLeave&nbsp;()</strong>
+    </dt>
+    <dd>
+    Set this event function to get notified when
+ the mouse was moved onto your object and has now moved
+ away again.  (this will also be triggered if the object itself
+ moves away from the mouse position)
+<p> Please note with lots of <a href="../modules/blitwizard.html#Class_object">objects</a>, enabling this
+ on objects with a low Z index (with many others above them) can have
+ an impact on performance.
+
+
+
+
+
+
+</dd>
 </dl>
 
 
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
-<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.11</a></i>
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.12</a></i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

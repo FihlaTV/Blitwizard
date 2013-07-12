@@ -130,5 +130,27 @@ int luafuncs_setMode(lua_State* l) {
 #endif
 }
 
+/// Get the extend in pixels a game unit in the 2d world
+// has at a default camera zoom level of 1.
+//
+// For 3d, a game unit should be roughly one meter and there
+// is no generic way to tell how this ends up in pixels due
+// to the very dynamic way objects look depending on the
+// camera position, camera angle etc.
+//
+// @function gameUnitToPixels
+// @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
+// @usage
+// -- Get the amount of pixels for one game unit:
+// local pixels = blitwizard.graphics.gameUnitToPixels()
+int luafuncs_gameUnitToPixels(lua_State* l) {
+    if (!unittopixelsset) {
+        return haveluaerror(l, "this function is unavailable before the first "
+        "blitwizard.graphics.setMode call");
+    }
+    lua_pushnumber(l, UNIT_TO_PIXELS);
+    return 1;
+}
+
 #endif  // USE_GRAPHICS
 

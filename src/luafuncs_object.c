@@ -148,7 +148,7 @@ int luafuncs_getAllObjects(lua_State* l) {
 // and deleted objects.
 // This is mainly for invalidating all iterators (see luafuncs_getAllObjects)
 // because they would otherwise run through a now inconsistent object list.
-void luacfuncs_objectAddedDeleted(struct blitwizardobject* o, int added) {
+void luacfuncs_objectAddedDeleted(__attribute__ ((unused)) struct blitwizardobject* o, int added) {
     if (!added) {
         iteratorChangeId++;
         // wrap over:
@@ -1240,30 +1240,58 @@ int luafuncs_object_set2dTextureClipping(lua_State* l) {
 }
 #endif
 
-/// Pin a sprite to a given @{blitwizard.graphics.camera|game camera}.
+/// Pin a 2d object to a given @{blitwizard.graphics.camera|game camera}.
 // 
 // It will only be visible on that given camera, it will ignore the
 // camera's 2d position and zoom and will simply display with default zoom
 // with 0,0 being the upper left corner.
 //
-// It will also be above all unpinned sprites.
+// It will also be above all unpinned 2d object.
 //
 // You might want to use this for on-top interface graphics that shouldn't
 // move with the level but stick to the screen.
+//
+// Unpin a pinned 
 // @function pinToCamera
-// @tparam userdata camera the @{blitwizard.graphics.camera|camera} to pin to, or nil to unpin
+// @tparam userdata (optional) camera the @{blitwizard.graphics.camera|camera} to pin to. If you don't specify any, the default camera will be used
 #ifdef USE_GRAPHICS
 int luafuncs_object_pinToCamera(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:pinToCamera");
 
+    if (obj->is3d) {
+        return haveluaerror(l, "cannot pin 3d objects");
+    }
+
     int cameraId = -1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         cameraId = toluacameraid(l, 2, 1, "blitwizard.object:pinToCamera");
+    } else {
+        if (graphics_GetCameraCount() <= 0) {
+            return haveluaerror(l, "there are no cameras");
+        }
+        cameraId = 0;
     }
 
     // pin it to the given camera:
     luacfuncs_objectgraphics_pinToCamera(obj, cameraId);
+    return 0;
+}
+#endif
+
+/// Unpin a sprite pinned with @{blitwizard.object.pinToCamera|pinToCamera.
+// @function unpinFromCamera
+#ifdef USE_GRAPHICS
+int luafuncs_object_unpinFromCamera(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:pinToCamera");
+
+    if (obj->is3d) {
+        return haveluaerror(l, "cannot pin or unpin 3d objects");
+    }
+
+    // unpin from camera:
+    luacfuncs_objectgraphics_pinToCamera(obj, -1);
     return 0;
 }
 #endif

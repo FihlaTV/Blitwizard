@@ -151,7 +151,7 @@ glyphWidth, glyphHeight, glyphsPerLine)
     charsPerLine = math.max(1, charsPerLine)
     
     -- various information
-    local gameUnitsInPixels = camera:gameUnitToPixels()
+    local gameUnitsInPixels = blitwizard.graphics.gameUnitToPixels()
     local glyphXShift = glyphWidth / gameUnitsInPixels
     local glyphYShift = glyphHeight / gameUnitsInPixels
     t._glyphDimensionX = glyphXShift

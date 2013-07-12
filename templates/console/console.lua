@@ -54,26 +54,53 @@ do
     local slideSpeed = 0.1
     local consoleDisabled = false
     local consoleLineHeight = 0
-    local consoleHeight = 240 / blitwizard.graphics.getCameras()[1]
-        :gameUnitToPixels()
+    local consoleHeight = 240
+    local consoleLoaded = false
     local consoleYPos = -consoleHeight
-    local consoleLinesShown = (function()
-        local text = blitwizard.font.text:new("Hello", "default", 0.8)
-        consoleLineHeight = text:height()
-        local result = math.floor(consoleHeight/text:height())
-        text:destroy()
-        return result-2
-    end)()
-    local commandHistory = { "" }
-    local inCommandHistory = 1
+    local consoleLinesShown = 99
+
+    -- lines storage:
+    local lines = {}
+    -- each line is { line = "text", text = blitwizard.font.text or nil }
 
     -- blinking cursor offset (from right side)
     local blinkCursorOffset = 0
 
-    -- create blinking cursor:
-    local blinkCursorText = blitwizard.font.text:new("|", "default", 1)
-    blinkCursorText:setVisible(false)
-    blinkCursorText:setZIndex(10001)
+    -- this will hold the blinking cursor once create:
+    local blinkCursorText = nil
+
+    local function trimConsole()
+        while #lines > consoleLinesShown do
+            -- remove first line:
+            if lines[1].text then
+                lines[1].text:destroy()
+            end
+            local i = 1
+            while i < #lines do
+                lines[i] = lines[i+1]
+                i = i + 1
+            end
+            table.remove(lines, #lines)
+        end
+    end
+    local function calculateConsoleLinesShown()
+        local text = blitwizard.font.text:new("Hello", "default", 0.8)
+        consoleLineHeight = text:height()
+        local result = math.floor(consoleHeight/text:height())
+        text:destroy()
+        consoleYPos = -consoleHeight
+        consoleLinesShown = result-2
+        trimConsole()
+    end
+    local commandHistory = { "" }
+    local inCommandHistory = 1
+
+    local function createBlinkingCursor()
+        -- create the blinking cursor
+        blinkCursorText = blitwizard.font.text:new("|", "default", 1)
+        blinkCursorText:setVisible(false)
+        blinkCursorText:setZIndex(10001)
+    end
 
     -- blinking cursor timing, text input line end in game units:
     local blinkCursorTime = 0
@@ -89,14 +116,18 @@ do
     "/console/console.png")
     consoleBg:setZIndex(9999)
     consoleBg:setVisible(true)
-    consoleBg:pinToCamera(blitwizard.graphics.getCameras()[1])
-    function consoleBg:onGeometryLoaded()
+    consoleBg:pinToCamera()
+    local function calculateConsoleBgSize()
         -- calculate proper size of the dev console:
         local w,h = consoleBg:getDimensions()
         local cw,ch = blitwizard.graphics.getCameras()[1]:
         getVisible2dAreaDimensions(false)
         consoleBg:setScale(cw/w, consoleHeight/h)
         consoleBg:setPosition(0, -h)
+    end
+    function consoleBg:onGeometryLoaded()
+        calculateConsoleBgSize()
+        pcall(calculateConsoleBgSize)
     end
 
     local function addConsoleLine(line)
@@ -117,20 +148,6 @@ do
         line = line:gsub("\r", "")
 
         lines[#lines+1] = { line = line, text = nil }
-    end
-    local function trimConsole()
-        while #lines > consoleLinesShown do
-            -- remove first line:
-            if lines[1].text then
-                lines[1].text:destroy()
-            end
-            local i = 1
-            while i < #lines do
-                lines[i] = lines[i+1]
-                i = i + 1
-            end
-            table.remove(lines, #lines)
-        end
     end
 
     local printvar = function(var)
@@ -221,6 +238,18 @@ do
 
     function consoleBg:doAlways()
         trimConsole()
+        
+        -- this will work as soon as blitwizard.graphics.setMode was called first:
+        local f = function()
+            consoleHeight = 240 / blitwizard.graphics.gameUnitToPixels()
+        end
+        if pcall(f) == true and consoleLoaded == false then
+            consoleLoaded = true
+            calculateConsoleLinesShown()
+            createBlinkingCursor()
+            pcall(calculateConsoleBgSize)
+        end
+
         if consoleOpened then
             local x,y = consoleBg:getPosition()
             if y < 0 then -- slide down

@@ -400,6 +400,7 @@ HWND graphics_GetWindowHWND() {
 
 int graphics_SetMode(int width, int height, int fullscreen,
 int resizable, const char* title, const char* renderer, char** error) {
+    graphics_calculateUnitToPixels(width, height);
 
 #if defined(ANDROID)
     if (!fullscreen) {
