@@ -38,7 +38,7 @@ extern "C" {
 #include <windows.h>
 #endif
 
-extern int UNIT_TO_PIXELS;
+extern double UNIT_TO_PIXELS;
 extern int unittopixelsset;
 
 int graphics_AreGraphicsRunning(void);

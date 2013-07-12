@@ -777,8 +777,9 @@ int luafuncs_object_getPosition(lua_State* l) {
 //
 // To find out how much pixels 1 game unit is in the 2d world with
 // a default zoom of 1, check @{blitwizard.graphics.gameUnitToPixels}.
-// This value is static for one game run, but it is usually inconsistent
-// across multiple game runs (=> may change if user quits your game and starts it again)
+// The value of @{blitwizard.graphics.gameUnitToPixels|gameUnitToPixels}
+// is recalculated
+// after each @{blitwizard.graphics.setMode} call.
 //
 // @function setPosition
 // @tparam number pos_x x coordinate

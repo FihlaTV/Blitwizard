@@ -59,13 +59,10 @@ int graphics_AreGraphicsRunning() {
     return graphicsactive;
 }
 
-int UNIT_TO_PIXELS = 50;
+double UNIT_TO_PIXELS = 50;
 int unittopixelsset = 0;
 
 void graphics_calculateUnitToPixels(int screenWidth, int screenHeight) {
-    if (unittopixelsset) {
-        return;
-    }
     unittopixelsset = 1;
     double sw = screenWidth;
     double sh = screenHeight;

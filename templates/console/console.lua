@@ -409,6 +409,14 @@ do
                 end
             end
             if consoleOpened then
+                if key ~= "f9" then
+                    if key[1] == "f" and #key >= 2 then
+                        return false
+                    end
+                end
+                if key == "escape" then
+                    return false
+                end
                 if key == "backspace" then
                     -- remove one character:
                     if #consoleText > 0 and
