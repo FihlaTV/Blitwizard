@@ -770,7 +770,7 @@ int luafuncs_object_getPosition(lua_State* l) {
 // smaller. If you need to run your game at very large zoom factors or very
 // small ones, consider changing your @{blitwizard.object:setScale|object scale}.
 //
-// For a 3d objects, the rule of thumb is 1 game unit should be handled as roughly 1 meter.
+// For 3d objects, the rule of thumb is 1 game unit should be handled as roughly 1 meter.
 // (this works best for the physics)
 //
 // <b>How to get the pixels for a 2d game unit:</b>
