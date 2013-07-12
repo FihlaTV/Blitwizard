@@ -217,7 +217,7 @@ int luafuncs_getCameras(lua_State* l) {
 // different world views side by side, you would want multiple
 // cameras.
 //
-// <b>IMPORTANT:</b> If you want to show a different part of the game world,
+// <b>Important:</b> If you want to show a different part of the game world,
 // this is where you want to be! Grab the first camera from
 // @{blitwizard.graphics.getCameras} and let's go:
 //
@@ -392,7 +392,8 @@ int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {
 #endif
 }
 
-/// Get the 2d zoom factor (defaults to 1).
+/// Get the 2d zoom factor (defaults to 1). See also
+// @{blitwizard.graphics.camera:set2dZoomFactor}.
 // @function get2dZoomFactor
 // @treturn number zoom_factor the zoom factor of the camera
 int luafuncs_camera_get2dZoomFactor(lua_State* l) {
@@ -403,8 +404,10 @@ int luafuncs_camera_get2dZoomFactor(lua_State* l) {
 }
 
 /// Set the 2d zoom factor. Only the 2d layer will be affected.
+//
 // A large zoom factor will zoom into the details of the scene,
 // a small zoom factor will show more surroundings from a larger distance.
+// (e.g. 2 means twice as large, 0.5 means half as large)
 // @function set2dZoomFactor
 // @tparam number zoom_factor the new zoom factor
 int luafuncs_camera_set2dZoomFactor(lua_State* l) {

@@ -197,8 +197,10 @@ void luastate_CreateCameraTable(lua_State* l) {
 
 void luastate_CreateGraphicsTable(lua_State* l) {
     lua_newtable(l);
+#ifdef USE_GRAPHICS
     luastate_registerfunc(l, &luafuncs_gameUnitToPixels,
     "gameUnitToPixels");
+#endif
     luastate_registergraphics(l, &luafuncs_getRendererName, "getRendererName");
     luastate_registergraphics(l, &luafuncs_setMode, "setMode");
     luastate_registergraphics(l, &luafuncs_getWindowSize, "getWindowSize");

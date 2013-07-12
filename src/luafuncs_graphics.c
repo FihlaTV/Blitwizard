@@ -56,6 +56,10 @@
 /// This function sets the graphics mode.
 // You can specify a resolution, whether your game should run in a window
 // or fullscreen, and if windowed whether the window is resizable.
+//
+// If you run in full screen, you should only use screen resolutions
+// (width/height) present in @{blitwizard.graphics.getDisplayModes}.
+//
 // Feel free to use this function multiple times to change the mode again
 // if you feel like doing so.
 //
@@ -130,11 +134,19 @@ int luafuncs_setMode(lua_State* l) {
 #endif
 }
 
-/// Get the extend in pixels a game unit in the 2d world
-// has at a default camera zoom level of 1.
+/// Get the extend in pixels a @{blitwizard.object:setPosition|game unit}
+// in the 2d world has on the screen,
+// at a default camera zoom level of 1.
 //
-// For 3d, a game unit should be roughly one meter and there
-// is no generic way to tell how this ends up in pixels due
+// (for cameras with other zoom levels, multiply with their
+// @{blitwizard.graphics.camera:get2dZoomFactor|zoom factor}
+// to know how large a game unit is on that camera - unless
+// for objects which you @{blitwizard.object:pinToCamera|pinned
+// to the screen} which are always drawn with zoom factor 1)
+//
+// This function is <b>useless for 3d objects</b>. For them,
+// a game unit should be roughly treated as one meter and there
+// is no generic way to tell how this ends up on the screen due
 // to the very dynamic way objects look depending on the
 // camera position, camera angle etc.
 //
@@ -142,7 +154,12 @@ int luafuncs_setMode(lua_State* l) {
 // @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
 // @usage
 // -- Get the amount of pixels for one game unit:
+// -- (this will be inaccurate if your camera is zoomed)
 // local pixels = blitwizard.graphics.gameUnitToPixels()
+//
+// -- Get the amount of pixels for one game unit, taking the
+// -- actual zoom level of the default camera into account:
+// local pixels = blitwizard.graphics.gameUnitToPixels() * blitwizard.graphics.getCameras()[1]:get2dZoomFactor
 int luafuncs_gameUnitToPixels(lua_State* l) {
     if (!unittopixelsset) {
         return haveluaerror(l, "this function is unavailable before the first "
@@ -151,6 +168,122 @@ int luafuncs_gameUnitToPixels(lua_State* l) {
     lua_pushnumber(l, UNIT_TO_PIXELS);
     return 1;
 }
+
+/// Get the current size of the graphics output window
+// (which was set using @{blitwizard.graphics.setMode}) in pixels.
+// @function getWindowSize
+// @treturn number width
+// @treturn number height
+int luafuncs_getWindowSize(lua_State* l) {
+#ifdef USE_GRAPHICS
+    unsigned int w,h;
+    if (!graphics_GetWindowDimensions(&w,&h)) {
+        lua_pushstring(l, "Failed to get window size");
+        return lua_error(l);
+    }
+    lua_pushnumber(l, w);
+    lua_pushnumber(l, h);
+    return 2;
+#else // ifdef USE_GRAPHICS
+    lua_pushstring(l, compiled_without_graphics);
+    return lua_error(l);
+#endif
+}
+
+/// Get all supported display modes as a list.
+//
+// Those are the width/height values you can possibly
+// use for @{blitwizard.graphics.setMode} for fullscreen.
+//
+// Returns a list of tables, each one containing
+// two entries for width and height.
+//
+// @function getDisplayModes
+// @treturn table list of resolution tables
+// @usage
+//   -- print out all display modes:
+//   for i,v in ipairs(blitwizard.graphics.getDisplayModes())
+//       print("Display mode: width: " .. v[1] .. ", height: " .. v[2])
+//   end
+int luafuncs_getDisplayModes(lua_State* l) {
+#ifdef USE_GRAPHICS
+    int c = graphics_GetNumberOfVideoModes();
+    lua_createtable(l, 1, 0);
+
+    // first, add desktop mode
+    int desktopw,desktoph;
+    graphics_GetDesktopVideoMode(&desktopw, &desktoph);
+
+    // resolution table with desktop width, height
+    lua_createtable(l, 2, 0);
+    lua_pushnumber(l, 1);
+    lua_pushnumber(l, desktopw);
+    lua_settable(l, -3);
+    lua_pushnumber(l, 2);
+    lua_pushnumber(l, desktoph);
+    lua_settable(l, -3);
+
+    // add table into our list
+    lua_pushnumber(l, 1);
+    lua_insert(l, -2);
+    lua_settable(l, -3);
+
+    int i = 1;
+    int index = 2;
+    while (i <= c) {
+        // add all supported video modes...
+        int w,h;
+        graphics_GetVideoMode(i, &w, &h);
+
+        // ...but not the desktop mode twice
+        if (w == desktopw && h == desktoph) {
+            i++;
+            continue;
+        }
+
+        // table containing the resolution width, height
+        lua_createtable(l, 2, 0);
+        lua_pushnumber(l, 1);
+        lua_pushnumber(l, w);
+        lua_settable(l, -3);
+        lua_pushnumber(l, 2);
+        lua_pushnumber(l, h);
+        lua_settable(l, -3);
+
+        // add the table into our list
+        lua_pushnumber(l, index);
+        lua_insert(l, -2);
+        lua_settable(l, -3);
+        index++;
+        i++;
+    }
+    return 1;
+#else // ifdef USE_GRAPHICS
+    lua_pushstring(l, compiled_without_graphics);
+    return lua_error(l);
+#endif
+}
+
+/// Get the current display mode of the desktop.
+// You might want to use this with @{blitwizard.graphics.setMode}
+// if you don't want to change the resolution in fullscreen
+// at all (but instead use whatever the current resolution is).
+// @function getDesktopDisplayMode
+// @treturn number width in pixels
+// @treturn number height in pixels
+int luafuncs_getDesktopDisplayMode(lua_State* l) {
+#ifdef USE_GRAPHICS
+    int w,h;
+    graphics_GetDesktopVideoMode(&w, &h);
+    lua_pushnumber(l, w);
+    lua_pushnumber(l, h);
+    return 2;
+#else // ifdef USE_GRAPHICS
+    lua_pushstring(l, compiled_without_graphics);
+    return lua_error(l);
+#endif
+}
+
 
 #endif  // USE_GRAPHICS
 

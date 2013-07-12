@@ -752,14 +752,34 @@ int luafuncs_object_getPosition(lua_State* l) {
 /// Set the object to a new position. Specify two coordinates for 2d
 // objects (x, y) and three for 3d objects (x, y, z).
 //
-// Please note this game position is in <b>game units</b>, not pixels.
+// Please note this game position is in <b>game units</b>,
+// not pixels.<br>
+//  
+// <b>What is a game unit:</b>
+//
+// Game units are a specific measure which are abstracted from actual
+// pixels. This allows blitwizard to remain largely independent of the
+// @{blitwizard.graphics.setMode|screen resolution} of a game.
+//
+// <b>How much is one game unit:</b>
+//
+// For 2d, one game unit is usually (see
+// "How to get the pixels for a 2d game unit" below) roughly
+// 40 pixels unless you zoom around - however, if you play your game at
+// a large screen resolution, it will be larger to make up for it, and otherwise
+// smaller. If you need to run your game at very large zoom factors or very
+// small ones, consider changing your @{blitwizard.object:setScale|object scale}.
+//
+// For a 3d objects, the rule of thumb is 1 game unit should be handled as roughly 1 meter.
+// (this works best for the physics)
+//
+// <b>How to get the pixels for a 2d game unit:</b>
 //
 // To find out how much pixels 1 game unit is in the 2d world with
-// a default zoom of 1, check @{blitwizard.graphics.camera:gameUnitToPixels}.
+// a default zoom of 1, check @{blitwizard.graphics.gameUnitToPixels}.
+// This value is static for one game run, but it is usually inconsistent
+// across multiple game runs (=> may change if user quits your game and starts it again)
 //
-// For the 3d world, one game unit should roughly equal one meter
-// if your game plays in a normal human-scale environment
-// (this works best for the physics).
 // @function setPosition
 // @tparam number pos_x x coordinate
 // @tparam number pos_y y coordinate
