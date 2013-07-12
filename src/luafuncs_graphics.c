@@ -134,7 +134,7 @@ int luafuncs_setMode(lua_State* l) {
 #endif
 }
 
-/// Get the extend in pixels a @{blitwizard.object:setPosition|game unit}
+/// Get the extent in pixels a @{blitwizard.object:setPosition|game unit}
 // in the 2d world has on the screen,
 // at a default camera zoom level of 1.
 //
