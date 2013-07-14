@@ -234,6 +234,8 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_object_setPosition, "setPosition");
     luastate_registerfunc(l, &luafuncs_object_setZIndex, "setZIndex");
     luastate_registerfunc(l, &luafuncs_object_getDimensions, "getDimensions");
+    luastate_registerfunc(l, &luafuncs_object_getOriginalDimensions,
+    "getOriginalDimensions");
     luastate_registerfunc(l, &luafuncs_object_getScale, "getScale");
     luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
     luastate_registerfunc(l, &luafuncs_object_scaleToDimensions,

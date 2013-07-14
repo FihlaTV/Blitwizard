@@ -899,6 +899,33 @@ int luafuncs_object_getDimensions(lua_State* l) {
     return 2+(obj->is3d);
 }
 
+/// Get the original, unscaled dimensions of an object.
+// Returns the same values as @{blitwizard.object:getScale},
+// but with assuming a @{blitwizard.object:setScale|scale factor of 1},
+// even if it's different.
+// @function getOriginalDimensions
+// @treturn number x_size X dimension value
+// @treturn number y_size Y dimension value
+// @treturn number z_size (only for 3d objects) Z dimension value 
+int luafuncs_object_getOriginalDimensions(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setPosition");
+    double x, y, z;
+#ifdef USE_GRAPHICS
+    if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
+        return haveluaerror(l, "Object dimensions not known");
+    }
+#else
+    x = 0; y = 0; z = 0;
+#endif
+    lua_pushnumber(l, x);
+    lua_pushnumber(l, y);
+    if (obj->is3d) {
+        lua_pushnumber(l, z);
+    }
+    return 2+(obj->is3d);
+}
+
 /// Get the object's scale, which per default is 1,1 for 2d objects
 // and 1,1,1 for 3d objects. The scale is a factor applied to the
 // dimensions of an object to stretch or shrink it.
