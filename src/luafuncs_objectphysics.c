@@ -50,6 +50,7 @@
 #include "luafuncs_object.h"
 #include "luafuncs_objectphysics.h"
 #include "main.h"
+#include "mathhelpers.h"
 
 /// Blitwizard object which represents an 'entity' in the game world
 /// with visual representation, behaviour code and collision shape.
@@ -421,6 +422,146 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     } else {
                         physics_set2dShapeRectangle(GET_SHAPE(shapes, i),
                         width, height);
+                    }
+                }
+                if (strcmp(shapetype, "polygon") == 0) {
+                    // polygon with a multiple points list
+                    
+                    lua_pushstring(l, "points");
+                    lua_gettable(l, 2+i);
+                    if (lua_type(l, -1) != LUA_TTABLE) {
+                        physics_destroyShapes(shapes, argcount);
+                        return haveluaerror(l, badargument2, 2+i,
+                        "blitwizard.object:enableCollision",
+                        "shape \"polygon\" needs \"points\" specified "
+                        "as a list table containing a list of "
+                        "coordinate points");
+                    }
+                    if (lua_rawlen(l, -1) < 3) {
+                        physics_destroyShapes(shapes, argcount);
+                        return haveluaerror(l, badargument2, 2+i,
+                        "blitwizard.object:enableCollision",
+                        "shape \"polygon\" needs a \"points\" list with "
+                        "at least 3 points or more");
+                    }
+                    if (lua_rawlen(l, -1) > 8) {
+                        physics_destroyShapes(shapes, argcount);
+                        return haveluaerror(l, badargument2, 2+i,
+                        "blitwizard.object:enableCollision",
+                        "shape \"polygon\" doesn't support more than 8 "
+                        "polygon points");
+                    }
+
+                    // this large loop will extract all points and
+                    // verify the points list is a valid list of
+                    // purely clockwise or counter-clockwise points
+                    int pointCount = 0;
+                    int ccwPolygon = 0;
+                    lua_pushnil(l);
+                    int px[8];
+                    int py[8];
+                    while (lua_next(l, -2)) {
+                        // each list item needs to be a table with two numbers in it:
+                        if (lua_type(l, -1) != LUA_TTABLE
+                        || lua_rawlen(l, -1) != 2) {
+                            physics_destroyShapes(shapes, argcount);
+                            char msg[512];
+                            snprintf(msg, sizeof(msg),
+                            "the \"points\" list specified "
+                            "has an invalid point #%d - "
+                            "not a table with two numbers",
+                            pointCount+1);
+                            return haveluaerror(l, badargument2, 2+i,
+                            "blitwizard.object:enableCollision",
+                            msg);
+                        }
+                        // verify the two table items to be numbers:
+                        lua_pushnumber(l, 1);
+                        lua_gettable(l, -2);
+                        if (lua_type(l, -1) != LUA_TNUMBER) {
+                            physics_destroyShapes(shapes, argcount);
+                            char msg[512];
+                            snprintf(msg, sizeof(msg),
+                            "the \"points\" list specified "
+                            "has an invalid point #%d - "
+                            "first coordinate not a number",
+                            pointCount+1);
+                            return haveluaerror(l, badargument2, 2+i,
+                            "blitwizard.object:enableCollision",
+                            msg);
+                        }
+                        px[pointCount] = lua_tonumber(l, -1);
+                        lua_pop(l, 1);
+                        lua_pushnumber(l, 2);
+                        lua_gettable(l, -2);
+                        if (lua_type(l, -1) != LUA_TNUMBER) {
+                            physics_destroyShapes(shapes, argcount);
+                            char msg[512];
+                            snprintf(msg, sizeof(msg),
+                            "the \"points\" list specified "
+                            "has an invalid point #%d - "
+                            "second coordinate not a number",
+                            pointCount+1);
+                            return haveluaerror(l, badargument2, 2+i,
+                            "blitwizard.object:enableCollision",
+                            msg);
+                        }
+                        py[pointCount] = lua_tonumber(l, -1);
+                        lua_pop(l, 1);
+
+                        // verify this to be a valid convex hull point
+                        if (pointCount > 1) {
+                            if (pointCount == 2) {
+                                // this point determines whether the whole polygon is ccw or not:
+                                ccwPolygon = pointisccw(px[0], py[0], px[1], py[1], px[2], py[2]);
+                            } else {
+                                // verify this point is ccw or non-ccw as the polygon demands:
+                                if (ccwPolygon != pointisccw(
+                                px[pointCount-2], py[pointCount-2],
+                                px[pointCount-1], py[pointCount-1],
+                                px[pointCount], py[pointCount])) {
+                                    physics_destroyShapes(shapes, argcount);
+                                    char msg[512];
+                                    snprintf(msg, sizeof(msg),
+                                    "the \"points\" list specified "
+                                    "has an invalid point #%d - "
+                                    "should be %s but it is not",
+                                    pointCount+1, ccwPolygon ? "counter-clockwise" : "clockwise");
+                                    return haveluaerror(l, badargument2, 2+i,
+                                    "blitwizard.object:enableCollision",
+                                    msg);
+                                }
+                            }
+                        }
+
+                        // done. advance to next point:
+                        pointCount++;
+                        lua_pop(l, 1);  // pop two points table
+                    }
+                    lua_pop(l, 1);  // pop lua_next iterator value
+                    lua_pop(l, 1);  // pop "points" table
+
+                    // at this point, we need to check that no line
+                    // between any points intersects with another one:
+                    // FIXME: do that
+
+                    // add points to the shape:
+                    if (ccwPolygon) {
+                        // add in the order we got them:
+                        int k = 0;
+                        while (k < pointCount) {
+                            physics_add2dShapePolygonPoint(
+                            GET_SHAPE(shapes, i), px[k], py[k]);
+                            k++;
+                        }
+                    } else {
+                        // add in reverse order so physics get a nice ccw shape:
+                        int k = pointCount - 1;
+                        while (k > 0) {
+                            physics_add2dShapePolygonPoint(
+                            GET_SHAPE(shapes, i), px[k], py[k]);
+                            k--;
+                        }
                     }
                 }
                 if (strcmp(shapetype, "circle") == 0) {
