@@ -40,7 +40,7 @@
 <ul>
   <li><a href="../modules/blitwizard.html">blitwizard</a></li>
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
-  <li><strong>blitwizard.console</strong></li>
+  <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
   <li><a href="../modules/blitwizard.debug.html">blitwizard.debug</a></li>
   <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
   <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
@@ -49,49 +49,33 @@
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
   <li><a href="../modules/os.html">os</a></li>
   <li><a href="../modules/string.html">string</a></li>
-  <li><a href="../modules/vector.html">vector</a></li>
+  <li><strong>vector</strong></li>
 </ul>
 
 </div>
 
 <div id="content">
 
-<h1>Module <code>blitwizard.console</code></h1>
+<h1>Module <code>vector</code></h1>
 
-<p>This is an ingame developer console.</p>
-<p> Press F9 to open.
- The console allows arbitrary code execution! (That is the point of it!)
-<p> Hence you might want to disable it in your final game with
- <a href="../modules/blitwizard.console.html#disable">blitwizard.console.disable</a>.
-<p> You can explicitely request the console to open using
- <a href="../modules/blitwizard.console.html#open">blitwizard.console.open</a>.
-<p> <i>Keep in mind when releasing your game:</i> please note this module
- is implemented in the
- <b>blitwizard templates</b>, so it is unavailable if you don't ship
- the templates with your game.
-</p>
+<p>The vector name space provided by blitwizard offers some
+ maths functions for vector calculation.</p>
+<p>
+<p> If you want to rotate a vector around another or similar fancy things,
+ look no further.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2013</li>
+        <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
+        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
     </ul>
 
 
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#open">open&nbsp;()</a></td>
-	<td class="summary">Open up the developer console by explicit request
-      (it can also be opened by simply pressing F9).</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#disable">disable&nbsp;()</a></td>
-	<td class="summary">Disable the console completely.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#print">print&nbsp;()</a></td>
-	<td class="summary">Print something to the console (works similar to Lua's print)</td>
+	<td class="name" ><a href="#rotate2d">rotate2d&nbsp;(pos_x, pos_y, angle)</a></td>
+	<td class="summary">Rotate a 2d vector around (0, 0) by a specified angle.</td>
 	</tr>
 </table>
 
@@ -102,42 +86,34 @@
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
     <dt>
-    <a name = "open"></a>
-    <strong>open&nbsp;()</strong>
+    <a name = "rotate2d"></a>
+    <strong>rotate2d&nbsp;(pos_x, pos_y, angle)</strong>
     </dt>
     <dd>
-    Open up the developer console by explicit request
-      (it can also be opened by simply pressing F9).
+    Rotate a 2d vector around (0, 0) by a specified angle.
 
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pos_x</span>
+            <span class="types"><span class="type">number</span></span>
+         the x coordinate of the vector to be rotated</li>
+        <li><span class="parameter">pos_y</span>
+            <span class="types"><span class="type">number</span></span>
+         the y coordinate of the vector to be rotated</li>
+        <li><span class="parameter">angle</span>
+            <span class="types"><span class="type">number</span></span>
+         the angle by which the vector should be rotated</li>
+    </ul>
 
-
-
-
-
-</dd>
-    <dt>
-    <a name = "disable"></a>
-    <strong>disable&nbsp;()</strong>
-    </dt>
-    <dd>
-    Disable the console completely.  If it is currently open,
-      it will be force-closed.
-<p>      You might want to do this in your final release.
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "print"></a>
-    <strong>print&nbsp;()</strong>
-    </dt>
-    <dd>
-    Print something to the console (works similar to Lua's print)
-
-
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        the X coordinate of the rotated vector</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        the Y coordinate of the rotated vector</li>
+    </ol>
 
 
 

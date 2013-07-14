@@ -36,6 +36,7 @@
 #include "luafuncs_physics.h"
 #include "luafuncs_net.h"
 #include "luafuncs_media_object.h"
+#include "luafuncs_vector.h"
 #include "luaerror.h"
 
 #include <stdlib.h>
@@ -194,6 +195,13 @@ void luastate_CreateCameraTable(lua_State* l) {
     "set2dZoomFactor");
 }
 #endif
+
+
+void luastate_CreateVectorTable(lua_State* l) {
+    lua_newtable(l);
+    luastate_registerfunc(l, &luafuncs_vector_rotate2d,
+    "rotate2d");
+}
 
 void luastate_CreateGraphicsTable(lua_State* l) {
     lua_newtable(l);

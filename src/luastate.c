@@ -402,6 +402,10 @@ static lua_State* luastate_New(void) {
     // we still have the module "blitwiz" on the stack here
     lua_pop(l, 1);
 
+    // vector namespace:
+    luastate_CreateVectorTable(l);
+    lua_setglobal(l, "vector");
+
     // obtain math table
     lua_getglobal(l, "math");
 

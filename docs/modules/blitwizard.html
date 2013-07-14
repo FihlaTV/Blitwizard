@@ -50,6 +50,7 @@
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
   <li><a href="../modules/os.html">os</a></li>
   <li><a href="../modules/string.html">string</a></li>
+  <li><a href="../modules/vector.html">vector</a></li>
 </ul>
 
 </div>
@@ -131,7 +132,11 @@
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object.shape_info">object.shape_info</a></td>
-	<td class="summary">This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+	<td class="summary">This is how you should submit shape info to
+ <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and
+ <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>
+ (THIS TABLE DOESN'T EXIST, it is just a
+ guide on how to construct it yourself)
 <p> All shape sizes, dimensions etc are specified in game units.</td>
 	</tr>
 	<tr>
@@ -208,6 +213,10 @@
 	<td class="name" ><a href="#object:getDimensions">object:getDimensions&nbsp;()</a></td>
 	<td class="summary">Get the dimensions of an object in game units (with
  <a href="../modules/blitwizard.html#object:setScale">scaling</a> taken into account).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:getOriginalDimensions">object:getOriginalDimensions&nbsp;()</a></td>
+	<td class="summary">Get the original, unscaled dimensions of an object.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:getScale">object:getScale&nbsp;()</a></td>
@@ -637,11 +646,15 @@
     <strong>object.shape_info</strong>
     </dt>
     <dd>
-    This is how you should submit shape info to <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a> (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+    This is how you should submit shape info to
+ <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and
+ <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>
+ (THIS TABLE DOESN'T EXIST, it is just a
+ guide on how to construct it yourself)
 <p> All shape sizes, dimensions etc are specified in game units.
 <p> <b>Note on object scaling:</b>
 <p> When you <a href="../modules/blitwizard.html#object:enableMovableCollision">enable collision</a>,
-the collision shape will be exactly as large
+ the collision shape will be exactly as large
  as specified on creation, no matter how large the current
  <a href="../modules/blitwizard.html#object:setScale">scaling</a> is
  (that is, you can directly set any sizes from
@@ -1212,6 +1225,34 @@ the collision shape will be exactly as large
 <p> Note with use of <a href="../modules/blitwizard.html#object:set2dTextureClipping">blitwizard.object:set2dTextureClipping</a> the dimensions
  change and they might no longer reflect the initial size of the
  texture.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        x_size X dimension value</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        y_size Y dimension value</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        z_size (only for 3d objects) Z dimension value</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:getOriginalDimensions"></a>
+    <strong>object:getOriginalDimensions&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the original, unscaled dimensions of an object.
+ Returns the same values as <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>,
+ but with assuming a <a href="../modules/blitwizard.html#object:setScale">scale factor of 1</a>,
+ even if it's different.
 
 
     <h3>Returns:</h3>

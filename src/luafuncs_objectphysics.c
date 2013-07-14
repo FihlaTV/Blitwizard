@@ -72,6 +72,7 @@ static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct bl
     lua_State* l = luastate_GetStatePtr();
 
     // push all args:
+    lua_checkstack(l, 10);
     luacfuncs_pushbobjidref(l, otherobj);
     lua_pushnumber(l, x);
     lua_pushnumber(l, y);
