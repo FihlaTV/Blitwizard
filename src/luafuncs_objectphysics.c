@@ -459,8 +459,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     int pointCount = 0;
                     int ccwPolygon = 0;
                     lua_pushnil(l);
-                    int px[8];
-                    int py[8];
+                    double px[8];
+                    double py[8];
                     while (lua_next(l, -2)) {
                         // each list item needs to be a table with two numbers in it:
                         if (lua_type(l, -1) != LUA_TTABLE
