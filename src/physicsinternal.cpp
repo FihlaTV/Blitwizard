@@ -870,10 +870,12 @@ void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
         shape->shape2d.b2.polygonpoints = NULL;
     }
     struct polygonpoint* p = shape->shape2d.b2.polygonpoints;
-    
-    struct polygonpoint* new_point = (struct polygonpoint*)malloc(sizeof(*new_point));
+   
+    struct polygonpoint* new_point = (struct polygonpoint*)
+        malloc(sizeof(*new_point));
     new_point->x = xoffset;
     new_point->y = yoffset;
+    new_point->next = NULL; 
     
     if (p != NULL) {
       new_point->next = p;
