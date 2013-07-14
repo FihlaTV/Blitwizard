@@ -557,7 +557,6 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                         pointCount++;
                         lua_pop(l, 1);  // pop two points table
                     }
-                    lua_pop(l, 1);  // pop lua_next iterator value
                     lua_pop(l, 1);  // pop "points" table
 
                     // at this point, we need to check that no line
