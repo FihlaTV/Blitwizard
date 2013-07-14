@@ -82,7 +82,8 @@ size_t physics_getShapeSize(void);  // get size of one shape struct
 #define GET_SHAPE(shapes,x) (struct physicsobjectshape*) \
       (((char*)shapes)+physics_getShapeSize()*x)
 #ifdef USE_PHYSICS2D
-// Set the given shape to one of those specified shapes:
+
+// Set the given shape to one of those specified simple shapes:
 void physics_set2dShapeRectangle(
 struct physicsobjectshape* shape, double width,
 double height);
@@ -91,12 +92,16 @@ struct physicsobjectshape* shape, double width,
 double height);
 void physics_set2dShapeCircle(
 struct physicsobjectshape* shape, double diameter);
+
 // Use those commands multiple times to construct those more complex shapes:
+// polygon shape: WARNING: behaviour undefined if not a valid convex polygon!
 void physics_add2dShapePolygonPoint(
 struct physicsobjectshape* shape, double xoffset, double yoffset);
+// edge shape: (arbitrary list of possibly unconnected edges)
 void physics_add2dShapeEdgeList(
 struct physicsobjectshape* shape, double x1, double y1,
 double x2, double y2);
+
 // Use those commands to move your shapes around from the center:
 void physics_set2dShapeOffsetRotation(
 struct physicsobjectshape* shape, double xoffset,

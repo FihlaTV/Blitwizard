@@ -24,6 +24,7 @@
 #include "config.h"
 #include "os.h"
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "logging.h"
@@ -158,15 +159,13 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
         snprintf(errbuf,sizeof(errbuf),"Failed to open SDL audio: %s", SDL_GetError());
         errbuf[sizeof(errbuf)-1] = 0;
         *error = strdup(errbuf);
-        // FIXME: this is a workaround for http:// bugzilla.libsdl.org/show_bug.cgi?id=1343 (will cause a memory leak!)
-        // SDL_AudioQuit();
+        SDL_AudioQuit();
         return 0;
     }
 
     if (actualfmt.channels != 2 || actualfmt.freq != 48000 || (s16 && actualfmt.format != AUDIO_S16) || (!s16 && actualfmt.format != AUDIO_F32SYS)) {
         *error = strdup("SDL audio delivered wrong/unusable format");
-        // FIXME: this is a workaround for http:// bugzilla.libsdl.org/show_bug.cgi?id=1343 (will cause a memory leak!)
-        // SDL_AudioQuit();
+        SDL_AudioQuit();
         return 0;
     }
 
@@ -322,8 +321,6 @@ void audio_SoundThread(void* userdata) {
     while (1) {
         // the waveOut callback will wake us up when there
         // is stuff to do:
-        // semaphore_Wait(newblocksignal);
-        // queueBlock();
         time_Sleep(100);
         mutex_Lock(waveoutlock);
         if (threadcontrol == 0) {

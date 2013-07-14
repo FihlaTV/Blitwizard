@@ -485,22 +485,6 @@ int luafuncs_sleep(lua_State* l) {
     return 0;
 }
 
-int luafuncs_getWindowSize(lua_State* l) {
-#ifdef USE_GRAPHICS
-    unsigned int w,h;
-    if (!graphics_GetWindowDimensions(&w,&h)) {
-        lua_pushstring(l, "Failed to get window size");
-        return lua_error(l);
-    }
-    lua_pushnumber(l, w);
-    lua_pushnumber(l, h);
-    return 2;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
 int luafuncs_trandom(lua_State* l) {
     // try to get higher quality random numbers here
     // (although still not cryptographically safe)
@@ -583,77 +567,6 @@ int luafuncs_getBackendName(lua_State* l) {
 #endif
 }
 
-int luafuncs_getDesktopDisplayMode(lua_State* l) {
-#ifdef USE_GRAPHICS
-    int w,h;
-    graphics_GetDesktopVideoMode(&w, &h);
-    lua_pushnumber(l, w);
-    lua_pushnumber(l, h);
-    return 2;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
-int luafuncs_getDisplayModes(lua_State* l) {
-#ifdef USE_GRAPHICS
-    int c = graphics_GetNumberOfVideoModes();
-    lua_createtable(l, 1, 0);
-
-    // first, add desktop mode
-    int desktopw,desktoph;
-    graphics_GetDesktopVideoMode(&desktopw, &desktoph);
-
-    // resolution table with desktop width, height
-    lua_createtable(l, 2, 0);
-    lua_pushnumber(l, 1);
-    lua_pushnumber(l, desktopw);
-    lua_settable(l, -3);
-    lua_pushnumber(l, 2);
-    lua_pushnumber(l, desktoph);
-    lua_settable(l, -3);
-
-    // add table into our list
-    lua_pushnumber(l, 1);
-    lua_insert(l, -2);
-    lua_settable(l, -3);
-
-    int i = 1;
-    int index = 2;
-    while (i <= c) {
-        // add all supported video modes...
-        int w,h;
-        graphics_GetVideoMode(i, &w, &h);
-
-        // ...but not the desktop mode twice
-        if (w == desktopw && h == desktoph) {
-            i++;
-            continue;
-        }
-
-        // table containing the resolution width, height
-        lua_createtable(l, 2, 0);
-        lua_pushnumber(l, 1);
-        lua_pushnumber(l, w);
-        lua_settable(l, -3);
-        lua_pushnumber(l, 2);
-        lua_pushnumber(l, h);
-        lua_settable(l, -3);
-
-        // add the table into our list
-        lua_pushnumber(l, index);
-        lua_insert(l, -2);
-        lua_settable(l, -3);
-        index++;
-        i++;
-    }
-    return 1;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
 
 /// Set the stepping frequency of the game logic.
 // The default is 16ms. Physics are unaffected.

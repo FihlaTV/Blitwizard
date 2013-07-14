@@ -34,6 +34,7 @@ void pointonline(double x1, double y1, double x2, double y2, double px, double p
 void rotatevec(double x, double y, double rotation, double* x2, double* y2);
 double normalizeangle(double angle);
 void ovalpoint(double angle, double width, double height, double* x, double* y);
+int pointisccw(double x1, double y1, double x2, double y2, double px, double py);
 
 #ifndef NOLLIMITS
 #define FASTMATH

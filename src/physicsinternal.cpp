@@ -1529,7 +1529,9 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
         _physics_fill2dOrigShapeCache(object2d);
     }
     // Secondly, delete all the old fixtures+
+    float oldfriction = 0.5f;
     while (f != NULL) {
+        oldfriction = f->GetFriction();
         body->DestroyFixture(f);
         f = body->GetFixtureList();
     }
@@ -1542,7 +1544,7 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
     
     // Should be able to re-use this
     b2FixtureDef fixtureDef;
-    fixtureDef.friction = 0.5; // TODO: ???
+    fixtureDef.friction = oldfriction;
     fixtureDef.density = 1; // TODO: ???
     
     int i = 0; // orig_shapes[i]
@@ -1615,7 +1617,7 @@ re-allocation of memory for m_vertices."
                     delete poly;
                 break;
                 default:
-                    printerror("fatal.");
+                    printerror("fatal error: unknown physics shape");
                 break;
             } // switch
         } // else

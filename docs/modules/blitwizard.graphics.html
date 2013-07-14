@@ -65,19 +65,38 @@
     <ul>
         <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
+        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@gmail.com)</li>
     </ul>
 
 
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
+	<td class="name" ><a href="#getCameras">getCameras&nbsp;()</a></td>
+	<td class="summary">Get a table array with all currently active cameras.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#setMode">setMode&nbsp;(width, height, title, fullscreen, renderer)</a></td>
 	<td class="summary">This function sets the graphics mode.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#getCameras">getCameras&nbsp;()</a></td>
-	<td class="summary">Get a table array with all currently active cameras.</td>
+	<td class="name" ><a href="#gameUnitToPixels">gameUnitToPixels&nbsp;()</a></td>
+	<td class="summary">Get the extent (in pixels) of a 2d object that make up
+ one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
+ object scale of 1.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getWindowSize">getWindowSize&nbsp;()</a></td>
+	<td class="summary">Get the current size of the graphics output window
+ (which was set using <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>) in pixels.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getDisplayModes">getDisplayModes&nbsp;()</a></td>
+	<td class="summary">Get all supported display modes as a list.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getDesktopDisplayMode">getDesktopDisplayMode&nbsp;()</a></td>
+	<td class="summary">Get the current display mode of the desktop.</td>
 	</tr>
 </table>
 <h2><a href="#Class_camera">Class camera </a></h2>
@@ -117,11 +136,6 @@
 	<td class="name" ><a href="#camera:set2dZoomFactor">camera:set2dZoomFactor&nbsp;(zoom_factor)</a></td>
 	<td class="summary">Set the 2d zoom factor.</td>
 	</tr>
-	<tr>
-	<td class="name" ><a href="#camera:gameUnitToPixels">camera:gameUnitToPixels&nbsp;()</a></td>
-	<td class="summary">Get the extend in pixels a game unit in the 2d world
- has at the default camera zoom level of 1.</td>
-	</tr>
 </table>
 
 <br/>
@@ -131,6 +145,26 @@
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
     <dt>
+    <a name = "getCameras"></a>
+    <strong>getCameras&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get a table array with all currently active cameras.
+ (per default, this is only one)
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "setMode"></a>
     <strong>setMode&nbsp;(width, height, title, fullscreen, renderer)</strong>
     </dt>
@@ -138,7 +172,9 @@
     This function sets the graphics mode.
  You can specify a resolution, whether your game should run in a window
  or fullscreen, and if windowed whether the window is resizable.
- Feel free to use this function multiple times to change the mode again
+<p> If you run in full screen, you should only use screen resolutions
+ (width/height) present in <a href="../modules/blitwizard.graphics.html#getDisplayModes">blitwizard.graphics.getDisplayModes</a>.
+<p> Feel free to use this function multiple times to change the mode again
  if you feel like doing so.
 <p> If you specify no parameters, the graphics output will be closed again.
 <p> Throws an error if graphics initialisation fails.
@@ -174,19 +210,115 @@
 
 </dd>
     <dt>
-    <a name = "getCameras"></a>
-    <strong>getCameras&nbsp;()</strong>
+    <a name = "gameUnitToPixels"></a>
+    <strong>gameUnitToPixels&nbsp;()</strong>
     </dt>
     <dd>
-    Get a table array with all currently active cameras.
- (per default, this is only one)
+    Get the extent (in pixels) of a 2d object that make up
+ one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
+ object scale of 1.
+<p> This value allows you to calculate how large an object
+ would end up in game units if you're aware of the size
+ the texture will have once it has been loaded.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        pixels The amount of pixels that equals one game unit at default zoom of 1
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Get the amount of pixels for one game unit:
+</span> <span class="comment">-- (this will be inaccurate if your camera is zoomed)
+</span> <span class="keyword">local</span> pixels = blitwizard.graphics.gameUnitToPixels()
+
+ <span class="comment">-- Get the amount of pixels for one game unit, taking the
+</span> <span class="comment">-- actual zoom level of the default camera into account:
+</span> <span class="keyword">local</span> pixels = blitwizard.graphics.gameUnitToPixels() * blitwizard.graphics.getCameras()[<span class="number">1</span>]:get2dZoomFactor</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "getWindowSize"></a>
+    <strong>getWindowSize&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the current size of the graphics output window
+ (which was set using <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>) in pixels.
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        width</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        height</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getDisplayModes"></a>
+    <strong>getDisplayModes&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get all supported display modes as a list.
+<p> Those are the width/height values you can possibly
+ use for <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a> for fullscreen.
+<p> Returns a list of tables, each one containing
+ two entries for width and height.
+
 
 
     <h3>Returns:</h3>
     <ol>
 
           <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
+        list of resolution tables
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+   <span class="comment">-- print out all display modes:
+</span>   <span class="keyword">for</span> i,v <span class="keyword">in</span> <span class="global">ipairs</span>(blitwizard.graphics.getDisplayModes())
+       <span class="global">print</span>(<span class="string">"Display mode: width: "</span> .. v[<span class="number">1</span>] .. <span class="string">", height: "</span> .. v[<span class="number">2</span>])
+   <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "getDesktopDisplayMode"></a>
+    <strong>getDesktopDisplayMode&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the current display mode of the desktop.
+ You might want to use this with <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>
+ if you don't want to change the resolution in fullscreen
+ at all (but instead use whatever the current resolution is).
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        width in pixels</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        height in pixels</li>
     </ol>
 
 
@@ -204,7 +336,7 @@
  the screen up e.g. for split screen multiplayer games, and show
  different world views side by side, you would want multiple
  cameras.
-<p> <b>IMPORTANT:</b> If you want to show a different part of the game world,
+<p> <b>Important:</b> If you want to show a different part of the game world,
  this is where you want to be! Grab the first camera from
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> and let's go:
 <p> Use <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">camera:set2dCenter</a>
@@ -389,7 +521,8 @@
     <strong>camera:get2dZoomFactor&nbsp;()</strong>
     </dt>
     <dd>
-    Get the 2d zoom factor (defaults to 1).
+    Get the 2d zoom factor (defaults to 1).  See also
+ <a href="../modules/blitwizard.graphics.html#camera:set2dZoomFactor">blitwizard.graphics.camera:set2dZoomFactor</a>.
 
 
     <h3>Returns:</h3>
@@ -409,8 +542,9 @@
     </dt>
     <dd>
     Set the 2d zoom factor.  Only the 2d layer will be affected.
- A large zoom factor will zoom into the details of the scene,
+<p> A large zoom factor will zoom into the details of the scene,
  a small zoom factor will show more surroundings from a larger distance.
+ (e.g. 2 means twice as large, 0.5 means half as large)
 
     <h3>Parameters:</h3>
     <ul>
@@ -424,44 +558,13 @@
 
 
 </dd>
-    <dt>
-    <a name = "camera:gameUnitToPixels"></a>
-    <strong>camera:gameUnitToPixels&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the extend in pixels a game unit in the 2d world
- has at the default camera zoom level of 1.
-<p> For 3d, a game unit should be roughly one meter and there
- is no generic way to tell how this ends up in pixels due
- to the very dynamic way objects look depending on your
- position in the world etc.
-
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">number</span></span>
-        pixels The amount of pixels that equals one game unit at default zoom of 1
-    </ol>
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
- <span class="comment">-- Get the amount of pixels for one game unit for the first (=default) camera:
-</span> <span class="keyword">local</span> pixels = blitwizard.graphics.getCameras()[<span class="number">1</span>]:gameUnitToPixels()</pre>
-    </ul>
-
-</dd>
 </dl>
 
 
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
-<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.11</a></i>
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.12</a></i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

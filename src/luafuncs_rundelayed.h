@@ -26,9 +26,9 @@
 
 #include "luaheader.h"
 
-void luacfuncs_settimeout_Do(void);
+void luacfuncs_runDelayed_Do(void);
 
-int luafuncs_setTimeout(lua_State* l);
+int luafuncs_runDelayed(lua_State* l);
 
 #endif  // BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
 

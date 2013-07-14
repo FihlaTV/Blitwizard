@@ -414,6 +414,7 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
         s->prev = s2;
     } else {
         s->next = spritelist;
+        s->prev = NULL;
     }
     if (s->next) {
         s->next->prev = s;
@@ -579,11 +580,11 @@ int* screen_h) {
     double width = sprite->width;
     double height = sprite->height;
     if (width == 0 && height == 0) {
-        width = sprite->texWidth;
-        height = sprite->texHeight;
+        width = sprite->texWidth * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
+        height = sprite->texHeight * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
         if (sprite->clippingWidth > 0) {
-            width = sprite->clippingWidth;
-            height = sprite->clippingHeight;
+            width = sprite->clippingWidth * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
+            height = sprite->clippingHeight * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
         }
     } else {
         width *= UNIT_TO_PIXELS;

@@ -146,16 +146,17 @@ glyphWidth, glyphHeight, glyphsPerLine)
     if type(width) ~= "nil" or (width or 0) < 0 then
         -- calculate horizontal char limit:
         charsPerLine = math.floor(
-            (width * camera:gameUnitToPixels()) / glyphWidth)
+            (width * blitwizard.graphics.gameUnitToPixels()) / glyphWidth)
     end
     charsPerLine = math.max(1, charsPerLine)
     
     -- various information
-    local gameUnitsInPixels = camera:gameUnitToPixels()
+    local gameUnitsInPixels = blitwizard.graphics.gameUnitToPixels()
     local glyphXShift = glyphWidth / gameUnitsInPixels
     local glyphYShift = glyphHeight / gameUnitsInPixels
     t._glyphDimensionX = glyphXShift
     t._glyphDimensionY = glyphYShift
+    t._scale = scale
     
     -- convert line breaks:
     text = text:gsub("\r\n", "\n")
@@ -163,28 +164,31 @@ glyphWidth, glyphHeight, glyphsPerLine)
 
     -- see if we need to insert line breaks:
     local maxLineLength = width
-    local lines = {text:split("\n")}
-    text = ""
-    for i,line in ipairs(lines) do
-        while #line > charsPerLine do
-            local str = line:sub(1, charsPerLine)
-            str = str:reverse()
-            local spacePos = str:find(" ")
-            if spacePos == nil or spacePos <= 0 then
-                spacePos = charsPerLine
-            else
-                spacePos = (1 + #str) - spacePos
+    if charsPerLine < #text then
+        -- insert line breaks
+        local lines = {text:split("\n")}
+        text = ""
+        for i,line in ipairs(lines) do
+            while #line > charsPerLine do
+                local str = line:sub(1, charsPerLine)
+                str = str:reverse()
+                local spacePos = str:find(" ")
+                if spacePos == nil or spacePos <= 0 then
+                    spacePos = charsPerLine
+                else
+                    spacePos = (1 + #str) - spacePos
+                end
+                if #text > 0 then
+                    text = text .. "\n"
+                end
+                text = text .. line:sub(1, spacePos-1) 
+                line = line:sub(spacePos+1)
             end
             if #text > 0 then
                 text = text .. "\n"
             end
-            text = text .. line:sub(1, spacePos-1) 
-            line = line:sub(spacePos+1)
+            text = text .. line
         end
-        if #text > 0 then
-            text = text .. "\n"
-        end
-        text = text .. line
     end
 
     -- walk through all glyphs:
@@ -225,15 +229,15 @@ glyphWidth, glyphHeight, glyphsPerLine)
             t.glyphs[#t.glyphs+1] = newGlyph
 
             -- update overall text block width and height:
-            if t._width < x + glyphWidth then
-                t._width = x + glyphWidth / gameUnitsInPixels
+            if t._width < x + t._glyphDimensionX then
+                t._width = x + t._glyphDimensionX
             end
-            if t._height < y + glyphHeight then
-                t._height = y + glyphHeight / gameUnitsInPixels
+            if t._height < y + t._glyphDimensionY then
+                t._height = y + t._glyphDimensionY
             end
         end
         i = i + 1
-        x = x + glyphWidth / gameUnitsInPixels
+        x = x + t._glyphDimensionX
     end
 
     -- return text:
@@ -256,11 +260,11 @@ end
 --[[--
   Move the text object to the given screen position in game units
   (0,0 is top left).
-  @function move
+  @function setPosition
   @tparam number x new x position in game units (0 is left screen border)
   @tparam number y new y position in game units (0 is top screen border)
 ]]
-function blitwizard.font.text:move(x, y)
+function blitwizard.font.text:setPosition(x, y)
     self._x = x
     self._y = y
     for i,v in ipairs(self.glyphs) do
@@ -317,7 +321,7 @@ end
   @function width
 ]]
 function blitwizard.font.text:width()
-    return self._width
+    return self._width * self._scale
 end
 
 --[[--
@@ -325,6 +329,6 @@ end
   @function height
 ]]
 function blitwizard.font.text:height()
-    return self._height
+    return self._height * self._scale
 end
 

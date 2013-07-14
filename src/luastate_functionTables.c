@@ -192,13 +192,15 @@ void luastate_CreateCameraTable(lua_State* l) {
     "get2dZoomFactor");
     luastate_registerfunc(l, &luafuncs_camera_set2dZoomFactor,
     "set2dZoomFactor");
-    luastate_registerfunc(l, &luafuncs_camera_gameUnitToPixels,
-    "gameUnitToPixels");
 }
 #endif
 
 void luastate_CreateGraphicsTable(lua_State* l) {
     lua_newtable(l);
+#ifdef USE_GRAPHICS
+    luastate_registerfunc(l, &luafuncs_gameUnitToPixels,
+    "gameUnitToPixels");
+#endif
     luastate_registergraphics(l, &luafuncs_getRendererName, "getRendererName");
     luastate_registergraphics(l, &luafuncs_setMode, "setMode");
     luastate_registergraphics(l, &luafuncs_getWindowSize, "getWindowSize");
@@ -232,6 +234,8 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_object_setPosition, "setPosition");
     luastate_registerfunc(l, &luafuncs_object_setZIndex, "setZIndex");
     luastate_registerfunc(l, &luafuncs_object_getDimensions, "getDimensions");
+    luastate_registerfunc(l, &luafuncs_object_getOriginalDimensions,
+    "getOriginalDimensions");
     luastate_registerfunc(l, &luafuncs_object_getScale, "getScale");
     luastate_registerfunc(l, &luafuncs_object_setScale, "setScale");
     luastate_registerfunc(l, &luafuncs_object_scaleToDimensions,

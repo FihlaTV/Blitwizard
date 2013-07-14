@@ -217,7 +217,7 @@ int luafuncs_getCameras(lua_State* l) {
 // different world views side by side, you would want multiple
 // cameras.
 //
-// <b>IMPORTANT:</b> If you want to show a different part of the game world,
+// <b>Important:</b> If you want to show a different part of the game world,
 // this is where you want to be! Grab the first camera from
 // @{blitwizard.graphics.getCameras} and let's go:
 //
@@ -335,6 +335,11 @@ int luafuncs_camera_getVisible2dAreaDimensions(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
     l, 1, 0, "blitwizard.graphics.camera:getVisible2dAreaDimensions");
 
+    // if the camera default unit -> pixel conversion size isn't known yet:
+    if (!unittopixelsset) {
+        return haveluaerror(l, "this function is uanvailable before first blitwizard.graphics.setMode call");
+    }
+
     int considerzoom = 0;
     // get consider_zoom parameter:
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
@@ -387,7 +392,8 @@ int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {
 #endif
 }
 
-/// Get the 2d zoom factor (defaults to 1).
+/// Get the 2d zoom factor (defaults to 1). See also
+// @{blitwizard.graphics.camera:set2dZoomFactor}.
 // @function get2dZoomFactor
 // @treturn number zoom_factor the zoom factor of the camera
 int luafuncs_camera_get2dZoomFactor(lua_State* l) {
@@ -398,8 +404,10 @@ int luafuncs_camera_get2dZoomFactor(lua_State* l) {
 }
 
 /// Set the 2d zoom factor. Only the 2d layer will be affected.
+//
 // A large zoom factor will zoom into the details of the scene,
 // a small zoom factor will show more surroundings from a larger distance.
+// (e.g. 2 means twice as large, 0.5 means half as large)
 // @function set2dZoomFactor
 // @tparam number zoom_factor the new zoom factor
 int luafuncs_camera_set2dZoomFactor(lua_State* l) {
@@ -417,26 +425,6 @@ int luafuncs_camera_set2dZoomFactor(lua_State* l) {
     }
     graphics_SetCamera2DZoom(e->cameraslot, lua_tonumber(l, 2));
     return 0;
-}
-
-/// Get the extend in pixels a game unit in the 2d world
-// has at the default camera zoom level of 1.
-//
-// For 3d, a game unit should be roughly one meter and there
-// is no generic way to tell how this ends up in pixels due
-// to the very dynamic way objects look depending on your
-// position in the world etc.
-//
-// @function gameUnitToPixels
-// @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
-// @usage
-// -- Get the amount of pixels for one game unit for the first (=default) camera:
-// local pixels = blitwizard.graphics.getCameras()[1]:gameUnitToPixels()
-int luafuncs_camera_gameUnitToPixels(lua_State* l) {
-    struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:gameUnitToPixels");
-    lua_pushnumber(l, UNIT_TO_PIXELS);
-    return 1;
 }
 
 #endif  // USE_GRAPHICS

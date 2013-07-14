@@ -148,7 +148,7 @@ int luafuncs_getAllObjects(lua_State* l) {
 // and deleted objects.
 // This is mainly for invalidating all iterators (see luafuncs_getAllObjects)
 // because they would otherwise run through a now inconsistent object list.
-void luacfuncs_objectAddedDeleted(struct blitwizardobject* o, int added) {
+void luacfuncs_objectAddedDeleted(__attribute__ ((unused)) struct blitwizardobject* o, int added) {
     if (!added) {
         iteratorChangeId++;
         // wrap over:
@@ -752,14 +752,36 @@ int luafuncs_object_getPosition(lua_State* l) {
 /// Set the object to a new position. Specify two coordinates for 2d
 // objects (x, y) and three for 3d objects (x, y, z).
 //
-// Please note this game position is in <b>game units</b>, not pixels.
+// Please note this game position is in <b>game units</b>,
+// not pixels.<br>
+//  
+// <b>What is a game unit:</b>
 //
-// To find out how much pixels 1 game unit is in the 2d world with
-// a default zoom of 1, check @{blitwizard.graphics.camera:gameUnitToPixels}.
+// Game units are a specific measure which are abstracted from actual
+// pixels. This allows blitwizard to remain largely independent of the
+// @{blitwizard.graphics.setMode|screen resolution} of a game.
 //
-// For the 3d world, one game unit should roughly equal one meter
-// if your game plays in a normal human-scale environment
-// (this works best for the physics).
+// <b>How much is one game unit:</b>
+//
+// For 2d, one game unit is usually around 50 pixels on the screen unless
+// you @{blitwizard.graphics.camera:set2dZoomFactor|zoom around}.
+// For large resolutions it will appear larger though,
+// so a game unit's final size on the screen scales with the screen resolution.
+//
+// For 3d objects, the rule of thumb is 1 game unit should be handled as roughly 1 meter.
+// (this works best for the physics)
+//
+// If you need to run your game at very large zoom factors or very
+// small ones, consider changing your @{blitwizard.object:setScale|object scale}
+// instead of making up for all of it with zooming around largely.
+//
+// To find out how much e.g. a 100x100 pixel texture is in game units
+// at scale 1, check @{blitwizard.graphics.gameUnitToPixels}.
+// (please note! a 100x100 pixel object is NOT necessarily 100x100
+// pixel large on the screen at @{blitwizard.object:setScale|scale 1} - this depends on the
+// @{blitwizard.graphics.setMode|screen resolution}. With larger resolution it will be
+// larger, so it always takes up the same relative amount on screen)
+//
 // @function setPosition
 // @tparam number pos_x x coordinate
 // @tparam number pos_y y coordinate
@@ -877,6 +899,33 @@ int luafuncs_object_getDimensions(lua_State* l) {
     return 2+(obj->is3d);
 }
 
+/// Get the original, unscaled dimensions of an object.
+// Returns the same values as @{blitwizard.object:getScale},
+// but with assuming a @{blitwizard.object:setScale|scale factor of 1},
+// even if it's different.
+// @function getOriginalDimensions
+// @treturn number x_size X dimension value
+// @treturn number y_size Y dimension value
+// @treturn number z_size (only for 3d objects) Z dimension value 
+int luafuncs_object_getOriginalDimensions(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setPosition");
+    double x, y, z;
+#ifdef USE_GRAPHICS
+    if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
+        return haveluaerror(l, "Object dimensions not known");
+    }
+#else
+    x = 0; y = 0; z = 0;
+#endif
+    lua_pushnumber(l, x);
+    lua_pushnumber(l, y);
+    if (obj->is3d) {
+        lua_pushnumber(l, z);
+    }
+    return 2+(obj->is3d);
+}
+
 /// Get the object's scale, which per default is 1,1 for 2d objects
 // and 1,1,1 for 3d objects. The scale is a factor applied to the
 // dimensions of an object to stretch or shrink it.
@@ -949,9 +998,21 @@ int luafuncs_object_setScale(lua_State* l) {
     }
     double x,y,z;
     x = lua_tonumber(l, 2);
+    if (x <= 0) {
+        return haveluaerror(l, badargument2, 1,
+        "blitwizard.object:setScale", "scale must be positive number");
+    }
     y = lua_tonumber(l, 3);
+    if (y <= 0) {
+        return haveluaerror(l, badargument2, 2,
+        "blitwizard.object:setScale", "scale must be positive number");
+    }
     if (obj->is3d) {
         z = lua_tonumber(l, 4);
+        if (z <= 0) {
+            return haveluaerror(l, badargument2, 3,
+            "blitwizard.object:setScale", "scale must be positive number");
+        }
         obj->scale3d.x = x;
         obj->scale3d.y = y;
         obj->scale3d.z = z;
@@ -959,6 +1020,7 @@ int luafuncs_object_setScale(lua_State* l) {
         obj->scale2d.x = x;
         obj->scale2d.y = y;
     }
+    luacfuncs_object_handleScalingForPhysics(obj);
     return 0;
 }
 
@@ -1123,6 +1185,7 @@ int luafuncs_object_setZIndex(lua_State* l) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setZIndex", "number", lua_strtype(l, 2));
     }
+    
     if (obj->is3d) {
         return haveluaerror(l, "z index can only be set for 2d objects");
     } else {
@@ -1239,30 +1302,58 @@ int luafuncs_object_set2dTextureClipping(lua_State* l) {
 }
 #endif
 
-/// Pin a sprite to a given @{blitwizard.graphics.camera|game camera}.
+/// Pin a 2d object to a given @{blitwizard.graphics.camera|game camera}.
 // 
 // It will only be visible on that given camera, it will ignore the
 // camera's 2d position and zoom and will simply display with default zoom
 // with 0,0 being the upper left corner.
 //
-// It will also be above all unpinned sprites.
+// It will also be above all unpinned 2d object.
 //
 // You might want to use this for on-top interface graphics that shouldn't
 // move with the level but stick to the screen.
+//
+// Unpin a pinned 
 // @function pinToCamera
-// @tparam userdata camera the @{blitwizard.graphics.camera|camera} to pin to, or nil to unpin
+// @tparam userdata (optional) camera the @{blitwizard.graphics.camera|camera} to pin to. If you don't specify any, the default camera will be used
 #ifdef USE_GRAPHICS
 int luafuncs_object_pinToCamera(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:pinToCamera");
 
+    if (obj->is3d) {
+        return haveluaerror(l, "cannot pin 3d objects");
+    }
+
     int cameraId = -1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         cameraId = toluacameraid(l, 2, 1, "blitwizard.object:pinToCamera");
+    } else {
+        if (graphics_GetCameraCount() <= 0) {
+            return haveluaerror(l, "there are no cameras");
+        }
+        cameraId = 0;
     }
 
     // pin it to the given camera:
     luacfuncs_objectgraphics_pinToCamera(obj, cameraId);
+    return 0;
+}
+#endif
+
+/// Unpin a sprite pinned with @{blitwizard.object.pinToCamera|pinToCamera.
+// @function unpinFromCamera
+#ifdef USE_GRAPHICS
+int luafuncs_object_unpinFromCamera(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:pinToCamera");
+
+    if (obj->is3d) {
+        return haveluaerror(l, "cannot pin or unpin 3d objects");
+    }
+
+    // unpin from camera:
+    luacfuncs_objectgraphics_pinToCamera(obj, -1);
     return 0;
 }
 #endif

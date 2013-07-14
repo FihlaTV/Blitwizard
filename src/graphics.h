@@ -38,7 +38,9 @@ extern "C" {
 #include <windows.h>
 #endif
 
-#define UNIT_TO_PIXELS 50
+#define UNIT_TO_PIXELS_DEFAULT (40.0)
+extern double UNIT_TO_PIXELS;
+extern int unittopixelsset;
 
 int graphics_AreGraphicsRunning(void);
 // Returns 1 if the graphics are open/active, otherwise 0.
@@ -214,6 +216,9 @@ int graphics_AddCamera(void);
 
 int graphics_DeleteCamera(int index);
 // Delete a specified camera.
+
+void graphics_calculateUnitToPixels(int screenWidth, int screenHeight);
+// Called internally on first setMode to adapt the unit-to-pixels ratio to a nice default
 
 #ifdef __cplusplus
 }
