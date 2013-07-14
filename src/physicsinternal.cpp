@@ -857,7 +857,7 @@ void physics_set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) != 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -1218,6 +1218,8 @@ void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints,
         ++i;
         p = p->next;
     }
+    assert(i >= 3);
+    assert(i <= 8);
     b2Vec2* varray = new b2Vec2[i];
     p = polygonpoints;
     i = 0;

@@ -459,8 +459,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     int pointCount = 0;
                     int ccwPolygon = 0;
                     lua_pushnil(l);
-                    int px[8];
-                    int py[8];
+                    double px[8];
+                    double py[8];
                     while (lua_next(l, -2)) {
                         // each list item needs to be a table with two numbers in it:
                         if (lua_type(l, -1) != LUA_TTABLE
@@ -510,6 +510,24 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                         py[pointCount] = lua_tonumber(l, -1);
                         lua_pop(l, 1);
 
+                        // verify this not to be the same point as a previous one:
+                        int j = 0;
+                        while (j < pointCount) {
+                            if (px[j] == px[pointCount] && py[j] == py[pointCount]) {
+                                physics_destroyShapes(shapes, argcount);
+                                char msg[512];
+                                snprintf(msg, sizeof(msg),
+                                "the \"points\" list specified "
+                                "has an invalid point #%d - "
+                                "point is a duplicate of a previous one",
+                                pointCount+1);
+                                return haveluaerror(l, badargument2, 2+i,
+                                "blitwizard.object:enableCollision",
+                                msg);
+                            }
+                            j++;
+                        }
+
                         // verify this to be a valid convex hull point
                         if (pointCount > 1) {
                             if (pointCount == 2) {
@@ -539,7 +557,6 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                         pointCount++;
                         lua_pop(l, 1);  // pop two points table
                     }
-                    lua_pop(l, 1);  // pop lua_next iterator value
                     lua_pop(l, 1);  // pop "points" table
 
                     // at this point, we need to check that no line
