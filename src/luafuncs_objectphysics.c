@@ -510,6 +510,24 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                         py[pointCount] = lua_tonumber(l, -1);
                         lua_pop(l, 1);
 
+                        // verify this not to be the same point as a previous one:
+                        int j = 0;
+                        while (j < pointCount) {
+                            if (px[j] == px[pointCount] && py[j] == py[pointCount]) {
+                                physics_destroyShapes(shapes, argcount);
+                                char msg[512];
+                                snprintf(msg, sizeof(msg),
+                                "the \"points\" list specified "
+                                "has an invalid point #%d - "
+                                "point is a duplicate of a previous one",
+                                pointCount+1);
+                                return haveluaerror(l, badargument2, 2+i,
+                                "blitwizard.object:enableCollision",
+                                msg);
+                            }
+                            j++;
+                        }
+
                         // verify this to be a valid convex hull point
                         if (pointCount > 1) {
                             if (pointCount == 2) {
