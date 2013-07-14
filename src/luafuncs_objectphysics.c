@@ -426,7 +426,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                 }
                 if (strcmp(shapetype, "polygon") == 0) {
                     // polygon with a multiple points list
-                    
+                    isok = 1;
+
                     lua_pushstring(l, "points");
                     lua_gettable(l, 2+i);
                     if (lua_type(l, -1) != LUA_TTABLE) {
