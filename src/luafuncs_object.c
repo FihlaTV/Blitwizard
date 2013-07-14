@@ -998,9 +998,21 @@ int luafuncs_object_setScale(lua_State* l) {
     }
     double x,y,z;
     x = lua_tonumber(l, 2);
+    if (x <= 0) {
+        return haveluaerror(l, badargument2, 1,
+        "blitwizard.object:setScale", "scale must be positive number");
+    }
     y = lua_tonumber(l, 3);
+    if (y <= 0) {
+        return haveluaerror(l, badargument2, 2,
+        "blitwizard.object:setScale", "scale must be positive number");
+    }
     if (obj->is3d) {
         z = lua_tonumber(l, 4);
+        if (z <= 0) {
+            return haveluaerror(l, badargument2, 3,
+            "blitwizard.object:setScale", "scale must be positive number");
+        }
         obj->scale3d.x = x;
         obj->scale3d.y = y;
         obj->scale3d.z = z;
@@ -1008,6 +1020,7 @@ int luafuncs_object_setScale(lua_State* l) {
         obj->scale2d.x = x;
         obj->scale2d.y = y;
     }
+    luacfuncs_object_handleScalingForPhysics(obj);
     return 0;
 }
 

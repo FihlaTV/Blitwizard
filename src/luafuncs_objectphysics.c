@@ -635,18 +635,94 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 #endif
         }
     }
-    obj->physics->movable = 1;
+    obj->physics->movable = movable;
+
+    // remember the size at which we initialised the shape:
+    if (obj->is3d) {
+        obj->physics->pinitx = obj->scale3d.x;
+        obj->physics->pinity = obj->scale3d.y;
+        obj->physics->pinitz = obj->scale3d.z;
+    } else {
+        obj->physics->pinitx = obj->scale2d.x;
+        obj->physics->pinity = obj->scale2d.y;
+    }
+    obj->physics->phullx = obj->physics->pinitx;
+    obj->physics->phully = obj->physics->pinity;
+    obj->physics->phullz = obj->physics->pinitz;
     return 1;
 }
 
-/// This is how you should submit shape info to @{object:enableStaticCollision} and @{object:enableMovableCollision} (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it yourself)
+void luacfuncs_object_handleScalingForPhysics(
+struct blitwizardobject* obj) {
+    if (!obj->physics || !obj->physics->object) {
+        // object has no shape, nothing to scale here.
+        return;
+    }
+
+    // first, check if we want to rescale things at all:
+    int dorescale = 0;
+    double dif = 0.05;
+    if (obj->is3d) {
+        if (fabs(obj->scale3d.x - obj->physics->phullx) > dif) {
+            dorescale = 1;
+        }
+        if (fabs(obj->scale3d.y - obj->physics->phully) > dif) {
+            dorescale = 1;
+        }
+        if (fabs(obj->scale3d.z - obj->physics->phullz) > dif) {
+            dorescale = 1;
+        }
+    } else {
+        if (fabs(obj->scale2d.x - obj->physics->phullx) > dif) {
+            dorescale = 1;
+        }
+        if (fabs(obj->scale2d.y - obj->physics->phully) > dif) {
+            dorescale = 1;
+        }
+    }
+    if (!dorescale) {
+        // nothing to do.
+        return;
+    }
+    // calculate the new scale factors we need:
+    double newscfx, newscfy, newscfz;
+    if (obj->is3d) {
+        newscfx = obj->scale3d.x / obj->physics->pinitx;
+        newscfy = obj->scale3d.y / obj->physics->pinity;
+        newscfz = obj->scale3d.z / obj->physics->pinitz;
+    } else {
+        newscfx = obj->scale2d.x / obj->physics->pinitx;
+        newscfy = obj->scale2d.y / obj->physics->pinity;
+    }
+    // aply new scale:
+    if (obj->is3d) {
+#ifdef USE_PHYSICS2D
+        physics_set2dScale(obj->physics->object, newscfx, newscfy);
+#endif
+    } else {
+#ifdef USE_PHYSICS3D
+        physics_set3dScale(obj->physics->object,
+        newscfx, newscfy, newscfz);
+#endif
+    }
+    // remember we did this scaling:
+    obj->physics->phullx = newscfx;
+    obj->physics->phully = newscfy;
+    obj->physics->phullz = newscfz;
+}
+
+/// This is how you should submit shape info to
+// @{object:enableStaticCollision} and
+// @{object:enableMovableCollision}
+// (THIS TABLE DOESN'T EXIST, it is just a
+// guide on how to construct it yourself)
 //
 // All shape sizes, dimensions etc are specified in game units.
 //
 // <b>Note on object scaling:</b>
 //
 // When you @{blitwizard.object:enableMovableCollision|enable collision},
-//the collision shape will be exactly as large
+// the collision shape will be exactly as large
 // as specified on creation, no matter how large the current
 // @{blitwizard.object:setScale|scaling} is
 // (that is, you can directly set any sizes from
