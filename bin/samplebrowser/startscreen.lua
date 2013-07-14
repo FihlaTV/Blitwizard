@@ -36,7 +36,7 @@ blitwizard engine - source code file
 
 function blitwizard.onInit()
     -- this will open up a graphics window:
-    blitwizard.graphics.setMode(800, 600, "blitwizard", false)
+    blitwizard.graphics.setMode(800 * 1, 600 * 1, "blitwizard", false)
     blitwizard.graphics.getCameras()[1]:set2dZoomFactor(2) -- zoom into things
 
     -- Introduction text:
@@ -45,8 +45,8 @@ function blitwizard.onInit()
     "\n\n  Visit http://www.blitwizard.de/doc-files/api-stable " ..
     "for documentation." ..
     "\n\n  Need help? Check out the forums: http://www.blitwizard.de/forum/"
-    , "default", 1.3)
-    text:move(1.5, 3.5) -- move a bit away from top/left corner
+    , "default", 1)
+    text:setPosition(1.5, 3.5) -- move a bit away from top/left corner
     text:setZIndex(2)
 
     -- Create top bar:
@@ -69,14 +69,12 @@ function blitwizard.onInit()
     function bar:onGeometryLoaded()
         local w,h = cameras[1]:getVisible2dAreaDimensions(false)
         bar:scaleToDimensions(w, nil)
-        local sx,sy = bar:getScale()
-        local px,py = bar:getDimensions()
     end
 
     -- button for showing sample browser selection
     local button = blitwizard.object:new(
         blitwizard.object.o2d, "browse.png")
-    button:pinToCamera(cameras[1])
+    button:pinToCamera()
 
     -- move to a nice position:
     function button:onGeometryLoaded()

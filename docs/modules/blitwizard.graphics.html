@@ -81,9 +81,9 @@
 	</tr>
 	<tr>
 	<td class="name" ><a href="#gameUnitToPixels">gameUnitToPixels&nbsp;()</a></td>
-	<td class="summary">Get the extend in pixels a <a href="../modules/blitwizard.html#object:setPosition">game unit</a>
- in the 2d world has on the screen,
- at a default camera zoom level of 1.</td>
+	<td class="summary">Get the extent (in pixels) of a 2d object that make up
+ one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
+ object scale of 1.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#getWindowSize">getWindowSize&nbsp;()</a></td>
@@ -214,19 +214,12 @@
     <strong>gameUnitToPixels&nbsp;()</strong>
     </dt>
     <dd>
-    Get the extend in pixels a <a href="../modules/blitwizard.html#object:setPosition">game unit</a>
- in the 2d world has on the screen,
- at a default camera zoom level of 1.
-<p> (for cameras with other zoom levels, multiply with their
- <a href="../modules/blitwizard.graphics.html#camera:get2dZoomFactor">zoom factor</a>
- to know how large a game unit is on that camera - unless
- for objects which you <a href="../modules/blitwizard.html#object:pinToCamera">pinned
- to the screen</a> which are always drawn with zoom factor 1)
-<p> This function is <b>useless for 3d objects</b>. For them,
- a game unit should be roughly treated as one meter and there
- is no generic way to tell how this ends up on the screen due
- to the very dynamic way objects look depending on the
- camera position, camera angle etc.
+    Get the extent (in pixels) of a 2d object that make up
+ one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
+ object scale of 1.
+<p> This value allows you to calculate how large an object
+ would end up in game units if you're aware of the size
+ the texture will have once it has been loaded.
 
 
 

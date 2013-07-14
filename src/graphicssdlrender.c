@@ -231,11 +231,13 @@ int visible, int cameraId) {
     // negative for flipping, zero'ed etc
     int horiflip = 0;
     if (width == 0 && height == 0) {
-        width = ((double)texWidth) / UNIT_TO_PIXELS;
-        height = ((double)texHeight) / UNIT_TO_PIXELS;
+        // if no size given, go to standard size:
+        width = ((double)texWidth) / UNIT_TO_PIXELS_DEFAULT;
+        height = ((double)texHeight) / UNIT_TO_PIXELS_DEFAULT;
         if (sourceWidth > 0) {
-            width = ((double)sourceWidth) / UNIT_TO_PIXELS;
-            height = ((double)sourceHeight) / UNIT_TO_PIXELS;
+            // if source width/height given, set clipping accordingly:
+            width = ((double)sourceWidth) / UNIT_TO_PIXELS_DEFAULT;
+            height = ((double)sourceHeight) / UNIT_TO_PIXELS_DEFAULT;
         }
     }
     if (width < 0) {

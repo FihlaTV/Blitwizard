@@ -763,23 +763,24 @@ int luafuncs_object_getPosition(lua_State* l) {
 //
 // <b>How much is one game unit:</b>
 //
-// For 2d, one game unit is usually (see
-// "How to get the pixels for a 2d game unit" below) roughly
-// 40 pixels unless you zoom around - however, if you play your game at
-// a large screen resolution, it will be larger to make up for it, and otherwise
-// smaller. If you need to run your game at very large zoom factors or very
-// small ones, consider changing your @{blitwizard.object:setScale|object scale}.
+// For 2d, one game unit is usually around 50 pixels on the screen unless
+// you @{blitwizard.graphics.camera:set2dZoomFactor|zoom around}.
+// For large resolutions it will appear larger though,
+// so a game unit's final size on the screen scales with the screen resolution.
 //
 // For 3d objects, the rule of thumb is 1 game unit should be handled as roughly 1 meter.
 // (this works best for the physics)
 //
-// <b>How to get the pixels for a 2d game unit:</b>
+// If you need to run your game at very large zoom factors or very
+// small ones, consider changing your @{blitwizard.object:setScale|object scale}
+// instead of making up for all of it with zooming around largely.
 //
-// To find out how much pixels 1 game unit is in the 2d world with
-// a default zoom of 1, check @{blitwizard.graphics.gameUnitToPixels}.
-// The value of @{blitwizard.graphics.gameUnitToPixels|gameUnitToPixels}
-// is recalculated
-// after each @{blitwizard.graphics.setMode} call.
+// To find out how much e.g. a 100x100 pixel texture is in game units
+// at scale 1, check @{blitwizard.graphics.gameUnitToPixels}.
+// (please note! a 100x100 pixel object is NOT necessarily 100x100
+// pixel large on the screen at @{blitwizard.object:setScale|scale 1} - this depends on the
+// @{blitwizard.graphics.setMode|screen resolution}. With larger resolution it will be
+// larger, so it always takes up the same relative amount on screen)
 //
 // @function setPosition
 // @tparam number pos_x x coordinate

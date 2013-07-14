@@ -134,21 +134,13 @@ int luafuncs_setMode(lua_State* l) {
 #endif
 }
 
-/// Get the extent (in pixels) a @{blitwizard.object:setPosition|game unit}
-// in the 2d world has on the screen,
-// at a default camera zoom level of 1.
+/// Get the extent (in pixels) of a 2d object that make up
+// one @{blitwizard.object:setPosition|game unit} at a default
+// object scale of 1.
 //
-// (for cameras with other zoom levels, multiply with their
-// @{blitwizard.graphics.camera:get2dZoomFactor|zoom factor}
-// to know how large a game unit is on that camera - unless
-// for objects which you @{blitwizard.object:pinToCamera|pinned
-// to the screen} which are always drawn with zoom factor 1)
-//
-// This function is <b>useless for 3d objects</b>. For them,
-// a game unit should be roughly treated as one meter and there
-// is no generic way to tell how this ends up on the screen due
-// to the very dynamic way objects look depending on the
-// camera position, camera angle etc.
+// This value allows you to calculate how large an object
+// would end up in game units if you're aware of the size
+// the texture will have once it has been loaded.
 //
 // @function gameUnitToPixels
 // @treturn number pixels The amount of pixels that equals one game unit at default zoom of 1
@@ -165,7 +157,7 @@ int luafuncs_gameUnitToPixels(lua_State* l) {
         return haveluaerror(l, "this function is unavailable before the first "
         "blitwizard.graphics.setMode call");
     }
-    lua_pushnumber(l, UNIT_TO_PIXELS);
+    lua_pushnumber(l, UNIT_TO_PIXELS_DEFAULT);
     return 1;
 }
 

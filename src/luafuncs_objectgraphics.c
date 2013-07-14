@@ -146,8 +146,8 @@ void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
         if (graphics2dsprites_getGeometry(o->graphics->sprite,
         &w, &h)) {
             graphics2dsprites_resize(o->graphics->sprite,
-            ((double)w) * o->scale2d.x / ((double)UNIT_TO_PIXELS),
-            ((double)h) * o->scale2d.y / ((double)UNIT_TO_PIXELS));
+            ((double)w) * o->scale2d.x / ((double)UNIT_TO_PIXELS_DEFAULT),
+            ((double)h) * o->scale2d.y / ((double)UNIT_TO_PIXELS_DEFAULT));
         }
     }
 }
@@ -230,8 +230,8 @@ struct blitwizardobject* o, double *x, double *y, double *z) {
         if (graphics2dsprites_getGeometry(o->graphics->sprite,
         &w, &h)) {
             if (w || h) {
-                *x = (double)w / ((double)UNIT_TO_PIXELS);
-                *y = (double)h / ((double)UNIT_TO_PIXELS);
+                *x = (double)w / ((double)UNIT_TO_PIXELS_DEFAULT);
+                *y = (double)h / ((double)UNIT_TO_PIXELS_DEFAULT);
                 return 1;
             }
             return 0;

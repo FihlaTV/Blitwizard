@@ -86,12 +86,11 @@ do
     end
     local function calculateConsoleLinesShown()
         local text = blitwizard.font.text:new(
-            "Hello", "default", 0.8)
+            "H", "default", 0.8)
         consoleLineHeight = text:height()
         local result = math.floor(
             consoleHeight/text:height())
         text:destroy()
-        consoleYPos = -consoleHeight
         blitwizard.console.consoleLinesShown = result-2
         trimConsole()
     end
@@ -100,7 +99,7 @@ do
 
     local function createBlinkingCursor()
         -- create the blinking cursor
-        blinkCursorText = blitwizard.font.text:new("|", "default", 1)
+        blinkCursorText = blitwizard.font.text:new("|", "default", 0.7)
         blinkCursorText:setVisible(false)
         blinkCursorText:setZIndex(10001)
     end
@@ -118,11 +117,11 @@ do
     consoleBg:pinToCamera()
     local function calculateConsoleBgSize()
         -- calculate proper size of the dev console:
+        consoleBg:setScale(1, 1)
         local w,h = consoleBg:getDimensions()
         local cw,ch = blitwizard.graphics.getCameras()[1]:
         getVisible2dAreaDimensions(false)
         consoleBg:setScale(cw/w, consoleHeight/h)
-        consoleBg:setPosition(0, -h)
     end
     function consoleBg:onGeometryLoaded()
         calculateConsoleBgSize()
@@ -242,11 +241,13 @@ do
         local f = function()
             consoleHeight = 240 / blitwizard.graphics.gameUnitToPixels()
         end
-        if pcall(f) == true and consoleLoaded == false then
-            consoleLoaded = true
+        if pcall(f) == true then
             calculateConsoleLinesShown()
-            createBlinkingCursor()
             pcall(calculateConsoleBgSize)
+            if consoleLoaded == false then
+                consoleLoaded = true
+                createBlinkingCursor()
+            end
         end
 
         if consoleOpened then
@@ -279,10 +280,10 @@ do
                     if lines[i].text == nil then
                         -- load glyphs
                         lines[i].text = blitwizard.font.text:new(
-                        lines[i].line, "default", 0.88)
+                        lines[i].line, "default", 0.7)
                         lines[i].text:setZIndex(10000)
                     end
-                    lines[i].text:move(0.1,
+                    lines[i].text:setPosition(0.1,
                     0.1 + y + ((i - 1) * consoleLineHeight))
                 end
                 i = i + 1
@@ -311,7 +312,7 @@ do
             end
             if consoleTextObj == nil then
                 consoleTextObj = blitwizard.font.text:new(
-                "> " .. consoleText, "default", 1)
+                "> " .. consoleText, "default", 0.7)
                 consoleTextObj:setZIndex(10000)
             end
             -- move the console input line object if it exists:
@@ -327,7 +328,7 @@ do
                 end
 
                 -- move console text to calculated position:
-                consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
+                consoleTextObj:setPosition(0.1 - shiftleft, y + consoleHeight 
                 - consoleLineHeight - 0.1)
 
                 -- remember text ending for blinking cursor:
@@ -354,7 +355,7 @@ do
 
                 -- get glyph size of input line font:
                 local gw,gh = consoleTextObj:getGlyphDimensions()
-                blinkCursorText:move(textEndPos - blinkCursorOffset * gw
+                blinkCursorText:setPosition(textEndPos - blinkCursorOffset * gw
                 - gw * math.min(0.4, blinkCursorOffset),
                 y + consoleHeight - consoleLineHeight - 0.1)
             else

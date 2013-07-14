@@ -38,6 +38,7 @@ extern "C" {
 #include <windows.h>
 #endif
 
+#define UNIT_TO_PIXELS_DEFAULT (40.0)
 extern double UNIT_TO_PIXELS;
 extern int unittopixelsset;
 
