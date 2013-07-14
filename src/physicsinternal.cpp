@@ -1218,13 +1218,12 @@ void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints,
         ++i;
         p = p->next;
     }
-    assert(i >= 3);
-    assert(i <= 8);
-    b2Vec2* varray = new b2Vec2[i];
+    int num = i;
+    b2Vec2* varray = new b2Vec2[num];
     p = polygonpoints;
     i = 0;
     while (p != NULL) {
-        varray[i].Set(p->x, p->y);
+        varray[(num-1)-i].Set(p->x, p->y);
         ++i;
         p = p->next;
     }
