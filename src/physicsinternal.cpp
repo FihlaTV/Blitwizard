@@ -691,6 +691,7 @@ void _physics_destroy2dShape(struct physicsobjectshape2d* shape) {
             while (p != NULL) {
                 p2 = p->next;
                 free(p);
+                p = p2;
             }
             free(p2);
         break;
