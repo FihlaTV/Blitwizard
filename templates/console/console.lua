@@ -56,7 +56,6 @@ do
     local consoleLineHeight = 0
     local consoleHeight = 240
     local consoleLoaded = false
-    local consoleYPos = -consoleHeight
     blitwizard.console.consoleLinesShown = 99
 
     -- lines storage:
@@ -115,6 +114,7 @@ do
     consoleBg:setZIndex(9999)
     consoleBg:setVisible(true)
     consoleBg:pinToCamera()
+    consoleBg:setPosition(0, -10)
     local function calculateConsoleBgSize()
         -- calculate proper size of the dev console:
         consoleBg:setScale(1, 1)
@@ -258,6 +258,9 @@ do
                     y = 0
                 end
             end
+            if y < -consoleHeight then
+                y = -consoleHeight
+            end
             consoleBg:setPosition(x, y)
         else
             local x,y = consoleBg:getPosition()
@@ -266,6 +269,9 @@ do
                 if y < -consoleHeight then
                     y = -consoleHeight
                 end
+            end
+            if y > 0 then
+                y = 0
             end
             consoleBg:setPosition(x, y)
         end
