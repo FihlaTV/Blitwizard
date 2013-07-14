@@ -98,6 +98,8 @@ static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct bl
             return 0;
         }
         *enabled = boolreturn;
+    } else {
+        lua_pop(l, 6 + 2 * use3d);
     }
     return 1;
 }
