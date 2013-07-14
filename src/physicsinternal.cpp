@@ -687,8 +687,7 @@ void _physics_destroy2dShape(struct physicsobjectshape2d* shape) {
         case BW_S2D_POLY:
             struct polygonpoint* p,* p2;
             p = shape->b2.polygonpoints;
-            p2 = NULL;
-            while (p != NULL) {
+            while (p) {
                 p2 = p->next;
                 free(p);
                 p = p2;
@@ -866,7 +865,7 @@ void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
-    if (not shape->shape2d.type == BW_S2D_POLY) {
+    if (shape->shape2d.type != BW_S2D_POLY) {
         shape->shape2d.b2.polygonpoints = NULL;
     }
    
@@ -874,7 +873,6 @@ void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
         malloc(sizeof(*new_point));
     new_point->x = xoffset;
     new_point->y = yoffset;
-    new_point->next = NULL; 
     
     new_point->next = shape->shape2d.b2.polygonpoints;
     shape->shape2d.b2.polygonpoints = new_point;
