@@ -869,7 +869,6 @@ void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
     if (not shape->shape2d.type == BW_S2D_POLY) {
         shape->shape2d.b2.polygonpoints = NULL;
     }
-    struct polygonpoint* p = shape->shape2d.b2.polygonpoints;
    
     struct polygonpoint* new_point = (struct polygonpoint*)
         malloc(sizeof(*new_point));
@@ -877,10 +876,8 @@ void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xof
     new_point->y = yoffset;
     new_point->next = NULL; 
     
-    if (p != NULL) {
-      new_point->next = p;
-    }
-    p = new_point;
+    new_point->next = shape->shape2d.b2.polygonpoints;
+    shape->shape2d.b2.polygonpoints = new_point;
     
     shape->shape2d.type = BW_S2D_POLY;
     
