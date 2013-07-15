@@ -801,8 +801,11 @@
     <dd>
     Apply a physics impulse onto an object (which will make it move,
  for example as if someone had pushed it).
- This will only work if the object has movable collision enabled through <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>.
- IMPORTANT: Some parameters are not present for 2d objects, see list below.
+<p> Use this instead of <a href="../modules/blitwizard.html#object:setPosition">object:setPosition</a>
+ for movement that takes collisions into account!
+<p> This will only work if the object has movable collision enabled through
+ <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>.
+<p> <b>Important</b>: Some parameters are not present for 2d objects, see list below.
 
     <h3>Parameters:</h3>
     <ul>
