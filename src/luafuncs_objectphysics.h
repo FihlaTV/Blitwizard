@@ -35,6 +35,7 @@
 #include "physics.h"
 #include "objectphysicsdata.h"
 
+int luafuncs_object_angularImpulse2d(lua_State* l);
 int luafuncs_object_enableStaticCollision(lua_State* l);
 int luafuncs_object_enableMovableCollision(lua_State* l);
 int luafuncs_object_disableCollision(lua_State* l);

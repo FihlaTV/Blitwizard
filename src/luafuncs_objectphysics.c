@@ -883,8 +883,14 @@ static void applyobjectsettings(struct blitwizardobject* obj) {
 
 /// Apply a physics impulse onto an object (which will make it move,
 // for example as if someone had pushed it).
-// This will only work if the object has movable collision enabled through @{object:enableMovableCollision|object:enableMovableCollision}.
-// IMPORTANT: Some parameters are not present for 2d objects, see list below.
+//
+// Use this instead of @{blitwizard.object:setPosition|object:setPosition}
+// for movement that takes collisions into account!
+//
+// This will only work if the object has movable collision enabled through
+// @{object:enableMovableCollision|object:enableMovableCollision}.
+//
+// <b>Important</b>: Some parameters are not present for 2d objects, see list below.
 // @function impulse
 // @tparam number force_x the x coordinate of the force vector applied through the impulse
 // @tparam number force_y the y coordinate of the force vector
@@ -976,6 +982,49 @@ int luafuncs_object_impulse(lua_State* l) {
     }
     return 0;
 }
+
+
+/// Apply a rotational impulse onto a 2d object (which will make it rotate as if pushed).
+// While @{blitwizard.object:setRotationAngle|object:setRotationAngle} might seem easier,
+// this will actually take obstacles and collision into account.
+//
+// Use @{blitwizard.object:angularImpulse3d|object:angularImpulse3d} for 3d objects.
+//
+// This function will only work if the object has movable collision enabled through
+// @{object:enableMovableCollision|object:enableMovableCollision}.
+// @tparam number force the rotational force (positive for counter-clockwise, negative for clockwise)
+// @usage
+// -- apply an angular impulse to a 2d object with collsion enabled,
+// -- and make it turn left:
+// obj:angularImpulse2d(0.2)
+int luafuncs_object_angularImpulse2d(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:impulse");
+    char funcname[] = "blitwizard.object.impulse";
+    if (!obj->physics || !obj->physics->object) {
+        lua_pushstring(l, "object has no shape");
+        return lua_error(l);
+    }
+    if (!obj->physics->movable) {
+        lua_pushstring(l, "impulse can be only applied to movable objects");
+        return lua_error(l);
+    }
+    if (obj->is3d) {
+        return haveluaerror(l, "you may only use this on 2d objects");
+    }
+    // validate force parameter:
+    if (lua_type(l, 2) != LUA_TNUMBER) {  // force x
+        return haveluaerror(l, badargument1, 1, funcname, "number",
+        lua_strtype(l, 2));
+    }
+    // get force:
+    double force = lua_tonumber(l, 2);
+
+    // apply impulse:
+    physics_apply2dAngularImpulse(obj->physics->object, -force);
+    return 0;
+}
+
 
 /// Restrict the ability to rotate for a given object. For 2d, the rotation
 // can be totally restricted or not, for 3d it can be restricted around a specific
