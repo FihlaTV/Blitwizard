@@ -990,14 +990,15 @@ cd ..
 
 # Check for -O3 -fno-finite-math-only
 OLD_CFLAGS="$CFLAGS"
-CFLAGS="-O3 -ffast-math -fno-finite-math-only"
-O3_AND_INFINITE_MATH="no"
-AC_MSG_CHECKING([whether CC accepts -O3 -fast-math -fno-finite-math-only])
+CFLAGS="-O2 -fno-math-errno -fno-finite-math-only"
+EXTRA_SPEED_FLAGS="no"
+AC_MSG_CHECKING([whether CC accepts -O2 -fno-math-errno -fno-finite-math-only])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
     [AC_MSG_RESULT([yes])]
-    [O3_AND_INFINITE_MATH="yes"],
+    [EXTRA_SPEED_FLAGS="yes"],
     [AC_MSG_RESULT([no])]
 )
+EXTRA_SPEED_FLAGS="no"
 CFLAGS="$OLD_CFLAGS"
 
 # Decide on some additional cflags:
@@ -1007,8 +1008,8 @@ AS_IF([test "x$enable_debug" = xyes],[
 ],[
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -s"
 ])
-AS_IF([test "x$O3_AND_INFINITE_MATH" = xyes],[
-    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O3 -ffast-math -fno-finite-math-only"
+AS_IF([test "x$EXTRA_SPEED_FLAGS" = xyes],[
+    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2 -fno-math-errno -fno-finite-math-only"
 ],[
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2"
 ])

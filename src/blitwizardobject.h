@@ -29,7 +29,15 @@
 #include "os.h"
 #include "objectgraphicsdata.h"
 
+#define VALIDATEMAGIC "489tjtgrniqrua9r"
+
 struct blitwizardobject {
+#ifdef VALIDATEBOBJ
+#ifdef NDEBUG
+#error "cannot validabe blitwizard object with NDEBUG defined"
+#endif
+    char validatemagic[] = VALIDATEBOBJ;
+#endif
     char* respath;  // resource path
     int is3d;  // 0: 2d sprite with z-order value, 1: 3d mesh or sprite
     double x,y;  // 2d: x,y, 3d: x,y,z with z pointing up

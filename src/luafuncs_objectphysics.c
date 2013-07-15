@@ -99,6 +99,7 @@ static int luafuncs_trycollisioncallback(struct blitwizardobject* obj, struct bl
         }
         *enabled = boolreturn;
     } else {
+        *enabled = 1;
         lua_pop(l, 6 + 2 * use3d);
     }
     return 1;
@@ -129,6 +130,10 @@ int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physic
     // get the associated blitwizard objects to the collision objects:
     struct blitwizardobject* aobj = (struct blitwizardobject*)physics_getObjectUserdata(a);
     struct blitwizardobject* bobj = (struct blitwizardobject*)physics_getObjectUserdata(b);
+#ifdef VALIDATEBOBJ
+    assert(strcmp(aobj->validatemagic, VALIDATEMAGIC) == 0);
+    assert(strcmp(bobj->validatemagic, VALIDATEMAGIC) == 0);
+#endif
 
     // call first object's callback:
     if (!luafuncs_trycollisioncallback2d(aobj, bobj, x, y, normalx, normaly, force, &enabled)) {

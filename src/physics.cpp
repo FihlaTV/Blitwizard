@@ -150,7 +150,7 @@ struct userdata_wrapper {
 static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force) {
     isInCallback = 1;
     
-    ((struct userdata_wrapper*)userdata)->callback2d(
+    int r = ((struct userdata_wrapper*)userdata)->callback2d(
      ((struct userdata_wrapper*)userdata)->userdata, a, b, x, y,
      normalx, normaly, force);
     
@@ -176,6 +176,7 @@ static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, st
         free(deletedObjects);
         deletedObjects = d;
     }
+    return r;
 }
 #endif
 

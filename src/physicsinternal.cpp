@@ -402,11 +402,14 @@ b2Contact* contact) {
 
 // handle the contact event and pass it on to the physics callback:
 static void physics_handleContact(b2Contact* contact) {
-    //printf("handlecontact0: %llu\n", time_GetMicroseconds());
     struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()
         ->GetBody()->GetUserData())->pobj;
     struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()
         ->GetBody()->GetUserData())->pobj;
+#ifdef VALIDATEBOBJ
+    assert(strcmp(obj1->validatemagic, VALIDATEMAGIC) == 0);
+    assert(strcmp(obj2->validatemagic, VALIDATEMAGIC) == 0);
+#endif
     if (obj1->deleted || obj2->deleted) {
         // one of the objects should be deleted already, ignore collision
         contact->SetEnabled(false);
@@ -450,7 +453,6 @@ static void physics_handleContact(b2Contact* contact) {
     struct physicsworld* w = obj1->pworld;
 
     // return the information through the callback
-    contact->SetEnabled(false);
     if (w->callback) {
         if (!w->callback(w->callbackuserdata, obj1, obj2,
         collidex, collidey, normalx, normaly, impact)) {
@@ -465,7 +467,6 @@ static void physics_handleContact(b2Contact* contact) {
             contact->SetEnabled(true);
         }
     }
-    //printf("handlecontact1: %llu\n", time_GetMicroseconds());
 }
 
 /*
