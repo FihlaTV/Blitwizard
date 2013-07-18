@@ -35,6 +35,7 @@
 #include <windows.h>
 #endif
 #include <stdarg.h>
+#include <assert.h>
 
 #include "logging.h"
 #include "imgloader.h"
@@ -181,14 +182,9 @@ void graphicssdlrender_CompleteFrame(void) {
 }
 
 static void graphicssdlrender_spriteCallback(
+const struct graphics2dsprite* sprite,
 const char* path, struct graphicstexture* tex,
-double x, double y,
-double width, double height,
-size_t texWidth, size_t texHeight,
-double angle,
-double alpha, double r, double g, double b,
-size_t sourceX, size_t sourceY,
-size_t sourceWidth, size_t sourceHeight,
+double r, double g, double b, double alpha,
 int visible, int cameraId) {
     if (!tex) {
         return;
@@ -197,89 +193,13 @@ int visible, int cameraId) {
         return;
     }
 
-    // get actual texture size (texWidth, texHeight are theoretical
-    // texture size of full sized original texture)
-    size_t actualTexW, actualTexH;
-    graphics_GetTextureDimensions(tex, &actualTexW, &actualTexH);
-
-    // if the actual texture is upscaled or downscaled,
-    // we need to take this into account:
-    if ((texWidth != actualTexW || texHeight != actualTexH) &&
-    (texWidth != 0 && texHeight != 0)) {
-        double scalex = (double)actualTexW / (double)texWidth;
-        double scaley = (double)actualTexH / (double)texHeight;
-
-        // scale all stuff according to this:
-        sourceX = scalex * (double)sourceX;
-        sourceY = scaley * (double)sourceY;
-        sourceWidth = scalex * (double)sourceWidth;
-        sourceHeight = scaley * (double)sourceHeight;
-    }
-
-    // now override texture size:
-    texWidth = actualTexW;
-    texHeight = actualTexH;
-
-    // if a camera is specified for pinning,
-    // the sprite will be pinned to the screen:
-    int pinnedToCamera = 0;
-    if (cameraId >= 0) {
-        pinnedToCamera = 1;
-    }
-
-    // evaluate special width/height:
-    // negative for flipping, zero'ed etc
-    int horiflip = 0;
-    if (width == 0 && height == 0) {
-        // if no size given, go to standard size:
-        width = ((double)texWidth) / UNIT_TO_PIXELS_DEFAULT;
-        height = ((double)texHeight) / UNIT_TO_PIXELS_DEFAULT;
-        if (sourceWidth > 0) {
-            // if source width/height given, set clipping accordingly:
-            width = ((double)sourceWidth) / UNIT_TO_PIXELS_DEFAULT;
-            height = ((double)sourceHeight) / UNIT_TO_PIXELS_DEFAULT;
-        }
-    }
-    if (width < 0) {
-        width = -width;
-        horiflip = 1;
-    }
-    if (height < 0) {
-        angle += 180;
-        horiflip = !horiflip;
-    }
-
-    // scale position according to zoom:
-    if (!pinnedToCamera) {
-        x *= UNIT_TO_PIXELS * zoom;
-        y *= UNIT_TO_PIXELS * zoom;
-    } else {
-        // ignore zoom when pinned to screen
-        x *= UNIT_TO_PIXELS;
-        y *= UNIT_TO_PIXELS;
-    }
-
-    if (!pinnedToCamera) {
-        // image center offset (when not pinned to screen):
-        x -= (width/2.0) * UNIT_TO_PIXELS * zoom;
-        y -= (height/2.0) * UNIT_TO_PIXELS * zoom;
-
-        // screen center offset (if not pinned):
-        unsigned int winw,winh;
-        graphics_GetWindowDimensions(&winw, &winh);
-        x += (winw/2.0);
-        y += (winh/2.0);
-
-        // move according to zoom, cam pos etc:
-        width *= UNIT_TO_PIXELS * zoom;
-        height *= UNIT_TO_PIXELS * zoom;
-        x -= centerx * UNIT_TO_PIXELS * zoom;
-        y -= centery * UNIT_TO_PIXELS * zoom;
-    } else {
-        // only adjust width/height to proper units when pinned
-        width *= UNIT_TO_PIXELS;
-        height *= UNIT_TO_PIXELS;
-    }
+    double x, y, width, height;
+    double sourceX, sourceY, sourceWidth, sourceHeight;
+    double angle;
+    int horiflip;
+    graphics2dsprite_calculateSizeOnScreen(
+    sprite, 0, &x, &y, &width, &height, &sourceX, &sourceY,
+    &sourceWidth, &sourceHeight, &angle, &horiflip, 0);
 
     // render:
     graphicsrender_DrawCropped(tex, x, y, alpha,

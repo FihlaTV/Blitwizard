@@ -1020,13 +1020,13 @@ int main(int argc, char** argv) {
         uint64_t delta = time_GetMilliseconds()-lastdrawingtime;
 
         // sleep/limit FPS as much as we can
-        if (delta < deltaspan) {
+        if (delta < (deltaspan-10)) {
             // the time passed is smaller than the optimal waiting time
             // -> sleep
             if (connections_NoConnectionsOpen() &&
             !listeners_HaveActiveListeners()) {
                 // no connections, use regular sleep
-                time_Sleep(deltaspan-delta);
+                time_Sleep((deltaspan-10)-delta);
                 connections_SleepWait(0);
             } else {
                 // use connection select wait to get connection events
@@ -1071,22 +1071,6 @@ int main(int argc, char** argv) {
         // .. unless we're already doing this for >2 seconds:
         && iterationStart + 2 >= time(NULL)
             ) {
-            if (logiciterations < MAXLOGICITERATIONS &&
-            logictimestamp < timeNow && (logictimestamp <= physicstimestamp
-            || physicsiterations >= MAXPHYSICSITERATIONS)) {
-                // check how much logic we might want to do in a batch:
-                int k = (timeNow-logictimestamp)/TIMESTEP;
-                if (k > MAXBATCHEDLOGIC) {
-                    k = MAXBATCHEDLOGIC;
-                }
-                // call logic functions of all objects:
-                int i = luacfuncs_object_doAllSteps(k);
-                doConsoleLog();
-
-                // advance time step:
-                logictimestamp += i * TIMESTEP;
-                logiciterations += i;
-            }
 #ifdef USE_PHYSICS2D
             if (physicsiterations < MAXPHYSICSITERATIONS &&
             physicstimestamp < timeNow && (physicstimestamp <= logictimestamp
@@ -1103,6 +1087,22 @@ int main(int argc, char** argv) {
 #else
             physicstimestamp = timeNow + 2000;
 #endif
+            if (logiciterations < MAXLOGICITERATIONS &&
+            logictimestamp < timeNow && (logictimestamp <= physicstimestamp
+            || physicsiterations >= MAXPHYSICSITERATIONS)) {
+                // check how much logic we might want to do in a batch:
+                int k = (timeNow-logictimestamp)/TIMESTEP;
+                if (k > MAXBATCHEDLOGIC) {
+                    k = MAXBATCHEDLOGIC;
+                }
+                // call logic functions of all objects:
+                int i = luacfuncs_object_doAllSteps(k);
+                doConsoleLog();
+
+                // advance time step:
+                logictimestamp += i * TIMESTEP;
+                logiciterations += i;
+            }
         }
 
         // check if we ran out of iterations:

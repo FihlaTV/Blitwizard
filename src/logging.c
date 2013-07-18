@@ -80,8 +80,8 @@ void doConsoleLog() {
     int i = 0;
     while (i < consoleloglinecount) {
         if (consoleloglines[i] && consoleloglinetypes[i]) {
-            char* tp = strdup(consoleloglinetypes[i]);
-            char* tl = strdup(consoleloglines[i]);
+            char* tp = strdup((char*)consoleloglinetypes[i]);
+            char* tl = strdup((char*)consoleloglines[i]);
             mutex_Release(consoleLogMutex);
             luacfuncs_onLog(tp, "%s", tl);
             mutex_Lock(consoleLogMutex);
@@ -89,10 +89,10 @@ void doConsoleLog() {
             free(tl);
         }
         if (consoleloglines[i]) {
-            free(consoleloglines[i]);
+            free((char*)consoleloglines[i]);
         }
         if (consoleloglinetypes[i]) {
-            free(consoleloglinetypes[i]);
+            free((char*)consoleloglinetypes[i]);
         }
         i++;
     }

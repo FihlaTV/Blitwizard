@@ -24,6 +24,7 @@
 #include "config.h"
 #include "os.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -36,6 +37,11 @@
 #include "graphicstexturemanager.h"
 
 static mutex* m = NULL;
+
+//#define SMOOTH_SPRITES
+#ifdef SMOOTH_SPRITES
+const float smoothmaxdist = 1.0f;
+#endif
 
 // data structure for a sprite:
 struct graphics2dsprite {
@@ -62,6 +68,9 @@ struct graphics2dsprite {
 
     // position, size info:
     double x, y, width, height, angle;
+#ifdef SMOOTH_SPRITES
+    double prevx, prevy;
+#endif
     // width, height = 0 means height should match texture geometry
 
     // texture clipping window:
@@ -283,11 +292,10 @@ void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite) {
 }
 
 void graphics2dsprites_doForAllSprites(
-void (*spriteInformation) (const char* path, struct graphicstexture* tex,
-double x, double y, double width, double height,
-size_t texWidth, size_t texHeight,
-double angle, double alpha, double r, double g, double b,
-size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
+void (*spriteInformation) (
+const struct graphics2dsprite* sprite,
+const char* path, struct graphicstexture* tex,
+double r, double g, double b, double alpha,
 int visible, int cameraId)) {
     if (!spriteInformation) {
         return;
@@ -301,27 +309,15 @@ int visible, int cameraId)) {
         // call sprite information callback:
         if ((s->clippingWidth > 0 && s->clippingHeight > 0) ||
         !s->clippingEnabled) {
-            size_t sx,sy,sw,sh;
-            sx = s->clippingX;
-            sy = s->clippingY;
-            sw = s->clippingWidth;
-            sh = s->clippingHeight;
-            if (!s->clippingEnabled && s->texWidth && s->texHeight) {
-                // reset to full texture size:
-                sx = 0;
-                sy = 0;
-                sw = s->texWidth;
-                sh = s->texHeight;
-            }
-            spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
-            s->texWidth, s->texHeight, s->angle, s->alpha, s->r, s->g, s->b,
-            sx, sy, sw, sh,
+            spriteInformation(
+            s,
+            s->path, s->tex, s->r, s->g, s->b, s->alpha,
             s->visible, s->pinnedToCamera);
         } else {
             // report sprite as invisible:
-            spriteInformation(s->path, s->tex, s->x, s->y, s->width, s->height,
-            s->texWidth, s->texHeight, s->angle, s->alpha, s->r, s->g, s->b,
-            s->clippingX, s->clippingY, s->clippingWidth, s->clippingHeight,
+            spriteInformation(
+            s,
+            s->path, s->tex, s->r, s->g, s->b, s->alpha,
             0, s->pinnedToCamera);
         }
 
@@ -395,6 +391,10 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
 void graphics2dsprites_move(struct graphics2dsprite* sprite,
 double x, double y, double angle) {
     mutex_Lock(m);
+#ifdef SMOOTH_SPRITES
+    sprite->prevx = x;
+    sprite->prevy = y;
+#endif
     sprite->x = x;
     sprite->y = y;
     sprite->angle = angle;
@@ -554,48 +554,149 @@ int visible) {
 }
 
 void graphics2dsprite_calculateSizeOnScreen(
-struct graphics2dsprite* sprite,
+const struct graphics2dsprite* sprite,
 int cameraId,
-int* screen_x, int* screen_y, int* screen_w,
-int* screen_h) {
+double* screen_x, double* screen_y, double* screen_w,
+double* screen_h, double* screen_sourceX, double* screen_sourceY,
+double* screen_sourceW, double* screen_sourceH,
+double* source_angle, int* phoriflip, int compensaterotation) {
+    assert(cameraId >= 0);
     // get camera settings:
     double zoom = graphics_GetCamera2DZoom(cameraId);
     double ratio = graphics_GetCamera2DAspectRatio(cameraId);
     double centerx = graphics_GetCamera2DCenterX(cameraId);
     double centery = graphics_GetCamera2DCenterY(cameraId);
-    double w = graphics_GetCameraWidth(cameraId);
-    double h = graphics_GetCameraHeight(cameraId);
+    assert(zoom > 0);
 
-    // calculate visible area on screen:
-    double x,y;
-    if (sprite->pinnedToCamera < 0) {
-        x = ((sprite->x - centerx + (w/2) /
-            UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
-        y = ((sprite->y - centery + (h/2) /
-            UNIT_TO_PIXELS) * zoom) * UNIT_TO_PIXELS;
-    } else {
-        x = sprite->x * UNIT_TO_PIXELS;
-        y = sprite->y * UNIT_TO_PIXELS;
+    // various size info things:
+    size_t sourceWidth, sourceHeight;
+    size_t texWidth, texHeight;
+    texWidth = sprite->texWidth;
+    texHeight = sprite->texHeight;
+    sourceWidth = sprite->clippingWidth;
+    sourceHeight = sprite->clippingHeight;
+    if (!sprite->clippingEnabled) {
+        sourceWidth = texWidth;
+        sourceHeight = texHeight;
     }
+    double angle = sprite->angle;
+    struct graphicstexture* tex = sprite->tex;
+    double sourceX = sprite->clippingX;
+    double sourceY = sprite->clippingY;    
     double width = sprite->width;
     double height = sprite->height;
+    double x = sprite->x;
+    double y = sprite->y;
+
+    // get actual texture size (texWidth, texHeight are theoretical
+    // texture size of full sized original texture)
+    size_t actualTexW, actualTexH;
+    if (tex) {
+        graphics_GetTextureDimensions(tex, &actualTexW, &actualTexH);
+    }
+
+    // if the actual texture is upscaled or downscaled,
+    // we need to take this into account:
+    if ((texWidth != actualTexW || texHeight != actualTexH) &&
+    (texWidth != 0 && texHeight != 0)) {
+        double scalex = (double)actualTexW / (double)texWidth;
+        double scaley = (double)actualTexH / (double)texHeight;
+
+        // scale all stuff according to this:
+        sourceX = scalex * (double)sourceX;
+        sourceY = scaley * (double)sourceY;
+        sourceWidth = scalex * (double)sourceWidth;
+        sourceHeight = scaley * (double)sourceHeight;
+    }
+
+    // now override texture size:
+    texWidth = actualTexW;
+    texHeight = actualTexH;
+
+    // if a camera is specified for pinning,
+    // the sprite will be pinned to the screen:
+    int pinnedToCamera = 0;
+    if (sprite->pinnedToCamera >= 0) {
+        pinnedToCamera = 1;
+    }
+
+    // evaluate special width/height:
+    // negative for flipping, zero'ed etc
+    int horiflip = 0;
     if (width == 0 && height == 0) {
-        width = sprite->texWidth * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
-        height = sprite->texHeight * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
-        if (sprite->clippingWidth > 0) {
-            width = sprite->clippingWidth * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
-            height = sprite->clippingHeight * (UNIT_TO_PIXELS/UNIT_TO_PIXELS_DEFAULT);
+        // if no size given, go to standard size:
+        width = ((double)texWidth) / UNIT_TO_PIXELS_DEFAULT;
+        height = ((double)texHeight) / UNIT_TO_PIXELS_DEFAULT;
+        if (sourceWidth > 0) {
+            // if source width/height given, set clipping accordingly:
+            width = ((double)sourceWidth) / UNIT_TO_PIXELS_DEFAULT;
+            height = ((double)sourceHeight) / UNIT_TO_PIXELS_DEFAULT;
         }
+    }
+    if (width < 0) {
+        width = -width;
+        horiflip = 1;
+    }
+    if (height < 0) {
+        angle += 180;
+        horiflip = !horiflip;
+    }
+
+    // scale position according to zoom:
+    if (!pinnedToCamera) {
+        x *= UNIT_TO_PIXELS * zoom;
+        y *= UNIT_TO_PIXELS * zoom;
     } else {
+        // ignore zoom when pinned to screen
+        x *= UNIT_TO_PIXELS;
+        y *= UNIT_TO_PIXELS;
+    }
+
+    if (!pinnedToCamera) {
+        // image center offset (when not pinned to screen):
+        x -= (width/2.0) * UNIT_TO_PIXELS * zoom;
+        y -= (height/2.0) * UNIT_TO_PIXELS * zoom;
+
+        // screen center offset (if not pinned):
+        unsigned int winw,winh;
+        graphics_GetWindowDimensions(&winw, &winh);
+        x += (winw/2.0);
+        y += (winh/2.0);
+
+        // move according to zoom, cam pos etc:
+        width *= UNIT_TO_PIXELS * zoom;
+        height *= UNIT_TO_PIXELS * zoom;
+        x -= centerx * UNIT_TO_PIXELS * zoom;
+        y -= centery * UNIT_TO_PIXELS * zoom;
+    } else {
+        // only adjust width/height to proper units when pinned
         width *= UNIT_TO_PIXELS;
         height *= UNIT_TO_PIXELS;
-    }   
+    }
 
-    // set visible area:
+    // set resulting info:
     *screen_x = x;
     *screen_y = y;
     *screen_w = width;
     *screen_h = height;
+    if (screen_sourceX) {
+        *screen_sourceX = sourceX;
+    }
+    if (screen_sourceY) {
+        *screen_sourceY = sourceY;
+    }
+    if (screen_sourceW) {
+        *screen_sourceW = sourceWidth;
+    }
+    if (screen_sourceH) {
+        *screen_sourceH = sourceHeight;
+    }
+    if (source_angle) {
+        *source_angle = angle;
+    }
+    if (phoriflip) {
+        *phoriflip = horiflip;
+    }
 }
 
 void graphics2dsprites_reportVisibility(void) {
@@ -623,16 +724,16 @@ void graphics2dsprites_reportVisibility(void) {
             int sh = graphics_GetCameraHeight(i);
 
             // get sprite pos on screen:
-            int x, y, w, h;
+            double x, y, w, h;
             graphics2dsprite_calculateSizeOnScreen(sprite,
-            i, &x, &y, &w, &h);
+            i, &x, &y, &w, &h, NULL, NULL, NULL, NULL, NULL, NULL, 1);
 
             // now check if rectangle is on screen:
-            if (((x >= 0 && x < sw) || (x + w >= 0 && x + w < sw) ||
+            if ((((x >= 0 && x < sw) || (x + w >= 0 && x + w < sw) ||
             (x < 0 && x + w >= sw))
             &&
             ((y >= 0 && y < sh) || (y + h >= 0 && y + h < sh) ||
-            (y < 0 && y + h >= sh))) {
+            (y < 0 && y + h >= sh)))) {
                 // it is.
                 texturemanager_usingRequest(sprite->request,
                 USING_AT_VISIBILITY_DETAIL);
@@ -702,10 +803,11 @@ int cameraId, int mx, int my, int event) {
         }
 
         // get sprite pos on screen:
-        int x, y, w, h;
+        double x, y, w, h;
         graphics2dsprite_calculateSizeOnScreen(sprite,
-        cameraId, &x, &y, &w, &h);
+        cameraId, &x, &y, &w, &h, NULL, NULL, NULL, NULL, NULL, NULL, 0);
 
+        // FIXME: consider rotation here!
         // check if sprite pos is under mouse pos:
         if (mx >= x && mx < x + w &&
         my >= y && my < y + h) {

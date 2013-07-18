@@ -27,6 +27,8 @@
 #include "config.h"
 #include "os.h"
 
+#define VALIDATESPRITEPOS
+
 #ifdef USE_GRAPHICS
 
 #ifdef __cplusplus
@@ -151,11 +153,10 @@ void graphics2dsprites_triggerCallbacks(void);
 // For sprites with no texture loaded/available,
 // the tex parameter will be set to NULL.
 void graphics2dsprites_doForAllSprites(
-void (*spriteInformation) (const char* path, struct graphicstexture* tex,
-double x, double y, double width, double height,
-size_t texwidth, size_t texheight,
-double angle, double alpha, double r, double g, double b,
-size_t sourceX, size_t sizeY, size_t sizeWidth, size_t sizeHeight,
+void (*spriteInformation) (
+const struct graphics2dsprite* sprite,
+const char* path, struct graphicstexture* tex,
+double r, double g, double b, double alpha,
 int visible, int cameraId));
 // Sprites will be returned in Z-Index order.
 // (lower index first, and for same z-index
@@ -204,6 +205,15 @@ int event, int invisible);
 
 // Return the total amount of 2d sprites.
 size_t graphics2dsprites_Count(void);
+
+// Calculate the size of a given sprite on a given camera:
+void graphics2dsprite_calculateSizeOnScreen(
+const struct graphics2dsprite* sprite,
+int cameraId,
+double* screen_x, double* screen_y, double* screen_w,
+double* screen_h, double* screen_sourceX, double* screen_sourceY,
+double* screen_sourceW, double* screen_sourceH,
+double* source_angle, int* phoriflip, int compensaterotation);
 
 #ifdef __cplusplus
 }

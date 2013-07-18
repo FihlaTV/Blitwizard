@@ -1007,11 +1007,11 @@ AS_IF([test "x$enable_debug" = xyes],[
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -g"
 ],[
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -s"
-])
-AS_IF([test "x$EXTRA_SPEED_FLAGS" = xyes],[
-    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2 -fno-math-errno -fno-finite-math-only"
-],[
-    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2"
+    AS_IF([test "x$EXTRA_SPEED_FLAGS" = xyes],[
+        ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2 -fno-math-errno -fno-finite-math-only"
+    ],[
+        ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2"
+    ])
 ])
 
 # OS dependant things:
