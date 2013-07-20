@@ -71,8 +71,11 @@ struct blitwizardobject {
     } rotation;
     union {
         struct {
-            double x,y;
-        } scale2d;
+            struct {
+                double x,y;
+            } scale2d;
+            double parallax;
+        };
         struct {
             double x,y,z;
         } scale3d;

@@ -83,6 +83,9 @@ struct graphics2dsprite {
     double r, g, b, a;
     int visible;
 
+    // parallax effect strength:
+    double parallax;
+
     // z index:
     int zindex;
 
@@ -457,6 +460,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->height = height;
     s->path = strdup(texturePath);
     s->zindex = 0;
+    s->parallax = 1;
     if (!s->path) {
         free(s);
         mutex_Release(m);
@@ -550,6 +554,16 @@ int visible) {
             i++;
         }
     }
+    mutex_Release(m);
+}
+
+void graphics2dsprites_setParallaxEffect(struct graphics2dsprite* sprite,
+double value) {
+    if (value <= 0) {
+        value = 1;
+    }
+    mutex_Lock(m);
+    sprite->parallax = value;
     mutex_Release(m);
 }
 
@@ -666,8 +680,8 @@ double* source_angle, int* phoriflip, int compensaterotation) {
         // move according to zoom, cam pos etc:
         width *= UNIT_TO_PIXELS * zoom;
         height *= UNIT_TO_PIXELS * zoom;
-        x -= centerx * UNIT_TO_PIXELS * zoom;
-        y -= centery * UNIT_TO_PIXELS * zoom;
+        x -= (centerx / sprite->parallax) * UNIT_TO_PIXELS * zoom;
+        y -= (centery / sprite->parallax) * UNIT_TO_PIXELS * zoom;
     } else {
         // only adjust width/height to proper units when pinned
         width *= UNIT_TO_PIXELS;

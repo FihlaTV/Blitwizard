@@ -74,6 +74,10 @@ void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite);
 // even if it is set to visible.
 int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite);
 
+// Set parallax effect to sprite
+void graphics2dsprites_setParallaxEffect(struct graphics2dsprite* sprite,
+double value);
+
 // Move a sprite.
 void graphics2dsprites_move(struct graphics2dsprite* sprite,
 double x, double y, double angle);
@@ -214,6 +218,8 @@ double* screen_x, double* screen_y, double* screen_w,
 double* screen_h, double* screen_sourceX, double* screen_sourceY,
 double* screen_sourceW, double* screen_sourceH,
 double* source_angle, int* phoriflip, int compensaterotation);
+// FIXME: This can NOT be safely used outside the doForAllSprites callback!
+// (threading issues)
 
 #ifdef __cplusplus
 }

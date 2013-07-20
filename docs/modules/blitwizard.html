@@ -210,6 +210,10 @@
 	<td class="summary">Get the transparency of the visual representation of this object.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:setParallax">object:setParallax&nbsp;(strength)</a></td>
+	<td class="summary">Enable a 2d parallax effect at a given strength.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:getDimensions">object:getDimensions&nbsp;()</a></td>
 	<td class="summary">Get the dimensions of an object in game units (with
  <a href="../modules/blitwizard.html#object:setScale">scaling</a> taken into account).</td>
@@ -1205,6 +1209,35 @@
           <span class="types"><span class="type">number</span></span>
         transparency from 0 (solid) to 1 (invisible)
     </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "object:setParallax"></a>
+    <strong>object:setParallax&nbsp;(strength)</strong>
+    </dt>
+    <dd>
+    Enable a 2d parallax effect at a given strength.
+ The <a href="http://en.wikipedia.org/wiki/Parallax">parallax effect</a>
+ simulates depth by displacing objects. Effectively, it just
+ makes them less (for strength > 1.0) or more (< 1.0) displaced
+ depending on the <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">camera position</a>
+ than they would normally be.
+<p> Therefore, use values smaller than 1 (and greater than zero) for
+ close objects, or greater than 1 for far away objects.
+<p> This function does only work with 2d objects.
+ It doesn't have any effect for
+ <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a>.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">strength</span>
+            <span class="types"><span class="type">number</span></span>
+         of the effect (greater than zero) or 1.0 to disable</li>
+    </ul>
+
 
 
 

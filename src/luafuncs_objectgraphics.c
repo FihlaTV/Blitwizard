@@ -126,6 +126,16 @@ double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o) {
     return o->graphics->alpha;
 }
 
+void luacfuncs_objectgraphics_updateParallax(struct blitwizardobject* o) {
+    if (!object_checkgraphics(o)) {
+        return;
+    }
+    if (!o->is3d && o->graphics->sprite) {
+        graphics2dsprites_setParallaxEffect(o->graphics->sprite,
+        o->parallax);
+    }
+}
+
 void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
     if (!object_checkgraphics(o)) {
         return;

@@ -467,6 +467,8 @@ int luafuncs_object_new(lua_State* l) {
     // actual specified first argument is the second one
     // on the lua stack.
 
+    //printf("[0] entering object:new %llu\n", time_GetMicroseconds());
+
     // first argument needs to be 2d/3d type:
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1, "blitwizard.object:new",
@@ -484,6 +486,8 @@ int luafuncs_object_new(lua_State* l) {
         resource = lua_tostring(l, 3);
     }
 
+    //printf("[1] preparing registry table stuff %llu\n", time_GetMicroseconds());
+
     // create new object
     struct blitwizardobject* o = malloc(sizeof(*o));
     if (!o) {
@@ -494,7 +498,9 @@ int luafuncs_object_new(lua_State* l) {
     o->is3d = is3d;
     // compose object registry entry string
     snprintf(o->regTableName, sizeof(o->regTableName),
-   "bobj_table_%p", o);
+    "bobj_table_%p", o);
+
+    //printf("[2] remembering resource path %llu\n", time_GetMicroseconds());
 
     // remember resource path:
     if (resource) {
@@ -507,7 +513,11 @@ int luafuncs_object_new(lua_State* l) {
         }
     }
 
+    //printf("[3] Calling luacfuncs_objectAddedDeleted %llu\n", time_GetMicroseconds());
+
     luacfuncs_objectAddedDeleted(o, 1);
+
+    //printf("[4] Adding us to list %llu\n", time_GetMicroseconds());
 
     // add us to the object list:
     o->next = objects;
@@ -516,21 +526,32 @@ int luafuncs_object_new(lua_State* l) {
     }
     objects = o;
 
+    //printf("[5] preparing selfRefname %llu\n", time_GetMicroseconds());
+
     // prepare registry entry name for self reference:
     snprintf(o->selfRefName, sizeof(o->selfRefName), "bobj_self_%p", o);
+
+    //printf("[6] calling luafuncs_objectgraphics_load %llu\n", time_GetMicroseconds());
 
     // if resource is present, start loading it:
 #ifdef USE_GRAPHICS
     luafuncs_objectgraphics_load(o, o->respath);
 #endif
 
+    //printf("[7] creating central idref %llu\n", time_GetMicroseconds());
+
     // create idref to object, which we will store up to object deletion:
     lua_pushstring(l, o->selfRefName);
     luacfuncs_pushbobjidref(l, o);
     lua_settable(l, LUA_REGISTRYINDEX);
 
+    //printf("[8] re-obtaining idref %llu\n", time_GetMicroseconds());
+
     // obtain ref again:
     luacfuncs_pushbobjidref(l, o); 
+
+    //printf("[9] done! %llu\n", time_GetMicroseconds());
+    //fflush(stdout);
     return 1;
 }
 
@@ -848,6 +869,41 @@ int luafuncs_object_getTransparency(lua_State* l) {
 #else
     return 1;
 #endif
+}
+
+/// Enable a 2d parallax effect at a given strength.
+// The <a href="http://en.wikipedia.org/wiki/Parallax">parallax effect</a>
+// simulates depth by displacing objects. Effectively, it just
+// makes them less (for strength > 1.0) or more (< 1.0) displaced
+// depending on the @{blitwizard.graphics.camera:set2dCenter|camera position}
+// than they would normally be.
+//
+// Therefore, use values smaller than 1 (and greater than zero) for
+// close objects, or greater than 1 for far away objects.
+//
+// This function does only work with 2d objects.
+// It doesn't have any effect for
+// @{blitwizard.object:pinToCamera|pinned objects}.
+// @function setParallax
+// @tparam number strength of the effect (greater than zero) or 1.0 to disable
+int luafuncs_object_setParallax(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setParallax");
+    if (obj->is3d) {
+        return haveluaerror(l, "setParallax may only be used on 2d objects");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:setParallax", "number", lua_strtype(l, 2));
+    }
+    if (lua_tonumber(l, 2) <= 0) {
+        return haveluaerror(l, badargument2, 1,
+        "blitwizard.object:setParallax", "parallax effect strength must be >0."
+        " Use 1.0 for no parallax");
+    }
+    obj->parallax = lua_tonumber(l, 2);
+    luacfuncs_objectgraphics_updateParallax(obj);
+    return 0;
 }
 
 /// Get the dimensions of an object in game units (with

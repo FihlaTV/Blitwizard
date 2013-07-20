@@ -38,6 +38,7 @@ int luafuncs_object_getPosition(lua_State* l);
 int luafuncs_object_setPosition(lua_State* l);
 int luafuncs_object_setZIndex(lua_State* l);
 int luafuncs_object_destroy(lua_State* l);
+int luafuncs_object_setParallax(lua_State* l);
 int luafuncs_object_getDimensions(lua_State* l);
 int luafuncs_object_getOriginalDimensions(lua_State* l);
 int luafuncs_object_getScale(lua_State* l);

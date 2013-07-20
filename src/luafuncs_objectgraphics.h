@@ -47,6 +47,9 @@ struct blitwizardobject* o);
 // Move graphical representation of object to correct position:
 void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o);
 
+// Update the object's parallax effect to the sprite
+void luacfuncs_objectgraphics_updateParallax(struct blitwizardobject* o);
+
 // get dimensions of object (unscaled/original):
 int luacfuncs_objectgraphics_getOriginalDimensions(
 struct blitwizardobject* o, double *x, double *y, double *z);

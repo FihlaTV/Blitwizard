@@ -1180,11 +1180,11 @@ int main(int argc, char** argv) {
 #endif
 
         // do some garbage collection:
-        gcframecount++;
+        /*gcframecount++;
         if (gcframecount > 100) {
             // do a gc step once in a while
             luastate_GCCollect();
-        }
+        }*/
 
         // new frame:
 #ifdef USE_GRAPHICS
