@@ -728,7 +728,7 @@ struct blitwizardobject* obj) {
         newscfy = obj->scale2d.y / obj->physics->pinity;
     }
     // aply new scale:
-    if (obj->is3d) {
+    if (!obj->is3d) {
 #ifdef USE_PHYSICS2D
         physics_set2dScale(obj->physics->object, newscfx, newscfy);
 #endif
