@@ -229,6 +229,13 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 1,
     "blitwizard.object:enableCollision");
 
+    if (!obj->is3d) {
+        if (obj->parallax != 1) {
+            return haveluaerror(l, "cannot use collision on object with "
+            "parallax effect");
+        }
+    }
+
     // validate: parameters need to be a list of shape info tables
     int argcount = lua_gettop(l)-1;
     if (argcount <= 0) {

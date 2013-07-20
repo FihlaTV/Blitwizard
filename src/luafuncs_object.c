@@ -496,6 +496,9 @@ int luafuncs_object_new(lua_State* l) {
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
+    if (!is3d) {
+        o->parallax = 1;
+    }
     // compose object registry entry string
     snprintf(o->regTableName, sizeof(o->regTableName),
     "bobj_table_%p", o);
@@ -892,6 +895,12 @@ int luafuncs_object_setParallax(lua_State* l) {
     if (obj->is3d) {
         return haveluaerror(l, "setParallax may only be used on 2d objects");
     }
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (obj->physics && obj->physics->object) {
+        return haveluaerror(l, "cannot enable parallax effect on objects "
+        "with collision");
+    }
+#endif
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setParallax", "number", lua_strtype(l, 2));
@@ -902,7 +911,9 @@ int luafuncs_object_setParallax(lua_State* l) {
         " Use 1.0 for no parallax");
     }
     obj->parallax = lua_tonumber(l, 2);
+#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_updateParallax(obj);
+#endif
     return 0;
 }
 
