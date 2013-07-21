@@ -193,6 +193,8 @@ void luastate_CreateCameraTable(lua_State* l) {
     "get2dZoomFactor");
     luastate_registerfunc(l, &luafuncs_camera_set2dZoomFactor,
     "set2dZoomFactor");
+    luastate_registerfunc(l, &luafuncs_camera_screenPosTo2dWorldPos,
+    "screenPosTo2dWorldPos");
 }
 #endif
 

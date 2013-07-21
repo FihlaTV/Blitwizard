@@ -623,30 +623,46 @@ int luafuncs_setstep(lua_State* l) {
 /// Specify this function if you want to get notified
 // when the mouse is moved over the @{blitwizard.graphics|graphics output}.
 //
+// The coordinates you get are the same that would be used
+// for @{blitwizard.graphics.camera:screenPosTo2dWorldPos|
+// camera:screenPosTo2dWorldPos}.
+//
 // <b>This function does not exist</b> unless you specify/override
 // it.
 // @function onMouseMove
-// @tparam number x_pos mouse X position
-// @tparam number y_pos mouse Y position
+// @tparam number x_pos mouse X position in game units
+// @tparam number y_pos mouse Y position in game units
+// @tparam userdata camera the @{blitwizard.graphics.camera|camera} the mouse moved over (most likely the default camera)
 // @usage
 // -- Listen for mouse evens:
-// function blitwizard.onMouseMove(x, y)
+// function blitwizard.onMouseMove(x, y, camera)
 //     print("Mouse position: x: " .. x .. ", y: " .. y)
 // end
 
 /// Specify this function if you want to get notified
 // when a mouse button is pressed down
-// on the @{blitwizard.graphics|graphics output}.
+// on a @{blitwizard.graphics.camera|camera} in the
+// @{blitwizard.graphics|graphics output}.
+// (Usually, one camera covers the whole graphics output)
+// 
+// If you just want to create a button to be clicked on (or register
+// clicks on objects generally), take a look at
+// @{blitwizard.object:onMouseClick|object:onMouseClick} instead.
+//
+// The coordinates and the @{blitwizard.graphics.camera|camera}
+// are specified in the same manner as for
+// @{blitwizard.onMouseMove}.
 //
 // <b>This function does not exist</b> unless you specify/override
 // it.
 // @function onMouseDown
 // @tparam number x_pos mouse X position
 // @tparam number y_pos mouse Y position
-// @tparam number button mouse button (1 for left, 2 for right)
+// @tparam number button mouse button (1 for left, 2 for right, 3 for middle)
+// @tparam camera the @{blitwizard.graphics.camera|camera} the mouse was clicked on
 // @usage
 // -- Listen for mouse evens:
-// function blitwizard.onMouseDown(x, y, button)
+// function blitwizard.onMouseDown(x, y, button, camera)
 //     print("Mouse down: button: " .. button .. ", x: " .. x .. ", y: " .. y)
 // end
 
@@ -655,12 +671,17 @@ int luafuncs_setstep(lua_State* l) {
 // is released
 // on the @{blitwizard.graphics|graphics output}.
 //
+// The coordinates and the @{blitwizard.graphics.camera|camera}
+// are specified in the same manner as for
+// @{blitwizard.onMouseMove}.
+//
 // <b>This function does not exist</b> unless you specify/override
 // it.
 // @function onMouseUp
 // @tparam number x_pos mouse X position
 // @tparam number y_pos mouse Y position
-// @tparam number button mouse button (1 for left, 2 for right)
+// @tparam number button mouse button (1 for left, 2 for right, 3 for middle)
+// @tparam camera the @{blitwizard.graphics.camera|camera} the mouse was clicked on
 // @usage
 // -- Listen for mouse evens:
 // function blitwizard.onMouseUp(x, y, button)

@@ -273,6 +273,72 @@ int luafuncs_camera_new(lua_State* l) {
 #endif
 }
 
+/// Specify a 2d position in the range from 0,0 to
+// w,h with w,h being the camera visible area size
+// as from @{blitwizard.graphics.camera:getVisible2dAreaDimensions|
+// getVisible2dAreaDimensions} with consider_zoom set to <b>false</b>.
+//
+// (So the position you specify is the coordinates a
+// @{blitwizard.object:pinToCamera|pinned object} would have on screen
+// or the coordinates you get from @{blitwizard.onMouseMove})
+//
+// The position can also be smaller than 0,0 or larger than the
+// actual camera dimensions, in which case you'll get an out-of-screen
+// world position as a result.
+// @function screenPosTo2dWorldPos
+// @tparam number pos_x the X coordinate of the screen position
+// @tparam number pos_y the Y coordinate of the screen position
+// @tparam number parallax (optional) if you want, specify the @{blitwizard.object:setParallax|parallax} effect strength to get the world position displaced accordingly for an object with that parallax effect strength
+// @treturn number X coordinate of the resulting world position
+// @treturn number Y coordinate of the resulting world position
+int luafuncs_camera_screenPosTo2dWorldPos(lua_State* l) {
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizard.graphics.camera:screenPosTo2dWorldPos");
+
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.graphics.camera:screenPosTo2dWorldPos", "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.graphics.camera:screenPosTo2dWorldPos", "number", lua_strtype(l, 3));
+    }
+    double parallax = 1;
+    if (lua_gettop(l) >= 4 && lua_type(l, 4) != LUA_TNIL) {
+        if (lua_type(l, 4) != LUA_TNUMBER) {
+            return haveluaerror(l, badargument1, 3,
+            "blitwizard.graphics.camera:screenPosTo2dWorldPos", "number", lua_strtype(l, 4));
+        }
+        if (lua_tonumber(l, 4) <= 0) {
+            return haveluaerror(l, badargument2, 3,
+            "blitwizard.graphics.camera:screenPosTo2dWorldPos",
+            "parallax effect strength needs to be greater than zero");
+        }
+        parallax = lua_tonumber(l, 4);
+    }
+    double x = lua_tonumber(l, 2);
+    double y = lua_tonumber(l, 3);
+    
+    // calculate camera top left world position:
+    double tx = graphics_GetCamera2DCenterX(e->cameraslot);
+    double ty = graphics_GetCamera2DCenterY(e->cameraslot);
+    double zoomscale =
+    (UNIT_TO_PIXELS * graphics_GetCamera2DZoom(e->cameraslot))
+    / (double)UNIT_TO_PIXELS_DEFAULT;
+    tx -= graphics_GetCameraWidth(e->cameraslot) * zoomscale * 0.5f;
+    ty -= graphics_GetCameraHeight(e->cameraslot) * zoomscale * 0.5f;
+
+    // scale on-screen to world coordinate scaling:
+    tx *= (UNIT_TO_PIXELS/(double)UNIT_TO_PIXELS_DEFAULT);
+    ty *= (UNIT_TO_PIXELS/(double)UNIT_TO_PIXELS_DEFAULT);
+    tx /= parallax;
+    ty /= parallax;
+
+    lua_pushnumber(l, tx);
+    lua_pushnumber(l, ty);
+    return 2;
+}
+
 /// Set the camera's 2d center which is the position in the 2d world
 // centered by the camera. This allows you to move the camera's shown
 // part of the 2d world around, focussing on other places.
@@ -309,8 +375,9 @@ int luafuncs_camera_set2dCenter(lua_State* l) {
 
 /// Get the game units of the visible 2d area of the game world
 // shown through this camera. This depends on the camera's
-// @{blitwizard.graphics.camera:getPixelDimensionsOnScreen|actual size in pixels
-// on the screen}, the camera's @{blitwizard.graphics.camera:get2dZoomFactor|
+// @{blitwizard.graphics.camera:getPixelDimensionsOnScreen|actual size
+// in pixels on the screen}, the camera's
+// @{blitwizard.graphics.camera:get2dZoomFactor|
 // 2d zoom factor} and the camera's @{blitwizard.graphics.camera:get2dAspectRatio|
 // 2d aspect ratio}.
 //
@@ -358,8 +425,8 @@ int luafuncs_camera_getVisible2dAreaDimensions(lua_State* l) {
     if (!considerzoom) {
         z = 1;
     }
-    lua_pushnumber(l, (w/UNIT_TO_PIXELS) * z);
-    lua_pushnumber(l, (h/UNIT_TO_PIXELS) * z);
+    lua_pushnumber(l, (w/UNIT_TO_PIXELS_DEFAULT) * z);
+    lua_pushnumber(l, (h/UNIT_TO_PIXELS_DEFAULT) * z);
     return 2;
 }
 
@@ -419,7 +486,7 @@ int luafuncs_camera_set2dZoomFactor(lua_State* l) {
         "number", lua_strtype(l, 2));
     }
     if (lua_tonumber(l, 2) <= 0) {
-        return haveluaerror(l, badargument2,
+        return haveluaerror(l, badargument2, 1,
         "blitwizard.graphics.camera:set2dZoomFactor",
         "zoom factor is zero or negative");
     }
