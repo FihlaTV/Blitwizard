@@ -416,6 +416,11 @@ static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
             // make it point at the next (less on top, previous in list)
             // sprite since that is now the relevant entry point.
             shortcut[i].entrance = sprite->prev;
+            if (sprite->prev) {
+                shortcut[i].zindex = sprite->prev->zindex;
+                shortcut[i].pinnedToCamera =
+                (sprite->prev->pinnedToCamera >= 0);
+            }
         }
         i++;
     }
@@ -498,6 +503,12 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     // seek the earliest sprite (from the back)
     // which has a lower or equal zindex, and add us behind
     struct graphics2dsprite* s2 = spritelistEnd;
+
+    // if the jump list is very outdated, redo it:
+    if (shortcutsNeedRecalculation > 30) {
+        shortcutsNeedRecalculation = 0;
+        graphics2dsprites_recalculateSpriteShortcuts();
+    }
 
     // check the jump list first:
     int i = 0;
