@@ -425,8 +425,8 @@ int luafuncs_camera_getVisible2dAreaDimensions(lua_State* l) {
     if (!considerzoom) {
         z = 1;
     }
-    lua_pushnumber(l, (w/UNIT_TO_PIXELS_DEFAULT) * z);
-    lua_pushnumber(l, (h/UNIT_TO_PIXELS_DEFAULT) * z);
+    lua_pushnumber(l, (w/UNIT_TO_PIXELS) * z);
+    lua_pushnumber(l, (h/UNIT_TO_PIXELS) * z);
     return 2;
 }
 

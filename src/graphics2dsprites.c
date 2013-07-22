@@ -102,8 +102,22 @@ struct graphics2dsprite {
     void* userdata;
 };
 // global linear sprite list:
+static int spritesInListCount = 0;
 static struct graphics2dsprite* spritelist = NULL;
 static struct graphics2dsprite* spritelistEnd = NULL;
+
+// shortcut sprite list for jumping to a given zindex depth:
+struct spriteShortcut {
+    struct graphics2dsprite* entrance;
+    int zindex;
+    int nextzindex;
+    int pinnedToCamera; // 1 if pinned, 0 if not
+    int nextPinnedToCamera;
+};
+#define SPRITESHORTCUTCOUNT 20
+struct spriteShortcut shortcut[SPRITESHORTCUTCOUNT];
+int shortcutsFilled = 0;
+int shortcutsNeedRecalculation = 0;
 
 // the "lowest" sprites enabled for each event:
 static struct graphics2dsprite* lastEventSprite[SPRITE_EVENT_TYPE_COUNT];
@@ -120,6 +134,45 @@ __attribute__((constructor)) static void graphics2dsprites_init(void) {
         lastEventSprite[i] = NULL;
         eventSpriteCount[i] = 0;
         i++;
+    }
+}
+
+// recalculate sprite shortcuts:
+static void graphics2dsprites_recalculateSpriteShortcuts(void) {
+    shortcutsFilled = 0;
+    int sinceLastShortcut = 0;
+    int lastZIndex = 0;
+    int lastPinnedState = 1;
+    int spritesBetweenShortcuts = (spritesInListCount
+        / ((double)SPRITESHORTCUTCOUNT * 1.5));
+    struct graphics2dsprite* spr = spritelistEnd;
+    while (spr) {
+        if ((sinceLastShortcut >= spritesBetweenShortcuts &&
+        (spr->zindex < lastZIndex ||
+        (spr->pinnedToCamera < 0 && lastPinnedState)
+        || sinceLastShortcut >= spritesBetweenShortcuts * 2))
+        || shortcutsFilled == 0) {
+            memset(&shortcut[shortcutsFilled], 0, sizeof(*shortcut));
+            shortcut[shortcutsFilled].entrance = spr;
+            shortcut[shortcutsFilled].zindex = spr->zindex;
+            shortcut[shortcutsFilled].nextzindex = -1;
+            shortcut[shortcutsFilled].pinnedToCamera =
+            (spr->pinnedToCamera >= 0);
+            if (shortcutsFilled > 0) {
+                shortcut[shortcutsFilled-1].nextzindex = spr->zindex;
+                shortcut[shortcutsFilled-1].nextPinnedToCamera =
+                shortcut[shortcutsFilled].pinnedToCamera;
+            }
+            lastZIndex = spr->zindex;
+            lastPinnedState = (spr->pinnedToCamera >= 0);
+            sinceLastShortcut = 0;
+            if (shortcutsFilled >= SPRITESHORTCUTCOUNT) {
+                break;
+            }
+            shortcutsFilled++;
+        }
+        sinceLastShortcut++;
+        spr = spr->prev;
     }
 }
 
@@ -306,6 +359,13 @@ int visible, int cameraId)) {
 
     mutex_Lock(m);
 
+    // it might be a good idea to restore the jump list here
+    // (although drawing doesn't need it)
+    if (shortcutsNeedRecalculation > 0) {
+        shortcutsNeedRecalculation = 0;
+        graphics2dsprites_recalculateSpriteShortcuts();
+    }
+
     // walk through linear sprite list:
     struct graphics2dsprite* s = spritelist;
     while (s) {
@@ -337,6 +397,34 @@ double width, double height) {
 }
 
 static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
+    if (!sprite->prev && !sprite->next &&
+    spritelistEnd != sprite && spritelist != sprite) {
+        // we're not actually in the list.
+        return;
+    }
+
+    // if the jump list points at us, fix it:
+    int i = 0;
+    while (i < shortcutsFilled) {
+        if ((shortcut[i].zindex < sprite->zindex &&
+        shortcut[i].pinnedToCamera == sprite->pinnedToCamera) ||
+        (!shortcut[i].pinnedToCamera && sprite->pinnedToCamera >= 0)) {
+            // we are already past the possibly relevant entries
+            break;
+        }
+        if (shortcut[i].entrance == sprite) {
+            // make it point at the next (less on top, previous in list)
+            // sprite since that is now the relevant entry point.
+            shortcut[i].entrance = sprite->prev;
+        }
+        i++;
+    }
+
+    // remember we might need to recalculate the whole jump list soon:
+    shortcutsNeedRecalculation++;
+
+    spritesInListCount--;
+
     // remove sprite from list:
     if (sprite->prev) {
         sprite->prev->next = sprite->next;
@@ -348,6 +436,8 @@ static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
     } else {
         spritelistEnd = sprite->prev;
     }
+    sprite->prev = NULL;
+    sprite->next = NULL;
 }
 
 void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
@@ -408,10 +498,34 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     // seek the earliest sprite (from the back)
     // which has a lower or equal zindex, and add us behind
     struct graphics2dsprite* s2 = spritelistEnd;
+
+    // check the jump list first:
+    int i = 0;
+    while (i < shortcutsFilled-1) {
+        if (shortcut[i].nextzindex <= s->zindex ||
+        (s->pinnedToCamera >= 0 && shortcut[i].nextPinnedToCamera)) {
+            // the next jump shortcut is past the interesting sprites,
+            // so use this one:
+            if (shortcut[i].entrance) {
+                s2 = shortcut[i].entrance;
+            }
+            break;
+        }
+        i++;
+    }
+
+    // search to the actual exact position (SLOW!)
     while (s2 && (s2->zindex > s->zindex ||
     (s2->pinnedToCamera >= 0 && s->pinnedToCamera < 0))) {
         s2 = s2->prev;
     }
+
+    // remember we need to recalculate the jump list at some point:
+    shortcutsNeedRecalculation++;
+
+    spritesInListCount++;
+
+    // add us into the list:
     if (s2) {
         s->next = s2->next;
         s->prev = s2;

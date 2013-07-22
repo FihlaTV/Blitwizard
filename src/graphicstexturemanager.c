@@ -793,7 +793,7 @@ struct texturerequesthandle* request) {
 static void texturemanager_processUnhandledRequests(void) {
     int c = 0;
     struct texturerequesthandle* handle = unhandledRequestList;
-    while (handle && c < 30) {
+    while (handle && c < 100) {
         struct texturerequesthandle* handlenext = handle->unhandledNext;
         texturemanager_processRequest(handle, 1);
         handle = handlenext;

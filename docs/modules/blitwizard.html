@@ -86,18 +86,19 @@
  ALT+F4, ...).</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#onMouseMove">onMouseMove&nbsp;(x_pos, y_pos)</a></td>
+	<td class="name" ><a href="#onMouseMove">onMouseMove&nbsp;(x_pos, y_pos, camera)</a></td>
 	<td class="summary">Specify this function if you want to get notified
  when the mouse is moved over the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#onMouseDown">onMouseDown&nbsp;(x_pos, y_pos, button)</a></td>
+	<td class="name" ><a href="#onMouseDown">onMouseDown&nbsp;(x_pos, y_pos, button, the)</a></td>
 	<td class="summary">Specify this function if you want to get notified
  when a mouse button is pressed down
- on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
+ on a <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> in the
+ <a href="../modules/blitwizard.graphics.html#">graphics output</a>.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#onMouseUp">onMouseUp&nbsp;(x_pos, y_pos, button)</a></td>
+	<td class="name" ><a href="#onMouseUp">onMouseUp&nbsp;(x_pos, y_pos, button, the)</a></td>
 	<td class="summary">Specify this function if you want to get notified
  when a mouse button (which was previously pressed down)
  is released
@@ -393,11 +394,14 @@
 </dd>
     <dt>
     <a name = "onMouseMove"></a>
-    <strong>onMouseMove&nbsp;(x_pos, y_pos)</strong>
+    <strong>onMouseMove&nbsp;(x_pos, y_pos, camera)</strong>
     </dt>
     <dd>
     Specify this function if you want to get notified
  when the mouse is moved over the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> The coordinates you get are the same that would be used
+ for <a href="../modules/blitwizard.graphics.html#camera:screenPosTo2dWorldPos">
+ camera:screenPosTo2dWorldPos</a>.
 <p> <b>This function does not exist</b> unless you specify/override
  it.
 
@@ -405,10 +409,13 @@
     <ul>
         <li><span class="parameter">x_pos</span>
             <span class="types"><span class="type">number</span></span>
-         mouse X position</li>
+         mouse X position in game units</li>
         <li><span class="parameter">y_pos</span>
             <span class="types"><span class="type">number</span></span>
-         mouse Y position</li>
+         mouse Y position in game units</li>
+        <li><span class="parameter">camera</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> the mouse moved over (most likely the default camera)</li>
     </ul>
 
 
@@ -418,7 +425,7 @@
     <ul>
         <pre class="example">
  <span class="comment">-- Listen for mouse evens:
-</span> <span class="keyword">function</span> blitwizard.onMouseMove(x, y)
+</span> <span class="keyword">function</span> blitwizard.onMouseMove(x, y, camera)
      <span class="global">print</span>(<span class="string">"Mouse position: x: "</span> .. x .. <span class="string">", y: "</span> .. y)
  <span class="keyword">end</span></pre>
     </ul>
@@ -426,12 +433,21 @@
 </dd>
     <dt>
     <a name = "onMouseDown"></a>
-    <strong>onMouseDown&nbsp;(x_pos, y_pos, button)</strong>
+    <strong>onMouseDown&nbsp;(x_pos, y_pos, button, the)</strong>
     </dt>
     <dd>
     Specify this function if you want to get notified
  when a mouse button is pressed down
- on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+ on a <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> in the
+ <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+ (Usually, one camera covers the whole graphics output)
+
+ If you just want to create a button to be clicked on (or register
+ clicks on objects generally), take a look at
+ <a href="../modules/blitwizard.html#object:onMouseClick">object:onMouseClick</a> instead.
+<p> The coordinates and the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a>
+ are specified in the same manner as for
+ <a href="../modules/blitwizard.html#onMouseMove">blitwizard.onMouseMove</a>.
 <p> <b>This function does not exist</b> unless you specify/override
  it.
 
@@ -445,7 +461,10 @@
          mouse Y position</li>
         <li><span class="parameter">button</span>
             <span class="types"><span class="type">number</span></span>
-         mouse button (1 for left, 2 for right)</li>
+         mouse button (1 for left, 2 for right, 3 for middle)</li>
+        <li><span class="parameter">the</span>
+            <span class="types"><span class="type">camera</span></span>
+         <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> the mouse was clicked on</li>
     </ul>
 
 
@@ -455,7 +474,7 @@
     <ul>
         <pre class="example">
  <span class="comment">-- Listen for mouse evens:
-</span> <span class="keyword">function</span> blitwizard.onMouseDown(x, y, button)
+</span> <span class="keyword">function</span> blitwizard.onMouseDown(x, y, button, camera)
      <span class="global">print</span>(<span class="string">"Mouse down: button: "</span> .. button .. <span class="string">", x: "</span> .. x .. <span class="string">", y: "</span> .. y)
  <span class="keyword">end</span></pre>
     </ul>
@@ -463,13 +482,16 @@
 </dd>
     <dt>
     <a name = "onMouseUp"></a>
-    <strong>onMouseUp&nbsp;(x_pos, y_pos, button)</strong>
+    <strong>onMouseUp&nbsp;(x_pos, y_pos, button, the)</strong>
     </dt>
     <dd>
     Specify this function if you want to get notified
  when a mouse button (which was previously pressed down)
  is released
  on the <a href="../modules/blitwizard.graphics.html#">graphics output</a>.
+<p> The coordinates and the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a>
+ are specified in the same manner as for
+ <a href="../modules/blitwizard.html#onMouseMove">blitwizard.onMouseMove</a>.
 <p> <b>This function does not exist</b> unless you specify/override
  it.
 
@@ -483,7 +505,10 @@
          mouse Y position</li>
         <li><span class="parameter">button</span>
             <span class="types"><span class="type">number</span></span>
-         mouse button (1 for left, 2 for right)</li>
+         mouse button (1 for left, 2 for right, 3 for middle)</li>
+        <li><span class="parameter">the</span>
+            <span class="types"><span class="type">camera</span></span>
+         <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> the mouse was clicked on</li>
     </ul>
 
 
