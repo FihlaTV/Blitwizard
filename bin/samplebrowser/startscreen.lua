@@ -89,6 +89,11 @@ function blitwizard.onInit()
         -- destroy all orbs:
         noOrbs = true
 
+        -- destroy bar, button and text:
+        bar:destroy()
+        button:destroy()
+        text:destroy()
+
         -- launch sample browser list:
         browser.launchSelection()
     end
