@@ -48,147 +48,80 @@ function browser.launchSelection()
     blitwizard.graphics.setMode(640, 480, "blitwizard game engine", false)
     local camera = blitwizard.graphics.getCameras()[1]
     camera:set2dZoomFactor(1)
-    local white = blitwizard.object:new(blitwizard.object.o2d, "white.png")
+    white = blitwizard.object:new(blitwizard.object.o2d, "white.png")
     white:setPosition(0, 0)
     white:setScale(50, 50)
-    local title = blitwizard.object:new(blitwizard.object.o2d, "title.png")
+    title = blitwizard.object:new(blitwizard.object.o2d, "title.png")
     title:setPosition(0, -2.5)
 
     -- create menu buttons:
+    buttons = {}
     local y = -0.8
     local i = 1
     while i <= #examples do
-        local button = blitwizard.object:new(blitwizard.object.o2d,
+        buttons[i] = blitwizard.object:new(blitwizard.object.o2d,
         "menu" .. i .. ".png")
-        button:setPosition(-1, y)
-        button:setZIndex(10)
+        buttons[i]:setPosition(-1, y)
+        buttons[i]:setZIndex(10)
         local exnumber = i
-        function button:onMouseClick()
+        local b = buttons[i]
+        function b:onMouseClick()
             -- run the given example:
             print("Launching example " .. exnumber)
+            browser.runExample(exnumber)
         end
         y = y + 0.8
         i = i + 1
     end
 end
 
--- Find and delete all physics objects found recursively in _G
-function find_and_delete_physics_objects(t)
-    local globaltable = false
-    if t == nil then
-        t = _G
-        globaltable = true
+function browser.cleanUpAfterExample()
+    -- delete all blitwizard objects:
+    local o = (blitwizard.getAllObjects())()
+    while o ~= nil do
+        o:destroy()
+        o = (blitwizard.getAllObjects())()
     end
-    local function processvalue(v)
-        if (type(v) == "table") then
-            find_and_delete_physics_objects(v)
-        end
-        if (type(v) == "userdata") then
-            pcall(function()
-                -- This should only do anything if v is a physics object:
-                blitwiz.physics2d.destroyObject(v)
-            end)
-        end
+end
+
+function browser.destroyBrowser()
+    -- delete all sample browser objects:
+    white:destroy()
+    white = nil
+    title:destroy()
+    title = nil
+    for i,v in ipairs(buttons) do
+        buttons[i]:destroy()
+        buttons[i] = nil
     end
-    if not globaltable then
-        for _,v in ipairs(t) do
-            processvalue(v)
-        end
-    end
-    for k,v in pairs(t) do
-        if not globaltable or k ~= "_G" then
-            if k ~= "blitwiz" and k ~= "table" and k ~= "package" then
-                processvalue(v)
-            end
-        end
-    end
+    buttons = nil
 end
 
 function browser.runExample(number)
     os.chdir("../../examples/" .. examples[menufocus] .. "/")
 
-    -- Remember and delete our previous event functions
-    browser_onClose = blitwiz.on_close
-    blitwiz.on_close = nil
-    browser_onMouseDown = blitwiz.on_mousedown
-    blitwiz.on_mousedown = nil
-    browser_onMouseMove = blitwiz.on_mousemove
-    blitwiz.on_mousemove = nil
-    browser_onInit = blitwiz.on_init
-    blitwiz.on_init = nil
+    -- create button which shall lead us back:
+    local backbutton = blitwizard.object:new(blitwizard.object.o2d,
+    "return.png")
+    backbutton:pinToCamera()
+    function backbutton:onGeometryLoaded()
+        -- place button into top right corner:
+        local w,h = blitwizard.graphics.getCameras()[1]:
+        getVisible2dAreaDimensions()
+        self:setPosition(w - self:getDimensions(), 0)
+    end
+    function backbutton:onMouseClick()
+        -- return to sample browser:
+        browser:cleanUpAfterExample() -- this also destroys us
+        browser:launchSelection()
+    end
+    backbutton:setZIndex(9998)
 
-    -- Load example
+    -- destroy all sample browser objects:
+    browser.destroyBrowser()
+
+    -- load example
     dofile("game.lua")
-
-    -- Wrap blitwiz.graphics.loadImage to load an image only if not present:
-    if browser_loadImage_wrapped ~= true then
-        browser_loadImage_wrapped = true
-
-        -- wrap loadImage:
-        local f = blitwiz.graphics.loadImage
-        function blitwiz.graphics.loadImage(imgname)
-            -- don't do anything if already being loaded or present
-            if blitwiz.graphics.isImageLoaded(imgname) ~= nil then
-                return
-            end
-
-            -- otherwise, load:
-            f(imgname)
-        end
-
-        -- wrap loadImageAsync:
-        local f = blitwiz.graphics.loadImageAsync
-        function blitwiz.graphics.loadImageAsync(imgname)
-            -- don't do anything if already being loaded or present
-            if blitwiz.graphics.isImageLoaded(imgname) ~= nil then
-                -- fire the callback if fully loaded:
-                if blitwiz.graphics.isImageLoaded(imgname) == true then
-                    blitwiz.on_image(imgname, true)
-                end
-                return
-            end
-
-            -- otherwise, load:
-            f(imgname)
-        end
-    end
-
-    -- Wrap drawing to show return button:
-    local f = blitwiz.on_draw
-    example_start_time = blitwiz.time.getTime()
-    blitwiz.on_draw = function()
-        f()
-        blitwiz.graphics.drawImage("return.png", {x=blitwiz.graphics.getWindowSize()-blitwiz.graphics.getImageSize("return.png"), y= -150 + math.min(150, (blitwiz.time.getTime() - example_start_time) * 0.2)})
-    end
-
-    -- Wrap on_mousedown to enable clicking the return button:
-    local f = blitwiz.on_mousedown
-    blitwiz.on_mousedown = function(button, x, y)
-        local imgw,imgh = blitwiz.graphics.getImageSize("return.png")
-        if (x > blitwiz.graphics.getWindowSize()-imgw and y < imgh) then
-            -- Wipe physics objects:
-            find_and_delete_physics_objects()
-
-            -- Unload some often-conflicting images:
-            blitwiz.graphics.unloadImage("bg.png")
-            blitwiz.graphics.unloadImage("background.png")
-
-            -- Restore event functions of the sample browser:
-            blitwiz.on_close = browser_on_close
-            blitwiz.on_mousedown = browser_on_mousedown
-            blitwiz.on_mousemove = browser_on_mousemove
-            blitwiz.on_init = browser_on_init
-            blitwiz.on_draw = browser_on_draw
-            blitwiz.on_step = browser_on_step
-            return
-        else
-            if f ~= nil then
-                f(button, x, y)
-            end
-        end
-    end
-    -- Run example
-    blitwiz.on_init()
 end
 
 function blitwizard.onClose()
