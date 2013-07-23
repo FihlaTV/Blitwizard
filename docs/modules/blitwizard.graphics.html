@@ -99,6 +99,13 @@
 	<td class="name" ><a href="#getDesktopDisplayMode">getDesktopDisplayMode&nbsp;()</a></td>
 	<td class="summary">Get the current display mode of the desktop.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#createDynamicTexture">createDynamicTexture&nbsp;(texture_name, lua_file_name, callback, parameters)</a></td>
+	<td class="summary">Create a runtime-created texture with the given name,
+ and the given lua file which gets executed to create
+ the image, and the given callback function which
+ gets executed once the texture has been created.</td>
+	</tr>
 </table>
 <h2><a href="#Class_camera">Class camera </a></h2>
 <table class="function_list">
@@ -328,6 +335,54 @@
           <span class="types"><span class="type">number</span></span>
         height in pixels</li>
     </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "createDynamicTexture"></a>
+    <strong>createDynamicTexture&nbsp;(texture_name, lua_file_name, callback, parameters)</strong>
+    </dt>
+    <dd>
+    Create a runtime-created texture with the given name,
+ and the given lua file which gets executed to create
+ the image, and the given callback function which
+ gets executed once the texture has been created.
+ Add additional parameters which get passed
+ to the lua function in the file.
+<p> This allows the creation of textures from
+ code at runtime, rather than just loading regular image
+ files.
+<p> For the given lua file name, you can also specify actual
+ lua source code (as a string) instead of a file name.
+<p> The only functions available to that
+ executed lua file (or provided lua code) will be those
+ in the ??? module (and some basic lua functions).
+<p> After the callback has been called, the texture
+ can be used e.g. for <a href="../modules/blitwizard.html#object:new">blitwizard.object:new</a>.
+<p> Please note the dynamic image creation is <b>not optimised for speed</b>
+ and it might take a while (a few seconds) for the callback to fire
+ or even longer, depending on what your image creation function does.
+<p> The image creation function gets run <i>in parallel</i> to your game
+ though, so it won't block or stop anything until it's complete.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">texture_name</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the name of the dynamic texture. Any string you like, but it mustn't have been used for a previous dynamic texture already.</li>
+        <li><span class="parameter">lua_file_name</span>
+            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
+         the name of a lua file to be executed. It will be run similar to dofile() does it, but inside the context of image creation with just ??? available. It needs to return an ??? at the end. Instead of a lua code file name, you can actually specify actual lua code aswell (as a string containing lua code, not a function)</li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         the callback function which will be called when the image creation was completed. As first parameter, it will be passed the texture_name string, as second true/or false depending on the success, and in case of failure (false), the third parameter will be an error string</li>
+        <li><span class="parameter">parameters</span>
+            <span class="types"><span class="type">any</span></span>
+         (optional) any additional parameters here..</li>
+    </ul>
+
 
 
 

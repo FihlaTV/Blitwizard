@@ -276,6 +276,41 @@ int luafuncs_getDesktopDisplayMode(lua_State* l) {
 #endif
 }
 
+/// Create a runtime-created texture with the given name,
+// and the given lua file which gets executed to create
+// the image, and the given callback function which
+// gets executed once the texture has been created.
+// Add additional parameters which get passed
+// to the lua function in the file.
+//
+// This allows the creation of textures from
+// code at runtime, rather than just loading regular image
+// files.
+//
+// For the given lua file name, you can also specify actual
+// lua source code (as a string) instead of a file name.
+//
+// The only functions available to that
+// executed lua file (or provided lua code) will be those
+// in the @{blitwizard.image} module (and some basic lua functions).
+//
+// After the callback has been called, the texture
+// can be used e.g. for @{blitwizard.object:new}.
+//
+// Please note the dynamic image creation is <b>not optimised for speed</b>
+// and it might take a while (a few seconds) for the callback to fire
+// or even longer, depending on what your image creation function does.
+//
+// The image creation function gets run <i>in parallel</i> to your game
+// though, so it won't block or stop anything until it's complete.
+// @function createDynamicTexture
+// @tparam string texture_name the name of the dynamic texture. Any string you like, but it mustn't have been used for a previous dynamic texture already.
+// @tparam string lua_file_name the name of a lua file to be executed. It will be run similar to dofile() does it, but inside the context of image creation with just @{blitwizard.image} available. It needs to return an @{blitwizard.image.image|image reference} at the end. Instead of a lua code file name, you can actually specify actual lua code aswell (as a string containing lua code, not a function)
+// @tparam function callback the callback function which will be called when the image creation was completed. As first parameter, it will be passed the texture_name string, as second true/or false depending on the success, and in case of failure (false), the third parameter will be an error string
+// @tparam any parameters (optional) any additional parameters here..
+int luafuncs_graphics_createDynamicTexture(lua_State* l) {
+    return 0;
+}
 
 #endif  // USE_GRAPHICS
 
