@@ -792,6 +792,7 @@ SDLADDED=no
 statictest=`echo $STATIC_LIBS_USE | grep lua`
 AS_IF([test -z "$statictest"], [
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DNOLLIMITS"
+    AC_DEFINE([NOLLIMITS], [], [disable use of llimits-based float2int optimisation])
     AS_IF([test "x$SHARED_LUA_5_2" = xyes],[
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DLUA_5_2_HEADER"
         AC_DEFINE([LUA_5_2_HEADER], [], [Enable use of lua 5.2 include folder])
