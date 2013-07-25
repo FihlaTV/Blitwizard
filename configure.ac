@@ -794,6 +794,7 @@ AS_IF([test -z "$statictest"], [
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DNOLLIMITS"
     AS_IF([test "x$SHARED_LUA_5_2" = xyes],[
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DLUA_5_2_HEADER"
+        AC_DEFINE([LUA_5_2_HEADER], [], [Enable use of lua 5.2 include folder])
     ])
 ])
 AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
