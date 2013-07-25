@@ -100,7 +100,7 @@ function blitwizard.onInit()
 
     -- spawn a few orbs (see spawnOrb code below):
     local i = 0
-    while i < 50 do
+    while i < 10 do
         spawnOrb()
         i = i + 1
     end

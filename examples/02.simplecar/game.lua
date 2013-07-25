@@ -10,16 +10,17 @@
 print("Simple car example in blitwizard")
 
 
-function blitwiz.on_init()
+function blitwizard.onInit()
 	-- This function is called right after blitwizard has
 	-- started. You would normally want to open up a
 	-- window here with blitwiz.graphics.setWindow().
 	
 	-- Open a window
-	blitwiz.graphics.setWindow(640, 480, "Simple Car")
+	blitwizard.graphics.setMode(640, 480, "Simple Car")
 	
-	-- Think of a car position:
-	carx = 0
+	-- Think of a car position at the very left of the screen:
+	carx = (blitwizard.graphics.getCameras()[1]:
+    getVisible2dAreaDimensions()) / 2 - 0.2
 	-- We will use this later in the step function and
 	-- increase it steadily for a moving car.
 	
@@ -55,7 +56,7 @@ function blitwiz.on_draw()
 	blitwiz.graphics.drawImage("nightmask.png", {x=mw/2 - w/2, y=mh/2 - h/2})
 end
 
-function blitwiz.on_close()
+function blitwizard.onClose()
 	-- The user has attempted to close the window,
 	-- so we want to respect his wishes and quit :-)
 	os.exit(0)
