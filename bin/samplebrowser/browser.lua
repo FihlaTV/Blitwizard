@@ -122,6 +122,11 @@ function browser.runExample(number)
 
     -- load example
     dofile("game.lua")
+
+    -- run init function again:
+    if type(blitwizard.onInit) == "function" then
+        blitwizard.onInit()
+    end
 end
 
 function blitwizard.onClose()

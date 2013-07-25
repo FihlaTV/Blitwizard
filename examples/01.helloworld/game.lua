@@ -11,52 +11,87 @@
 
 print("Hello world example in blitwizard")
 
--- All blitwiz.on_* functions are predetermined by
--- blitwizard and are called when various things happen
--- (if you have added them to your program). This allows
--- you to react to certain events (e.g. program has loaded,
--- the window is redrawn etc.).
+-- All blitwizard.on* functions (e.g. blitwizard.onInit)
+-- are predetermined by blitwizard and are called when
+-- various things happen (if you have added them to
+-- your program).
+-- This allows you to react to certain events
+-- (e.g. program has loaded, the window is redrawn etc.).
 
 -- For more information on which callback functions are
 -- available, check the other examples or see the full
--- documentation on http://games.homeofjones.de/blitwizard/
+-- documentation at http://www.blitwizard.de/doc-files/api-stable
 
 -- Warn if we run without templates (you can remove this from
 -- your own game if you wish to, it is just for convenience)
-if blitwiz.templatesinitialised ~= true then
+if blitwizard.templatesinitialised ~= true then
     error "The templates/ sub folder with the templates is apparently missing. Please copy it into the same folder as your game.lua before you start up."
 end
 
-function blitwiz.on_init()
+function blitwizard.onInit()
 	-- This function is called right after blitwizard has
-	-- started. You would normally want to open up a
-	-- window here with blitwiz.graphics.setWindow().
+	-- started.
+	-- You may want to open up a window here,
+	-- using blitwizard.graphics.setMode().
 
 	-- Open a window
 	function openwindow()
-		blitwiz.graphics.setWindow(640, 480, "Hello World", false) -- resolution/size: 640x480, title: "Hello World", fullscreen: false/no
+		blitwizard.graphics.setMode(640, 480, "Hello World", false)
+        -- resolution/size: 640x480, title: "Hello World", fullscreen: false/no
 	end
 	if pcall(openwindow) == false then
 		-- Opening a window failed.
 		-- Open fullscreen at any resolution (for Android)
-		resolution = blitwiz.graphics.getDisplayModes()[1]
-		blitwiz.graphics.setWindow(resolution[1], resolution[2], "Hello World", true)
+		resolution = blitwizard.graphics.getDisplayModes()[1]
+		blitwizard.graphics.setMode(
+        resolution[1], resolution[2], "Hello World", true)
 	end
 
-	-- Load images
-	blitwiz.graphics.loadImage("hello_world.png")
-    blitwiz.graphics.loadImage("system_info.png")
+    -- Create hello world:
+    local helloworld = blitwizard.object:new(
+    blitwizard.object.o2d, "hello_world.png")
+    helloworld:setPosition(0, -2)
+
+    -- Create system info title:
+    local si = blitwizard.object:new(
+    blitwizard.object.o2d, "system_info.png")
+    si:pinToCamera()
+
+    -- Create system info text:
+    local stxt = blitwizard.font.text:new(
+    _VERSION .. ",\nrunning on: "  ..
+    os.sysname() .. " (" .. os.sysversion() ..
+    ")")
+
+    function si:onGeometryLoaded()
+        -- place at left botom:
+        local camw,camh =
+        blitwizard.graphics.getCameras()[1]:
+        getVisible2dAreaDimensions(true)
+
+        local imgw,imgh =
+        self:getDimensions()
+        
+        self:setPosition(1, camh - imgh - 1)
+
+        -- move text aswell:
+        local mx,my = self:getPosition()
+        stxt:setPosition(mx + 0.5, my + 1)
+    end
 end
 
-function blitwiz.on_keydown(key)
-	-- When pressing space, we can switch between accelerated and software rendering with this:
+function blitwizard.onKeyDown(key)
+	-- When pressing space, we can switch between
+	-- accelerated and software rendering with this:
 	if key == "space" then
 		if switchedtosoftware ~= true then
-			blitwiz.graphics.setWindow(600,480,"Hello World", false, "software")
+			blitwizard.graphics.setMode(600, 480,
+            "Hello World", false, "software")
 			switchedtosoftware = true
 			print("Now: software mode")
 		else
-			blitwiz.graphics.setWindow(600,480,"Hello World", false)
+			blitwizard.graphics.setMode(600, 480,
+            "Hello World", false)
 			switchedtosoftware = false
 			print("Now: accelerated mode")
 		end
@@ -67,7 +102,7 @@ function blitwiz.on_keydown(key)
 	end
 end
 
-function blitwiz.on_draw()
+function blitwizard.on_draw()
 	-- This gets called each time the window is redrawn.
 	-- If you don't put this function here or if you don't put
 	-- any drawing calls into it, the window will simply stay
@@ -85,7 +120,7 @@ function blitwiz.on_draw()
 	-- Done!
 end
 
-function blitwiz.on_close()
+function blitwizard.onClose()
 	-- This function gets called whenever the user clicks
 	-- the close button in the window title bar.
 	
@@ -94,7 +129,7 @@ function blitwiz.on_close()
 	os.exit(0)
 end
 
-function blitwiz.on_step()
+--[[function blitwiz.on_step()
 	-- This gets called with fixed 60 FPS constantly (it
 	-- will get called more often if FPS are lower to
 	-- keep up).
@@ -117,5 +152,6 @@ function blitwiz.on_step()
 		-- Remove leading -- from next line to enable quitting after 10s:
         --os.exit(0)
 	end
-end
+end]]
+
 
