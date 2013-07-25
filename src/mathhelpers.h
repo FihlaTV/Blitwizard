@@ -43,8 +43,13 @@ int pointisccw(double x1, double y1, double x2, double y2, double px, double py)
 #ifdef FASTMATH
 
 // use the fast double > int32 conversion from Lua
+#ifdef LUA_5_2_HEADER
+#include "lua5.2/lua.h"
+#include "lua5.2/llimits.h"
+#else
 #include "lua.h"
 #include "llimits.h"
+#endif
 static inline int fastdoubletoint32(double i) {
     int n;
     lua_number2int(n, i);
