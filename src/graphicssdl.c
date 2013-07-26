@@ -530,29 +530,47 @@ int resizable, const char* title, const char* renderer, char** error) {
 
     // create window
     if (fullscreen) {
-        mainwindow = SDL_CreateWindow(title, 0,0, width, height, SDL_WINDOW_FULLSCREEN);
+        mainwindow = SDL_CreateWindow(title, 0, 0, width, height,
+        SDL_WINDOW_FULLSCREEN);
         mainwindowfullscreen = 1;
     } else {
         mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, width, height, 0);
         mainwindowfullscreen = 0;
     }
+
     if (!mainwindow) {
-        snprintf(errormsg,sizeof(errormsg),"Failed to open SDL window: %s", SDL_GetError());
+        snprintf(errormsg, sizeof(errormsg),
+        "Failed to open SDL window: %s", SDL_GetError());
         errormsg[sizeof(errormsg)-1] = 0;
         *error = strdup(errormsg);
         return 0;
     }
 
+    // see if we actually ended up with the resolution we wanted:
+    int actualwidth, actualheight;
+    SDL_GetWindowSize(mainwindow, &actualwidth, &actualheight);
+    if (actualwidth != width || actualheight != height) {
+        if (fullscreen) {  // we failed to get the requested resolution:
+            SDL_DestroyWindow(mainwindow);
+            snprintf(errormsg, sizeof(errormsg), "Failed to open "
+            "SDL window: ended up with other resolution than requested");
+            *error = strdup(errormsg);
+            return 0;
+        }
+    }
+
     // Create renderer
     if (!softwarerendering) {
-        mainrenderer = SDL_CreateRenderer(mainwindow, rendererindex, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+        mainrenderer = SDL_CreateRenderer(mainwindow, rendererindex,
+        SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
         if (!mainrenderer) {
             softwarerendering = 1;
             strcpy(preferredrenderer, "software");
         }
     }
     if (softwarerendering) {
-        mainrenderer = SDL_CreateRenderer(mainwindow, -1, SDL_RENDERER_SOFTWARE);
+        mainrenderer = SDL_CreateRenderer(mainwindow, -1,
+        SDL_RENDERER_SOFTWARE);
     }
     if (!mainrenderer) {
         // we failed to create the renderer
