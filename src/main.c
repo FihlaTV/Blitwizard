@@ -240,9 +240,11 @@ static void mousebuttonevent(int button, int release, int x, int y) {
             free(error);
         }
     }
+#ifdef USE_GRAPHICS
     if (!release) {
         luacfuncs_objectgraphics_processMouseClick(x, y, button);
     }
+#endif
 }
 static void mousemoveevent(int x, int y) {
     char* error;
@@ -265,7 +267,9 @@ static void mousemoveevent(int x, int y) {
             free(error);
         }
     }
+#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_processMouseMove(x, y);
+#endif
 }
 
 static void keyboardevent(const char* key, int release) {
