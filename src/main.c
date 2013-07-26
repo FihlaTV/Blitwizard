@@ -68,7 +68,6 @@ int wantquit = 0; // set to 1 if there was a quit event
 int suppressfurthererrors = 0; // a critical error was shown, don't show more
 int windowisfocussed = 0;
 int appinbackground = 0; // app is in background (mobile/Android)
-static int sdlinitialised = 0; // sdl was initialised and needs to be quit
 char* templatepath = NULL; // global template directory path as determined at runtime
 char* gameluapath = NULL; // game.lua path as determined at runtime
 char* binpath = NULL;  // path to blitwizard binary
@@ -122,16 +121,14 @@ void* main_DefaultPhysics2dPtr() {
 
 void main_Quit(int returncode) {
     listeners_CloseAll();
-    if (sdlinitialised) {
 #ifdef USE_SDL_AUDIO
-        // audio_Quit(); // FIXME: workaround for
-        // http://bugzilla.libsdl.org/show_bug.cgi?id=1396
-        // (causes an unclean shutdown)
+    audio_Quit();
+    // FIXME: make sure this is ok with
+    // http://bugzilla.libsdl.org/show_bug.cgi?id=1396
 #endif
 #ifdef USE_GRAPHICS
-        graphics_Quit();
+    graphics_Quit();
 #endif
-    }
     exit(returncode);
 }
 
