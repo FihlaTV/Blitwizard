@@ -24,6 +24,7 @@
 #include "config.h"
 #include "os.h"
 
+#include <limits.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -155,9 +156,10 @@ static void graphics2dsprites_recalculateSpriteShortcuts(void) {
             memset(&shortcut[shortcutsFilled], 0, sizeof(*shortcut));
             shortcut[shortcutsFilled].entrance = spr;
             shortcut[shortcutsFilled].zindex = spr->zindex;
-            shortcut[shortcutsFilled].nextzindex = -1;
+            shortcut[shortcutsFilled].nextzindex = INT_MIN;
             shortcut[shortcutsFilled].pinnedToCamera =
             (spr->pinnedToCamera >= 0);
+            shortcut[shortcutsFilled].nextPinnedToCamera = 0;
             if (shortcutsFilled > 0) {
                 shortcut[shortcutsFilled-1].nextzindex = spr->zindex;
                 shortcut[shortcutsFilled-1].nextPinnedToCamera =
@@ -514,7 +516,7 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     int i = 0;
     while (i < shortcutsFilled-1) {
         if (shortcut[i].nextzindex <= s->zindex ||
-        (s->pinnedToCamera >= 0 && shortcut[i].nextPinnedToCamera)) {
+        (s->pinnedToCamera >= 0 && !shortcut[i].nextPinnedToCamera)) {
             // the next jump shortcut is past the interesting sprites,
             // so use this one:
             if (shortcut[i].entrance) {
