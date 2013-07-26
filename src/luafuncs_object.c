@@ -1087,7 +1087,9 @@ int luafuncs_object_setScale(lua_State* l) {
         obj->scale2d.x = x;
         obj->scale2d.y = y;
     }
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
     luacfuncs_object_handleScalingForPhysics(obj);
+#endif
     return 0;
 }
 
