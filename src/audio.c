@@ -102,7 +102,7 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
     char preferredbackend[20] = "";
 #ifdef WINDOWS
     if (backend && strcasecmp(backend, "waveout") == 0) {
-        strcpy(preferredbackend, "waveout");
+        strcpy(preferredbackend, "winmm");
     }
     if (backend && (strcasecmp(backend, "directsound") == 0 || strcasecmp(backend, "dsound") == 0)) {
         strcpy(preferredbackend, "directsound");
@@ -145,7 +145,7 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
     fmt.freq = 48000;
     if (!s16) {
         fmt.format = AUDIO_F32SYS;
-    }else{
+    } else {
         fmt.format = AUDIO_S16;
     }
     fmt.channels = 2;
