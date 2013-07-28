@@ -66,8 +66,7 @@ function blitwizard.onInit()
     function si:onGeometryLoaded()
         -- place at left botom:
         local camw,camh =
-        blitwizard.graphics.getCameras()[1]:
-        getVisible2dAreaDimensions(true)
+        blitwizard.graphics.getCameras()[1]:getDimensions()
 
         local imgw,imgh =
         self:getDimensions()

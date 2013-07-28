@@ -63,11 +63,11 @@ function blitwizard.onInit()
     bar:setZIndex(1)
 
     -- scale top bar to the width of the visible area
-    -- (camera:getVisible2dAreDimensions(false) returns
+    -- (camera:getDimensions(false) returns
     -- the visible area for pinned objects, so without
     -- zoom as for normal objects):
     function bar:onGeometryLoaded()
-        local w,h = cameras[1]:getVisible2dAreaDimensions(false)
+        local w,h = cameras[1]:getDimensions()
         bar:scaleToDimensions(w, nil)
     end
 
@@ -78,7 +78,7 @@ function blitwizard.onInit()
 
     -- move to a nice position:
     function button:onGeometryLoaded()
-        local w,h = cameras[1]:getVisible2dAreaDimensions(false)
+        local w,h = cameras[1]:getDimensions()
         self:setScale(0.7, 0.7)
         local tx,th = self:getDimensions()
         self:setPosition(w/2 - tx/2, h/2 + h/6)

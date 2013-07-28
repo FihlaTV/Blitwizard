@@ -275,8 +275,8 @@ int luafuncs_camera_new(lua_State* l) {
 
 /// Specify a 2d position in the range from 0,0 to
 // w,h with w,h being the camera visible area size
-// as from @{blitwizard.graphics.camera:getVisible2dAreaDimensions|
-// getVisible2dAreaDimensions} with consider_zoom set to <b>false</b>.
+// as from @{blitwizard.graphics.camera:getDimensions|
+// getDimensions} with consider_zoom set to <b>false</b>.
 //
 // (So the position you specify is the coordinates a
 // @{blitwizard.object:pinToCamera|pinned object} would have on screen
@@ -373,46 +373,54 @@ int luafuncs_camera_set2dCenter(lua_State* l) {
     return 0;
 }
 
-/// Get the game units of the visible 2d area of the game world
-// shown through this camera. This depends on the camera's
-// @{blitwizard.graphics.camera:getPixelDimensionsOnScreen|actual size
-// in pixels on the screen}, the camera's
-// @{blitwizard.graphics.camera:get2dZoomFactor|
-// 2d zoom factor} and the camera's @{blitwizard.graphics.camera:get2dAspectRatio|
-// 2d aspect ratio}.
+/// Get the size of the camera in game units (so the size of the
+// visible world area it shows).
 //
-// <i>Note on 3d objects:</i>
-// There is no similar function for 3d objects, because in 3d it
-// largely depends on the camera's position and angle which objects
-// will be visible how large on the screen, while for 2d it only
-// depends on zoom and aspect ratio.
+// consider_zoom = false gives you the area of
+// @{blitwizard.object:pinToCamera|pinned objects} which the camera
+// shows, which is not influenced by zoom. (this is the default if
+// consider_zoom is no specified at all)
+//
+// consider_zoom = true is a special case useful for 2d,
+// which gives you the camera's dimensions according to the current
+// zoom factor.
+//
+// The result of this function depends on the camera's
+// @{blitwizard.graphics.camera:getPixelDimensionsOnScreen|
+// actual size in pixels on the screen}, the camera's
+// @{blitwizard.graphics.camera:get2dZoomFactor|
+// 2d zoom factor} (for consider_zoom set to true) and the camera's
+// @{blitwizard.graphics.camera:get2dAspectRatio|
+// 2d aspect ratio}.
 //
 // <i>Note on @{blitwizard.object:pinToCamera|pinned} 2d objects:</i>
 // If you want to know the area visible in game units for
 // @{blitwizard.object:pinToCamera|pinned objects} which are unaffected
 // by camera zoom when drawn, specify <i>false</i> as first parameter
 // for not taking the zoom into account.
-// @function getVisible2dAreaDimensions
-// @tparam boolean consider_zoom (optional) defaults to true. Specifies whether
-// the zoom factor should be taken into account. Set to <i>true</i> if yes,
-// <i>false</i> if not.
-// @treturn number width the width of the visible 2d world area
-// @treturn number height the height of the visible 2d world area
-int luafuncs_camera_getVisible2dAreaDimensions(lua_State* l) {
+// @function getDimensions
+// @tparam boolean consider_zoom (optional) defaults to false.
+// Specifies whether the 2d zoom factor should be taken into account.
+// Set to <i>true</i> if yes, <i>false</i> if not.
+// @treturn number width the width of the camera in game units
+// @treturn number height the height of the camera in game units
+int luafuncs_camera_getDimensions(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:getVisible2dAreaDimensions");
+    l, 1, 0, "blitwizard.graphics.camera:getDimensions");
 
     // if the camera default unit -> pixel conversion size isn't known yet:
     if (!unittopixelsset) {
-        return haveluaerror(l, "this function is uanvailable before first blitwizard.graphics.setMode call");
+        return haveluaerror(l, "this function is unavailable before the "
+        "first blitwizard.graphics.setMode call");
     }
 
     int considerzoom = 0;
     // get consider_zoom parameter:
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         if (lua_type(l, 2) != LUA_TBOOLEAN) {
-            return haveluaerror(l, badargument1, 1, "blitwizard.graphics.camera:"
-            "getVisible2dAreaDimensions", "boolean", lua_strtype(l, 2));
+            return haveluaerror(l, badargument1, 1,
+            "blitwizard.graphics.camera:"
+            "getDimensions", "boolean", lua_strtype(l, 2));
         }
         considerzoom = lua_toboolean(l, 2);
     }

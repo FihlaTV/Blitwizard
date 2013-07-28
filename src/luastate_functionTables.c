@@ -187,8 +187,8 @@ void luastate_CreateCameraTable(lua_State* l) {
     "getPixelDimensionsOnScreen");
     luastate_registerfunc(l, &luafuncs_camera_setPixelDimensionsOnScreen,
     "setPixelDimensionsOnScreen");
-    luastate_registerfunc(l, &luafuncs_camera_getVisible2dAreaDimensions,
-    "getVisible2dAreaDimensions");
+    luastate_registerfunc(l, &luafuncs_camera_getDimensions,
+    "getDimensions");
     luastate_registerfunc(l, &luafuncs_camera_get2dZoomFactor,
     "get2dZoomFactor");
     luastate_registerfunc(l, &luafuncs_camera_set2dZoomFactor,

@@ -42,6 +42,7 @@
 #ifdef USE_SDL_GRAPHICS
 #include "SDL.h"
 #endif
+#include "file.h"
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "luaheader.h"
@@ -477,21 +478,31 @@ int luafuncs_object_new(lua_State* l) {
     int is3d = (lua_tointeger(l, 2) == 1);
 
     // second argument, if present, needs to be the resource:
-    const char* resource = NULL;
+    const char* resourcerelative = NULL;
     if (lua_gettop(l) >= 3 && lua_type(l, 3) != LUA_TNIL) {
         if (lua_type(l, 3) != LUA_TSTRING) {
             return haveluaerror(l, badargument1, 2, "blitwizard.object:new",
             "string", lua_strtype(l, 3));
         }
-        resource = lua_tostring(l, 3);
+        resourcerelative = lua_tostring(l, 3);
     }
 
-    //printf("[1] preparing registry table stuff %llu\n", time_GetMicroseconds());
+    // immediately turn this into an absolute path so os.chdir() is safe:
+    char* resource = NULL;
+    if (resourcerelative) {
+        resource = file_GetAbsolutePathFromRelativePath(
+        resourcerelative);
+        if (!resource) {
+            return haveluaerror(l, "failed to allocate or determine "
+            "absolute path");
+        }
+    }
 
     // create new object
     struct blitwizardobject* o = malloc(sizeof(*o));
     if (!o) {
         luacfuncs_object_clearRegistryTable(l, o);
+        free(resource);
         return haveluaerror(l, "failed to allocate new object");
     }
     memset(o, 0, sizeof(*o));
@@ -499,28 +510,19 @@ int luafuncs_object_new(lua_State* l) {
     if (!is3d) {
         o->parallax = 1;
     }
+
     // compose object registry entry string
     snprintf(o->regTableName, sizeof(o->regTableName),
     "bobj_table_%p", o);
 
-    //printf("[2] remembering resource path %llu\n", time_GetMicroseconds());
-
     // remember resource path:
     if (resource) {
-        o->respath = strdup(resource);
-        if (!o->respath) {
-            luacfuncs_object_clearRegistryTable(l, o);
-            free(o);
-            return haveluaerror(l, "failed to allocate resource path for new "
-            "object");
-        }
+        o->respath = resource;
     }
 
     //printf("[3] Calling luacfuncs_objectAddedDeleted %llu\n", time_GetMicroseconds());
 
     luacfuncs_objectAddedDeleted(o, 1);
-
-    //printf("[4] Adding us to list %llu\n", time_GetMicroseconds());
 
     // add us to the object list:
     o->next = objects;
@@ -529,26 +531,18 @@ int luafuncs_object_new(lua_State* l) {
     }
     objects = o;
 
-    //printf("[5] preparing selfRefname %llu\n", time_GetMicroseconds());
-
     // prepare registry entry name for self reference:
     snprintf(o->selfRefName, sizeof(o->selfRefName), "bobj_self_%p", o);
-
-    //printf("[6] calling luafuncs_objectgraphics_load %llu\n", time_GetMicroseconds());
 
     // if resource is present, start loading it:
 #ifdef USE_GRAPHICS
     luafuncs_objectgraphics_load(o, o->respath);
 #endif
 
-    //printf("[7] creating central idref %llu\n", time_GetMicroseconds());
-
     // create idref to object, which we will store up to object deletion:
     lua_pushstring(l, o->selfRefName);
     luacfuncs_pushbobjidref(l, o);
     lua_settable(l, LUA_REGISTRYINDEX);
-
-    //printf("[8] re-obtaining idref %llu\n", time_GetMicroseconds());
 
     // obtain ref again:
     luacfuncs_pushbobjidref(l, o); 

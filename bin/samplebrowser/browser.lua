@@ -98,16 +98,18 @@ function browser.destroyBrowser()
 end
 
 function browser.runExample(number)
-    os.chdir("../../examples/" .. examples[menufocus] .. "/")
-
-    -- create button which shall lead us back:
+    -- this button shall lead us back
     local backbutton = blitwizard.object:new(blitwizard.object.o2d,
     "return.png")
+
+    -- change to example directory:
+    os.chdir("../../examples/" .. examples[menufocus] .. "/")
+
+    -- place back button at correct position:
     backbutton:pinToCamera()
     function backbutton:onGeometryLoaded()
         -- place button into top right corner:
-        local w,h = blitwizard.graphics.getCameras()[1]:
-        getVisible2dAreaDimensions()
+        local w,h = blitwizard.graphics.getCameras()[1]:getDimensions()
         self:setPosition(w - self:getDimensions(), 0)
     end
     function backbutton:onMouseClick()

@@ -19,8 +19,7 @@ function blitwizard.onInit()
 	blitwizard.graphics.setMode(640, 480, "Simple Car")
 	
 	-- Think of a car position at the very left of the screen:
-	carx = (blitwizard.graphics.getCameras()[1]:
-    getVisible2dAreaDimensions()) / 2 - 0.2
+	carx = (blitwizard.graphics.getCameras()[1]:getDimensions()) / 2 - 0.2
 	-- We will use this later in the step function and
 	-- increase it steadily for a moving car.
 	

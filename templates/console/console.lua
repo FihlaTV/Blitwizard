@@ -120,7 +120,7 @@ do
         consoleBg:setScale(1, 1)
         local w,h = consoleBg:getDimensions()
         local cw,ch = blitwizard.graphics.getCameras()[1]:
-        getVisible2dAreaDimensions(false)
+        getDimensions()
         consoleBg:setScale(cw/w, consoleHeight/h)
     end
     function consoleBg:onGeometryLoaded()
@@ -325,7 +325,7 @@ do
             if consoleTextObj then
                 -- get a bit of info about screen size etc:
                 local cw,ch = blitwizard.graphics.getCameras()[1]:
-                getVisible2dAreaDimensions(false)
+                getDimensions()
 
                 -- shift to the right when entering very long lines:
                 local shiftleft = 0        
