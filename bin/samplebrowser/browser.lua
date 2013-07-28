@@ -67,7 +67,6 @@ function browser.launchSelection()
         local b = buttons[i]
         function b:onMouseClick()
             -- run the given example:
-            print("Launching example " .. exnumber)
             browser.runExample(exnumber)
         end
         y = y + 0.8
@@ -75,11 +74,21 @@ function browser.launchSelection()
     end
 end
 
+function countobj()
+    local c = 0
+    for v in blitwizard.getAllObjects() do
+        c = c + 1
+    end
+    return c
+end
+
 function browser.cleanUpAfterExample()
     -- delete all blitwizard objects:
+    local i = 0
     local o = (blitwizard.getAllObjects())()
     while o ~= nil do
         o:destroy()
+        i = i + 1
         o = (blitwizard.getAllObjects())()
     end
 end

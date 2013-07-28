@@ -105,7 +105,11 @@ static int luacfuncs_getObjectsIterator(lua_State* l) {
         "iterator is outdated");
     }
     // iterate further:
-    oid->currentObj = oid->currentObj->next;
+    if (oid->currentObj) {
+        oid->currentObj = oid->currentObj->next;
+    } else {
+        oid->currentObj = objects;
+    }
     // skip all deleted objects:
     while (oid->currentObj && oid->currentObj->deleted) {
         oid->currentObj = oid->currentObj->next;
@@ -140,7 +144,7 @@ int luafuncs_getAllObjects(lua_State* l) {
     struct objectiteratordata* oid = lua_newuserdata(l, sizeof(*oid));
     memset(oid, 0, sizeof(*oid));
     oid->iteratorChangeId = iteratorChangeId;
-    oid->currentObj = objects;
+    oid->currentObj = NULL;
 
     // create closure:
     lua_pushcclosure(l, luacfuncs_getObjectsIterator, 1);

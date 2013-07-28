@@ -22,38 +22,41 @@ function blitwizard.onInit()
 	carx = (blitwizard.graphics.getCameras()[1]:getDimensions()) / 2 - 0.2
 	-- We will use this later in the step function and
 	-- increase it steadily for a moving car.
-	
-	-- Load images
-	blitwiz.graphics.loadImage("background.png")
-	blitwiz.graphics.loadImage("car.png")
-	blitwiz.graphics.loadImage("nightmask.png")
+
+    -- create background object:
+    local bg = blitwizard.object:new(
+    blitwizard.object.o2d, "background.png")
+    bg:setZIndex(1)
+
+    -- creat car object:	
+	local car = blitwizard.object:new(
+    blitwizard.object.o2d, "car.png")
+    car:setZIndex(2)
+    function car:onGeometryLoaded()
+        -- once the geometry is loaded and the texture size is known,
+        -- start moving on the screen:
+        function self:doAlways()
+            -- get current pos and window size:
+            local x,y = self:getPosition()
+            local w,h = blitwizard.graphics.getCameras()[1]:getDimensions()
+            -- get size of the car image (=us)
+            local iw, ih = self:getDimensions()
+            -- advance position and warp from right to left border:
+            x = x + 0.05
+            if x >= w/2 + iw/2 then
+                x = -(w/2) - iw/2
+            end
+            -- set final position to car:
+            self:setPosition(x, h/2-ih/2)
+        end
+    end    
+
+    -- create in-front night mask for nice vignette:
+	local mask = blitwizard.object:new(
+    blitwizard.object.o2d, "nightmask.png")
+    mask:setZIndex(3)
 end
 
-function blitwiz.on_keydown(key)
-	-- Quit on escape
-	if  key == "escape" then
-		os.exit(0)
-	end
-end
-
-function blitwiz.on_draw()
-	-- Draw scenery:
-	
-	-- Calculate background position
-	local w,h = blitwiz.graphics.getImageSize("background.png")
-	local mw,mh = blitwiz.graphics.getWindowSize()
-
-	-- Draw background
-	blitwiz.graphics.drawImage("background.png", {x=mw/2 - w/2, y=mh/2 - h/2})
-
-	-- Draw car
-	local carwidth,carheight = blitwiz.graphics.getImageSize("car.png");
-	-- We want to draw it at the car x position, and directly on the ground of the window
-	blitwiz.graphics.drawImage("car.png", {x=carx, y=mh - carheight}); 
-	
-	-- Draw night mask
-	blitwiz.graphics.drawImage("nightmask.png", {x=mw/2 - w/2, y=mh/2 - h/2})
-end
 
 function blitwizard.onClose()
 	-- The user has attempted to close the window,
@@ -62,15 +65,4 @@ function blitwizard.onClose()
 end
 
 
-function blitwiz.on_step()
-	-- We will continuously move our car here:
-	carx = carx + 1
-	-- Check whether we exceeded screen bounds:
-	local w,h = blitwiz.graphics.getWindowSize()
-	if carx >= w then
-		-- Set us back to the left border
-		local imgwidth,imgheight = blitwiz.graphics.getImageSize("car.png")
-		carx = -imgwidth
-	end
-end
 

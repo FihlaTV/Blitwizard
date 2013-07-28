@@ -714,6 +714,12 @@ void* userdata) {
         }
         graphicstexturelist_AddTextureToHashmap(
         gtm);
+
+        // assume initial usage:
+        gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] =
+        time(NULL);
+        gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] =
+        time(NULL);
     }
     request->gtm = gtm;
 
@@ -722,10 +728,6 @@ void* userdata) {
     if (gtm->failedToLoad && gtm->failedToLoadTime + 10 < time(NULL)) {
         gtm->failedToLoad = 0;
     }
-
-    // assume initial usage:
-    request->gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] =
-    time(NULL);
 
     mutex_Lock(textureReqListMutex);
 
