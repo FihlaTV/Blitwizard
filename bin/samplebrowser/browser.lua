@@ -110,11 +110,21 @@ function browser.runExample(number)
     function backbutton:onGeometryLoaded()
         -- place button into top right corner:
         local w,h = blitwizard.graphics.getCameras()[1]:getDimensions()
-        self:setPosition(w - self:getDimensions(), 0)
+        local iw,ih = self:getDimensions()
+        self:setPosition(w - iw, -ih)
+
+        -- move button down:
+        function self:doAlways()
+            local x,y = self:getPosition()
+            y = math.min(0, y + 0.05)
+            self:setPosition(x, y)
+        end
     end
     function backbutton:onMouseClick()
         -- return to sample browser:
+        self:destroy()
         browser:cleanUpAfterExample() -- this also destroys us
+        os.chdir("../../bin/samplebrowser/")
         browser:launchSelection()
     end
     backbutton:setZIndex(9998)
