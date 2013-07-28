@@ -79,7 +79,10 @@ function browser.cleanUpAfterExample()
     -- delete all blitwizard objects:
     local o = (blitwizard.getAllObjects())()
     while o ~= nil do
-        o:destroy()
+        -- the deletion might fail, hence pcall it:
+        pcall(function()
+            o:destroy()
+        end)
         o = (blitwizard.getAllObjects())()
     end
 end

@@ -743,12 +743,10 @@ void* userdata) {
 
 void texturemanager_usingRequest(
 struct texturerequesthandle* request, int visibility) {
-    if (!request->gtm) {
+    if (!request) {
         return;
     }
-    mutex_Lock(textureReqListMutex);
     request->gtm->lastUsage[visibility] = time(NULL);
-    mutex_Release(textureReqListMutex); 
 }
 
 void texturemanager_destroyRequest(
@@ -938,10 +936,10 @@ void* userdata) {
     return 1;
 }
 
-static time_t lastAdoptCheck = 0;
-static void texturemanager_adoptTextures(void) {
-    if (lastAdoptCheck + ADOPTINTERVAL < time(NULL)) {
-        lastAdoptCheck = time(NULL);
+static time_t lastAdaptCheck = 0;
+static void texturemanager_adaptTextures(void) {
+    if (lastAdaptCheck + ADAPTINTERVAL < time(NULL)) {
+        lastAdaptCheck = time(NULL);
     } else {
         return;
     }
@@ -954,7 +952,7 @@ static void texturemanager_adoptTextures(void) {
 void texturemanager_tick(void) {
     mutex_Lock(textureReqListMutex);
     texturemanager_processUnhandledRequests();
-    texturemanager_adoptTextures();
+    texturemanager_adaptTextures();
     mutex_Release(textureReqListMutex);
 }
 

@@ -115,6 +115,10 @@ void* userdata);
 // manager can decide whether to scale it up or down to save
 // memory for the textures used most).
 //
+// !! LOCK WITH texturemanager_lockForTextureAccess BEFORE CALL !!
+//
+// Levels of visibility explained:
+//
 // Please make sure you actually use the diverse levels of
 // visibility provided. It is not so important you
 // use the INVISIBLE option when things get out of visibility,
@@ -122,15 +126,21 @@ void* userdata);
 // possible to allow the scaling down of far away textures.
 //
 // DETAIL should only be used for very close up (a few meters
-// at best) textures. DISTANT should be used for anything
-// more far away than 50-100 meters.
+// at best) textures which are rendered at larger than
+// 1:1 pixel size.
+//
+// NORMAL should be used for anything rendered very close to 1:1.
+//
+// DISTANT should be used for anything notably below 1:1 size,
+// e.g. 50% in screen pixels compared to its actual texture size
+// or smaller.
 //
 // If you do actually have visibility algorithms, use
 // INVISIBLE for things that aren't rendered at all. However,
 // avoid this for any objects that would be considered DETAIL
-// judging from their distance, because they will otherwise
-// pop up with ugly low res textures when suddenly getting
-// visible again in close range :-)
+// judging from their distance but which are just temporarily obscured,
+// because they will otherwise pop up with ugly low res textures
+// when suddenly getting visible again in close range :-)
 void texturemanager_usingRequest(
 struct texturerequesthandle* request, int visibility);
 #define USING_AT_VISIBILITY_DETAIL 0
@@ -139,13 +149,13 @@ struct texturerequesthandle* request, int visibility);
 #define USING_AT_VISIBILITY_INVISIBLE 3
 #define USING_AT_COUNT 4
 
-// for normal use:
+// will be used for normal use:
 #define TEXSIZE_HIGH 1024
-// for previously normal, now distant use:
+// will be used for previously normal, now distant use:
 #define TEXSIZE_MEDIUM 512
-// for longer distant use (SCALEDOWNSECONDSLONG):
+// will be used for longer distant use (SCALEDOWNSECONDSLONG):
 #define TEXSIZE_LOW 128
-// when not used for a longer time:
+// will be used when texture not used for a longer time:
 #define TEXSIZE_TINY 32
 
 // How fast to scale down things:
@@ -175,7 +185,7 @@ struct texturerequesthandle* request, int visibility);
 #endif
 
 // How often to check all textures for down- and upscaling:
-#define ADOPTINTERVAL 5
+#define ADAPTINTERVAL 5
 
 
 // Destroy a texture request. You will still get a textureSwitch

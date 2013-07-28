@@ -842,6 +842,7 @@ double* source_angle, int* phoriflip, int compensaterotation) {
 
 void graphics2dsprites_reportVisibility(void) {
     int c = graphics_GetCameraCount();
+    texturemanager_lockForTextureAccess();
     mutex_Lock(m);
     struct graphics2dsprite* sprite = spritelist;
     while (sprite) {
@@ -886,6 +887,7 @@ void graphics2dsprites_reportVisibility(void) {
         sprite = sprite->next;
     }
     mutex_Release(m); 
+    texturemanager_releaseFromTextureAccess();
 }
 
 void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
