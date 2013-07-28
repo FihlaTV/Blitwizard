@@ -106,6 +106,10 @@ static int luacfuncs_getObjectsIterator(lua_State* l) {
     }
     // iterate further:
     oid->currentObj = oid->currentObj->next;
+    // skip all deleted objects:
+    while (oid->currentObj && oid->currentObj->deleted) {
+        oid->currentObj = oid->currentObj->next;
+    }
     struct blitwizardobject* o = oid->currentObj;
     // pop iterator data:
     lua_pop(l, 1);
