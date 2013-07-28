@@ -847,7 +847,7 @@ void graphics2dsprites_reportVisibility(void) {
     struct graphics2dsprite* sprite = spritelist;
     while (sprite) {
         if (!sprite->texWidth || !sprite->texHeight
-        || sprite->loadingError) {
+        || sprite->loadingError || !sprite->tex) {
             sprite = sprite->next;
             continue;
         }

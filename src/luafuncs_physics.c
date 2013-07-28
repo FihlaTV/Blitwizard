@@ -91,20 +91,22 @@ int luafuncs_ray(lua_State* l, int use3d) {
 
     double startx = lua_tonumber(l, 1);
     double starty = lua_tonumber(l, 2);
-    double startz;
+    __attribute__ ((unused)) double startz = 0;
     if (use3d) {
         startz = lua_tonumber(l, 3);
     }
     double targetx = lua_tonumber(l, 3+use3d);
     double targety = lua_tonumber(l, 4+use3d);
-    double targetz;
+    __attribute__ ((unused)) double targetz = 0;
     if (use3d) {
         targetz = lua_tonumber(l, 6);
     }
 
     struct physicsobject* obj;
-    double hitpointx,hitpointy,hitpointz;
-    double normalx,normaly,normalz;
+    double hitpointx,hitpointy;
+    double hitpointz = 0;
+    double normalx,normaly;
+    double normalz = 0;
 
     int returnvalue;
     if (use3d) {
@@ -196,7 +198,8 @@ int luafuncs_set2dGravity(lua_State* l) {
 
 /// Set the world gravity for all 3d objects.
 // @function set3dGravity
-int luafuncs_set3dGravity(lua_State* l) {
+int luafuncs_set3dGravity(__attribute__((unused)) lua_State* l) {
+    // FIXME: remove __attribute__ ((unused)) when implementing this
     return 0;
 }
 
