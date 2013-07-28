@@ -103,7 +103,7 @@ function browser.runExample(number)
     "return.png")
 
     -- change to example directory:
-    os.chdir("../../examples/" .. examples[menufocus] .. "/")
+    os.chdir("../../examples/" .. examples[number] .. "/")
 
     -- place back button at correct position:
     backbutton:pinToCamera()
