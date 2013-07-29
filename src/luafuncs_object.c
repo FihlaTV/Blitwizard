@@ -265,6 +265,11 @@ static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
             o->next->prev = o->prev;
         }
 
+        // free resource path if any
+        if (o->respath) {   
+            free(o->respath);
+        }
+
         // free object
         free(o);
         return 1;
@@ -444,7 +449,7 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 // or false to make it receive or block mouse events (default: false)
 int luafuncs_object_setInvisibleToMouse(lua_State* l) {
     struct blitwizardobject* o =
-    toblitwizardobject(l, 1, 1, "blitwiz.object:setInvisibleToMouse");
+    toblitwizardobject(l, 1, 1, "blitwizard.object:setInvisibleToMouse");
 
     if (lua_type(l, 2) != LUA_TBOOLEAN) {
         haveluaerror(l, badargument1, 1,
@@ -736,7 +741,7 @@ int args, int* boolreturn) {
 int luafuncs_object_destroy(lua_State* l) {
     // delete the given object
     struct blitwizardobject* o =
-    toblitwizardobject(l, 1, 1, "blitwiz.object:destroy");
+    toblitwizardobject(l, 1, 1, "blitwizard.object:destroy");
 
     // tell getAllObjects() iterator of change:
     luacfuncs_objectAddedDeleted(o, 0);
@@ -1494,8 +1499,10 @@ int luacfuncs_object_doAllSteps(int count) {
               objects = o->next;
             }
             if (o->next) {
-              o->next->prev = o->prev;
+                o->next->prev = o->prev;
             }
+            o->next = NULL;
+            o->prev = NULL;
 
             // remove from important list:
             if (o->importantPrev || o->importantNext ||
@@ -1511,6 +1518,8 @@ int luacfuncs_object_doAllSteps(int count) {
                     o->importantNext->importantPrev = o->
                     importantPrev;
                 }
+                o->importantPrev = NULL;
+                o->importantNext = NULL;
             }
 
             // add to deleted list:
@@ -1548,6 +1557,8 @@ int luacfuncs_object_doAllSteps(int count) {
                     a->obj->importantNext->importantPrev = a->obj->
                     importantPrev;
                 }
+                a->obj->importantPrev = NULL;
+                a->obj->importantNext = NULL;
             }
         } else {
             if (!a->obj->importantPrev && !a->obj->importantNext &&

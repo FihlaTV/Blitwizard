@@ -224,8 +224,8 @@ graphics2dsprite* sprite) {
 
 // this callback will be called by the texture manager:
 static void graphics2dsprites_dimensionInfoCallback(
-struct texturerequesthandle* request, size_t width, size_t height,
-void* userdata) {
+__attribute__ ((unused)) struct texturerequesthandle* request,
+size_t width, size_t height, void* userdata) {
     mutex_Lock(m);
     struct graphics2dsprite* s = userdata;
 
@@ -263,7 +263,7 @@ struct graphics2dsprite* sprite, double alpha) {
 
 // this callback will be called by the texture manager:
 static void graphics2dsprites_textureSwitchCallback(
-struct texturerequesthandle* request,
+__attribute__ ((unused)) struct texturerequesthandle* request,
 struct graphicstexture* texture, void* userdata) {
     struct graphics2dsprite* s = userdata;
 
@@ -432,6 +432,9 @@ static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
 
     spritesInListCount--;
 
+    // if this is enabled for an event, recalculate event stuff:
+    graphics2dsprites_findLastEventSprites();
+
     // remove sprite from list:
     if (sprite->prev) {
         sprite->prev->next = sprite->next;
@@ -458,13 +461,15 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
 
     // check if we're enabled for any event:
     int i = 0;
-    while (i < SPRITE_EVENT_TYPE_COUNT) {
-        if (sprite->enabledForEvent[i]) {
-            eventSpriteCount[i]++;
-            // last event sprite needs to be recalculated:
-            lastEventSprite[i] = NULL;
+    if (sprite->visible) {
+        while (i < SPRITE_EVENT_TYPE_COUNT) {
+            if (sprite->enabledForEvent[i]) {
+                eventSpriteCount[i]--;
+                // last event sprite needs to be recalculated:
+                lastEventSprite[i] = NULL;
+            }
+            i++;
         }
-        i++;
     }
 
     // destroy texture manager request
@@ -480,7 +485,12 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
 
     // remove sprite from list:
     graphics2dsprites_removeFromList(sprite);
- 
+
+    // free resource path:
+    if (sprite->path) {
+        free(sprite->path);
+    } 
+
     // free sprite:
     free(sprite);
 
@@ -702,6 +712,7 @@ double* screen_h, double* screen_sourceX, double* screen_sourceY,
 double* screen_sourceW, double* screen_sourceH,
 double* source_angle, int* phoriflip, int compensaterotation) {
     assert(cameraId >= 0);
+    assert(sprite);
     // get camera settings:
     double zoom = graphics_GetCamera2DZoom(cameraId);
     double ratio = graphics_GetCamera2DAspectRatio(cameraId);
@@ -734,6 +745,9 @@ double* source_angle, int* phoriflip, int compensaterotation) {
     size_t actualTexW, actualTexH;
     if (tex) {
         graphics_GetTextureDimensions(tex, &actualTexW, &actualTexH);
+    } else {
+        actualTexW = texWidth;
+        actualTexH = texHeight;
     }
 
     // if the actual texture is upscaled or downscaled,
