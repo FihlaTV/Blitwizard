@@ -131,6 +131,115 @@ static int luacfuncs_getObjectsIterator(lua_State* l) {
     }
 }
 
+/// Scan for 2d @{blitwizard.object|objects} around the
+// given position in a circle with the given radius.
+// (@{blitwizard.object:pinToCamera|Pinned objects} will
+// be ignored)
+// Returns an iterator for all objects found.
+//
+// Use this if you want to make an enemy scan for
+// the player or other things to attack.
+//
+// If you want
+// to have a true visibility check that takes walls
+// into account aswell, combine this with
+// @{blitwizard.physics.ray2d} (see usage example below).
+//
+// Please note this function is potentially <b>slow</b> if
+// there are a lot of objects around.
+//
+// If you want to scan for 3d objects, use
+// @{blitwizard.scanFor3dObjects|scanFor3dObjects}.
+// @function scanFor2dObjects
+// @tparam number x coordinate of position around which to scan
+// @tparam number y coordinate of position around which to scan
+// @tparam number radius the scan radius
+// @treturn function returns an iterator function
+// @usage
+// -- scan for 2d objects around a circle with a radius of 5
+// -- around the position 0,0 and print their exact location
+// for obj in blitwizard.scanForObjects(0, 0, 5)
+//     local x, y = obj:getPosition()
+//     print("Found an object at " .. x .. ", " .. y)
+// end
+//
+// -- scan for 2d objects which can actually be seen
+// -- from position 1,1 with a maximum distance of 3:
+// for obj in blitwizard.scanFor2dObjects(1, 1, 3)
+//     local x, y = obj:getPosition()
+//     if blitwizard.physics.ray2d(1, 1, x, y) == nil then
+//         -- nothing blocks our sight!
+//         print("We can see an object at " .. x .. ", " .. y)
+//     end
+// end
+static int luacfuncs_scanForObjectsIterator(lua_State* l) {
+    // check if the iterated results table is empty:
+    if (lua_rawlen(l, lua_upvalueindex(1)) == 0) {
+        // we reached the end of the object list.
+        // return nil:
+        lua_pushnil(l);
+        return 1;
+    }
+    // get the last object from the table:
+    lua_pushnumber(l, lua_rawlen(l, lua_upvalueindex(1)));
+    lua_gettable(l, lua_upvalueindex(1));
+    // now remove the last object from the table:
+    lua_pushnumber(l, lua_rawlen(l, lua_upvalueindex(1)));
+    lua_pushnil(l);
+    lua_settable(l, lua_upvalueindex(1));
+    // return the object from the table:
+    return 1;
+}
+int luafuncs_scanFor2dObjects(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.scanForObjects", "number",
+        lua_strtype(l, 1));
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.scanForObjects", "number",
+        lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.scanForObjects", "number",
+        lua_strtype(l, 3));
+    }
+    if (lua_tonumber(l, 3) <= 0) {
+        return haveluaerror(l, badargument2,
+        "blitwizard.scanForObjects",
+        "scan range needs to be positive");
+    }
+
+    // ok now we validated all args, extract them:
+    double range = lua_tonumber(l, 3);
+    double x = lua_tonumber(l, 0);
+    double y = lua_tonumber(l, 1);
+
+    // create a table with all objects for the
+    // iterator function:
+    lua_newtable(l);
+    // FIXME: this badly needs a quadtree.
+    struct blitwizardobject* o = objects;
+    while (o) {
+        if (!o->is3d && !o->deleted) {
+            if (o->graphics && o->graphics->sprite) {
+                if (o->graphics->pinnedToCamera >= 0) {
+                    // skip pinned sprites
+                    continue;
+                }
+            }
+            luacfuncs_pushbobjidref(l, o);
+        } 
+        o = o->next;
+    }
+
+    // now create and return the iterator function:
+    lua_pushcclosure(l, luacfuncs_scanForObjectsIterator, 1);
+    return 1; 
+}
+
 /// Iterate through all existing objects, no matter if 2d or 3d.
 // @function getAllObjects
 // @treturn function returns an iterator function

@@ -43,6 +43,7 @@ Permission is granted to anyone to use this software for any purpose, including 
  ]]
 dofile(os.templatedir() .. "/font/font.lua")
 
+
 do
     blitwizard.console = {}
 
@@ -124,7 +125,7 @@ do
         consoleBg:setScale(cw/w, consoleHeight/h)
     end
     function consoleBg:onGeometryLoaded()
-        calculateConsoleBgSize()
+        consoleBg:setVisible(false)
         pcall(calculateConsoleBgSize)
     end
 
@@ -193,7 +194,7 @@ do
                 if insideQuotation == nil then
                     -- start quotation:
                     if part:startswith("[[") then
-                        insideQuotation = "]]"
+                        insideQuotation = "]" .. "]"
                     else
                         insideQuotation = part:sub(1, 1)
                     end
@@ -237,20 +238,22 @@ do
     function consoleBg:doAlways()
         trimConsole()
         
-        -- this will work as soon as blitwizard.graphics.setMode was called first:
-        local f = function()
-            consoleHeight = 240 / blitwizard.graphics.gameUnitToPixels()
-        end
-        if pcall(f) == true then
-            calculateConsoleLinesShown()
-            pcall(calculateConsoleBgSize)
-            if consoleLoaded == false then
-                consoleLoaded = true
-                createBlinkingCursor()
-            end
-        end
-
         if consoleOpened then
+            -- this will work as soon as blitwizard.graphics.setMode
+            -- has been called for first time:
+            local f = function()
+                consoleHeight = 240 / blitwizard.graphics.gameUnitToPixels()
+            end
+            if pcall(f) == true then
+                calculateConsoleLinesShown()
+                pcall(calculateConsoleBgSize)
+                if consoleLoaded == false then
+                    consoleLoaded = true
+                    createBlinkingCursor()
+                end
+                consoleBg:setVisible(true)
+            end
+
             local x,y = consoleBg:getPosition()
             if y < 0 then -- slide down
                 y = y + slideSpeed
@@ -296,7 +299,9 @@ do
             end
         else
             -- hide blinking text cursor:
-            blinkCursorText:setVisible(false)
+            if blinkCursorText ~= nil then
+                blinkCursorText:setVisible(false)
+            end
 
             -- delete the glyph objects of all lines since they're invisible:
             local i = 1
@@ -349,7 +354,8 @@ do
         end
 
         -- handle blinking cursor
-        if consoleOpened or y > -consoleHeight then
+        if (consoleOpened or y > -consoleHeight)
+        and blinkCursorText ~= nil then
             -- draw blinking cursor
             blinkCursorTime = blinkCursorTime + 1
             if blinkCursorTime > 80 then
@@ -368,7 +374,9 @@ do
                 blinkCursorText:setVisible(false)
             end
         else
-            blinkCursorText:setVisible(false)
+            if blinkCursorText then
+                blinkCursorText:setVisible(false)
+            end
         end
     end
 

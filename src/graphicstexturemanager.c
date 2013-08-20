@@ -690,7 +690,10 @@ size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
 struct graphicstexture* texture, void* userdata),
 void* userdata) {
-
+#ifdef DEBUGTEXTUREMANAGER
+    //printf("[TEXMAN] [REQUEST] new request for %s, new total "
+    //"count: %llu\n", path, texturemanager_getRequestCount());
+#endif
     // allocate request:
     struct texturerequesthandle* request = malloc(sizeof(*request));
     if (!request) {
@@ -1064,7 +1067,7 @@ int texturemanager_getTextureGpuSizeInfo(const char* texture) {
     return loaded;
 }
 
-size_t texturemanager_getRequestCount() {
+size_t texturemanager_getRequestCount(void) {
     size_t count = 0;
     mutex_Lock(textureReqListMutex);
     struct texturerequesthandle* req = textureRequestList;

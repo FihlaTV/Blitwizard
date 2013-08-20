@@ -35,17 +35,7 @@ function blitwizard.onInit()
 	-- using blitwizard.graphics.setMode().
 
 	-- Open a window
-	function openwindow()
-		blitwizard.graphics.setMode(640, 480, "Hello World", false)
-        -- resolution/size: 640x480, title: "Hello World", fullscreen: false/no
-	end
-	if pcall(openwindow) == false then
-		-- Opening a window failed.
-		-- Open fullscreen at any resolution (for Android)
-		resolution = blitwizard.graphics.getDisplayModes()[1]
-		blitwizard.graphics.setMode(
-        resolution[1], resolution[2], "Hello World", true)
-	end
+    blitwizard.graphics.setMode(640, 480, "Hello World", false)
 
     -- Create hello world:
     local helloworld = blitwizard.object:new(
@@ -101,24 +91,6 @@ function blitwizard.onKeyDown(key)
 	end
 end
 
-function blitwizard.on_draw()
-	-- This gets called each time the window is redrawn.
-	-- If you don't put this function here or if you don't put
-	-- any drawing calls into it, the window will simply stay
-	-- black.
-	
-	-- When the image is loaded, draw it centered:
-	local w,h = blitwiz.graphics.getImageSize("hello_world.png")
-	local mw,mh = blitwiz.graphics.getWindowSize()
-
-	-- Actual drawing happens here
-	blitwiz.graphics.drawImage("hello_world.png", {x=mw/2 - w/2, y=mh/2 - h/2})
-    blitwiz.graphics.drawImage("system_info.png", {x=mw/2 - w/2, y=mh/2 + h/2 - 30})
-	blitwiz.font.draw("default", _VERSION .. ",\nrunning on: "  .. os.sysname() .. " (" .. os.sysversion() .. ")", mw/2 - w/2 + 20, mh/2 + h/2 - 30 + 28)
-
-	-- Done!
-end
-
 function blitwizard.onClose()
 	-- This function gets called whenever the user clicks
 	-- the close button in the window title bar.
@@ -128,29 +100,5 @@ function blitwizard.onClose()
 	os.exit(0)
 end
 
---[[function blitwiz.on_step()
-	-- This gets called with fixed 60 FPS constantly (it
-	-- will get called more often if FPS are lower to
-	-- keep up).
-	
-	-- This is the right place for game physics/continuous
-	-- movements or calculations of any sort that are part
-	-- of your continuously running game simulation.
-
-	-- For this example, we could e.g. quit after 10 seconds -
-	-- see below for an explanation on how to achieve that:
-	
-    -- Remember the time when we started up:
-	if startupTime == nil then -- Check if we already remembered the time
-        -- We didn't, therefore set it:
-		startupTime = blitwiz.time.getTime()
-	end
-
-    -- Check when 10 seconds have expired:
-	if blitwiz.time.getTime() > startupTime + 10000 then
-		-- Remove leading -- from next line to enable quitting after 10s:
-        --os.exit(0)
-	end
-end]]
 
 

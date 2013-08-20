@@ -292,6 +292,7 @@ int id) {
     if (!o->is3d) {
         if (o->graphics->sprite) {
             graphics2dsprites_setPinnedToCamera(o->graphics->sprite, id);
+            o->graphics->pinnedToCamera = id;
         }
     }
 }

@@ -49,6 +49,9 @@ int luafuncs_object_setInvisibleToMouse(lua_State* l);
 // iterate through all objects:
 int luafuncs_getAllObjects(lua_State* l);
 
+// scan for nearby objects:
+int luafuncs_scanFor2dObjects(lua_State* l);
+
 // set the function on top of the stack as event function:
 // (put nil on top of the stack if you want to clear the event)
 void luacfuncs_object_setEvent(lua_State* l,

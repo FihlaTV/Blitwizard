@@ -30,7 +30,8 @@
 struct objectgraphicsdata {
     double alpha;  // object alpha (0 invisible, 1 solid)
     int geometryCallbackDone;  // set to 1 once geometry callback was fired
-    int visibilityCallbackDone;  // set to 1 once geometry callback was fired
+    int visibilityCallbackDone;  // set to 1 once visibility callback was fired
+    int pinnedToCamera;  // copy of currently set 'pinned state'
 #ifdef USE_GRAPHICS
     // explicit sprite dimensions we set (or 0,0 if texture dimensions)
     double width, height;

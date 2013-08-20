@@ -66,16 +66,12 @@
     <ul>
         <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@gmail.com)</li>
+        <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
     </ul>
 
 
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
-	<tr>
-	<td class="name" ><a href="#getCameras">getCameras&nbsp;()</a></td>
-	<td class="summary">Get a table array with all currently active cameras.</td>
-	</tr>
 	<tr>
 	<td class="name" ><a href="#setMode">setMode&nbsp;(width, height, title, fullscreen, renderer)</a></td>
 	<td class="summary">This function sets the graphics mode.</td>
@@ -106,6 +102,10 @@
  the image, and the given callback function which
  gets executed once the texture has been created.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#getCameras">getCameras&nbsp;()</a></td>
+	<td class="summary">Get a table array with all currently active cameras.</td>
+	</tr>
 </table>
 <h2><a href="#Class_camera">Class camera </a></h2>
 <table class="function_list">
@@ -121,8 +121,8 @@
 	<td class="name" ><a href="#camera:screenPosTo2dWorldPos">camera:screenPosTo2dWorldPos&nbsp;(pos_x, pos_y, parallax)</a></td>
 	<td class="summary">Specify a 2d position in the range from 0,0 to
  w,h with w,h being the camera visible area size
- as from <a href="../modules/blitwizard.graphics.html#camera:getVisible2dAreaDimensions">
- getVisible2dAreaDimensions</a> with consider_zoom set to <b>false</b>.</td>
+ as from <a href="../modules/blitwizard.graphics.html#camera:getDimensions">
+ getDimensions</a> with consider_zoom set to <b>false</b>.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#camera:set2dCenter">camera:set2dCenter&nbsp;(x_position, y_position)</a></td>
@@ -130,9 +130,9 @@
  centered by the camera.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:getVisible2dAreaDimensions">camera:getVisible2dAreaDimensions&nbsp;(consider_zoom)</a></td>
-	<td class="summary">Get the game units of the visible 2d area of the game world
- shown through this camera.</td>
+	<td class="name" ><a href="#camera:getDimensions">camera:getDimensions&nbsp;(consider_zoom)</a></td>
+	<td class="summary">Get the size of the camera in game units (so the size of the
+ visible world area it shows).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#camera:getPixelDimensionsOnScreen">camera:getPixelDimensionsOnScreen&nbsp;()</a></td>
@@ -159,26 +159,6 @@
 
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
-    <dt>
-    <a name = "getCameras"></a>
-    <strong>getCameras&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get a table array with all currently active cameras.
- (per default, this is only one)
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
-    </ol>
-
-
-
-
-</dd>
     <dt>
     <a name = "setMode"></a>
     <strong>setMode&nbsp;(width, height, title, fullscreen, renderer)</strong>
@@ -388,6 +368,26 @@
 
 
 </dd>
+    <dt>
+    <a name = "getCameras"></a>
+    <strong>getCameras&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get a table array with all currently active cameras.
+ (per default, this is only one)
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
+    </ol>
+
+
+
+
+</dd>
 </dl>
     <h2><a name="Class_camera"></a>Class camera </h2>
         Blitwizard camera object which represents a render camera.
@@ -456,8 +456,8 @@
     <dd>
     Specify a 2d position in the range from 0,0 to
  w,h with w,h being the camera visible area size
- as from <a href="../modules/blitwizard.graphics.html#camera:getVisible2dAreaDimensions">
- getVisible2dAreaDimensions</a> with consider_zoom set to <b>false</b>.
+ as from <a href="../modules/blitwizard.graphics.html#camera:getDimensions">
+ getDimensions</a> with consider_zoom set to <b>false</b>.
 <p> (So the position you specify is the coordinates a
  <a href="../modules/blitwizard.html#object:pinToCamera">pinned object</a> would have on screen
  or the coordinates you get from <a href="../modules/blitwizard.html#onMouseMove">blitwizard.onMouseMove</a>)
@@ -530,21 +530,25 @@
 
 </dd>
     <dt>
-    <a name = "camera:getVisible2dAreaDimensions"></a>
-    <strong>camera:getVisible2dAreaDimensions&nbsp;(consider_zoom)</strong>
+    <a name = "camera:getDimensions"></a>
+    <strong>camera:getDimensions&nbsp;(consider_zoom)</strong>
     </dt>
     <dd>
-    Get the game units of the visible 2d area of the game world
- shown through this camera.  This depends on the camera's
- <a href="../modules/blitwizard.graphics.html#camera:getPixelDimensionsOnScreen">actual size
- in pixels on the screen</a>, the camera's
+    Get the size of the camera in game units (so the size of the
+ visible world area it shows).
+<p> consider_zoom = false gives you the area of
+ <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a> which the camera
+ shows, which is not influenced by zoom. (this is the default if
+ consider_zoom is no specified at all)
+<p> consider_zoom = true is a special case useful for 2d,
+ which gives you the camera's dimensions according to the current
+ zoom factor.
+<p> The result of this function depends on the camera's
+ <a href="../modules/blitwizard.graphics.html#camera:getPixelDimensionsOnScreen">
+ actual size in pixels on the screen</a>, the camera's
  <a href="../modules/blitwizard.graphics.html#camera:get2dZoomFactor">
- 2d zoom factor</a> and the camera's ???.
-<p> <i>Note on 3d objects:</i>
- There is no similar function for 3d objects, because in 3d it
- largely depends on the camera's position and angle which objects
- will be visible how large on the screen, while for 2d it only
- depends on zoom and aspect ratio.
+ 2d zoom factor</a> (for consider_zoom set to true) and the camera's
+ ???.
 <p> <i>Note on <a href="../modules/blitwizard.html#object:pinToCamera">pinned</a> 2d objects:</i>
  If you want to know the area visible in game units for
  <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a> which are unaffected
@@ -555,19 +559,19 @@
     <ul>
         <li><span class="parameter">consider_zoom</span>
             <span class="types"><span class="type">boolean</span></span>
-         (optional) defaults to true. Specifies whether
- the zoom factor should be taken into account. Set to <i>true</i> if yes,
- <i>false</i> if not.</li>
+         (optional) defaults to false.
+ Specifies whether the 2d zoom factor should be taken into account.
+ Set to <i>true</i> if yes, <i>false</i> if not.</li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
         <li>
           <span class="types"><span class="type">number</span></span>
-        width the width of the visible 2d world area</li>
+        width the width of the camera in game units</li>
         <li>
           <span class="types"><span class="type">number</span></span>
-        height the height of the visible 2d world area</li>
+        height the height of the camera in game units</li>
     </ol>
 
 

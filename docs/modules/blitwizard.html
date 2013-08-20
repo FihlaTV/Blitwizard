@@ -121,6 +121,11 @@
  after a specified time delay.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#scanForObjects">scanForObjects&nbsp;(x, y, radius)</a></td>
+	<td class="summary">Scan for <a href="../modules/blitwizard.html#Class_object">objects</a> around the
+ given position in a circle with the given radius.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
 	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
 	</tr>
@@ -622,6 +627,51 @@
 
 
 
+
+</dd>
+    <dt>
+    <a name = "scanForObjects"></a>
+    <strong>scanForObjects&nbsp;(x, y, radius)</strong>
+    </dt>
+    <dd>
+    Scan for <a href="../modules/blitwizard.html#Class_object">objects</a> around the
+ given position in a circle with the given radius.
+ Returns an iterator for all objects found.
+<p> Use this if you want to make an enemy scan for
+ the player or other things to attack.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x</span>
+            <span class="types"><span class="type">number</span></span>
+         coordinate of position around which to scan</li>
+        <li><span class="parameter">y</span>
+            <span class="types"><span class="type">number</span></span>
+         coordinate of position around which to scan</li>
+        <li><span class="parameter">radius</span>
+            <span class="types"><span class="type">number</span></span>
+         the scan radius</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">function</span></span>
+        returns an iterator function
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- scan for objects around a circle with a radius of 5
+</span> <span class="comment">-- around the position 0,0 and print their exact location
+</span> <span class="keyword">for</span> obj <span class="keyword">in</span> blitwizard.scanForObjects(<span class="number">0</span>, <span class="number">0</span>, <span class="number">5</span>)
+     <span class="keyword">local</span> x, y = obj:getPosition()
+     <span class="global">print</span>(<span class="string">"Found an object at "</span> .. x .. <span class="string">", "</span> .. y)
+ <span class="keyword">end</span></pre>
+    </ul>
 
 </dd>
     <dt>
