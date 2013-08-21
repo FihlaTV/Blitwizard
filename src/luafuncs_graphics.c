@@ -51,7 +51,7 @@
 #include "luafuncs_physics.h"
 #include "main.h"
 #include "graphics.h"
-
+#include "graphicstexturemanager.h"
 
 /// This function sets the graphics mode.
 // You can specify a resolution, whether your game should run in a window
@@ -250,6 +250,41 @@ int luafuncs_getDisplayModes(lua_State* l) {
         i++;
     }
     return 1;
+#else // ifdef USE_GRAPHICS
+    lua_pushstring(l, compiled_without_graphics);
+    return lua_error(l);
+#endif
+}
+
+/// Force a specified texture to be reloaded from disk
+// (from the original file path).
+//
+// This is useful if you want to allow the user to change
+// images which you can then reload on-the-fly.
+//
+// However, this shouldn't be a function you call regularly
+// midgame. It can hang:
+//
+// <b>Important:</b> In rare cases, this function can cause
+// a freeze of 1-3 seconds. Display some sort of loading
+// indicator before you're calling it to avoid user confusion
+// in such cases!
+//
+// <b>Note about callbacks:</b>
+// Please note the @{blitwizard.object:onGeometryLoaded|
+// geometry callback} might fire again
+// on 2d @{blitwizard.object|objects} using the texture.
+//
+// @function forceTextureReload
+// @tparam string path the file path of the texture to be unloaded
+int luafuncs_forceTextureReload(lua_State* l) {
+#ifdef USE_GRAPHICS
+    if (lua_type(l, 1) != LUA_TSTRING) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.graphics.forceTextureReload",
+        "string", lua_strtype(l, 1));
+    }
+    texturemanager_wipeTexture(lua_tostring(l, 1));
 #else // ifdef USE_GRAPHICS
     lua_pushstring(l, compiled_without_graphics);
     return lua_error(l);

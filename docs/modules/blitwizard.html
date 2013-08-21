@@ -121,8 +121,8 @@
  after a specified time delay.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#scanForObjects">scanForObjects&nbsp;(x, y, radius)</a></td>
-	<td class="summary">Scan for <a href="../modules/blitwizard.html#Class_object">objects</a> around the
+	<td class="name" ><a href="#scanFor2dObjects">scanFor2dObjects&nbsp;(x, y, radius)</a></td>
+	<td class="summary">Scan for 2d <a href="../modules/blitwizard.html#Class_object">objects</a> around the
  given position in a circle with the given radius.</td>
 	</tr>
 	<tr>
@@ -630,15 +630,25 @@
 
 </dd>
     <dt>
-    <a name = "scanForObjects"></a>
-    <strong>scanForObjects&nbsp;(x, y, radius)</strong>
+    <a name = "scanFor2dObjects"></a>
+    <strong>scanFor2dObjects&nbsp;(x, y, radius)</strong>
     </dt>
     <dd>
-    Scan for <a href="../modules/blitwizard.html#Class_object">objects</a> around the
+    Scan for 2d <a href="../modules/blitwizard.html#Class_object">objects</a> around the
  given position in a circle with the given radius.
+ (<a href="../modules/blitwizard.html#object:pinToCamera">Pinned objects</a> will
+ be ignored)
  Returns an iterator for all objects found.
 <p> Use this if you want to make an enemy scan for
  the player or other things to attack.
+<p> If you want
+ to have a true visibility check that takes walls
+ into account aswell, combine this with
+ <a href="../modules/blitwizard.physics.html#ray2d">blitwizard.physics.ray2d</a> (see usage example below).
+<p> Please note this function is potentially <b>slow</b> if
+ there are a lot of objects around.
+<p> If you want to scan for 3d objects, use
+ ???.
 
     <h3>Parameters:</h3>
     <ul>
@@ -665,11 +675,21 @@
     <h3>Usage:</h3>
     <ul>
         <pre class="example">
- <span class="comment">-- scan for objects around a circle with a radius of 5
+ <span class="comment">-- scan for 2d objects around a circle with a radius of 5
 </span> <span class="comment">-- around the position 0,0 and print their exact location
 </span> <span class="keyword">for</span> obj <span class="keyword">in</span> blitwizard.scanForObjects(<span class="number">0</span>, <span class="number">0</span>, <span class="number">5</span>)
      <span class="keyword">local</span> x, y = obj:getPosition()
      <span class="global">print</span>(<span class="string">"Found an object at "</span> .. x .. <span class="string">", "</span> .. y)
+ <span class="keyword">end</span>
+
+ <span class="comment">-- scan for 2d objects which can actually be seen
+</span> <span class="comment">-- from position 1,1 with a maximum distance of 3:
+</span> <span class="keyword">for</span> obj <span class="keyword">in</span> blitwizard.scanFor2dObjects(<span class="number">1</span>, <span class="number">1</span>, <span class="number">3</span>)
+     <span class="keyword">local</span> x, y = obj:getPosition()
+     <span class="keyword">if</span> blitwizard.physics.ray2d(<span class="number">1</span>, <span class="number">1</span>, x, y) == <span class="keyword">nil</span> <span class="keyword">then</span>
+         <span class="comment">-- nothing blocks our sight!
+</span>         <span class="global">print</span>(<span class="string">"We can see an object at "</span> .. x .. <span class="string">", "</span> .. y)
+     <span class="keyword">end</span>
  <span class="keyword">end</span></pre>
     </ul>
 

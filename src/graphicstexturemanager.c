@@ -804,6 +804,37 @@ static void texturemanager_processUnhandledRequests(void) {
     }
 }
 
+static void texturemanager_moveRequestToUnhandled(
+struct texturerequesthandle* request) {
+    if ((request->prev || request->next
+    || textureRequestList == request)) {
+        if (!request->unhandledPrev && !request->unhandledNext &&
+        !(unhandledRequestList == request)) {
+            // add it to unhandled list:
+            request->unhandledNext = unhandledRequestList;
+            if (request->unhandledNext) {
+                request->unhandledNext->unhandledPrev = request;
+            }
+            request->unhandledPrev = NULL;
+            unhandledRequestList = request;
+        }
+        // remove from regular request list:
+        if (request->prev) {
+            request->prev->next = request->next;
+        } else {
+            textureRequestList = request->unhandledNext;
+            if (textureRequestList) {
+                textureRequestList->prev = NULL;
+            }
+        }
+        if (request->next) {
+            request->next->prev = request->prev;
+        }
+        request->next = NULL;
+        request->prev = NULL;
+    }
+}
+
 static void texturemanager_forceRequestToDifferentSize(
 struct texturerequesthandle* request, struct graphicstexturemanaged* gtm,
 int newsize) {
@@ -835,33 +866,7 @@ int newsize) {
         // move request to unhandled request list:
         // (so it will try to re-obtain the texture if it's now
         // without any)
-        if ((request->prev || request->next
-        || textureRequestList == request)) {
-            if (!request->unhandledPrev && !request->unhandledNext &&
-            !(unhandledRequestList == request)) {
-                // add it to unhandled list:
-                request->unhandledNext = unhandledRequestList;
-                if (request->unhandledNext) {
-                    request->unhandledNext->unhandledPrev = request;
-                }
-                request->unhandledPrev = NULL;
-                unhandledRequestList = request;
-            }
-            // remove from regular request list:
-            if (request->prev) {
-                request->prev->next = request->next;
-            } else {
-                textureRequestList = request->unhandledNext;
-                if (textureRequestList) {
-                    textureRequestList->prev = NULL;
-                }
-            }
-            if (request->next) {
-                request->next->prev = request->prev;
-            }
-            request->next = NULL;
-            request->prev = NULL;
-        }
+        texturemanager_moveRequestToUnhandled(request);
     }
 }
 
@@ -923,11 +928,21 @@ struct graphicstexturemanaged* gtm, int neededversion) {
                     gtm->path, i);
 #endif
                 }
-                
             }
         }
         i++;
-    }     
+    }
+}
+
+static int texturemanager_textureSafeToDelete(struct graphicstexturemanaged* gtm) {
+    int i = 0;
+    while (i < gtm->scalelistcount) {
+        if (gtm->scalelist[i].locked || gtm->scalelist[i].writelock) {
+            return 0;
+        }
+        i++;
+    }
+    return 1;
 }
 
 static int texturemanager_checkTextureForScaling(
@@ -968,11 +983,38 @@ uint64_t texturemanager_getGpuMemoryUse() {
     return v;
 }
 
+static int needtowait = 0;
+static int texturemanager_deviceLostTexListCallback(
+struct graphicstexturemanaged* gtm,
+struct graphicstexturemanaged* gtm2,
+void* userdata) {
+    if (!texturemanager_textureSafeToDelete(gtm)) {
+        needtowait = 1;
+    }
+    return 1;
+}
+
 void texturemanager_deviceLost(void) {
 #ifdef DEBUGTEXTUREMANAGER
     printinfo("[TEXMAN] [DEVICE] Graphics device was closed.");
 #endif
     mutex_Lock(textureReqListMutex);
+
+    // if any sort of scaling process or caching process is underway,
+    // sadly we will need to wait for it to finish:
+    needtowait = 1;
+    while (needtowait) {
+        needtowait = 0;
+        graphicstexturelist_doForAllTextures(
+        &texturemanager_deviceLostTexListCallback, NULL);
+        if (!needtowait) {
+            break;
+        }
+        mutex_Release(textureReqListMutex);
+        time_Sleep(500);
+        mutex_Lock(textureReqListMutex);
+        needtowait = 1;
+    }
 
     // forbid further GPU uploads:
     noTextureUploads = 1;
@@ -1003,6 +1045,83 @@ void texturemanager_deviceLost(void) {
 
     // now throw all GPU textures away:
     graphicstexturelist_InvalidateHWTextures();
+
+    // move all regular requests to unhandled requests:
+    while (textureRequestList) {
+        texturemanager_moveRequestToUnhandled(textureRequestList);
+    }
+
+    mutex_Release(textureReqListMutex);
+}
+
+void texturemanager_wipeTexture(const char* tex) {
+    mutex_Lock(textureReqListMutex); 
+    
+    // find relevant texture entry:
+    struct graphicstexturemanaged* gtm =
+    graphicstexturelist_GetTextureByName(tex);
+
+    if (!gtm) {
+        // nothing to be reloaded here.
+        mutex_Release(textureReqListMutex);
+    }
+
+    while (!texturemanager_textureSafeToDelete(gtm)) {
+        // we need to wait. (this sucks, yes.)
+        mutex_Release(textureReqListMutex);
+        time_Sleep(500);
+        mutex_Lock(textureReqListMutex);
+    }
+
+    // find all affected requests and remove the texture from them:
+    struct texturerequesthandle* req = textureRequestList;
+    while (req) {
+        if (req->gtm == gtm) {
+            // steal its texture copy again:
+            if (req->handedTexture) {
+                req->textureSwitchCallback(req, NULL, req->userdata);
+                req->handedTexture = NULL;
+                req->handedTextureScaledEntry = NULL;
+            }
+
+            // move the request to unhandled so it reloads its texture:
+            texturemanager_moveRequestToUnhandled(req);
+        }
+        req = req->next;
+    }
+    // same for all unhandled requests:
+    req = unhandledRequestList;
+    while (req) {
+        if (req->gtm == gtm) {
+            // steal its texture copy again:
+            if (req->handedTexture) {
+                req->textureSwitchCallback(req, NULL, req->userdata);
+                req->handedTexture = NULL;
+                req->handedTextureScaledEntry = NULL;
+            }
+
+            // move the request to unhandled so it reloads its texture:
+            texturemanager_moveRequestToUnhandled(req);
+        }
+        req = req->next;
+    }
+
+    // wipe textures (they should be reloaded again):
+    graphicstexturelist_InvalidateTextureInHW(gtm);
+    int i = 0;
+    while (i < gtm->scalelistcount) {
+        struct graphicstexturescaled* st = &(gtm->scalelist[i]);
+        if (st->pixels) {
+            free(st->pixels);
+            st->pixels = NULL;
+        }
+        if (st->diskcachepath) {
+            // FIXME: we probably care to delete the file?
+            free(st->diskcachepath);
+            st->diskcachepath = NULL;
+        }
+        i++;
+    }
 
     mutex_Release(textureReqListMutex);
 }

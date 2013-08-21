@@ -27,6 +27,7 @@
 #ifdef USE_SDL_GRAPHICS
 
 //  various standard headers
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -534,7 +535,8 @@ int resizable, const char* title, const char* renderer, char** error) {
         SDL_WINDOW_FULLSCREEN);
         mainwindowfullscreen = 1;
     } else {
-        mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, width, height, 0);
+        mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_MINIMIZED);
         mainwindowfullscreen = 0;
     }
 
@@ -695,8 +697,8 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
                     // FIXME: just a workaround for
                     // http://bugzilla.libsdl.org/show_bug.cgi?id=1349
                     if (mainwindowfullscreen) {
-                        SDL_SetWindowFullscreen(mainwindow, SDL_FALSE);
-                        SDL_SetWindowFullscreen(mainwindow, SDL_TRUE);
+                        //SDL_SetWindowFullscreen(mainwindow, SDL_FALSE);
+                        //SDL_SetWindowFullscreen(mainwindow, SDL_TRUE);
                     }
 #endif
 #endif

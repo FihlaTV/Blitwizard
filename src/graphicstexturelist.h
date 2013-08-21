@@ -143,6 +143,8 @@ void graphicstexturelist_doForAllTextures(
 int (*callback)(struct graphicstexturemanaged* texture,
 struct graphicstexturemanaged* previoustexture, void* userdata),
 void* userdata);
+// Return 0 from the callback if you deleted a texture.
+// Return 1 if you just changed it (or read it).
 
 #endif  // USE_GRAPHICS
 

@@ -219,9 +219,20 @@ void texturemanager_releaseFromTextureAccess(void);
 // Report that the device was lost and that all GPU textures are now
 // declared garbage:
 void texturemanager_deviceLost(void);
+// THIS FUNCTION MIGHT HANG!! (worst case: 1-5 seconds)
+// It needs to wait for some concurrent processes to finish in some
+// rare cases. Expect it to hang a short bit.
 
 // Report that device was restored and GPU textures may be reuploaded:
 void texturemanager_deviceRestored(void);
+
+// Force a specific texture to be reloaded:
+void texturemanager_wipeTexture(const char* tex);
+// THIS FUNCTION MIGHT HANG!! (worst case: 1-5 seconds)
+// Similar to texturemanager_deviceLost(), this function might be
+// blocked by concurrent processes for which it needs to wait to finish!
+// It is less likely to hang than texturemanager_deviceLost(),
+// but don't be surprised if it does!
 
 // INFO FUNCTIONS //
 
