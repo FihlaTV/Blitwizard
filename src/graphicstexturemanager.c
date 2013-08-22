@@ -1064,6 +1064,7 @@ void texturemanager_wipeTexture(const char* tex) {
     if (!gtm) {
         // nothing to be reloaded here.
         mutex_Release(textureReqListMutex);
+        return;
     }
 
     while (!texturemanager_textureSafeToDelete(gtm)) {
