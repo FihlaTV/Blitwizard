@@ -746,14 +746,6 @@ void* userdata) {
     return request;
 }
 
-void texturemanager_usingRequest(
-struct texturerequesthandle* request, int visibility) {
-    if (!request) {
-        return;
-    }
-    request->gtm->lastUsage[visibility] = time(NULL);
-}
-
 void texturemanager_destroyRequest(
 struct texturerequesthandle* request) {
     if (!request) {
@@ -832,6 +824,32 @@ struct texturerequesthandle* request) {
         }
         request->next = NULL;
         request->prev = NULL;
+    }
+}
+
+
+void texturemanager_usingRequest(
+struct texturerequesthandle* request, int visibility) {
+    if (!request) {
+        return;
+    }
+    request->gtm->lastUsage[visibility] = time(NULL);
+
+    // see if the texture has been unloaded by now:
+    // (in which case we want to be sure to dump this to
+    // the unhandled request list)
+    int available = 0;
+    int i = 0;
+    while (i < request->gtm->scalelistcount) {
+        if (request->gtm->scalelist[i].gt) {
+            available = 1;
+            break;
+        }
+        i++;
+    }
+
+    if (!available) {
+        texturemanager_moveRequestToUnhandled(request);
     }
 }
 
