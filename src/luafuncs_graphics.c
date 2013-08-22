@@ -41,6 +41,7 @@
 #include "luaheader.h"
 
 #include "os.h"
+#include "file.h"
 #include "logging.h"
 #include "luaerror.h"
 #include "luastate.h"
@@ -284,7 +285,13 @@ int luafuncs_forceTextureReload(lua_State* l) {
         "blitwizard.graphics.forceTextureReload",
         "string", lua_strtype(l, 1));
     }
-    texturemanager_wipeTexture(lua_tostring(l, 1));
+    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, 1));
+    if (!p) {
+        return;
+    }
+    file_MakeSlashesCrossplatform(p);
+    texturemanager_wipeTexture(p);
+    free(p);
 #else // ifdef USE_GRAPHICS
     lua_pushstring(l, compiled_without_graphics);
     return lua_error(l);

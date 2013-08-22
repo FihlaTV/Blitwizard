@@ -160,13 +160,13 @@ struct texturerequesthandle* request, int visibility);
 
 // How fast to scale down things:
 // Going down to TINY roughly after this time:
-#define SCALEDOWNSECONDSVERYVERYLONG (60*2)
+#define SCALEDOWNSECONDSVERYVERYLONG (120*2)
 // Going down to LOW roughly after this time:
-#define SCALEDOWNSECONDSVERYLONG (60*1)
+#define SCALEDOWNSECONDSVERYLONG (120*1)
 // Going down to MEDIUM roughly after this time:
-#define SCALEDOWNSECONDSLONG 20
+#define SCALEDOWNSECONDSLONG 60
 // Going down to HIGH roughly after this time:
-#define SCALEDOWNSECONDS 5
+#define SCALEDOWNSECONDS 30
 
 // helps with debugging downscaling:
 //#define ULTRAFASTDOWNSCALE

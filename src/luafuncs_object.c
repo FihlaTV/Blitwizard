@@ -614,6 +614,7 @@ int luafuncs_object_new(lua_State* l) {
     if (resourcerelative) {
         resource = file_GetAbsolutePathFromRelativePath(
         resourcerelative);
+        file_MakeSlashesCrossplatform(resource);
         if (!resource) {
             return haveluaerror(l, "failed to allocate or determine "
             "absolute path");

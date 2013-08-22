@@ -64,6 +64,10 @@ uint64_t gpuMemUse = 0;
 // no texture uploads (e.g. device is currently lost)
 int noTextureUploads = 0;
 
+// max gpu uploads per tick:
+int maxuploads = 5;
+int currentuploads = 0;
+
 mutex* textureReqListMutex = NULL;
 struct texturerequesthandle {
     // the respective texture list entry:
@@ -378,6 +382,15 @@ struct graphicstexturemanaged* gtm, int slot) {
 #endif
                     return texturemanager_getRandomGPUTexture(gtm);
                 }
+                if (currentuploads >= maxuploads) {
+#ifdef DEBUGTEXTUREMANAGER
+                    printinfo("[TEXMAN] GPU upload of %s size %d DELAYED "
+                    "(max uploads)", gtm->path, i);
+#endif
+                    return texturemanager_getRandomGPUTexture(gtm);
+                }
+                currentuploads++;
+
 #ifdef DEBUGTEXTUREMANAGER
                 printinfo("[TEXMAN] GPU upload texture size %d of %s", i, gtm->path);
 #endif
@@ -989,6 +1002,7 @@ static void texturemanager_adaptTextures(void) {
 
 void texturemanager_tick(void) {
     mutex_Lock(textureReqListMutex);
+    currentuploads = 0;
     texturemanager_processUnhandledRequests();
     texturemanager_adaptTextures();
     mutex_Release(textureReqListMutex);
@@ -1073,6 +1087,7 @@ void texturemanager_deviceLost(void) {
 }
 
 void texturemanager_wipeTexture(const char* tex) {
+    printf("Wiping %s...\n", tex);
     mutex_Lock(textureReqListMutex); 
     
     // find relevant texture entry:
@@ -1080,10 +1095,13 @@ void texturemanager_wipeTexture(const char* tex) {
     graphicstexturelist_GetTextureByName(tex);
 
     if (!gtm) {
+        printf("Nothing to wipe!\n");
         // nothing to be reloaded here.
         mutex_Release(textureReqListMutex);
         return;
     }
+
+    printf("Will wipe!\n");
 
     while (!texturemanager_textureSafeToDelete(gtm)) {
         // we need to wait. (this sucks, yes.)
@@ -1125,7 +1143,7 @@ void texturemanager_wipeTexture(const char* tex) {
         req = req->next;
     }
 
-    // wipe textures (they should be reloaded again):
+    // wipe texture (it should be reloaded again):
     graphicstexturelist_InvalidateTextureInHW(gtm);
     int i = 0;
     while (i < gtm->scalelistcount) {
