@@ -512,6 +512,13 @@ double x, double y, double angle) {
 }
 
 static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
+#if (!defined(NDEBUG) && defined(EXTRADEBUG))
+    mutex_Release(m);
+    assert(graphics2dsprites_Count()
+    <= texturemanager_getRequestCount());
+    mutex_Lock(m);
+#endif
+
     // seek the earliest sprite (from the back)
     // which has a lower or equal zindex, and add us behind
     struct graphics2dsprite* s2 = spritelistEnd;
@@ -566,6 +573,23 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     } else {
         spritelist = s;
     }
+
+#if (!defined(NDEBUG) && defined(EXTRADEBUG))
+    mutex_Release(m);
+    assert(graphics2dsprites_Count()
+    <= texturemanager_getRequestCount());
+    mutex_Lock(m);
+#endif
+}
+
+static size_t graphics2dsprites_Count_internal(void) {
+    size_t count = 0;
+    struct graphics2dsprite* sprite = spritelist;
+    while (sprite) {
+        count++;
+        sprite = sprite->next;
+    }
+    return count;
 }
 
 struct graphics2dsprite* graphics2dsprites_create(
@@ -580,6 +604,7 @@ const char* texturePath, double x, double y, double width, double height) {
     struct graphics2dsprite* s = malloc(sizeof(*s));
     if (!s) {
         mutex_Release(m);
+        texturemanager_releaseFromTextureAccess();
         return NULL;
     }
     memset(s, 0, sizeof(*s));
@@ -601,16 +626,25 @@ const char* texturePath, double x, double y, double width, double height) {
     if (!s->path) {
         free(s);
         mutex_Release(m);
+        texturemanager_releaseFromTextureAccess();
         return NULL;
     }
     s->visible = 1;
 
     mutex_Release(m);
     // get a texture request:
+#ifdef EXTRADEBUG
+    assert(graphics2dsprites_Count()
+    <= texturemanager_getRequestCount());
+#endif
     s->request = texturemanager_requestTexture(
     s->path, graphics2dsprites_dimensionInfoCallback,
     graphics2dsprites_textureSwitchCallback,
     s);
+#ifdef EXTRADEBUG
+    assert(graphics2dsprites_Count()
+    <= texturemanager_getRequestCount());
+#endif
     mutex_Lock(m);
 
     // add us to the list:
@@ -999,15 +1033,10 @@ void* graphics2dsprites_getUserdata(struct graphics2dsprite* sprite) {
 }
 
 size_t graphics2dsprites_Count(void) {
-    size_t count = 0;
     mutex_Lock(m);
-    struct graphics2dsprite* sprite = spritelist;
-    while (sprite) {
-        count++;
-        sprite = sprite->next;
-    }
+    size_t c = graphics2dsprites_Count_internal();
     mutex_Release(m);
-    return count;
+    return c;
 }
 
 #endif

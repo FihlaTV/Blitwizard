@@ -38,6 +38,7 @@
 #include "config.h"
 #include "os.h"
 
+#include "file.h"
 #include "luaheader.h"
 #include "luaerror.h"
 #include "graphicstexturemanager.h"
@@ -77,7 +78,13 @@ int luafuncs_debug_getTextureUsageInfo(lua_State* l) {
         "blitwizard.debug.getTextureUsageInfo", "string",
         lua_strtype(l, 1));
     }
-    lua_pushnumber(l, texturemanager_getTextureUsageInfo(lua_tostring(l, -1)));
+    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_MakeSlashesCrossplatform(p);
+    lua_pushnumber(l, texturemanager_getTextureUsageInfo(p)); 
+    free(p);
 #else
     lua_pushnumber(l, -1);
 #endif
@@ -105,8 +112,14 @@ int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l) {
         "blitwizard.debug.getTextureUsageInfo", "string",
         lua_strtype(l, 1));
     }
+    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_MakeSlashesCrossplatform(p);
     lua_pushnumber(l,
-        texturemanager_getTextureGpuSizeInfo(lua_tostring(l, -1)));
+        texturemanager_getTextureGpuSizeInfo(p));
+    free(p);
 #else
     lua_pushnumber(l, 0);
 #endif

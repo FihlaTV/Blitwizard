@@ -30,6 +30,7 @@
 #include "config.h"
 #include "os.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -102,6 +103,21 @@ struct texturerequesthandle* unhandledRequestList = NULL;
 
 void texturemanager_lockForTextureAccess() {
     mutex_Lock(textureReqListMutex);
+}
+
+static size_t texturemanager_getRequestCount_internal(void) {
+    size_t count = 0;
+    struct texturerequesthandle* req = textureRequestList;
+    while (req) {
+        count++;
+        req = req->next;
+    }
+    req = unhandledRequestList;
+    while (req) {
+        count++;
+        req = req->unhandledNext;
+    }
+    return count;
 }
 
 void texturemanager_releaseFromTextureAccess() {
@@ -263,7 +279,8 @@ static void texturemanager_scaleTextureThread(void* userdata) {
     if (info->obtainedscale->pixels) {
         // allocate new pixel data:
         info->scaletarget->pixels =
-        malloc(info->scaletarget->width * info->scaletarget->height * 4);
+        malloc(info->scaletarget->width *
+        info->scaletarget->height * 4);
 #ifdef DEBUGTEXTUREMANAGER
         printinfo("[TEXMAN] scaling %s to %u, %u",
         info->scaletarget->parent->path,
@@ -274,7 +291,8 @@ static void texturemanager_scaleTextureThread(void* userdata) {
             // scale it:
             img_Scale(4, info->obtainedscale->pixels,
             info->obtainedscale->width,
-            info->obtainedscale->height, (char**)&(info->scaletarget->pixels),
+            info->obtainedscale->height,
+            (char**)&(info->scaletarget->pixels),
             info->scaletarget->width, info->scaletarget->height);
         } else {
             // free so we don't have uninitialised data as texture:
@@ -412,7 +430,8 @@ struct graphicstexturemanaged* gtm, int slot) {
             } else {
                 if (gtm->scalelist[i].diskcachepath) {
 #ifdef DEBUGTEXTUREMANAGER
-                    printinfo("[TEXMAN] disk cache retrieval texture size %d of %s", i, gtm->path);
+                    printinfo("[TEXMAN] disk cache retrieval "
+                    "texture size %d of %s", i, gtm->path);
 #endif
                     // we need to retrieve this from the disk cache:
                     gtm->scalelist[i].locked = 1;
@@ -427,7 +446,8 @@ struct graphicstexturemanaged* gtm, int slot) {
                     !gtm->scalelist[gtm->origscale].locked) {
                         if (gtm->scalelist[gtm->origscale].pixels) {
 #ifdef DEBUGTEXTUREMANAGER
-                            printinfo("[TEXMAN] downscaling texture for size %d of %s", i, gtm->path);
+                            printinfo("[TEXMAN] downscaling texture "
+                            "for size %d of %s", i, gtm->path);
 #endif
                             // it is right there! we only need to scale!
                             // so... let's do this.. LEEROOOOOY - okok
@@ -747,12 +767,20 @@ void* userdata) {
 
     mutex_Lock(textureReqListMutex);
 
+#if (!defined(NDEBUG) && defined(EXTRADEBUG))
+    size_t c = texturemanager_getRequestCount_internal();
+#endif
+
     // add to unhandled texture request list:
     request->unhandledNext = unhandledRequestList;
     if (request->unhandledNext) {
         request->unhandledNext->unhandledPrev = request;
     }
     unhandledRequestList = request;
+
+#if (!defined(NDEBUG) && defined(EXTRADEBUG))
+    assert(texturemanager_getRequestCount_internal() == c + 1);
+#endif
 
     mutex_Release(textureReqListMutex);
 
@@ -811,23 +839,26 @@ static void texturemanager_processUnhandledRequests(void) {
 
 static void texturemanager_moveRequestToUnhandled(
 struct texturerequesthandle* request) {
+#if (!defined(NDEBUG) && defined(EXTRADEBUG))
+    size_t c = texturemanager_getRequestCount_internal();
+#endif
     if ((request->prev || request->next
     || textureRequestList == request)) {
-        if (!request->unhandledPrev && !request->unhandledNext &&
-        !(unhandledRequestList == request)) {
-            // add it to unhandled list:
-            request->unhandledNext = unhandledRequestList;
-            if (request->unhandledNext) {
-                request->unhandledNext->unhandledPrev = request;
-            }
-            request->unhandledPrev = NULL;
-            unhandledRequestList = request;
+        assert(!request->unhandledPrev && !request->unhandledNext &&
+        !(unhandledRequestList == request));
+        // add it to unhandled list:
+        request->unhandledNext = unhandledRequestList;
+        if (request->unhandledNext) {
+            request->unhandledNext->unhandledPrev = request;
         }
+        request->unhandledPrev = NULL;
+        unhandledRequestList = request;
+
         // remove from regular request list:
         if (request->prev) {
             request->prev->next = request->next;
         } else {
-            textureRequestList = request->unhandledNext;
+            textureRequestList = request->next;
             if (textureRequestList) {
                 textureRequestList->prev = NULL;
             }
@@ -838,6 +869,11 @@ struct texturerequesthandle* request) {
         request->next = NULL;
         request->prev = NULL;
     }
+#if (!defined(NDEBUG) && defined(EXTRADEBUG))
+    assert(request->unhandledNext || request->unhandledPrev
+    || unhandledRequestList == request);
+    assert(texturemanager_getRequestCount_internal() == c);
+#endif
 }
 
 
@@ -1224,20 +1260,10 @@ int texturemanager_getTextureGpuSizeInfo(const char* texture) {
 }
 
 size_t texturemanager_getRequestCount(void) {
-    size_t count = 0;
     mutex_Lock(textureReqListMutex);
-    struct texturerequesthandle* req = textureRequestList;
-    while (req) {
-        count++;
-        req = req->next;
-    }
-    req = unhandledRequestList;
-    while (req) {
-        count++;
-        req = req->next;
-    }
+    size_t c = texturemanager_getRequestCount_internal();
     mutex_Release(textureReqListMutex);
-    return count;
+    return c;
 }
 
 #endif  // USE_GRAPHICS
