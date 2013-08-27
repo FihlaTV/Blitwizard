@@ -435,6 +435,9 @@ static lua_State* luastate_New(void) {
     lua_pushstring(l, "templatedir");
     lua_pushcfunction(l, &luafuncs_templatedir);
     lua_settable(l, -3);
+    lua_pushstring(l, "sleep");
+    lua_pushcfunction(l, &luafuncs_sleep);
+    lua_settable(l, -3);
     lua_pushstring(l, "gameluapath");
     lua_pushcfunction(l, &luafuncs_gameluapath);
     lua_settable(l, -3);

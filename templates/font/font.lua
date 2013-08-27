@@ -91,21 +91,21 @@ glyphWidth, glyphHeight, glyphsPerLine)
         end
     end
     if type(width) ~= "number" and type(width) ~= "nil" then
-        error("bad parameter #4 to blitwizard.font.text:create: expected " ..
+        error("bad parameter #5 to blitwizard.font.text:create: expected " ..
         "number or nil")
     end
     if fontPath ~= "default" or type(glyphWidth) ~= "nil"
     or type(glyphHeight) ~= "nil" or type(glyphsPerLine) ~= "nil" then
         if type(glyphWidth) ~= "number" then
-            error("bad parameter #5 to blitwizard.font.text:create: " ..
-            "expected number")
-        end
-        if type(glyphHeight) ~= "number" then
             error("bad parameter #6 to blitwizard.font.text:create: " ..
             "expected number")
         end
-        if type(glyphsPerLine) ~= "number" then
+        if type(glyphHeight) ~= "number" then
             error("bad parameter #7 to blitwizard.font.text:create: " ..
+            "expected number")
+        end
+        if type(glyphsPerLine) ~= "number" then
+            error("bad parameter #8 to blitwizard.font.text:create: " ..
             "expected number")
         end
     end

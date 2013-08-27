@@ -131,6 +131,11 @@
 	<td class="summary">This function reloads the game.lua file that has been initially loaded
  by blitwizard on startup.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#sleep">sleep&nbsp;(milliseconds)</a></td>
+	<td class="summary">This function lets the whole blitwizard process freeze for the given
+ amount of milliseconds.</td>
+	</tr>
 </table>
 
 <br/>
@@ -407,6 +412,31 @@
 <p> <b>This function is provided by the templates and only present if you
  use them.</b>
 
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "sleep"></a>
+    <strong>sleep&nbsp;(milliseconds)</strong>
+    </dt>
+    <dd>
+    This function lets the whole blitwizard process freeze for the given
+ amount of milliseconds.
+<p> The only useful application of this is probably sleeping just a few
+ milliseconds sometimes to use less cpu time (but obviously, this slows
+ down the game and it might cause it to run notably worse on slow computers).
+<p> If you're just looking into running a function after some time has passed,
+ you most likely want to use <a href="../modules/blitwizard.html#runDelayed">runDelayed</a> instead.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">milliseconds</span>
+            <span class="types"><span class="type">number</span></span>
+         the amount of milliseconds to sleep the whole process</li>
+    </ul>
 
 
 

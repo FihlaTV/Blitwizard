@@ -224,12 +224,14 @@ int luafuncs_scanFor2dObjects(lua_State* l) {
     struct blitwizardobject* o = objects;
     while (o) {
         if (!o->is3d && !o->deleted) {
+#ifdef USE_GRAPHICS
             if (o->graphics && o->graphics->sprite) {
                 if (o->graphics->pinnedToCamera >= 0) {
                     // skip pinned sprites
                     continue;
                 }
             }
+#endif
             luacfuncs_pushbobjidref(l, o);
         } 
         o = o->next;

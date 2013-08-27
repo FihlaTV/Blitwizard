@@ -378,3 +378,29 @@ int luafuncs_gameluapath(lua_State* l) {
 // use them.</b>
 // @function reload
 
+
+/// This function lets the whole blitwizard process freeze for the given
+// amount of milliseconds.
+//
+// The only useful application of this is probably sleeping just a few
+// milliseconds sometimes to use less cpu time (but obviously, this slows
+// down the game and it might cause it to run notably worse on slow computers).
+//
+// If you're just looking into running a function after some time has passed,
+// you most likely want to use @{blitwizard.runDelayed|runDelayed} instead.
+// @function sleep
+// @tparam number milliseconds the amount of milliseconds to sleep the whole process
+int luafuncs_sleep(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1, "os.sleep",
+        "number", lua_strtype(l, 1));
+    }
+    double ms = lua_tonumber(l, 1);
+    if (ms < 0) {
+        return haveluaerror(l, badargument2, 1, "os.sleep",
+        "amount of milliseconds to sleep needs to be positive");
+    }
+    time_Sleep(ms);
+    return 0;
+}
+

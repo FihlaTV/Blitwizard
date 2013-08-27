@@ -28,6 +28,7 @@
 #include "luastate.h"
 #include "luafuncs.h"
 #include "physics.h"
+#include "luafuncs_os.h"
 #include "luafuncs_debug.h"
 #include "luafuncs_graphics.h"
 #include "luafuncs_graphics_camera.h"

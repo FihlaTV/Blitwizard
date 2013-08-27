@@ -66,7 +66,7 @@ uint64_t gpuMemUse = 0;
 int noTextureUploads = 0;
 
 // max gpu uploads per tick:
-int maxuploads = 5;
+int maxuploads = 100;
 int currentuploads = 0;
 
 mutex* textureReqListMutex = NULL;
@@ -157,6 +157,7 @@ int texturemanager_saveSystemMemory(void) {
 // If you anxiously want more memory, specify savememory = 2.
 int texturemanager_decideOnPreferredSize(struct graphicstexturemanaged* gtm,
 time_t now, int savememory) {
+    //return 0;
     int wantsize = 0;  // 0 = full, 1 = tiny, 2 = low, 3 = medium, 4 = high
     // downscaling based on distance:
     if (gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + SCALEDOWNSECONDS
