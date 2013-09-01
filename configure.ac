@@ -1046,7 +1046,7 @@ AS_IF([test -z "$maybeos"],[
 
     echo -e "$WRITELINE" > scripts/.buildinfo
     CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS `cd $scriptsdir && sh ./checksse.sh`"   
-    CXXFLAGS="$ADDITIONAL_CFLAGS $CXXFLAGS `cd $scriptdir && sh ./checksse.sh`"
+    CXXFLAGS="$ADDITIONAL_CFLAGS $CXXFLAGS `cd $scriptsdir && sh ./checksse.sh`"
 
     AC_CHECK_LIB([dl], [dlopen],, AC_MSG_ERROR(Cannot find all the necessary functions. Try to install the necessary libraries and headers))
     
