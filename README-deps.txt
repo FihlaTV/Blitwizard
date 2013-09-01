@@ -40,7 +40,7 @@ That file contains:
     libvorbis 1.3.2
     libFLAC 1.2.1
     Lua 5.2.1
-	Box2D 2.2.1
+    Box2D 2.2.1
     Speex 1.2rc1
     OGRE 1.8.0
     PhysFS 2.1 (hg)
