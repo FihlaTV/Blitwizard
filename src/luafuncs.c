@@ -41,7 +41,7 @@
 #include "luaerror.h"
 #include "luafuncs.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 #include "graphicstexture.h"
 #ifdef WINDOWS
@@ -63,7 +63,7 @@
 
 #if defined(ANDROID) || defined(__ANDROID__)
 // required for RWops file loading for Android
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 
 #if defined(ANDROID) || defined(__ANDROID__)

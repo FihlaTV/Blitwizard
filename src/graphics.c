@@ -46,7 +46,7 @@
 #endif
 
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 
 #include "graphicstexture.h"

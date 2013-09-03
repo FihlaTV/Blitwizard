@@ -34,7 +34,7 @@
 #ifdef WINDOWS
 #include <windows.h>
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "graphicstexture.h"
 #include "graphics.h"
 #endif

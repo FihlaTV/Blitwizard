@@ -40,7 +40,7 @@
 #ifdef USE_AUDIO
 #ifdef USE_SDL_AUDIO
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 
 static void (*samplecallbackptr)(void*, unsigned int) = NULL;
 static int soundenabled = 0;

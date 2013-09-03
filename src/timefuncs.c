@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <time.h>
 #ifdef HAVE_SDL
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #else
 #ifdef WINDOWS
 #include <windows.h>

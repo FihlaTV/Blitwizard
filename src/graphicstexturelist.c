@@ -38,8 +38,8 @@
 
 #include "logging.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
-#include "SDL_syswm.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 #endif
 #include "graphicstexture.h"
 #include "graphics.h"

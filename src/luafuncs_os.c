@@ -46,7 +46,7 @@
 #include "luaerror.h"
 #include "luafuncs.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 #include "graphicstexture.h"
 #ifdef WINDOWS

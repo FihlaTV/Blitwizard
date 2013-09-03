@@ -40,7 +40,7 @@
 
 #include "os.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 #include "file.h"
 #include "graphicstexture.h"

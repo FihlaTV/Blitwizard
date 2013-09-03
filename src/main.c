@@ -86,7 +86,7 @@ char* binpath = NULL;  // path to blitwizard binary
 #include "connections.h"
 #include "listeners.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 #include "graphicstexture.h"
 #include "graphicstexturemanager.h"
