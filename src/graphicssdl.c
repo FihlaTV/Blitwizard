@@ -745,8 +745,10 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
                     case SDLK_RIGHT:
                         sprintf(keybuf,"right");break;
                     default:
-                        snprintf(keybuf, sizeof(keybuf)-1,
-                        "unknown-%d", e.key.keysym.sym);
+                        if (strlen(keybuf) == 0) {
+                            snprintf(keybuf, sizeof(keybuf)-1,
+                            "unknown-%d", e.key.keysym.sym);
+                        }
                         break;
                 }
                 if (strlen(keybuf) > 0) {
