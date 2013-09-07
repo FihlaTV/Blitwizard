@@ -630,6 +630,7 @@ int lastfingerdownx,lastfingerdowny;
 void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int button, int release, int x, int y), void (*mousemoveevent)(int x, int y), void (*keyboardevent)(const char* button, int release), void (*textevent)(const char* text), void (*putinbackground)(int background)) {
     if (!graphics3d) {
         SDL_Event e;
+        memset(&e, 0, sizeof(e));
         while (SDL_PollEvent(&e) == 1) {
             if (e.type == SDL_QUIT) {
                 quitevent();
@@ -748,6 +749,7 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
                     keyboardevent(keybuf, release);
                 }
             }
+            memset(&e, 0, sizeof(e));
         }
     }
 }
