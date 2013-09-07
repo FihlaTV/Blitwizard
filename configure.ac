@@ -805,7 +805,7 @@ AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
         FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lSDL2"
     ], [
         FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardSDL"
-        FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Isdl/include"
+        FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iinclude/sdl"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS"
     AC_DEFINE([USE_SDL_GRAPHICS], [], [Enable SDL graphics subsystem])
@@ -865,7 +865,7 @@ AS_IF([test "x$AUDIO_FEATURE_ENABLED" = xyes],[
                 FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lSDL2"
             ], [
                 FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardSDL"
-                FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Isdl/include"
+                FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iinclude/sdl"
             ])
         ])
         

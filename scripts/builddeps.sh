@@ -413,6 +413,10 @@ if [ ! -e libs/libblitwizardSDL.a ]; then
         cd "$dir"
         cd src/sdl && make || { echo "Failed to compile SDL2"; exit 1; }
         cd "$dir"
+        mkdir -p src/include/
+        mkdir -p src/include/sdl
+        rm -r src/include/sdl/SDL2/
+        cp -R src/sdl/include/ src/include/sdl/SDL2/ 
     fi
 fi
 
