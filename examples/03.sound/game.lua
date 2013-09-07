@@ -8,53 +8,44 @@
 
 print("Sound example in blitwizard")
 
-function blitwiz.on_init()
-	print("Sound backend: " .. blitwiz.sound.getBackendName())
-
-	-- Open a window
+function blitwizard.onInit()
+    -- Open a window
     function openwindow()
-        blitwiz.graphics.setWindow(640, 480, "Sound", false)
+        blitwizard.graphics.setMode(640, 480, "Sound", false)
     end
     if pcall(openwindow) == false then
         -- Opening a window failed.
         -- Open fullscreen at any resolution (for Android)
-        resolution = blitwiz.graphics.getDisplayModes()[1]
-        blitwiz.graphics.setWindow(resolution[1], resolution[2], "Sound", true)
-    end	
+        resolution = blitwizard.graphics.getDisplayModes()[1]
+        blitwizard.graphics.setMode(resolution[1], resolution[2], "Sound", true)
+    end    
 
-	-- Load image
-	blitwiz.graphics.loadImage("background.png")
+    -- Load image
+    local background = blitwizard.object:new(
+       blitwizard.object.o2d, "background.png")
+    background:pinToCamera()
 
-	-- Play song
-	blitwiz.sound.play("blitwizarddemosongloop.ogg", 1.0, -0.2, true)    -- This will play sound "blitwizarddemosongloop.ogg" with volume 1.0 (full),
-	-- panning -0.2 (slightly left) and repeat true (enabled, so will repeat forever)
+    -- Play song
+    local sound = blitwizard.audio.simpleSound:new("blitwizarddemosongloop.ogg")
+    -- This will play sound "blitwizarddemosongloop.ogg" with volume 1.0 (full),
+    -- and repeat true (enabled, so will repeat forever)
+    sound:play(1, true)
 end
 
-function blitwiz.on_keydown(key)
-	-- When escape is pressed, we want to quit
+function blitwizard.onKeyDown(key)
+    -- When escape is pressed, we want to quit
     if key == "escape" then
-		os.exit(0)
-	end
+        os.exit(0)
+    end
 end
 
-function blitwiz.on_draw()
-	-- When the image is loaded, draw it centered:
-	local w,h = blitwiz.graphics.getImageSize("background.png")
-	local mw,mh = blitwiz.graphics.getWindowSize()
-
-	-- Actual drawing happens here
-	blitwiz.graphics.drawImage("background.png", {x=mw/2 - w/2, y=mh/2 - h/2})
-
-	-- Done!
-end
-
-function blitwiz.on_close()
-	-- This function gets called whenever the user clicks
-	-- the close button in the window title bar.
-	
-	-- The user has attempted to close the window,
-	-- so we want to respect his wishes and quit :-)
-	os.exit(0)
+function blitwizard.onClose()
+    -- This function gets called whenever the user clicks
+    -- the close button in the window title bar.
+    
+    -- The user has attempted to close the window,
+    -- so we want to respect his wishes and quit :-)
+    os.exit(0)
 end
 
 
