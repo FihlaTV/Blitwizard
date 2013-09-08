@@ -84,13 +84,19 @@ end
 
 function browser.cleanUpAfterExample()
     -- delete all blitwizard objects:
-    local i = 0
-    local o = (blitwizard.getAllObjects())()
+    local i = 1
+    local iterator = blitwizard.getAllObjects()
+    local o = iterator()
     while o ~= nil do
-        o:destroy()
+        if o._templateObj ~= true then
+            o:destroy()
+            iterator = blitwizard.getAllObjects()
+        end
         i = i + 1
-        o = (blitwizard.getAllObjects())()
+        o = iterator()
     end
+    -- stop all sounds:
+    blitwizard.audio.stopAllPlayingSounds()
 end
 
 function browser.destroyBrowser()

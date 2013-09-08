@@ -102,6 +102,7 @@ do
         blinkCursorText = blitwizard.font.text:new("|", "default", 0.7)
         blinkCursorText:setVisible(false)
         blinkCursorText:setZIndex(10001)
+        blinkCursorText:_markAsTemplateObj()
     end
 
     -- blinking cursor timing, text input line end in game units:
@@ -116,6 +117,7 @@ do
     consoleBg:setVisible(true)
     consoleBg:pinToCamera()
     consoleBg:setPosition(0, -10)
+    consoleBg._templateObj = true
     local function calculateConsoleBgSize()
         -- calculate proper size of the dev console:
         consoleBg:setScale(1, 1)
@@ -291,6 +293,7 @@ do
                         lines[i].text = blitwizard.font.text:new(
                         lines[i].line, "default", 0.7)
                         lines[i].text:setZIndex(10000)
+                        lines[i].text:_markAsTemplateObj()
                     end
                     lines[i].text:setPosition(0.1,
                     0.1 + y + ((i - 1) * consoleLineHeight))
@@ -325,6 +328,7 @@ do
                 consoleTextObj = blitwizard.font.text:new(
                 "> " .. consoleText, "default", 0.7)
                 consoleTextObj:setZIndex(10000)
+                consoleTextObj:_markAsTemplateObj()
             end
             -- move the console input line object if it exists:
             if consoleTextObj then

@@ -332,3 +332,9 @@ function blitwizard.font.text:height()
     return self._height * self._scale
 end
 
+function blitwizard.font.text:_markAsTemplateObj()
+    for i,v in ipairs(self.glyphs) do
+        v._templateObj = true
+    end
+end
+
