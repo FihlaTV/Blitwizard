@@ -81,6 +81,7 @@ void audiomixer_Init(void) {
 
 // Check whether no sound is playing right now (1), or if some is playing (0):
 int audiomixer_NoSoundsPlaying(void) {
+    audio_LockAudioThread();
     int i = 0;
     while (i < MAXCHANNELS) {
         if (channels[i].mixsource) {
@@ -88,7 +89,21 @@ int audiomixer_NoSoundsPlaying(void) {
         }
         i++;
     }
+    audio_UnlockAudioThread();
     return 1;
+}
+
+int audiomixer_GetIdFromSoundOnChannel(unsigned int channel) {
+    if (channel >= MAXCHANNELS) {
+        return -1;
+    }
+    audio_LockAudioThread();
+    int result = channels[channel].id;
+    if (!channels[channel].mixsource) {
+        result = -1;
+    }
+    audio_UnlockAudioThread();
+    return result;
 }
 
 // Cancel channel, we are in the sound thread

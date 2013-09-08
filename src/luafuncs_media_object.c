@@ -363,6 +363,30 @@ int luafuncs_media_object_adjust(lua_State* l, int type) {
     return 0;
 }
 
+/// Stop all currently playing sounds.
+// (@{blitwizard.audio.simpleSound|simpleSound},
+// @{blitwizard.audio.pannedSound|pannedSound} and
+// @{blitwizard.audio.positionalSound|positionalSound} objects)
+//
+// After using this, all the affected sounds which have been
+// @{blitwizard.audio.simpleSound:play|played} will stop.
+// You may play them again if you wish to do so.
+// @function stopAllPlayingSounds
+int luafuncs_media_object_stopAllPlayingSounds(lua_State* l) {
+#ifdef USE_AUDIO
+    unsigned int i = 0;
+    unsigned int c = audiomixer_ChannelCount();
+    while (i < c) {
+        int id = audiomixer_GetIdFromSoundOnChannel(c);
+        if (id >= 0) {
+            audiomixer_StopSound(id);
+        }
+        i++;
+    }
+#endif
+    return 0;
+}
+
 /// Implements a simple sound which has no
 // stereo left/right panning or room positioning features.
 // This is the sound object suited best for background music.

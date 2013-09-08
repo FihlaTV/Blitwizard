@@ -333,6 +333,10 @@ void luastate_CreateAudioTable(lua_State* l) {
     lua_pushstring(l, "simpleSound");
     luastate_CreateSimpleSoundTable(l);
     lua_settable(l, -3);
+
+    lua_pushstring(l, "stopAllPlayingSounds");
+    lua_pushcfunction(l, &luafuncs_media_object_stopAllPlayingSounds);
+    lua_settable(l, -3);
 }
 
 void luastate_CreateTimeTable(lua_State* l) {

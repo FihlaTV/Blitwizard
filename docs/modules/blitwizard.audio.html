@@ -32,6 +32,7 @@
 
 <h2>Contents</h2>
 <ul>
+<li><a href="#Functions">Functions</a></li>
 <li><a href="#Class_simpleSound">Class simpleSound </a></li>
 <li><a href="#Class_pannedSound">Class pannedSound </a></li>
 <li><a href="#Class_positionedSound">Class positionedSound </a></li>
@@ -83,6 +84,13 @@
     </ul>
 
 
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#stopAllPlayingSounds">stopAllPlayingSounds&nbsp;()</a></td>
+	<td class="summary">Stop all currently playing sounds.</td>
+	</tr>
+</table>
 <h2><a href="#Class_simpleSound">Class simpleSound </a></h2>
 <table class="function_list">
 	<tr>
@@ -148,6 +156,28 @@
 <br/>
 
 
+    <h2><a name="Functions"></a>Functions</h2>
+    <dl class="function">
+    <dt>
+    <a name = "stopAllPlayingSounds"></a>
+    <strong>stopAllPlayingSounds&nbsp;()</strong>
+    </dt>
+    <dd>
+    Stop all currently playing sounds.
+ (<a href="../modules/blitwizard.audio.html#Class_simpleSound">simpleSound</a>,
+ <a href="../modules/blitwizard.audio.html#Class_pannedSound">pannedSound</a> and
+ ??? objects)
+<p> After using this, all the affected sounds which have been
+ <a href="../modules/blitwizard.audio.html#simpleSound:play">played</a> will stop.
+ You may play them again if you wish to do so.
+
+
+
+
+
+
+</dd>
+</dl>
     <h2><a name="Class_simpleSound"></a>Class simpleSound </h2>
         Implements a simple sound which has no
  stereo left/right panning or room positioning features.

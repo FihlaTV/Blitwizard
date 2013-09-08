@@ -59,7 +59,10 @@
 
 <h1>Module <code>blitwizard</code></h1>
 
-<p></p>
+<p>Blitwizard namespace containing the generic
+ <a href="../modules/blitwizard.html#Class_object">blitwizard game entity object</a> and various sub
+ namespaces for <a href="../modules/blitwizard.physics.html#">physics</a>,
+ <a href="../modules/blitwizard.graphics.html#">graphics</a> and more.</p>
 <p></p>
     <h3>Info:</h3>
     <ul>
@@ -71,6 +74,17 @@
 
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
+	<tr>
+	<td class="name" ><a href="#cancelDelayedRun">cancelDelayedRun&nbsp;(handle)</a></td>
+	<td class="summary">Cancel a function which was scheduled to be run with
+ <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
+ for it.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#runDelayed">runDelayed&nbsp;(function, delay)</a></td>
+	<td class="summary">This function allows scheduling a function to be executed
+ after a specified time delay.</td>
+	</tr>
 	<tr>
 	<td class="name" ><a href="#loadResourceArchive">loadResourceArchive&nbsp;(Path)</a></td>
 	<td class="summary">Load a .zip file as a resource archive.</td>
@@ -108,17 +122,6 @@
 	<td class="name" ><a href="#onLog">onLog&nbsp;(msgtype, msg)</a></td>
 	<td class="summary">Specify this function if you want to receive internal
  blitwizard log messages.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#cancelDelayedRun">cancelDelayedRun&nbsp;(handle)</a></td>
-	<td class="summary">Cancel a function which was scheduled to be run with
- <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
- for it.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#runDelayed">runDelayed&nbsp;(function, delay)</a></td>
-	<td class="summary">This function allows scheduling a function to be executed
- after a specified time delay.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#scanFor2dObjects">scanFor2dObjects&nbsp;(x, y, radius)</a></td>
@@ -315,6 +318,68 @@
 
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
+    <dt>
+    <a name = "cancelDelayedRun"></a>
+    <strong>cancelDelayedRun&nbsp;(handle)</strong>
+    </dt>
+    <dd>
+    Cancel a function which was scheduled to be run with
+ <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
+ for it.
+<p> If the function has already been executed, this function
+ will return false, otherwise it will return true and
+ the function won't be executed.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">handle</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the handle returned by <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a></li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "runDelayed"></a>
+    <strong>runDelayed&nbsp;(function, delay)</strong>
+    </dt>
+    <dd>
+    This function allows scheduling a function to be executed
+ after a specified time delay.
+<p> blitwizard.runDelayed will return instantly, and lateron
+ when the specified amount of time has passed, the function will
+ be run once.
+<p> If you know JavaScript, this function works similar to
+ JavaScript's setTimeout.
+<p> The return value of <a href="../modules/blitwizard.html#runDelayed">runDelayed</a>
+ is a handle which you can use to cancel the
+ scheduled function run with <a href="../modules/blitwizard.html#cancelDelayedRun">blitwizard.cancelDelayedRun</a>,
+ as long as it hasn't been run yet.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">function</span>
+            <span class="types"><span class="type">function</span></span>
+         the function which shall be executed later</li>
+        <li><span class="parameter">delay</span>
+            <span class="types"><span class="type">number</span></span>
+         the delay in milliseconds before executing the function</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">userdata</span></span>
+        handle which can be used with <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a>
+    </ol>
+
+
+
+
+</dd>
     <dt>
     <a name = "loadResourceArchive"></a>
     <strong>loadResourceArchive&nbsp;(Path)</strong>
@@ -565,68 +630,6 @@
      <span class="global">print</span>(<span class="string">"[LOG:"</span> .. msgtype .. <span class="string">"] "</span> .. msg)
  <span class="keyword">end</span></pre>
     </ul>
-
-</dd>
-    <dt>
-    <a name = "cancelDelayedRun"></a>
-    <strong>cancelDelayedRun&nbsp;(handle)</strong>
-    </dt>
-    <dd>
-    Cancel a function which was scheduled to be run with
- <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
- for it.
-<p> If the function has already been executed, this function
- will return false, otherwise it will return true and
- the function won't be executed.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">handle</span>
-            <span class="types"><span class="type">userdata</span></span>
-         the handle returned by <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a></li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "runDelayed"></a>
-    <strong>runDelayed&nbsp;(function, delay)</strong>
-    </dt>
-    <dd>
-    This function allows scheduling a function to be executed
- after a specified time delay.
-<p> blitwizard.runDelayed will return instantly, and lateron
- when the specified amount of time has passed, the function will
- be run once.
-<p> If you know JavaScript, this function works similar to
- JavaScript's setTimeout.
-<p> The return value of <a href="../modules/blitwizard.html#runDelayed">runDelayed</a>
- is a handle which you can use to cancel the
- scheduled function run with <a href="../modules/blitwizard.html#cancelDelayedRun">blitwizard.cancelDelayedRun</a>,
- as long as it hasn't been run yet.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">function</span>
-            <span class="types"><span class="type">function</span></span>
-         the function which shall be executed later</li>
-        <li><span class="parameter">delay</span>
-            <span class="types"><span class="type">number</span></span>
-         the delay in milliseconds before executing the function</li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">userdata</span></span>
-        handle which can be used with <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a>
-    </ol>
-
-
-
 
 </dd>
     <dt>
