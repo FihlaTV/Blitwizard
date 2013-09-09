@@ -377,7 +377,7 @@ int luafuncs_media_object_stopAllPlayingSounds(lua_State* l) {
     unsigned int i = 0;
     unsigned int c = audiomixer_ChannelCount();
     while (i < c) {
-        int id = audiomixer_GetIdFromSoundOnChannel(c);
+        int id = audiomixer_GetIdFromSoundOnChannel(i);
         if (id >= 0) {
             audiomixer_StopSound(id);
         }
