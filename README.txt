@@ -39,7 +39,7 @@ of the examples which are located in examples/ in separate sub
 folders. Feel free to modify those .lua files, then rerun the sample
 browser and see how the examples changed!
 
-Check out docs/index.html for acomplete documentation of the
+Check out docs/index.html for a complete documentation of the
 provided functionality of blitwizard for advanced usage.
 (That file is only present for blitwizard releases, not for dev code)
 

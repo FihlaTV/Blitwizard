@@ -1,5 +1,5 @@
 
-# blitwizard configure.ac - autoconf generated, extended by Jonas Thiem
+# blitwizard configure.ac - autoconf generated, extended by Jonas Thiem et al
 # Process this file with autoreconf to produce a configure script
 # (see autogen.sh)
 
