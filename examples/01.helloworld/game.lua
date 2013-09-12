@@ -53,8 +53,12 @@ function blitwizard.onInit()
     os.sysname() .. " (" .. os.sysversion() ..
     ")")
 
+    -- As soon as the system info image (si) is loaded,
+    -- we would like to place it accordingly and move
+    -- the text aswell.
+    -- It needs to be loaded so we know its dimensions.
     function si:onGeometryLoaded()
-        -- place at left botom:
+        -- place at left bottom:
         local camw,camh =
         blitwizard.graphics.getCameras()[1]:getDimensions()
 

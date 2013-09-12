@@ -37,6 +37,7 @@
 #include "luafuncs_media_object.h"
 #include "luafuncs_os.h"
 #include "luafuncs_string.h"
+#include "luafuncs_rundelayed.h"
 #include "luaerror.h"
 #include "luastate_functionTables.h"
 
@@ -486,6 +487,12 @@ static lua_State* luastate_New(void) {
     // throw table "string" off the stack
     lua_pop(l, 1);
 
+    // blitwizard.runDelayed:
+    lua_pushstring(l, "runDelayed");
+    lua_pushcfunction(l, &luafuncs_runDelayed);
+    lua_settable(l, -3); 
+
+    // set _VERSION string:
     char vstr[512];
     char is64bit[] = " (64-bit binary)";
 #ifndef _64BIT
