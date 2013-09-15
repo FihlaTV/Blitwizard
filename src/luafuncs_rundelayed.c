@@ -90,6 +90,7 @@ void luacfuncs_runDelayed_CleanDelayedRuns(lua_State* l) {
             lua_pushnil(l);
             lua_settable(l, LUA_REGISTRYINDEX);
             free(f);
+            deleted = 1;
         }
 
         if (!deleted) {
