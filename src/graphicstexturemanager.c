@@ -394,17 +394,17 @@ struct graphicstexturemanaged* gtm, int slot) {
             return gtm->scalelist[i].gt;
         } else {
             if (gtm->scalelist[i].pixels) {
-                if (noTextureUploads) {
+                if (noTextureUploads || !unittopixelsset) {
 #ifdef DEBUGTEXTUREMANAGER
-                    printinfo("[TEXMAN] GPU upload of %s size %d DELAYED "
-                    "(no device)", gtm->path, i);
+                    //printinfo("[TEXMAN] GPU upload of %s size %d DELAYED "
+                    //"(no device)", gtm->path, i);
 #endif
                     return texturemanager_getRandomGPUTexture(gtm);
                 }
                 if (currentuploads >= maxuploads) {
 #ifdef DEBUGTEXTUREMANAGER
-                    printinfo("[TEXMAN] GPU upload of %s size %d DELAYED "
-                    "(max uploads)", gtm->path, i);
+                    //printinfo("[TEXMAN] GPU upload of %s size %d DELAYED "
+                    //"(max uploads)", gtm->path, i);
 #endif
                     return texturemanager_getRandomGPUTexture(gtm);
                 }

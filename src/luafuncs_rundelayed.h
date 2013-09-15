@@ -26,9 +26,14 @@
 
 #include "luaheader.h"
 
+// tick function to be called each frame which operates delaeyd runs:
 void luacfuncs_runDelayed_Do(void);
 
+// lua function to schedule a delayed run:
 int luafuncs_runDelayed(lua_State* l);
+
+// get a count of currently scheduled functions to be run later:
+size_t luacfuncs_runDelayed_getScheduledCount(void);
 
 #endif  // BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
 

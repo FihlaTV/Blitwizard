@@ -343,6 +343,11 @@ static lua_State* luastate_New(void) {
     // obtain the blitwiz lib
     lua_getglobal(l, "blitwizard");
 
+    // blitwizard.runDelayed:
+    lua_pushstring(l, "runDelayed");
+    lua_pushcfunction(l, &luafuncs_runDelayed);
+    lua_settable(l, -3);
+
     // blitwizard.object:
     lua_pushstring(l, "object");
     luastate_CreateObjectTable(l);
@@ -486,11 +491,6 @@ static lua_State* luastate_New(void) {
 
     // throw table "string" off the stack
     lua_pop(l, 1);
-
-    // blitwizard.runDelayed:
-    lua_pushstring(l, "runDelayed");
-    lua_pushcfunction(l, &luafuncs_runDelayed);
-    lua_settable(l, -3); 
 
     // set _VERSION string:
     char vstr[512];

@@ -59,6 +59,9 @@ void luacfuncs_objectgraphics_newFrame(void);
 // media cleanup callback:
 void checkAllMediaObjectsForCleanup(void);
 
+// counting current amount of scheduled functions (runDelayed):
+size_t luacfuncs_runDelayed_getScheduledCount(void);
+
 // per-object mouse event handling:
 void luacfuncs_objectgraphics_processMouseClick(int x, int y,
 int button);
@@ -1159,14 +1162,16 @@ int main(int argc, char** argv) {
         !graphics_AreGraphicsRunning() &&
 #endif
         connections_NoConnectionsOpen() &&
-        !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()) {
+        !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()
+        && luacfuncs_runDelayed_getScheduledCount() == 0) {
 #else
         if (
 #ifdef USE_GRAPHICS
         !graphics_AreGraphicsRunning() &&
 #endif
         connections_NoConnectionsOpen() &&
-        !listeners_HaveActiveListeners()) {
+        !listeners_HaveActiveListeners()
+        && luacfuncs_runDelayed_getScheduledCount() == 0) {
 #endif
             main_Quit(1);
         }

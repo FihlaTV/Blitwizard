@@ -54,8 +54,21 @@ static uint64_t runDelayedTS = 0;
 static uint64_t currentRelativeTS = 0;
 static int insideRunDelayedCallback = 0;
 
-__attribute__ ((constructor)) void luacfuncs_runDelayed_Init() {
+__attribute__ ((constructor)) void luacfuncs_runDelayed_Init(void) {
     runDelayedTS = time_GetMilliseconds();
+}
+
+size_t luacfuncs_runDelayed_getScheduledCount(void) {
+    size_t c = 0;
+    struct timeoutfunc* prev = NULL;
+    struct timeoutfunc* f = timeoutfuncs;
+    while (f) {
+        if (!f->deleted) {
+            c = c + 1;
+        }
+        f = f->next;
+    }
+    return c;
 }
 
 void luacfuncs_runDelayed_CleanDelayedRuns(lua_State* l) {
@@ -98,6 +111,7 @@ void luacfuncs_runDelayed_Do() {
         runDelayedTS = time_GetMilliseconds();
         return;
     }
+    luacfuncs_runDelayed_CleanDelayedRuns(l);
     uint64_t oldTime = runDelayedTS;
     runDelayedTS = time_GetMilliseconds();
     if (oldTime < runDelayedTS) {
@@ -108,6 +122,9 @@ void luacfuncs_runDelayed_Do() {
             struct timeoutfunc* tfnext = tf->next;
             if (tf->triggerTime <= runDelayedTS && !tf->deleted) {
                 currentRelativeTS = tf->triggerTime;
+                // push error func:
+                lua_pushcfunction(l, internaltracebackfunc());
+
                 // obtain callback:
                 char funcname[64];
                 snprintf(funcname, sizeof(funcname),
@@ -117,13 +134,16 @@ void luacfuncs_runDelayed_Do() {
 
                 // run callback:
                 insideRunDelayedCallback = 1;
-
+                lua_pcall(l, 0, 0, -2);
                 insideRunDelayedCallback = 0; 
 
                 // remove callback function:
                 lua_pushstring(l, funcname);
                 lua_pushnil(l);
                 lua_settable(l, LUA_REGISTRYINDEX);
+
+                // remove error function from stack:
+                lua_pop(l, 1);
 
                 // remove trigger:
                 if (tfprev) {
