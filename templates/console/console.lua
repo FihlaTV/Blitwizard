@@ -290,13 +290,19 @@ do
                 if lines[i] ~= nil then
                     if lines[i].text == nil then
                         -- load glyphs
-                        lines[i].text = blitwizard.font.text:new(
-                        lines[i].line, "default", 0.7)
-                        lines[i].text:setZIndex(10000)
-                        lines[i].text:_markAsTemplateObj()
+                        local newfontobj = nil
+                        pcall(function()
+                            newfontobj = blitwizard.font.text:new(
+                            lines[i].line, "default", 0.7)
+                            lines[i].text:setZIndex(10000)
+                            lines[i].text:_markAsTemplateObj()
+                        end)
+                        lines[i].text = newfontobj
                     end
-                    lines[i].text:setPosition(0.1,
-                    0.1 + y + ((i - 1) * consoleLineHeight))
+                    if lines[i].text then
+                        lines[i].text:setPosition(0.1,
+                        0.1 + y + ((i - 1) * consoleLineHeight))
+                    end
                 end
                 i = i + 1
             end
@@ -325,10 +331,14 @@ do
                 consoleTextObj = nil
             end
             if consoleTextObj == nil then
-                consoleTextObj = blitwizard.font.text:new(
-                "> " .. consoleText, "default", 0.7)
-                consoleTextObj:setZIndex(10000)
-                consoleTextObj:_markAsTemplateObj()
+                local textobj = nil
+                pcall(function()
+                    textobj = blitwizard.font.text:new(
+                    "> " .. consoleText, "default", 0.7)
+                    consoleTextObj:setZIndex(10000)
+                    consoleTextObj:_markAsTemplateObj()
+                end)
+                consoleTextObj = textobj
             end
             -- move the console input line object if it exists:
             if consoleTextObj then

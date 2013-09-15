@@ -151,7 +151,12 @@ glyphWidth, glyphHeight, glyphsPerLine)
     charsPerLine = math.max(1, charsPerLine)
     
     -- various information
-    local gameUnitsInPixels = blitwizard.graphics.gameUnitToPixels()
+    local gameUnitsInPixels = 0
+    if pcall(function()
+        gameUnitsInPixels = blitwizard.graphics.gameUnitToPixels()
+    end) ~= true then
+        error("cannot create font - no device open?")
+    end
     local glyphXShift = glyphWidth / gameUnitsInPixels
     local glyphYShift = glyphHeight / gameUnitsInPixels
     t._glyphDimensionX = glyphXShift

@@ -149,7 +149,7 @@ void luacfuncs_runDelayed_Do() {
                 if (tfprev) {
                     tfprev->next = tf->next;
                 } else {
-                    timeoutfuncs->next = tf->next;
+                    timeoutfuncs = tf->next;
                 }
                 free(tf);
 
