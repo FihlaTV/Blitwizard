@@ -34,6 +34,7 @@
 #include <stdarg.h>
 #include <float.h>
 #include <math.h>
+#include <assert.h>
 
 #include "luaheader.h"
 
@@ -131,11 +132,29 @@ void luacfuncs_runDelayed_Do() {
                 "timeoutfunc%d", tf->id);
                 lua_pushstring(l, funcname);
                 lua_gettable(l, LUA_REGISTRYINDEX);
+                assert(lua_type(l, -1) == LUA_TFUNCTION);
+                assert(lua_type(l, -2) == LUA_TFUNCTION);
+
+                // remember if we were the first item to be processed:
+                int firstitem = (tf == timeoutfuncs);
 
                 // run callback:
                 insideRunDelayedCallback = 1;
-                lua_pcall(l, 0, 0, -2);
+                int r = lua_pcall(l, 0, 0, -2);
                 insideRunDelayedCallback = 0; 
+
+                // this might have prepended new scheduled runDelays.
+                // detect if this was done:
+                if (firstitem) {
+                    if (tf != timeoutfuncs) {
+                        // new prepended things!
+                        tfprev = timeoutfuncs;
+                        while (tfprev->next != tf) {
+                            // advance to latest prepended entry
+                            tfprev = tfprev->next;
+                        }
+                    }
+                }
 
                 // remove callback function:
                 lua_pushstring(l, funcname);
@@ -174,7 +193,7 @@ void luacfuncs_runDelayed_Do() {
 // @tparam userdata handle the handle returned by @{blitwizard.runDelayed}
 int luafuncs_cancelDelayedRun(lua_State* l) {
     if (lua_type(l, 1) != LUA_TUSERDATA) {
-        return haveluaerror(l, badargument1, 1, "blitiwzard.cancelDelayedRun",
+        return haveluaerror(l, badargument1, 1, "blitwizard.cancelDelayedRun",
         "runDelayed handle", lua_strtype(l, 1));
     }
     if (lua_rawlen(l, 1) != sizeof(struct luaidref)) {
@@ -272,7 +291,7 @@ int luafuncs_runDelayed(lua_State* l) {
     memset(tf, 0, sizeof(*tf));
 
     // set trigger info:
-    tf->id = nextdelayedfuncid;
+    tf->id = useid;
     tf->triggerTime = currentRelativeTS;
     if (tf->triggerTime == 0) {
         tf->triggerTime = runDelayedTS;
