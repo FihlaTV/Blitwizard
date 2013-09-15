@@ -60,7 +60,6 @@ __attribute__ ((constructor)) void luacfuncs_runDelayed_Init(void) {
 
 size_t luacfuncs_runDelayed_getScheduledCount(void) {
     size_t c = 0;
-    struct timeoutfunc* prev = NULL;
     struct timeoutfunc* f = timeoutfuncs;
     while (f) {
         if (!f->deleted) {

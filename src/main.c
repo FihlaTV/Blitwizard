@@ -62,6 +62,9 @@ void checkAllMediaObjectsForCleanup(void);
 // counting current amount of scheduled functions (runDelayed):
 size_t luacfuncs_runDelayed_getScheduledCount(void);
 
+// trigger scheduled runDelayed functions:
+void luacfuncs_runDelayed_Do(void);
+
 // per-object mouse event handling:
 void luacfuncs_objectgraphics_processMouseClick(int x, int y,
 int button);
@@ -1127,6 +1130,9 @@ int main(int argc, char** argv) {
                 // we don't need to iterate anymore -> everything is fine
             }
         }
+
+        // handle runDelayed calls:
+        luacfuncs_runDelayed_Do();
 
 #ifdef USE_GRAPHICS
         // report visibility of sprites to texture manager:
