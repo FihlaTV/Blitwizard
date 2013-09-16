@@ -175,6 +175,9 @@ void luacfuncs_runDelayed_Do() {
                     free(tf);
                 } else {
                     tf->triggerTime += tf->triggerDelay;
+                    if(tf->triggerTime <= runDelayedTS) {
+                        tfnext = tf;
+                    }
                 }
 
                 // unset current relative ts:
