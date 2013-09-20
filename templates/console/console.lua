@@ -294,8 +294,8 @@ do
                         pcall(function()
                             newfontobj = blitwizard.font.text:new(
                             lines[i].line, "default", 0.7)
-                            lines[i].text:setZIndex(10000)
-                            lines[i].text:_markAsTemplateObj()
+                            newfontobj:setZIndex(10000)
+                            newfontobj:_markAsTemplateObj()
                         end)
                         lines[i].text = newfontobj
                     end
@@ -335,8 +335,8 @@ do
                 pcall(function()
                     textobj = blitwizard.font.text:new(
                     "> " .. consoleText, "default", 0.7)
-                    consoleTextObj:setZIndex(10000)
-                    consoleTextObj:_markAsTemplateObj()
+                    textobj:setZIndex(10000)
+                    textobj:_markAsTemplateObj()
                 end)
                 consoleTextObj = textobj
             end
