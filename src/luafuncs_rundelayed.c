@@ -48,6 +48,7 @@ struct timeoutfunc {
     int deleted;
     int id;
     uint64_t triggerTime;
+    uint64_t triggerDelay;
     struct timeoutfunc* next;
 };
 static struct timeoutfunc* timeoutfuncs = NULL;
@@ -156,21 +157,33 @@ void luacfuncs_runDelayed_Do() {
                     }
                 }
 
-                // remove callback function:
-                lua_pushstring(l, funcname);
-                lua_pushnil(l);
-                lua_settable(l, LUA_REGISTRYINDEX);
-
                 // remove error function from stack:
                 lua_pop(l, 1);
 
-                // remove trigger:
-                if (tfprev) {
-                    tfprev->next = tf->next;
+                // If this is not supposed to loop, delete it
+                if(tf->triggerDelay == 0) {
+                    // remove callback function:
+                    lua_pushstring(l, funcname);
+                    lua_pushnil(l);
+                    lua_settable(l, LUA_REGISTRYINDEX);
+
+                    // remove trigger:
+                    if (tfprev) {
+                        tfprev->next = tf->next;
+                    } else {
+                        timeoutfuncs = tf->next;
+                    }
+                    free(tf);
                 } else {
-                    timeoutfuncs = tf->next;
+                    // Set next execution time
+                    tf->triggerTime += tf->triggerDelay;
+                    // For small loop times, maybe run this function
+                    // more than once. Just set tfnext to call it
+                    // again.
+                    if(tf->triggerTime <= runDelayedTS) {
+                        tfnext = tf;
+                    }
                 }
-                free(tf);
 
                 // unset current relative ts:
                 currentRelativeTS = 0;
@@ -237,6 +250,7 @@ int luafuncs_cancelDelayedRun(lua_State* l) {
 // @function runDelayed
 // @tparam function function the function which shall be executed later
 // @tparam number delay the delay in milliseconds before executing the function
+// @tparam boolean repeat (optional) if set to true, repeat the function every delay milliseconds instead of only calling it once
 // @treturn userdata handle which can be used with @{blitwizard.cancelDelayedRun|cancelDelayedRun} 
 int luafuncs_runDelayed(lua_State* l) {
     // remove previous completed runDelay calls:
@@ -257,6 +271,21 @@ int luafuncs_runDelayed(lua_State* l) {
     if (d < 0) {
         return haveluaerror(l, badargument2, 2, "luafuncs.setTimeout",
         "timeout needs to be positive");
+    }
+
+    // check repeat parameter:
+    int repeat = 0;
+    switch (lua_type(l, 3)) {
+    case LUA_TNONE:
+        repeat = 0;
+        break;
+    case LUA_TBOOLEAN:
+        repeat = lua_tointeger(l, 3);
+        break;
+    default:
+        return haveluaerror(l, badargument1, 3, "luafuncs.setTimeout",
+        "boolean or nil", lua_strtype(l, 3));
+        break;
     }
 
     // see which id we would want to use:
@@ -297,6 +326,11 @@ int luafuncs_runDelayed(lua_State* l) {
         tf->triggerTime = runDelayedTS;
     }
     tf->triggerTime += d;
+    if(repeat == 1) {
+        tf->triggerDelay = d;
+    } else {
+        tf->triggerDelay = 0;
+    }
 
     tf->next = timeoutfuncs;
     timeoutfuncs = tf;
