@@ -261,6 +261,26 @@ function blitwizard.font.text:destroy()
     end
 end
 
+--[[--
+  Enable click events on the given font.
+  Please note this can slow down click event processing
+  considerably if you enable this on lengthy texts.
+
+  Set an @{blitwizard.object:onMouseClick|onMouseClick}
+  function on your text object to receive the click events.
+  @function enableMouseEvents
+]]
+function blitwizard.font.text:enableMouseEvents()
+    local fontobj = self
+    for i,v in ipairs(self.glyphs) do
+        v:setInvisibleToMouse(true)
+        function v:onMouseClick()
+            if fontobj.onMouseClick ~= nil then
+                fontobj:onMouseClick()
+            end
+        end
+    end
+end
 
 --[[--
   Move the text object to the given screen position in game units

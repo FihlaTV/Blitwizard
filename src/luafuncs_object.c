@@ -985,10 +985,12 @@ int luafuncs_object_setTransparency(lua_State* l) {
 // @treturn number transparency from 0 (solid) to 1 (invisible)
 int luafuncs_object_getTransparency(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
-    "blitwizard.object:setTransparency");
+    "blitwizard.object:getTransparency");
 #ifdef USE_GRAPHICS
-    return 1-luacfuncs_objectgraphics_getAlpha(obj);
+    lua_pushnumber(l, 1-luacfuncs_objectgraphics_getAlpha(obj));
+    return 1;
 #else
+    lua_pushnil(l);
     return 1;
 #endif
 }
