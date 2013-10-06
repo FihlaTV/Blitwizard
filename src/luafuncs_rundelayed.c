@@ -45,6 +45,7 @@
 
 int nextdelayedfuncid = 0;
 struct timeoutfunc {
+    int hasrun;
     int deleted;
     int id;
     uint64_t triggerTime;
@@ -148,10 +149,11 @@ void luacfuncs_runDelayed_Do() {
                 // detect if this was done:
                 if (firstitem) {
                     if (tf != timeoutfuncs) {
-                        // new prepended things!
+                        // new prepended things! fix our prev pointer!
                         tfprev = timeoutfuncs;
                         while (tfprev->next != tf) {
                             // advance to latest prepended entry
+                            // (=closest to us and new previous)
                             tfprev = tfprev->next;
                         }
                     }
@@ -160,8 +162,11 @@ void luacfuncs_runDelayed_Do() {
                 // remove error function from stack:
                 lua_pop(l, 1);
 
+                // remember that we executed this function:
+                tf->hasrun = 1;
+
                 // If this is not supposed to loop, delete it
-                if(tf->triggerDelay == 0) {
+                if (tf->triggerDelay == 0) {
                     // remove callback function:
                     lua_pushstring(l, funcname);
                     lua_pushnil(l);
@@ -199,9 +204,13 @@ void luacfuncs_runDelayed_Do() {
 // @{blitwizard.runDelayed} using the handle you received
 // for it.
 //
-// If the function has already been executed, this function
+// If the cancelled function has already been executed, this function
 // will return false, otherwise it will return true and
-// the function won't be executed.
+// the function won't be executed anymore.
+//
+// For repeated delayed runs (see @{blitwizard.runDelayed}/repeat parameter)
+// it will return false if the function has already been
+// executed once or more.
 // @function cancelDelayedRun
 // @tparam userdata handle the handle returned by @{blitwizard.runDelayed}
 int luafuncs_cancelDelayedRun(lua_State* l) {
@@ -224,11 +233,20 @@ int luafuncs_cancelDelayedRun(lua_State* l) {
     while (tf) {
         if (tf->id == id) {
             tf->deleted = 1;
-            lua_pushboolean(l, 1);
+            if (!tf->hasrun) {
+                // it has not been executed so far:
+                lua_pushboolean(l, 1);
+            } else {
+                // we were too late, it was already run:
+                lua_pushboolean(l, 0);
+            }
             return 1;
         }
         tf = tf->next;
     }
+    // we don't know about this function,
+    // so most likely it already ran at some point
+    // and is now long gone:
     lua_pushboolean(l, 0);
     return 1;
 }
@@ -241,7 +259,7 @@ int luafuncs_cancelDelayedRun(lua_State* l) {
 // be run once.
 //
 // If you know JavaScript, this function works similar to
-// JavaScript's setTimeout.
+// JavaScript's setTimeout/setInterval.
 //
 // The return value of @{blitwizard.runDelayed|runDelayed}
 // is a handle which you can use to cancel the
@@ -250,7 +268,7 @@ int luafuncs_cancelDelayedRun(lua_State* l) {
 // @function runDelayed
 // @tparam function function the function which shall be executed later
 // @tparam number delay the delay in milliseconds before executing the function
-// @tparam boolean repeat (optional) if set to true, repeat the function every delay milliseconds instead of only calling it once
+// @tparam boolean repeat (optional) if set to true, repeat the function infinitely with the interval being the specified milliseconds delay, instead of only calling it once. (You can still use @{blitwizard.cancelDelayedRun|cancelDelayedRun} to stop it at some point)
 // @treturn userdata handle which can be used with @{blitwizard.cancelDelayedRun|cancelDelayedRun} 
 int luafuncs_runDelayed(lua_State* l) {
     // remove previous completed runDelay calls:
@@ -258,34 +276,30 @@ int luafuncs_runDelayed(lua_State* l) {
 
     // check function parameter:
     if (lua_type(l, 1) != LUA_TFUNCTION) {
-        return haveluaerror(l, badargument1, 1, "luafuncs.setTimeout",
+        return haveluaerror(l, badargument1, 1, "blitwizard.runDelayed",
         "function", lua_strtype(l, 1));
     }
 
     // check delay parameter:
     if (lua_type(l, 2) != LUA_TNUMBER) {
-        return haveluaerror(l, badargument1, 2, "luafuncs.setTimeout",
+        return haveluaerror(l, badargument1, 2, "blitwizard.runDelayed",
         "number", lua_strtype(l, 2));
     }
     int d = lua_tointeger(l, 2);
     if (d < 0) {
-        return haveluaerror(l, badargument2, 2, "luafuncs.setTimeout",
+        return haveluaerror(l, badargument2, 2, "blitwizard.runDelayed",
         "timeout needs to be positive");
     }
 
     // check repeat parameter:
     int repeat = 0;
-    switch (lua_type(l, 3)) {
-    case LUA_TNONE:
-        repeat = 0;
-        break;
-    case LUA_TBOOLEAN:
-        repeat = lua_tointeger(l, 3);
-        break;
-    default:
-        return haveluaerror(l, badargument1, 3, "luafuncs.setTimeout",
-        "boolean or nil", lua_strtype(l, 3));
-        break;
+    if (lua_type(l, 3) != LUA_TNIL) {  // optional parameter
+        if (lua_type(l, 3) == LUA_TBOOLEAN) {
+            repeat = lua_tointeger(l, 3);
+        } else {
+            return haveluaerror(l, badargument1, 3, "blitwizard.runDelayed",
+            "boolean or nil", lua_strtype(l, 3));
+        }
     }
 
     // see which id we would want to use:
