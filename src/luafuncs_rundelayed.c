@@ -185,8 +185,9 @@ void luacfuncs_runDelayed_Do() {
                     // For small loop times, maybe run this function
                     // more than once. Just set tfnext to call it
                     // again.
-                    if(tf->triggerTime <= runDelayedTS) {
+                    if (tf->triggerTime <= runDelayedTS) {
                         tfnext = tf;
+                        continue;  // skip updating tfprev
                     }
                 }
 
