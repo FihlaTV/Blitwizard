@@ -740,7 +740,10 @@
 </span>      <span class="global">print</span>(<span class="string">"This should be written every 10 seconds!"</span>)
   <span class="keyword">end</span>
   blitwizard.runDelayed(runIn5Seconds, <span class="number">5000</span>)
-  blitwizard.runDelayed(runEach10Seconds, <span class="number">10000</span>) -- repeated run</pre>
+  <span class="keyword">local</span> myHandle = blitwizard.runDelayed(runEach10Seconds,
+      <span class="number">10000</span>, <span class="keyword">true</span>) <span class="comment">-- repeated run
+</span>  <span class="comment">-- now you can use myHandle with blitwizard.cancelDelayedRun to cancel it
+</span></pre>
     </ul>
 
 </dd>

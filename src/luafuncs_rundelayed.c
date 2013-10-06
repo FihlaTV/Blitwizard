@@ -49,7 +49,7 @@ struct timeoutfunc {
     int deleted;
     int id;
     uint64_t triggerTime;
-    uint64_t triggerDelay;
+    uint64_t triggerRepeatDelay;
     struct timeoutfunc* next;
 };
 static struct timeoutfunc* timeoutfuncs = NULL;
@@ -108,7 +108,13 @@ void luacfuncs_runDelayed_CleanDelayedRuns(lua_State* l) {
     } 
 }
 
+// For repeated calls that need to be called many times
+// to catch up with current time (not the rule but may happen),
+// limit the amount of calls to catch up so we don't get stuck forever:
+#define MAXREPETITIONS 4
 void luacfuncs_runDelayed_Do() {
+    int repetitions = 0;
+
     lua_State* l = luastate_GetStatePtr();
     if (runDelayedTS == 0) {
         runDelayedTS = time_GetMilliseconds();
@@ -166,7 +172,7 @@ void luacfuncs_runDelayed_Do() {
                 tf->hasrun = 1;
 
                 // If this is not supposed to loop, delete it
-                if (tf->triggerDelay == 0) {
+                if (tf->triggerRepeatDelay == 0) {
                     // remove callback function:
                     lua_pushstring(l, funcname);
                     lua_pushnil(l);
@@ -181,11 +187,13 @@ void luacfuncs_runDelayed_Do() {
                     free(tf);
                 } else {
                     // Set next execution time
-                    tf->triggerTime += tf->triggerDelay;
+                    tf->triggerTime += tf->triggerRepeatDelay;
                     // For small loop times, maybe run this function
                     // more than once. Just set tfnext to call it
                     // again.
-                    if (tf->triggerTime <= runDelayedTS) {
+                    if (tf->triggerTime <= runDelayedTS &&
+                    repetitions < MAXREPETITIONS) {
+                        repetitions++;
                         tfnext = tf;
                         continue;  // skip updating tfprev
                     }
@@ -194,8 +202,15 @@ void luacfuncs_runDelayed_Do() {
                 // unset current relative ts:
                 currentRelativeTS = 0;
             } else {
+                // no deletion, hence use our current non-deleted
+                // item as new previous.
                 tfprev = tf;
             }
+
+            // reset repetitions since we're now advancing to next:
+            repetitions = 0;
+
+            // advance to next:
             tf = tfnext;
         }
     }
@@ -281,7 +296,10 @@ int luafuncs_cancelDelayedRun(lua_State* l) {
 //      print("This should be written every 10 seconds!")
 //  end
 //  blitwizard.runDelayed(runIn5Seconds, 5000)
-//  blitwizard.runDelayed(runEach10Seconds, 10000) -- repeated run
+//  local myHandle = blitwizard.runDelayed(runEach10Seconds,
+//      10000, true) -- repeated run
+//  -- now you can use myHandle with blitwizard.cancelDelayedRun to cancel it
+//
 int luafuncs_runDelayed(lua_State* l) {
     // remove previous completed runDelay calls:
     luacfuncs_runDelayed_CleanDelayedRuns(l);
@@ -307,11 +325,17 @@ int luafuncs_runDelayed(lua_State* l) {
     int repeat = 0;
     if (lua_type(l, 3) != LUA_TNIL) {  // optional parameter
         if (lua_type(l, 3) == LUA_TBOOLEAN) {
-            repeat = lua_tointeger(l, 3);
+            repeat = lua_toboolean(l, 3);
         } else {
             return haveluaerror(l, badargument1, 3, "blitwizard.runDelayed",
             "boolean or nil", lua_strtype(l, 3));
         }
+    }
+
+    // avoid the user sending us into an infinite loop:
+    if (repeat && d == 0) {
+        return haveluaerror(l, badargument2, 2, "blitwizard.runDelayed",
+        "delay cannot be zero for repeated runs");
     }
 
     // see which id we would want to use:
@@ -352,10 +376,8 @@ int luafuncs_runDelayed(lua_State* l) {
         tf->triggerTime = runDelayedTS;
     }
     tf->triggerTime += d;
-    if(repeat == 1) {
-        tf->triggerDelay = d;
-    } else {
-        tf->triggerDelay = 0;
+    if (repeat) {
+        tf->triggerRepeatDelay = d;
     }
 
     tf->next = timeoutfuncs;
