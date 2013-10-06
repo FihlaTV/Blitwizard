@@ -268,8 +268,19 @@ int luafuncs_cancelDelayedRun(lua_State* l) {
 // @function runDelayed
 // @tparam function function the function which shall be executed later
 // @tparam number delay the delay in milliseconds before executing the function
-// @tparam boolean repeat (optional) if set to true, repeat the function infinitely with the interval being the specified milliseconds delay, instead of only calling it once. (You can still use @{blitwizard.cancelDelayedRun|cancelDelayedRun} to stop it at some point)
-// @treturn userdata handle which can be used with @{blitwizard.cancelDelayedRun|cancelDelayedRun} 
+// @tparam boolean repeat (optional) If set to true, repeat the function infinitely with the interval being the specified milliseconds delay, instead of only calling it once. You can still use @{blitwizard.cancelDelayedRun|cancelDelayedRun} to stop it at some point. Default is false (not repeating).
+// @treturn userdata handle which can be used with @{blitwizard.cancelDelayedRun|cancelDelayedRun}
+// @usage
+//  function runIn5Seconds()
+//      -- this will print to the developer console (F9):
+//      print("5 seconds are over!") 
+//  end
+//  function runEach10Seconds()
+//      -- this will also print to the dev console:
+//      print("This should be written every 10 seconds!")
+//  end
+//  blitwizard.runDelayed(runIn5Seconds, 5000)
+//  blitwizard.runDelayed(runEach10Seconds, 10000) -- repeated run
 int luafuncs_runDelayed(lua_State* l) {
     // remove previous completed runDelay calls:
     luacfuncs_runDelayed_CleanDelayedRuns(l);

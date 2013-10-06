@@ -84,6 +84,10 @@
 	<td class="summary">Destroy a <a href="../modules/blitwizard.font.html#Class_text">text</a> object again.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#text:enableMouseEvents">text:enableMouseEvents&nbsp;()</a></td>
+	<td class="summary">Enable click events on the given font.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#text:setPosition">text:setPosition&nbsp;(x, y)</a></td>
 	<td class="summary">Move the text object to the given screen position in game units
   (0,0 is top left).</td>
@@ -190,6 +194,23 @@
     <dd>
     Destroy a <a href="../modules/blitwizard.font.html#Class_text">text</a> object again.
   (If you don't do this, it will stay on the screen forever!)
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:enableMouseEvents"></a>
+    <strong>text:enableMouseEvents&nbsp;()</strong>
+    </dt>
+    <dd>
+    Enable click events on the given font.
+  Please note this can slow down click event processing
+  considerably if you enable this on lengthy texts.
+<p>  Set an <a href="../modules/blitwizard.html#object:onMouseClick">onMouseClick</a>
+  function on your text object to receive the click events.
 
 
 
