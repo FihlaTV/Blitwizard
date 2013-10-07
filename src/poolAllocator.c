@@ -21,23 +21,37 @@
 
 */
 
+#include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "threading.h"
 #include "poolAllocator.h"
 
-struct poolAllocator {
-    size_t size;
-    mutex* m;
-    size_t maxpoolsize;
+#define slot_t int32_t
 
-    int poolcount;
-    void* pools;
-    size_t* poolsize;
-    int firstinterestingpool; // pool not at max size with lowest index
+struct pool {
+    void* memory;  // memory area
+    slot_t* freeslots;  // list of free and occupied items
+    size_t size;  // size in items
+    size_t filled;  // amount of filled (occupied) items
+};
+
+struct poolAllocator {
+    size_t size;  // the size of one item which can be allocated
+    mutex* m;
+    size_t maxpoolsize;  // max size of one pool in items
+
+    int poolcount;  // amount of "sub" pools we have
+    struct pool* pools;  // pointer to all pools
+    int firstfreepool; // pool with lowest index which is not full
 };
 
 struct poolAllocator* poolAllocator_New(size_t size, int threadsafe) {
+    if (size == 0) {
+        // we don't support allocating nothing.
+        return NULL;
+    }
     struct poolAllocator* p = malloc(sizeof(*p));
     if (!p) {
         return NULL;
@@ -53,7 +67,11 @@ struct poolAllocator* poolAllocator_New(size_t size, int threadsafe) {
             return NULL;
         }
     }
-    p->firstinterestingpool = -1;
+    p->firstfreepool = -1;
+
+    // to avoid requiring very lengthy memory areas,
+    // we don't want a single sub-pool to exceed roughly 32M
+    p->maxpoolsize = (32 * 1024 * 1024) / size;
     return p;
 }
 
@@ -61,9 +79,82 @@ void* poolAllocator_Alloc(struct poolAllocator* p) {
     if (p->m) {
         mutex_Lock(p->m);
     }
-    
+
+    // first, see if there is an existing pool with free space:
+    int usepool = -1;
+    usepool = p->firstfreepool;  // free pool we remembered
+    if (usepool < 0) {
+        // find first non-full pool:
+        int i = 0;
+        while (i < p->poolcount) {
+            if (p->pools[i].filled < p->maxpoolsize) {
+                p->firstfreepool = i;
+                usepool = i;
+                break;
+            }
+            i++;
+        }
+    }
+    int expandpool = 0;
+    if (usepool < 0) {
+        // find first pool that can be expanded:
+        int i = 0;
+        while (i < p->poolcount) {
+            if (p->pools[i].size < p->maxpoolsize) {
+                usepool = i;
+                expandpool = 1;
+                break;
+            }
+            i++;
+        }
+    }
+    if (usepool < 0) {
+        // we need to add a completely new pool!
+        // let's do this... leerooooy jj
+
+        // first, resize the pool array:
+        int newcount = p->poolcount + 1;
+        void* newpools = realloc(p->pools, sizeof(void*) * newcount);
+        if (!newpools) {
+            if (p->m) {
+                mutex_Release(p->m);
+            }
+            return NULL;
+        }
+        p->pools = newpools;
+
+        // initialise new empty pool:
+        struct pool* newp = &(p->pools[p->poolcount]);
+        memset(newp, 0, sizeof(*newp));
+        usepool = p->poolcount;
+        expandpool = 1;
+        p->poolcount++;
+    }
+    if (expandpool) {
+        // need to expand this pool first before using it.
+        struct pool* pool = &(p->pools[usepool]);
+        int newsize = pool->size * 2;
+        if (newsize == 0) {
+            // use initial size of 4:
+            newsize = 4;
+        }
+        // first, expand memory:
+        void* newmem = realloc(pool->memory, sizeof(p->size) * newsize);
+        if (!newmem) {
+            // whoops, out of memory?
+            if (p->m) {
+                mutex_Release(p->m);
+            }
+            return NULL;
+        }
+    }
+ 
     if (p->m) {
         mutex_Release(p->m);
     }
+}
+
+void poolAllocator_Free(struct poolAllocator* p, void* memp) {
+
 }
 
