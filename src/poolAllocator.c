@@ -21,6 +21,7 @@
 
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -32,9 +33,10 @@
 
 struct pool {
     void* memory;  // memory area
-    slot_t* freeslots;  // list of free and occupied items
+    slot_t* filledslots;  // list of free and occupied items
     size_t size;  // size in items
     size_t filled;  // amount of filled (occupied) items
+    int firstfreeslot;
 };
 
 struct poolAllocator {
@@ -126,8 +128,13 @@ void* poolAllocator_Alloc(struct poolAllocator* p) {
         // initialise new empty pool:
         struct pool* newp = &(p->pools[p->poolcount]);
         memset(newp, 0, sizeof(*newp));
+        newp->firstfreeslot = 1;
+
+        // now use this pool for our allocation:
         usepool = p->poolcount;
-        expandpool = 1;
+        expandpool = 1;  // it needs to be expanded from size 0
+
+        // remember we have a new pool now:
         p->poolcount++;
     }
     if (expandpool) {
@@ -147,11 +154,61 @@ void* poolAllocator_Alloc(struct poolAllocator* p) {
             }
             return NULL;
         }
+        // now expand filled slots info array:
+        void* newarray = realloc(pool->filledslots, sizeof(slot_t) * newsize);
+        if (!newarray) {
+            // out of memory apparently!
+            free(newmem);
+            if (p->m) {
+                mutex_Release(p->m);
+            }
+            return NULL;
+        }
+        // set new pointers to larger areas:
+        pool->filledslots = newarray;
+        pool->memory = newmem;
+        // set new free slot hint:
+        if (pool->firstfreeslot < 0) {
+            pool->firstfreeslot = pool->size;
+        }
+        // mark new slots as empty:
+        memset(pool->filledslots + sizeof(slot_t) * pool->size, 0,
+        sizeof(slot_t) * (newsize - pool->size));
+        // update new size:
+        pool->size = newsize;
     }
- 
+    // see if we have a nice free slot:
+    struct pool* pool = &(p->pools[usepool]);
+    int slot = pool->firstfreeslot;
+    if (slot < 0) {
+        unsigned int i = 0;
+        while (i < pool->size) {
+            if (!pool->filledslots[i]) {
+                pool->firstfreeslot = i;
+                slot = i;
+                break;
+            }
+            i++;
+        }
+        if (slot < 0) {
+            fprintf(stderr, "FATAL POOL ALLOCATION ERROR - "
+            "no free slot found. This indicates memory corruption or a bug.");
+            exit(1);
+            return NULL;
+        }
+    }
+    // use the free slot and return memory address:
+    pool->filledslots[slot] = 1;
+    void* ptr = ((char*)pool->memory) + slot * (p->size);
+    pool->firstfreeslot = -1;
+    if (slot + 1 < (int)pool->size && pool->filledslots[slot+1] == 0) {
+        pool->firstfreeslot = slot + 1;
+    } 
+
     if (p->m) {
         mutex_Release(p->m);
     }
+    return ptr;
 }
 
 void poolAllocator_Free(struct poolAllocator* p, void* memp) {
