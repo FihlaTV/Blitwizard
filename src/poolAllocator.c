@@ -252,14 +252,32 @@ void poolAllocator_free(struct poolAllocator* p, void* memp) {
     // find the pool this is in, seeking backwards:
     int i = p->poolcount - 1;
     while (i >= 0) {
-        if (memp >= p->pools[i].memory && memp <
+        if (memp >= p->pools[i].memory && (char*)memp <
         (char*)p->pools[i].memory + p->size * p->pools[i].size) {
             // this is what it belongs to!
             int offset = memp - p->pools[i].memory;
             int slot = (offset / p->size);
-            assert(slot >= 0 && slot < p->pools[i].size);
+            assert(slot >= 0 && slot < (int)p->pools[i].size);
             assert(p->pools[i].filledslots[slot] == 1);
             p->pools[i].filledslots[slot] = 0;
+            p->pools[i].filled--;
+            if (p->pools[i].filled == 0) {
+                // wipe pool empty to regain memory:
+                free(p->pools[i].memory);
+                p->pools[i].memory = NULL;
+                free(p->pools[i].filledslots);
+                p->pools[i].filledslots = NULL;
+                p->pools[i].size = 0;
+                p->pools[i].firstfreeslot = -1;
+                if (p->firstfreepool == i) {
+                    p->firstfreepool = -1;
+                }
+            } else {
+                // update first free pool
+                if (i < p->firstfreepool) {
+                    p->firstfreepool = i;
+                }
+            }
             return;
         }
         i--;
