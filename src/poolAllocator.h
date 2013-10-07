@@ -28,6 +28,9 @@
 // of same size. The pool allocation is supposed to
 // speed up things as opposed to single malloc() calls.
 
+// If you want to use standard malloc instead, uncomment this:
+//#define DISABLE_POOL_ALLOC
+
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -36,7 +39,7 @@ struct poolAllocator;
 // Set up a new pool allocator. Thread-safe pool allocators
 // allow thread-safe usage of poolAllocator_Alloc from many
 // threads at once, but they are naturally a bit slower.
-struct poolAllocator* poolAllocator_New(size_t size, int threadsafe);
+struct poolAllocator* poolAllocator_create(size_t size, int threadsafe);
 
 // Allocate using the given allocator. Please note thread-safety
 // depends on whether the allocator was set up with thread-safety enabled.
@@ -45,15 +48,15 @@ struct poolAllocator* poolAllocator_New(size_t size, int threadsafe);
 //
 // The allocation always has the size specified when setting up
 // the allocator.
-void* poolAllocator_Alloc(struct poolAllocator* p);
+void* poolAllocator_alloc(struct poolAllocator* p);
 
 // Free memory allocated by a specific pool allocator.
-void poolAllocator_Free(struct poolAllocator* p, void* memptr);
+void poolAllocator_free(struct poolAllocator* p, void* memptr);
 
 // Destroy a pool allocator and free all memory used by it.
 // Do not use memory allocated by it afterwards, and don't
 // attempt to use poolAllocator_Free on any of it.
-void poolAllocator_Destroy(struct poolAllocator* p);
+void poolAllocator_destroy(struct poolAllocator* p);
 
 #endif  // BLITWIZARD_POOLALLOCATOR_H_
 

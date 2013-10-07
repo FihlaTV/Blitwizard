@@ -36,6 +36,7 @@
 #include "graphicstexture.h"
 #include "threading.h"
 #include "graphicstexturemanager.h"
+#include "poolAllocator.h"
 
 static mutex* m = NULL;
 
@@ -107,6 +108,9 @@ static int spritesInListCount = 0;
 static struct graphics2dsprite* spritelist = NULL;
 static struct graphics2dsprite* spritelistEnd = NULL;
 
+// sprite allocator:
+struct poolAllocator* spriteAllocator = NULL;
+
 // shortcut sprite list for jumping to a given zindex depth:
 struct spriteShortcut {
     struct graphics2dsprite* entrance;
@@ -136,6 +140,10 @@ __attribute__((constructor)) static void graphics2dsprites_init(void) {
         eventSpriteCount[i] = 0;
         i++;
     }
+
+    // create our sprite allocator:
+    spriteAllocator = poolAllocator_create(
+    sizeof(struct graphics2dsprite), 1);
 }
 
 // recalculate sprite shortcuts:
@@ -492,7 +500,7 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     } 
 
     // free sprite:
-    free(sprite);
+    poolAllocator_free(spriteAllocator, sprite);
 
     // done!
     mutex_Release(m);
@@ -601,7 +609,7 @@ const char* texturePath, double x, double y, double width, double height) {
     mutex_Lock(m);
 
     // create new sprite struct:
-    struct graphics2dsprite* s = malloc(sizeof(*s));
+    struct graphics2dsprite* s = poolAllocator_alloc(spriteAllocator);
     if (!s) {
         mutex_Release(m);
         texturemanager_releaseFromTextureAccess();
@@ -624,7 +632,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->zindex = 0;
     s->parallax = 1;
     if (!s->path) {
-        free(s);
+        poolAllocator_free(spriteAllocator, s);
         mutex_Release(m);
         texturemanager_releaseFromTextureAccess();
         return NULL;

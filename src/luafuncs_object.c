@@ -56,6 +56,7 @@
 #include "luafuncs_objectphysics.h"
 #include "graphics2dsprites.h"
 #include "luafuncs_graphics_camera.h"
+#include "poolAllocator.h"
 
 // some statistics:
 int processedImportantObjects = 0;
@@ -79,6 +80,14 @@ struct addRemoveObject {
     struct addRemoveObject* next;
 };
 struct addRemoveObject* addRemoveImportantObjects = NULL;
+
+// block allocator for blitwizard objects:
+struct poolAllocator* blitwizardObjAllocator = NULL;
+__attribute__((constructor)) static void
+luacfuncs_object_getAllocator(void) {
+    blitwizardObjAllocator = poolAllocator_create(
+    sizeof(struct blitwizardobject), 0);
+}
 
 // an iterator change will cause all iterators to be come invalid.
 static uint64_t iteratorChangeId = 0;
@@ -382,7 +391,7 @@ static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
         }
 
         // free object
-        free(o);
+        poolAllocator_free(blitwizardObjAllocator, o);
         return 1;
     }
     return 0;
@@ -624,7 +633,7 @@ int luafuncs_object_new(lua_State* l) {
     }
 
     // create new object
-    struct blitwizardobject* o = malloc(sizeof(*o));
+    struct blitwizardobject* o = poolAllocator_alloc(blitwizardObjAllocator);
     if (!o) {
         luacfuncs_object_clearRegistryTable(l, o);
         free(resource);

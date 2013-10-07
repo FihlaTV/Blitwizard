@@ -22,7 +22,7 @@
 */
 
 #ifndef NDEBUG
-// comment this line if you don't want debug output:
+// comment those lines if you don't want debug output:
 #define DEBUGTEXTUREMANAGER
 #define DEBUGTEXTUREMANAGERTHREADS
 #endif
@@ -47,6 +47,7 @@
 #include "timefuncs.h"
 #include "graphicstexturelist.h"
 #include "graphicstextureloader.h"
+#include "poolAllocator.h"
 #include "imgloader/imgloader.h"
 #include "diskcache.h"
 
@@ -98,8 +99,12 @@ struct texturerequesthandle {
     struct texturerequesthandle* unhandledPrev, *unhandledNext;
 };
 
+// list of unhandled and regularly handled texture requests:
 struct texturerequesthandle* textureRequestList = NULL;
 struct texturerequesthandle* unhandledRequestList = NULL;
+
+// pool allocator for texture requests:
+struct poolAllocator* textureReqBlockAlloc = NULL;
 
 void texturemanager_lockForTextureAccess() {
     mutex_Lock(textureReqListMutex);
@@ -249,6 +254,8 @@ time_t now, int savememory) {
 // this runs on application start:
 __attribute__((constructor)) static void texturemanager_init(void) {
     textureReqListMutex = mutex_Create();
+    textureReqBlockAlloc = poolAllocator_create(
+    sizeof(struct texturerequesthandle), 1);
 }
 
 // return just any GPU texture:
@@ -729,7 +736,8 @@ void* userdata) {
     //"count: %llu\n", path, texturemanager_getRequestCount());
 #endif
     // allocate request:
-    struct texturerequesthandle* request = malloc(sizeof(*request));
+    struct texturerequesthandle* request =
+    poolAllocator_alloc(textureReqBlockAlloc);
     if (!request) {
         return NULL;
     }
@@ -746,7 +754,7 @@ void* userdata) {
         gtm = graphicstexturelist_AddTextureToList(
         path);
         if (!gtm) {
-            free(request);
+            poolAllocator_free(textureReqBlockAlloc, request);
             return NULL;
         }
         graphicstexturelist_AddTextureToHashmap(
@@ -822,7 +830,7 @@ struct texturerequesthandle* request) {
     }
 
     // free request:
-    free(request);
+    poolAllocator_free(textureReqBlockAlloc, request);
 
     mutex_Release(textureReqListMutex);
 }

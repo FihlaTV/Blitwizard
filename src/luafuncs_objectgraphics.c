@@ -35,10 +35,17 @@
 #include "luafuncs_object.h"
 #include "luastate.h"
 #include "graphics2dsprites.h"
-
+#include "poolAllocator.h"
 
 #define MAXREQUESTSPERFRAME 20
 int requestsperframe = 0;
+
+struct poolAllocator* objectGraphicsAllocator = NULL;
+__attribute__((constructor)) void
+    luacfuncs_objectgraphics_initAllocator(void) {
+    objectGraphicsAllocator = poolAllocator_create(
+    sizeof(struct objectgraphicsdata), 0);
+}
 
 // load object graphics. might do nothing if too many have been 
 // loaded this frame!
@@ -60,7 +67,7 @@ const char* resource) {
 
     // create graphics thing if necessary:
     if (!o->graphics) {
-        o->graphics = malloc(sizeof(*(o->graphics)));
+        o->graphics = poolAllocator_alloc(objectGraphicsAllocator);
         if (!o->graphics) {
             // memory allocation error
             return;
@@ -172,7 +179,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
         }
     }
     if (o->graphics) {
-        free(o->graphics);
+        poolAllocator_free(objectGraphicsAllocator, o->graphics);
         o->graphics = NULL;
     }
 }
