@@ -88,11 +88,13 @@ int luafuncs_setMode(lua_State* l) {
     int x = lua_tonumber(l, 1);
     if (x <= 0) {
         return haveluaerror(l, badargument2, 1,
+        "blitwizard.graphics.setMode",
         "argument #1 is not a valid resolution width");
     }
     int y = lua_tonumber(l, 2);
     if (y <= 0) {
         return haveluaerror(l, badargument2, 1,
+        "blitwizard.graphics.setMode",
         "argument #2 is not a valid resolution height");
     }
 
