@@ -79,6 +79,9 @@ int id);
 void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
 int visible);
 
+// Query the value set by setVisible:
+int luacfuncs_objectgraphics_getVisible(struct blitwizardobject* o);
+
 // enable/disable mouse events for object:
 void luacfuncs_objectgraphics_enableMouseClickEvent(struct blitwizardobject* o,
 int enabled);

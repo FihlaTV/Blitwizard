@@ -655,6 +655,13 @@ const char* texturePath, double x, double y, double width, double height) {
     return s;
 }
 
+int graphics2dsprites_getZIndex(struct graphics2dsprite* sprite) {
+    mutex_Lock(m);
+    int z = sprite->zindex;
+    mutex_Release(m);
+    return z;
+}
+
 void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
 int zindex) {
     mutex_Lock(m);
@@ -696,6 +703,13 @@ int cameraId) {
 
     // done.
     mutex_Release(m);
+}
+
+int graphics2dsprites_getVisible(struct graphics2dsprite* sprite) {
+    mutex_Lock(m);
+    int r = sprite->visible;
+    mutex_Release(m);
+    return r;
 }
 
 void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,

@@ -86,6 +86,9 @@ double x, double y, double angle);
 void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
 int visible);
 
+// Query whether a sprite is set to visible (=1) or not (=0)
+int graphics2dsprites_getVisible(struct graphics2dsprite* sprite);
+
 // Resize a sprite. Set negative sizes for mirroring,
 // and 0, 0 for width/height if you want to have the sprite
 // size determined purely by texture dimensions.
@@ -106,6 +109,9 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite);
 // Set the Z index of the sprite (Defaults to 0):
 void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
 int zindex);
+
+// Get the current Z index of the sprite:
+int graphics2dsprites_getZIndex(struct graphics2dsprite* sprite);
 
 // --- internally used to draw sprites: ---
 

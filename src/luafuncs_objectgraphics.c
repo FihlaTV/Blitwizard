@@ -297,6 +297,18 @@ int id) {
     }
 }
 
+int luacfuncs_objectgraphics_getVisible(struct blitwizardobject* o) {
+    if (!object_checkgraphics(o)) {
+        return 0;
+    }
+    if (!o->is3d) {
+        if (o->graphics->sprite) {
+            return graphics2dsprites_getVisible(o->graphics->sprite);
+        }
+    }
+    return 0;
+}
+
 void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
 int visible) {
     if (!object_checkgraphics(o)) {

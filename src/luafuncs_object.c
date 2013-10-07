@@ -995,6 +995,26 @@ int luafuncs_object_getTransparency(lua_State* l) {
 #endif
 }
 
+/// Get the current @{blitwizard.object:setParallax|parallax effect
+// strength} of the given object. (only possible for 2d objects)
+// @function getParallax
+// @treturn number the strength of the effect (a positive number)
+int luafuncs_object_getParallax(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setParallax");
+    if (obj->is3d) {
+        return haveluaerror(l, "getParallax may only be used on 2d objects");
+    }
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (obj->physics && obj->physics->object) {
+        return haveluaerror(l, "no parallax effect available for objects "
+        "with collision");
+    }
+#endif
+    lua_pushnumber(l, obj->parallax);
+    return 1;
+}
+
 /// Enable a 2d parallax effect at a given strength.
 // The <a href="http://en.wikipedia.org/wiki/Parallax">parallax effect</a>
 // simulates depth by displacing objects. Effectively, it just
@@ -1005,9 +1025,14 @@ int luafuncs_object_getTransparency(lua_State* l) {
 // Therefore, use values smaller than 1 (and greater than zero) for
 // close objects, or greater than 1 for far away objects.
 //
-// This function does only work with 2d objects.
-// It doesn't have any effect for
+// This function does only work with 2d objects with
+// @{blitwizard.object:enableMovableCollision|no movable collision} and 
+// @{blitwizard.object:enableStaticCollision|no static collision} enabled.
+// It doesn't have any visible effect for
 // @{blitwizard.object:pinToCamera|pinned objects}.
+//
+// Use @{blitwizard.object:getParallax|object:getParallax} to retrieve the
+// current parallax strength on a 2d object with no collision.
 // @function setParallax
 // @tparam number strength of the effect (greater than zero) or 1.0 to disable
 int luafuncs_object_setParallax(lua_State* l) {
@@ -1357,15 +1382,41 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
 #endif
 }
 
-/// Set the z-index of the object (only for 2d objects).
+/// Get the @{blitwizard.object:setZIndex|z index} of the given
+// object (only for 2d objects).
+// @function getZIndex
+// @treturn number The current z index
+int luafuncs_object_getZIndex(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getZIndex");
+
+    if (obj->is3d) {
+        return haveluaerror(l, "3d objects don't have a z index");
+    } else {
+#ifdef USE_GRAPHICS
+        if (obj->graphics && obj->graphics->sprite) {
+            lua_pushnumber(l, graphics2dsprites_getZIndex(
+            obj->graphics->sprite));
+            return 1;
+        }
+#else
+        return haveluaerror(l, error_nographics);
+#endif
+    }
+    return 0;
+}
+
+/// Set the z index of the object (only for 2d objects).
 // An object with a higher z index will be drawn above
 // others with a lower z index. If two objects have the same
 // z index, the newer object will be drawn on top.
 //
 // The z index will be internally set to an integer,
-// so use numbers like -25, 0, 1, 2, 3, 99, ...
+// so use numbers like -25, 0, 1, 2, 3, 99, ... and don't use
+// fractional numbers like 0.5.
 //
-// The default z index is 0.
+// The default z index is 0. Use @{blitwizard.object:getZIndex|
+// object:getZIndex} to retrieve the current value for a 2d object.
 // @function setZIndex
 // @tparam number z_index New z index
 int luafuncs_object_setZIndex(lua_State* l) {
@@ -1724,21 +1775,40 @@ void luacfuncs_object_updateGraphics() {
 #endif
 }
 
+/// Query whether an object is currently @{blitwizard.object:setVisible|set
+// to be visible or not}. Returns true if visible (the default for objects
+// if not changed), false if not.
+//
+// Please note this is no indication if the object is actually on
+// screen right now.
+// @function getVisible
+// @treturn boolean true if set to be visible (default), false if not
+#ifdef USE_GRAPHICS
+int luafuncs_object_getVisible(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getVisible");
+    lua_pushboolean(l, luacfuncs_objectgraphics_getVisible(obj));
+    return 1;
+}
+#endif
+
 
 /// Change whether an object is shown at all, or whether it is hidden.
 // If you know objects aren't going to be needed at some point or
 // if you want to hide them until something specific happens,
 // use this function to hide them temporarily.
 //
+// Use @{blitwizard.object:getVisible|object:getVisible} to query the current
+// value.
 // @function setVisible
 // @tparam boolean visible specify true if you want the object to be shown (default), or false if you want it to be hidden. Please note this has no effect on collision
 #ifdef USE_GRAPHICS
 int luafuncs_object_setVisible(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
-    "blitwizard.object:pinToCamera");
+    "blitwizard.object:setVisible");
     if (lua_type(l, 2) != LUA_TBOOLEAN) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.object:pinToCamera", "boolean",
+        "blitwizard.object:setVisible", "boolean",
         lua_strtype(l, 2));
     }        
     luacfuncs_objectgraphics_setVisible(obj,

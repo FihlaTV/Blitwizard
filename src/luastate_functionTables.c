@@ -270,6 +270,7 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registergraphics(l, &luafuncs_object_set2dTextureClipping,
     "set2dTextureClipping");
     luastate_registergraphics(l, &luafuncs_object_setVisible, "setVisible");
+    luastate_registergraphics(l, &luafuncs_object_getVisible, "getVisible");
 
     // physics functions:
     luastate_register2dphysics(l, &luafuncs_object_angularImpulse2d,

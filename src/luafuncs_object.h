@@ -36,9 +36,11 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 
 int luafuncs_object_getPosition(lua_State* l);
 int luafuncs_object_setPosition(lua_State* l);
+int luafuncs_object_getZIndex(lua_State* l);
 int luafuncs_object_setZIndex(lua_State* l);
 int luafuncs_object_destroy(lua_State* l);
 int luafuncs_object_setParallax(lua_State* l);
+int luafuncs_object_getParallax(lua_State* l);
 int luafuncs_object_getDimensions(lua_State* l);
 int luafuncs_object_getOriginalDimensions(lua_State* l);
 int luafuncs_object_getScale(lua_State* l);
@@ -98,6 +100,8 @@ int luafuncs_object_pinToCamera(lua_State* l);
 
 // set object visibility:
 int luafuncs_object_setVisible(lua_State* l);
+// query object visibility setting (not actual visibility):
+int luafuncs_object_getVisible(lua_State* l);
 
 // get and adjust 2d rotation:
 int luafuncs_object_setRotationAngle(lua_State* l);

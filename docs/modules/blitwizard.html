@@ -113,15 +113,6 @@
  blitwizard log messages.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#scanFor2dObjects">scanFor2dObjects&nbsp;(x, y, radius)</a></td>
-	<td class="summary">Scan for 2d <a href="../modules/blitwizard.html#Class_object">objects</a> around the
- given position in a circle with the given radius.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
-	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
-	</tr>
-	<tr>
 	<td class="name" ><a href="#cancelDelayedRun">cancelDelayedRun&nbsp;(handle)</a></td>
 	<td class="summary">Cancel a function which was scheduled to be run with
  <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
@@ -131,6 +122,15 @@
 	<td class="name" ><a href="#runDelayed">runDelayed&nbsp;(function, delay, repeat)</a></td>
 	<td class="summary">This function allows scheduling a function to be executed
  after a specified time delay.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#scanFor2dObjects">scanFor2dObjects&nbsp;(x, y, radius)</a></td>
+	<td class="summary">Scan for 2d <a href="../modules/blitwizard.html#Class_object">objects</a> around the
+ given position in a circle with the given radius.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
+	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
 	</tr>
 </table>
 <h2><a href="#Class_object">Class object </a></h2>
@@ -219,6 +219,11 @@
 	<td class="summary">Get the transparency of the visual representation of this object.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:getParallax">object:getParallax&nbsp;()</a></td>
+	<td class="summary">Get the current <a href="../modules/blitwizard.html#object:setParallax">parallax effect
+ strength</a> of the given object.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:setParallax">object:setParallax&nbsp;(strength)</a></td>
 	<td class="summary">Enable a 2d parallax effect at a given strength.</td>
 	</tr>
@@ -245,8 +250,13 @@
 	<td class="summary">Scale up an object to precise boundaries in game units.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#object:getZIndex">object:getZIndex&nbsp;()</a></td>
+	<td class="summary">Get the <a href="../modules/blitwizard.html#object:setZIndex">z index</a> of the given
+ object (only for 2d objects).</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#object:setZIndex">object:setZIndex&nbsp;(z_index)</a></td>
-	<td class="summary">Set the z-index of the object (only for 2d objects).</td>
+	<td class="summary">Set the z index of the object (only for 2d objects).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:setRotationAngle">object:setRotationAngle&nbsp;(rotation)</a></td>
@@ -270,6 +280,11 @@
 	<tr>
 	<td class="name" ><a href="#object:unpinFromCamera">object:unpinFromCamera&nbsp;()</a></td>
 	<td class="summary">Unpin a sprite pinned with @{blitwizard.object.pinToCamera|pinToCamera.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:getVisible">object:getVisible&nbsp;()</a></td>
+	<td class="summary">Query whether an object is currently <a href="../modules/blitwizard.html#object:setVisible">set
+ to be visible or not</a>.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:setVisible">object:setVisible&nbsp;(visible)</a></td>
@@ -571,6 +586,91 @@
 
 </dd>
     <dt>
+    <a name = "cancelDelayedRun"></a>
+    <strong>cancelDelayedRun&nbsp;(handle)</strong>
+    </dt>
+    <dd>
+    Cancel a function which was scheduled to be run with
+ <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
+ for it.
+<p> If the cancelled function has already been executed, this function
+ will return false, otherwise it will return true and
+ the function won't be executed anymore.
+<p> For repeated delayed runs (see <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a>/repeat parameter)
+ it will return false if the function has already been
+ executed once or more.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">handle</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the handle returned by <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a></li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "runDelayed"></a>
+    <strong>runDelayed&nbsp;(function, delay, repeat)</strong>
+    </dt>
+    <dd>
+    This function allows scheduling a function to be executed
+ after a specified time delay.
+<p> blitwizard.runDelayed will return instantly, and lateron
+ when the specified amount of time has passed, the function will
+ be run once.
+<p> If you know JavaScript, this function works similar to
+ JavaScript's setTimeout/setInterval.
+<p> The return value of <a href="../modules/blitwizard.html#runDelayed">runDelayed</a>
+ is a handle which you can use to cancel the
+ scheduled function run with <a href="../modules/blitwizard.html#cancelDelayedRun">blitwizard.cancelDelayedRun</a>,
+ as long as it hasn't been run yet.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">function</span>
+            <span class="types"><span class="type">function</span></span>
+         the function which shall be executed later</li>
+        <li><span class="parameter">delay</span>
+            <span class="types"><span class="type">number</span></span>
+         the delay in milliseconds before executing the function</li>
+        <li><span class="parameter">repeat</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) If set to true, repeat the function infinitely with the interval being the specified milliseconds delay, instead of only calling it once. You can still use <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a> to stop it at some point. Default is false (not repeating).</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">userdata</span></span>
+        handle which can be used with <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+  <span class="keyword">function</span> runIn5Seconds()
+      <span class="comment">-- this will print to the developer console (F9):
+</span>      <span class="global">print</span>(<span class="string">"5 seconds are over!"</span>)
+  <span class="keyword">end</span>
+  <span class="keyword">function</span> runEach10Seconds()
+      <span class="comment">-- this will also print to the dev console:
+</span>      <span class="global">print</span>(<span class="string">"This should be written every 10 seconds!"</span>)
+  <span class="keyword">end</span>
+  blitwizard.runDelayed(runIn5Seconds, <span class="number">5000</span>)
+  <span class="keyword">local</span> myHandle = blitwizard.runDelayed(runEach10Seconds,
+      <span class="number">10000</span>, <span class="keyword">true</span>) <span class="comment">-- repeated run
+</span>  <span class="comment">-- now you can use myHandle with blitwizard.cancelDelayedRun to cancel it
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
     <a name = "scanFor2dObjects"></a>
     <strong>scanFor2dObjects&nbsp;(x, y, radius)</strong>
     </dt>
@@ -659,91 +759,6 @@
      <span class="keyword">local</span> x, y = obj:getPosition()
      <span class="global">print</span>(<span class="string">"object at: "</span> .. x .. <span class="string">", "</span> .. y)
  <span class="keyword">end</span></pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "cancelDelayedRun"></a>
-    <strong>cancelDelayedRun&nbsp;(handle)</strong>
-    </dt>
-    <dd>
-    Cancel a function which was scheduled to be run with
- <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
- for it.
-<p> If the cancelled function has already been executed, this function
- will return false, otherwise it will return true and
- the function won't be executed anymore.
-<p> For repeated delayed runs (see <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a>/repeat parameter)
- it will return false if the function has already been
- executed once or more.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">handle</span>
-            <span class="types"><span class="type">userdata</span></span>
-         the handle returned by <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a></li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "runDelayed"></a>
-    <strong>runDelayed&nbsp;(function, delay, repeat)</strong>
-    </dt>
-    <dd>
-    This function allows scheduling a function to be executed
- after a specified time delay.
-<p> blitwizard.runDelayed will return instantly, and lateron
- when the specified amount of time has passed, the function will
- be run once.
-<p> If you know JavaScript, this function works similar to
- JavaScript's setTimeout/setInterval.
-<p> The return value of <a href="../modules/blitwizard.html#runDelayed">runDelayed</a>
- is a handle which you can use to cancel the
- scheduled function run with <a href="../modules/blitwizard.html#cancelDelayedRun">blitwizard.cancelDelayedRun</a>,
- as long as it hasn't been run yet.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">function</span>
-            <span class="types"><span class="type">function</span></span>
-         the function which shall be executed later</li>
-        <li><span class="parameter">delay</span>
-            <span class="types"><span class="type">number</span></span>
-         the delay in milliseconds before executing the function</li>
-        <li><span class="parameter">repeat</span>
-            <span class="types"><span class="type">boolean</span></span>
-         (optional) If set to true, repeat the function infinitely with the interval being the specified milliseconds delay, instead of only calling it once. You can still use <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a> to stop it at some point. Default is false (not repeating).</li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">userdata</span></span>
-        handle which can be used with <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a>
-    </ol>
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
-  <span class="keyword">function</span> runIn5Seconds()
-      <span class="comment">-- this will print to the developer console (F9):
-</span>      <span class="global">print</span>(<span class="string">"5 seconds are over!"</span>)
-  <span class="keyword">end</span>
-  <span class="keyword">function</span> runEach10Seconds()
-      <span class="comment">-- this will also print to the dev console:
-</span>      <span class="global">print</span>(<span class="string">"This should be written every 10 seconds!"</span>)
-  <span class="keyword">end</span>
-  blitwizard.runDelayed(runIn5Seconds, <span class="number">5000</span>)
-  <span class="keyword">local</span> myHandle = blitwizard.runDelayed(runEach10Seconds,
-      <span class="number">10000</span>, <span class="keyword">true</span>) <span class="comment">-- repeated run
-</span>  <span class="comment">-- now you can use myHandle with blitwizard.cancelDelayedRun to cancel it
-</span></pre>
     </ul>
 
 </dd>
@@ -1336,6 +1351,26 @@
 
 </dd>
     <dt>
+    <a name = "object:getParallax"></a>
+    <strong>object:getParallax&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the current <a href="../modules/blitwizard.html#object:setParallax">parallax effect
+ strength</a> of the given object.  (only possible for 2d objects)
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        the strength of the effect (a positive number)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "object:setParallax"></a>
     <strong>object:setParallax&nbsp;(strength)</strong>
     </dt>
@@ -1348,9 +1383,13 @@
  than they would normally be.
 <p> Therefore, use values smaller than 1 (and greater than zero) for
  close objects, or greater than 1 for far away objects.
-<p> This function does only work with 2d objects.
- It doesn't have any effect for
+<p> This function does only work with 2d objects with
+ <a href="../modules/blitwizard.html#object:enableMovableCollision">no movable collision</a> and
+ <a href="../modules/blitwizard.html#object:enableStaticCollision">no static collision</a> enabled.
+ It doesn't have any visible effect for
  <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a>.
+<p> Use <a href="../modules/blitwizard.html#object:getParallax">object:getParallax</a> to retrieve the
+ current parallax strength on a 2d object with no collision.
 
     <h3>Parameters:</h3>
     <ul>
@@ -1550,17 +1589,39 @@
 
 </dd>
     <dt>
+    <a name = "object:getZIndex"></a>
+    <strong>object:getZIndex&nbsp;()</strong>
+    </dt>
+    <dd>
+    Get the <a href="../modules/blitwizard.html#object:setZIndex">z index</a> of the given
+ object (only for 2d objects).
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">number</span></span>
+        The current z index
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "object:setZIndex"></a>
     <strong>object:setZIndex&nbsp;(z_index)</strong>
     </dt>
     <dd>
-    Set the z-index of the object (only for 2d objects).
+    Set the z index of the object (only for 2d objects).
  An object with a higher z index will be drawn above
  others with a lower z index. If two objects have the same
  z index, the newer object will be drawn on top.
 <p> The z index will be internally set to an integer,
- so use numbers like -25, 0, 1, 2, 3, 99, ...
-<p> The default z index is 0.
+ so use numbers like -25, 0, 1, 2, 3, 99, ... and don't use
+ fractional numbers like 0.5.
+<p> The default z index is 0. Use <a href="../modules/blitwizard.html#object:getZIndex">
+ object:getZIndex</a> to retrieve the current value for a 2d object.
 
     <h3>Parameters:</h3>
     <ul>
@@ -1701,6 +1762,29 @@
 
 </dd>
     <dt>
+    <a name = "object:getVisible"></a>
+    <strong>object:getVisible&nbsp;()</strong>
+    </dt>
+    <dd>
+    Query whether an object is currently <a href="../modules/blitwizard.html#object:setVisible">set
+ to be visible or not</a>.  Returns true if visible (the default for objects
+ if not changed), false if not.
+<p> Please note this is no indication if the object is actually on
+ screen right now.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">boolean</span></span>
+        true if set to be visible (default), false if not
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "object:setVisible"></a>
     <strong>object:setVisible&nbsp;(visible)</strong>
     </dt>
@@ -1709,7 +1793,8 @@
  If you know objects aren't going to be needed at some point or
  if you want to hide them until something specific happens,
  use this function to hide them temporarily.
-
+<p> Use <a href="../modules/blitwizard.html#object:getVisible">object:getVisible</a> to query the current
+ value.
 
     <h3>Parameters:</h3>
     <ul>
