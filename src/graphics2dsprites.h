@@ -188,9 +188,9 @@ int cameraId);
 // Report visibility to texture manager
 void graphics2dsprites_reportVisibility(void);
 
-#define SPRITE_EVENT_TYPE_CLICK 1
-#define SPRITE_EVENT_TYPE_MOTION 2
-#define SPRITE_EVENT_TYPE_FETCH 3
+#define SPRITE_EVENT_TYPE_CLICK 0
+#define SPRITE_EVENT_TYPE_MOTION 1
+#define SPRITE_EVENT_TYPE_FETCH 2
 #define SPRITE_EVENT_TYPE_COUNT 3
 // Get sprite at the given screen position
 // (e.g. mouse position) with the given camera
