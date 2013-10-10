@@ -271,7 +271,8 @@ static void luastate_VoidDebug(lua_State* l) {
 static char* whitelist[] = { "string", "os", "math", "blitwizard",
 "io", "_G", "_VERSION", "pairs", "ipairs", "coroutine", "next",
 "tostring", "tonumber", "type", "setmetatable", "getmetatable",
-"load", "table", "error", "pcall", "xpcall", "assert", NULL };
+"load", "table", "error", "pcall", "xpcall", "assert", "require",
+NULL };
 
 static void luastate_ApplyWhitelist(lua_State* l) {
     int repeat = 1;
