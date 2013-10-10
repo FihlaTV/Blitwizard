@@ -126,6 +126,7 @@ int shortcutsNeedRecalculation = 0;
 
 // the "lowest" sprites enabled for each event:
 static struct graphics2dsprite* lastEventSprite[SPRITE_EVENT_TYPE_COUNT];
+static int recalculateLastEventSprite[SPRITE_EVENT_TYPE_COUNT];
 // all the sprites enabled for a given event (which are visible):
 int eventSpriteCount[SPRITE_EVENT_TYPE_COUNT];
 
@@ -137,6 +138,7 @@ __attribute__((constructor)) static void graphics2dsprites_init(void) {
     int i = 0;
     while (i < SPRITE_EVENT_TYPE_COUNT) {
         lastEventSprite[i] = NULL;
+        recalculateLastEventSprite[i] = 1;
         eventSpriteCount[i] = 0;
         i++;
     }
@@ -186,10 +188,15 @@ static void graphics2dsprites_recalculateSpriteShortcuts(void) {
     }
 }
 
+// This function searches the sprites with the lowest zindex
+// which are still relevant for a given event.
+// This allows an actual event search later to stop early when
+// reaching the lowest relevant sprite, saving precious time.
 static void graphics2dsprites_findLastEventSprites(void) {
     int i = 0;
     while (i < SPRITE_EVENT_TYPE_COUNT) {
-        if (!lastEventSprite[i]) {
+        if (recalculateLastEventSprite[i]) {
+            recalculateLastEventSprite[i] = 1;
             if (eventSpriteCount[i] > 0) {
                 // search for first sprite that is enabled for this event:
                 struct graphics2dsprite* s = spritelist;
@@ -440,8 +447,16 @@ static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
 
     spritesInListCount--;
 
-    // if this is enabled for an event, recalculate event stuff:
-    graphics2dsprites_findLastEventSprites();
+    // if this is enabled for an event, remember to recalculate
+    // last event sprite if necessary:
+    i = 0;
+    while (i < SPRITE_EVENT_TYPE_COUNT) {
+        if (sprite->enabledForEvent[i]
+        && lastEventSprite[i] == sprite) {
+            recalculateLastEventSprite[i] = 1;
+        }
+        i++;
+    }
 
     // remove sprite from list:
     if (sprite->prev) {
@@ -985,13 +1000,15 @@ struct graphics2dsprite* sprite, int event, int enabled) {
     } else {
         if (sprite->visible) {
             eventSpriteCount[event]--;
-            recalculate = 1;
+            if (lastEventSprite[event] == sprite) {
+                // we were the last, so now it must be someone else:
+                recalculate = 1;
+            }
         }
     }
     if (recalculate) {
-        // recalculate last event sprite:
-        lastEventSprite[event] = NULL;
-        graphics2dsprites_findLastEventSprites();
+        // force recalculation of last event sprite:
+        recalculateLastEventSprite[event] = 1;
     }
     mutex_Release(m);
 }

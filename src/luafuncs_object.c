@@ -1927,4 +1927,32 @@ int luafuncs_object_setVisible(lua_State* l) {
 // an impact on performance.
 // @function onMouseLeave
 
-
+/// Return the object which would be clicked on if the mouse clicked
+// on the given screen position. The screen position shall be specified
+// in zoom-independent game units (similar to the coordinates returned
+// by @{blitwizard.onMouseMove} or by
+// @{blitwizard.graphics.camera:getDimensions} with consider_zoom
+// set to false).
+//
+// This function respects the @{blitwizard.object:setInvisibleToMouse|
+// invisible to mouse setting} of the objects.
+// @function pickObjectAtPosition
+// @tparam number x_pos X position on the screen in game units
+// @tparam number y_pos Y position on the screen in game units
+// @treturn userdata the @{blitwizard.object|object} which would be clicked if the mouse was to click at the given position (or nil if none hit).
+int luafuncs_object_pickObjectAtPosition(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.pickObjectAtPosition",
+        "number", lua_strtype(l, 1));
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.pickObjectAtPosition",
+        "number", lua_strtype(l, 2));
+    }
+    double x = lua_tonumber(l, 1);
+    double y = lua_tonumber(l, 2);
+    
+    return 0;
+}

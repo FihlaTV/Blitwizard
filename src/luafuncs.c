@@ -615,7 +615,8 @@ int luafuncs_setstep(lua_State* l) {
 //
 // The coordinates you get are the same that would be used
 // for @{blitwizard.graphics.camera:screenPosTo2dWorldPos|
-// camera:screenPosTo2dWorldPos}.
+// camera:screenPosTo2dWorldPos} or
+// @{blitwizard.pickObjectAtPosition}.
 //
 // <b>This function does not exist</b> unless you specify/override
 // it.
