@@ -1132,7 +1132,6 @@ void texturemanager_deviceLost(void) {
 }
 
 void texturemanager_wipeTexture(const char* tex) {
-    printf("Wiping %s...\n", tex);
     mutex_Lock(textureReqListMutex); 
     
     // find relevant texture entry:
@@ -1140,13 +1139,10 @@ void texturemanager_wipeTexture(const char* tex) {
     graphicstexturelist_GetTextureByName(tex);
 
     if (!gtm) {
-        printf("Nothing to wipe!\n");
         // nothing to be reloaded here.
         mutex_Release(textureReqListMutex);
         return;
     }
-
-    printf("Will wipe!\n");
 
     while (!texturemanager_textureSafeToDelete(gtm)) {
         // we need to wait. (this sucks, yes.)
