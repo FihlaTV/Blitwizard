@@ -869,6 +869,9 @@ int luafuncs_object_destroy(lua_State* l) {
     // tell getAllObjects() iterator of change:
     luacfuncs_objectAddedDeleted(o, 0);
 
+    // make invisible:
+    luacfuncs_objectgraphics_setVisible(o, 0),
+
     // remove self ref in registry:
     lua_pushstring(l, o->selfRefName);
     lua_pushnil(l);
@@ -1773,6 +1776,11 @@ void luacfuncs_object_updateGraphics(void) {
     // update visual representations of objects:
     struct blitwizardobject* o = objects;
     while (o) {
+        if (o->deleted) {
+            o = o->next;
+            continue;
+        }
+
         // attempt to load graphics if not done yet:
         luafuncs_objectgraphics_load(o, o->respath);
 
@@ -1787,6 +1795,10 @@ void luacfuncs_object_updateGraphics(void) {
 
             // fire onLoaded callback.
             luacfuncs_object_callEvent(l, o, "onLoaded", 0, NULL);
+            if (o->deleted) {
+                o = o->next;
+                continue;
+            }
 
             // assuming doAlways() often contains code for placing the
             // object at its proper position, call it now once:

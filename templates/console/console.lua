@@ -87,9 +87,15 @@ do
     local function calculateConsoleLinesShown()
         local text = blitwizard.font.text:new(
             "H", "default", 0.8)
-        consoleLineHeight = text:height()
-        local result = math.floor(
-            consoleHeight/text:height())
+        local result = 0
+        if pcall(function()
+            consoleLineHeight = text:height()
+            result = math.floor(
+                consoleHeight/text:height())
+        end) ~= true then
+            text:destroy()
+            error("couldn't calculate lines")
+        end
         text:destroy()
         blitwizard.console.consoleLinesShown = result-2
         trimConsole()
@@ -380,8 +386,11 @@ do
                 blinkCursorText:setVisible(true)
 
                 -- get glyph size of input line font:
-                local gw,gh = consoleTextObj:getGlyphDimensions()
-                blinkCursorText:setPosition(textEndPos - blinkCursorOffset * gw
+                local gw,gh = 0.2, 0.2
+                if consoleTextObj then
+                    local gw,gh = consoleTextObj:getGlyphDimensions()
+                end
+                blinkCursorText:setPosition((textEndPos or consoleBg:getDimensions()) - blinkCursorOffset * gw
                 - gw * math.min(0.4, blinkCursorOffset),
                 y + consoleHeight - consoleLineHeight - 0.1)
             else
