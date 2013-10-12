@@ -640,7 +640,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->b = 1;
     s->pinnedToCamera = -1;
     s->alpha = 1;
-    s->visible = 1;
+    s->visible = 0;
     s->width = width;
     s->height = height;
     s->path = strdup(texturePath);
@@ -652,7 +652,6 @@ const char* texturePath, double x, double y, double width, double height) {
         texturemanager_releaseFromTextureAccess();
         return NULL;
     }
-    s->visible = 1;
 
     mutex_Release(m);
     // get a texture request:

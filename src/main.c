@@ -955,7 +955,7 @@ int main(int argc, char** argv) {
     doConsoleLog();
 
 #if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: Calling blitwiz.on_init...");
+    printinfo("Blitwizard startup: Calling blitwiz.onInit...");
 #endif
     doConsoleLog();
 
@@ -996,8 +996,6 @@ int main(int argc, char** argv) {
     while (!wantquit) {
         doConsoleLog(); 
         uint64_t timeNow = time_GetMilliseconds();
-
-        // this is a hack for SDL bug http://bugzilla.libsdl.org/show_bug.cgi?id=1422
 
 #ifdef USE_AUDIO
         // simulate audio
@@ -1102,6 +1100,10 @@ int main(int argc, char** argv) {
                 if (k > MAXBATCHEDLOGIC) {
                     k = MAXBATCHEDLOGIC;
                 }
+                if (k < 1) {
+                    k = 1;
+                }
+
                 // call logic functions of all objects:
                 int i = luacfuncs_object_doAllSteps(k);
                 doConsoleLog();

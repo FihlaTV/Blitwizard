@@ -641,7 +641,9 @@ int luafuncs_object_new(lua_State* l) {
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
+    o->visible = 1;
     if (!is3d) {
+        // for 2d objects, set parallax to default of 1:
         o->parallax = 1;
     }
 
@@ -1765,7 +1767,7 @@ int luacfuncs_object_doAllSteps(int count) {
     return count;
 }
 
-void luacfuncs_object_updateGraphics() {
+void luacfuncs_object_updateGraphics(void) {
 #ifdef USE_GRAPHICS
     lua_State* l = luastate_GetStatePtr();
     // update visual representations of objects:
@@ -1774,8 +1776,23 @@ void luacfuncs_object_updateGraphics() {
         // attempt to load graphics if not done yet:
         luafuncs_objectgraphics_load(o, o->respath);
 
-        if (luafuncs_objectgraphics_NeedGeometryCallback(o)) {
+        if (luafuncs_objectgraphics_needGeometryCallback(o)) {
+            // the dimensions of the object's graphical representation
+            // are now known. -> fire onGeometryLoaded
             luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0, NULL);
+        }
+        if (luafuncs_objectgraphics_needVisibleCallback(o)) {
+            // the object has now fully loaded and can be made visible.
+            luacfuncs_objectgraphics_setVisible(o, o->visible);
+
+            // fire onLoaded callback.
+            luacfuncs_object_callEvent(l, o, "onLoaded", 0, NULL);
+
+            // assuming doAlways() often contains code for placing the
+            // object at its proper position, call it now once:
+            if (o->haveDoAlways) {
+                luacfuncs_object_callEvent(l, o, "doAlways", 0, NULL);
+            }
         }
 
         luacfuncs_objectgraphics_updatePosition(o);
@@ -1796,7 +1813,7 @@ void luacfuncs_object_updateGraphics() {
 int luafuncs_object_getVisible(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:getVisible");
-    lua_pushboolean(l, luacfuncs_objectgraphics_getVisible(obj));
+    lua_pushboolean(l, obj->visible);
     return 1;
 }
 #endif
@@ -1819,7 +1836,9 @@ int luafuncs_object_setVisible(lua_State* l) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setVisible", "boolean",
         lua_strtype(l, 2));
-    }        
+    }
+    // set it visible (or not):
+    obj->visible = lua_toboolean(l, 2);
     luacfuncs_objectgraphics_setVisible(obj,
     lua_toboolean(l, 2));
     return 0;

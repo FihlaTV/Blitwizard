@@ -24,6 +24,7 @@
 #include "config.h"
 #include "os.h"
 #include "osinfo.h"
+#include "logging.h"
 #ifdef UNIX
 #include <signal.h>
 #endif
@@ -201,6 +202,7 @@ static const char* GetCrashInfo(const char* reason) {
 }
 
 static void handleerror(const char* name) {
+    crashed = 1;
     char msg[4096];
     snprintf(msg, sizeof(msg), FATALERROR_MSG, GetCrashInfo(name));
     fprintf(stderr, "%s\n", msg);

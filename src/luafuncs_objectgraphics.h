@@ -36,12 +36,12 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o);
 
 // check if a geometry callback needs to be fired.
 // returns 1 if that is the case, 0 if not.
-int luafuncs_objectgraphics_NeedGeometryCallback(
+int luafuncs_objectgraphics_needGeometryCallback(
 struct blitwizardobject* o);
 
 // check if a visibility callback needs to be fired.
 // returns 1 if that is the case, 0 if not.
-int luafuncs_objectgraphics_NeedVisibleCallback(
+int luafuncs_objectgraphics_needVisibleCallback(
 struct blitwizardobject* o);
 
 // Move graphical representation of object to correct position:

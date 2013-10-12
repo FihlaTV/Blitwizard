@@ -531,7 +531,7 @@ int luafuncs_getRendererName(lua_State* l) {
     if (!p) {
         lua_pushnil(l);
         return 1;
-    }else{
+    } else {
         lua_pushstring(l, p);
         return 1;
     }
@@ -547,7 +547,7 @@ int luafuncs_getBackendName(lua_State* l) {
     const char* p = audio_GetCurrentBackendName();
     if (p) {
         lua_pushstring(l, p);
-    }else{
+    } else {
         lua_pushstring(l, "null driver");
     }
     return 1;

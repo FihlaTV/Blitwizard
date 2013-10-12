@@ -33,8 +33,9 @@ function blitwizard.onInit()
     blitwizard.object.o2d, "car.png")
     car:setZIndex(2)
     function car:onGeometryLoaded()
-        -- once the geometry is loaded and the texture size is known,
-        -- start moving on the screen:
+        -- now the textur size of the car is known
+        -- (texture is at least partially loaded).
+        -- make it slowly move along the bottom of the screen:
         function self:doAlways()
             -- get current pos and window size:
             local x,y = self:getPosition()

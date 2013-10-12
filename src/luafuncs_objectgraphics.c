@@ -37,9 +37,6 @@
 #include "graphics2dsprites.h"
 #include "poolAllocator.h"
 
-#define MAXREQUESTSPERFRAME 20
-int requestsperframe = 0;
-
 struct poolAllocator* objectGraphicsAllocator = NULL;
 __attribute__((constructor)) void
     luacfuncs_objectgraphics_initAllocator(void) {
@@ -51,9 +48,6 @@ __attribute__((constructor)) void
 // loaded this frame!
 void luafuncs_objectgraphics_load(struct blitwizardobject* o,
 const char* resource) {
-    if (1 == 2 && requestsperframe >= MAXREQUESTSPERFRAME) {
-        return;
-    }
     if (o->deleted == 1) {
         return;
     }
@@ -81,19 +75,12 @@ const char* resource) {
         graphics2dsprites_setUserdata(o->graphics->sprite, o);
         o->scale2d.x = 1;
         o->scale2d.y = 1;
-        requestsperframe++;
     }
 }
 
 static int object_checkgraphics(struct blitwizardobject* o) {
     // check for graphics struct and attempt to create it:
     if (!o->graphics) {
-        /*o->graphics = malloc(sizeof(*(o->graphics)));
-        if (!o->graphics) {
-            // memory allocation error
-            return 0;
-        }
-        memset(o->graphics, 0, sizeof(*(o->graphics)));*/
         luafuncs_objectgraphics_load(o, o->respath);
         if (!o->graphics) {
             return 0;
@@ -184,7 +171,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
     }
 }
 
-int luafuncs_objectgraphics_NeedGeometryCallback(
+int luafuncs_objectgraphics_needGeometryCallback(
 struct blitwizardobject* o) {
     if (!o->graphics || o->graphics->geometryCallbackDone) {
         return 0;
@@ -206,7 +193,7 @@ struct blitwizardobject* o) {
     }
 }
 
-int luafuncs_objectgraphics_NeedVisibleCallback(
+int luafuncs_objectgraphics_needVisibleCallback(
 struct blitwizardobject* o) {
     if (!object_checkgraphics(o)) {
         return 0;
@@ -258,7 +245,6 @@ struct blitwizardobject* o, double *x, double *y, double *z) {
 }
 
 void luacfuncs_objectgraphics_newFrame() {
-    requestsperframe = 0;
 }
 
 void luacfuncs_objectgraphics_unsetTextureClipping(

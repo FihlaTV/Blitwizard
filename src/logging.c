@@ -51,6 +51,7 @@ volatile char* consoleloglines[CONSOLELOGMAXBUFFEREDLINES];
 volatile char* consoleloglinetypes[CONSOLELOGMAXBUFFEREDLINES];
 volatile int consoleloglinecount = 0;
 volatile int mayConsoleLog = 0;
+volatile int crashed = 0;
 mutex* consoleLogMutex = NULL;
 
 __attribute__ ((constructor)) static void prepareMutexes(void) {
@@ -149,24 +150,26 @@ void printerror(const char* fmt, ...) {
 #endif
 #ifdef WINDOWS
     // we want graphical error messages for windows
-    if (!suppressfurthererrors || 1 == 1) {
-        // minimize drawing window if fullscreen
+    // minimize drawing window if fullscreen
 #ifdef USE_GRAPHICS
+    if (!crashed) {
+        // we only want to do this in non-crash situations,
+        // since otherwise this will probably cause worse crashing
         if (graphics_AreGraphicsRunning() && graphics_IsFullscreen()) {
             graphics_MinimizeWindow();
         }
-#endif
-        // show error msg
-        char printerror[4096];
-        snprintf(printerror, sizeof(printerror)-1,
-        "The application cannot continue due to a fatal error:\n\n%s",
-        printline);
-#ifdef USE_SDL_GRAPHICS
-        MessageBox(graphics_GetWindowHWND(), printerror, "Fatal error", MB_OK|MB_ICONERROR);
-#else
-        MessageBox(NULL, printerror, "Fatal error", MB_OK|MB_ICONERROR);
-#endif
     }
+#endif
+    // show error msg
+    char printerror[4096];
+    snprintf(printerror, sizeof(printerror)-1,
+    "The application cannot continue due to a fatal error:\n\n%s",
+    printline);
+#ifdef USE_SDL_GRAPHICS
+    MessageBox(graphics_GetWindowHWND(), printerror, "Fatal error", MB_OK|MB_ICONERROR);
+#else
+    MessageBox(NULL, printerror, "Fatal error", MB_OK|MB_ICONERROR);
+#endif
 #endif
 }
 
