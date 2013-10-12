@@ -55,7 +55,7 @@ do
     local slideSpeed = 0.1
     local consoleDisabled = false
     local consoleLineHeight = 0
-    local consoleHeight = 240
+    local consoleHeight = 240 / 40 -- 40 should be roughly gameUnitToPixels
     local consoleLoaded = false
     blitwizard.console.consoleLinesShown = 99
 
@@ -283,7 +283,7 @@ do
 
         -- place lines properly:
         local x,y = consoleBg:getPosition()
-        if consoleOpened or y > -consoleHeight then
+        if consoleOpened or (y > -consoleHeight + 1.0) then
             -- Cycle through lines, load their text glyphs and move them:
             local i = 1
             while i <= #lines do

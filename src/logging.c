@@ -78,8 +78,9 @@ void doConsoleLog() {
     mayConsoleLog = 1;
 
     // flush out all buffered lines:
+    int printto = consoleloglinecount;
     int i = 0;
-    while (i < consoleloglinecount) {
+    while (i < printto) {
         if (consoleloglines[i] && consoleloglinetypes[i]) {
             char* tp = strdup((char*)consoleloglinetypes[i]);
             char* tl = strdup((char*)consoleloglines[i]);
@@ -97,7 +98,16 @@ void doConsoleLog() {
         }
         i++;
     }
-    consoleloglinecount = 0;
+    consoleloglinecount -= printto;
+    // if new messages arrived, pull them towards the beginning:
+    if (consoleloglinecount > 0) {
+        int i = 0;
+        while (i < consoleloglinecount) {
+            consoleloglines[i] = consoleloglines[i+printto];
+            consoleloglinetypes[i] = consoleloglinetypes[i+printto];
+            i++;
+        }
+    }
     mutex_Release(consoleLogMutex);
 }
 

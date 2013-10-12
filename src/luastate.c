@@ -317,8 +317,9 @@ static void luastate_ApplyWhitelist(lua_State* l) {
 static lua_State* luastate_New(void) {
     lua_State* l = luaL_newstate();
 
-    lua_gc(l, LUA_GCSETPAUSE, 110);
-    lua_gc(l, LUA_GCSETSTEPMUL, 300);
+    lua_gc(l, LUA_GCSTOP, 0);
+    //lua_gc(l, LUA_GCSETPAUSE, 110);
+    //lua_gc(l, LUA_GCSETSTEPMUL, 300);
 
     // standard libs
     luaL_openlibs(l);

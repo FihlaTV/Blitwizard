@@ -120,7 +120,6 @@ void luacfuncs_onLog(const char* type, const char* fmt, ...) {
     printline[sizeof(printline)-1] = 0;
     va_end(a);
 
-    luastate_suspendGC();
     if (!luastate_PushFunctionArgumentToMainstate_String(type)) {
         fprintf(stderr, "Error when pushing func args to blitwizard.onLog");
         main_Quit(1); 
@@ -141,7 +140,6 @@ void luacfuncs_onLog(const char* type, const char* fmt, ...) {
             free(error);
         }
     }
-    luastate_resumeGC();
 }
 
 int luafuncs_getTemplateDirectory(lua_State* l) {
@@ -278,14 +276,17 @@ static int luafuncs_printline(void) {
     if (len == 0) {
         return 0;
     }
-    unsigned int i = 0;
-    while (i < len) {
+    int i = 0;
+    while (i < (int)len) {
         if (printlinebuf[i] == '\n') {
             break;
         }
         i++;
     }
-    if (i >= len-1 && printlinebuf[len-1] != '\n') {
+    if (i < 0) {
+        return 0;
+    }
+    if (i >= (int)len-1 && printlinebuf[len-1] != '\n') {
         return 0;
     }
     printlinebuf[i] = 0;
