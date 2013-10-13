@@ -53,6 +53,9 @@ function blitwizard.onInit()
     os.sysname() .. " (" .. os.sysversion() ..
     ")")
 
+    -- Set text invisible until we placed it on its proper position:
+    stxt:setVisible(false)
+
     -- As soon as the system info image (si) is loaded,
     -- we would like to place it accordingly and move
     -- the text aswell.
@@ -70,6 +73,9 @@ function blitwizard.onInit()
         -- move text aswell:
         local mx,my = self:getPosition()
         stxt:setPosition(mx + 0.5, my + 1)
+
+        -- now since text is at proper position, make it visible:
+        stxt:setVisible(true)
     end
 end
 

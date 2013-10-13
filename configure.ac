@@ -1132,7 +1132,8 @@ Build flags:
 AC_SUBST(FINAL_INCLUDE_FLAGS)
 AC_SUBST(FINAL_USE_LIB_FLAGS)
 AC_SUBST(FINAL_LD_FLAGS)
-AC_DEFINE([SYSTEM_TEMPLATE_PATH], "\"${datadir}/blitwizard/templates/\"",
+AC_DEFINE_DIR([BWDATADIR], [datadir], [Data directory])
+AC_DEFINE_UNQUOTED([SYSTEM_TEMPLATE_PATH], "$BWDATADIR/blitwizard/templates/",
 [The path to the system-wide installed templates])
 AS_IF([test "x$enable_debug" = xyes],[
     AM_CONDITIONAL([ENABLE_DEBUG], [test 1 = 1])
