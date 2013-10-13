@@ -67,19 +67,38 @@ struct orderedExecutionPipeline;
 // struct which represents the order dependencies
 // of a specific entry:
 struct orderedExecutionOrderDependencies {
-    // NULL-terminated dependencies:
+    // dependency lists:
     void** before; // list of data pointers which need to run before
+    size_t beforeEntryCount;
     void** after;  // list of data pointers which need to run after
-    // listing data pointers which haven't been
+    size_t afterEntryCount;
+    // Note: listing data pointers which haven't been
     // added yet with orderedExeuction_Add is valid.
+
+    // special groups:
+    int runAfterAll;  // a special group running after all normal entries
+    int runBeforeAll;  // a special group running before all normal entries
 };
 
-struct orderedExecutionPipeline* orderedExecution_New(void (*func)(void* data));
-void orderedExecution_Add(struct orderedExecutionPipeline* pipeline,
+// create a new pipeline:
+struct orderedExecutionPipeline* orderedExecution_new(void (*func)(void* data));
+
+// add a new entry to be called (represented by the data entry):
+int orderedExecution_add(struct orderedExecutionPipeline* pipeline,
 void* data, struct orderedExecutionOrderDependencies* deps);
-void orderedExecution_Remove(struct orderedExecutionPipeline* pipeline,
+// This function will make a deep copy of the deps struct:
+// You may free the dependency struct (including the before/after list)
+// after passing it to this function.
+// Returns 1 on success. Returns 0 in out of memory conditions.
+// The deps are NOT tested for validity at this stage. This happens
+// when orderedExecution_Do is called.
+
+// remove an entry again:
+void orderedExecution_remove(struct orderedExecutionPipeline* pipeline,
 void* data);
-void orderedExecution_Do(struct orderedExecutionPipeline* pipeline,
+
+// call all entries in the pipeline in their according order:
+void orderedExecution_do(struct orderedExecutionPipeline* pipeline,
 void** datawithfaultydependencies);
 
 #endif  // BLITWIZARD_ORDEREDEXECUTION_H_
