@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# This test confirms os.ls() (a blitwizard lua api function) works.
-# It lists the files in the templates/ directory using blitwizard/os.ls,
-# then does the same in bash and compares the results.
+# This test checks if the physics objects get garbage collected.
+# Mainly, it just verifies blitwizard doesn't crash or outright error.
 
 source preparetest.sh
 
-# Get output from blitwizard
+# Lua test code:
 echo "
 -- create a static 3d and a movable 2d object
 local obj1 = blitwizard.object:new(blitwizard.object.o3d)
