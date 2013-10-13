@@ -871,7 +871,9 @@ int luafuncs_object_destroy(lua_State* l) {
     luacfuncs_objectAddedDeleted(o, 0);
 
     // make invisible:
+#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_setVisible(o, 0),
+#endif
 
     // remove self ref in registry:
     lua_pushstring(l, o->selfRefName);
@@ -968,7 +970,9 @@ int luafuncs_object_setPosition(lua_State* l) {
         z = 0;
     }
     objectphysics_setPosition(obj, x, y, z);
+#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_updatePosition(obj);
+#endif
     return 0;
 }
 
