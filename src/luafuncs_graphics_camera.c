@@ -67,7 +67,6 @@ struct luacameralistentry {
 };
 struct luacameralistentry* luacameralist = NULL;
 
-
 static int garbagecollect_cameraobjref(lua_State* l) {
     // get id reference to object
     struct luaidref* idref = lua_touserdata(l, -1);
@@ -109,7 +108,8 @@ void luacfuncs_pushcameraidref(lua_State* l, struct luacameralistentry* c) {
     ref->ref.camera = c;
 
     // set garbage collect callback:
-    luastate_SetGCCallback(l, -1, (int (*)(void*))&garbagecollect_cameraobjref);
+    luastate_SetGCCallback(l, -1,
+    (int (*)(void*))&garbagecollect_cameraobjref);
 
     // set metatable __index to blitwizard.graphics.camera table
     lua_getmetatable(l, -1);
@@ -133,10 +133,13 @@ void luacfuncs_pushcameraidref(lua_State* l, struct luacameralistentry* c) {
             lua_pop(l, 1);  // pop blitwizard.graphics table
 
             if (lua_type(l, -1) != LUA_TTABLE) {
-                // error: blitwizard.graphics.camera isn't a table as it should be
-                lua_pop(l, 3); // blitwizard.graphics.camera, "__index", metatable
+                // error: blitwizard.graphics.camera isn't a table,
+                // as it clearly should be
+                lua_pop(l, 3); // blitwizard.graphics.camera, "__index",
+                                // metatable
             } else {
-                lua_rawset(l, -3); // removes blitwizard.graphics.camera, "__index"
+                lua_rawset(l, -3); // removes blitwizard.graphics.camera,
+                                    // "__index"
                 lua_setmetatable(l, -2); // setting remaining metatable
                 // stack is now back empty, apart from new userdata!
             }
@@ -152,7 +155,8 @@ void luacfuncs_pushcameraidref(lua_State* l, struct luacameralistentry* c) {
 struct luacameralistentry* toluacameralistentry(lua_State* l,
 int index, int arg, const char* func) {
     if (lua_type(l, index) != LUA_TUSERDATA) {
-        haveluaerror(l, badargument1, arg, func, "camera", lua_strtype(l, index));
+        haveluaerror(l, badargument1, arg, func, "camera",
+        lua_strtype(l, index));
     }
     if (lua_rawlen(l, index) != sizeof(struct luaidref)) {
         haveluaerror(l, badargument2, arg, func, "not a valid camera");
@@ -231,16 +235,6 @@ int luafuncs_getCameras(lua_State* l) {
 // The OGRE 3d renderer supports multiple cameras.</i>
 // @type camera
 
-struct luacameralist {
-    // This entry is referenced to by garbage collected lua
-    // idrefs, and will be deleted once all lua idrefs are gone.
-    // It identifies a camera by camera slot id (see graphics.h).
-
-    int cameraslot;  // if -1, the camera at that slot was deleted,
-    // and this is a stale entry
-    int refcount;  // if 0, we will delete this entry
-};
-
 /// Destroy the given camera.
 //
 // It will be removed from the @{blitwizard.graphics.getCameras} list
@@ -251,8 +245,20 @@ int luafuncs_camera_destroy(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
     return haveluaerror(l, "the SDL renderer backend doesn't support destroying or adding cameras");
 #else
-#error "unimplemented code path"
-    // ...
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizard.graphics.camera:destroy");
+    graphics_DeleteCamera(e->cameraslot);
+    int slot = e->cameraslot;
+    e->cameraslot = -1;
+    // now, disable all existing entries in the list of refs we gave out:
+    e = luacameralist;
+    while (e) {
+        if (e->cameraslot == slot) {
+            e->cameraslot = -1;
+        }
+        e = e->next;
+    }
+    return 0;
 #endif
 }
 
@@ -268,8 +274,36 @@ int luafuncs_camera_new(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
     return haveluaerror(l, "the SDL renderer doesn't support multiple cameras");
 #else
-#error "unimplemented code path"
-    // ... FIXME !!!
+    int i = graphics_AddCamera();
+    if (i < 0) {
+        return haveluaerror(l, "error when adding the new camera");
+    }
+    // see if we have an existing entry:
+    struct luacameralistentry* e = luacameralist;
+    while (e) {
+        if (e->cameraslot == i) {
+            e->refcount++;
+
+            // return idref this existing entry:
+            luacfuncs_pushcameraidref(l, e);
+            return 1;
+        }
+        e = e->next;
+    }
+    // we need to add a new entry:
+    e = malloc(sizeof(*e));
+    if (!e) {
+        return haveluaerror(l, "allocating camera entry failed");
+    }
+    memset(e, 0, sizeof(*e));
+    e->cameraslot = i;
+    if (luacameralist) {
+        e->next = luacameralist;
+        luacameralist->prev = e;
+    }
+    luacameralist = e;
+    luacfuncs_pushcameraidref(l, e);
+    return 1;
 #endif
 }
 
@@ -463,7 +497,19 @@ int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
     return haveluaerror(l, "the SDL renderer doesn't support resizing cameras");
 #else
-#error "Unimplemented code path"
+    struct luacameralistentry* e = toluacameralistentry(
+    l, 1, 0, "blitwizad.graphics.camera:setPixelDimensionsOnScreen");
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1, "blitwizard.graphics.camera:"
+        "setPixelDimensionsOnScreen", "number", lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2, "blitwizard.graphics.camera:"
+        "setPixelDimensionsOnScreen", "number", lua_strtype(l, 3));
+    }
+    graphics_SetCameraSize(e->cameraslot, lua_tonumber(l, 2),
+    lua_tonumber(l, 3));
+    return 0;
 #endif
 }
 

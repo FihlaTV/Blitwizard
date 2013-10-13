@@ -748,7 +748,7 @@ void* userdata) {
 
     // locate according texture entry:
     struct graphicstexturemanaged* gtm =
-    graphicstexturelist_GetTextureByName(path);
+    graphicstexturelist_getTextureByName(path);
     if (!gtm) {
         // add new texture entry:
         gtm = graphicstexturelist_AddTextureToList(
@@ -1136,7 +1136,7 @@ void texturemanager_wipeTexture(const char* tex) {
     
     // find relevant texture entry:
     struct graphicstexturemanaged* gtm =
-    graphicstexturelist_GetTextureByName(tex);
+    graphicstexturelist_getTextureByName(tex);
 
     if (!gtm) {
         // nothing to be reloaded here.
@@ -1219,7 +1219,7 @@ void texturemanager_deviceRestored(void) {
 int texturemanager_getTextureUsageInfo(const char* texture) {
     mutex_Lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
-    graphicstexturelist_GetTextureByName(texture);
+    graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
         mutex_Release(textureReqListMutex);
         return -1;
@@ -1240,7 +1240,7 @@ int texturemanager_getTextureUsageInfo(const char* texture) {
 int texturemanager_getTextureGpuSizeInfo(const char* texture) {
     mutex_Lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
-    graphicstexturelist_GetTextureByName(texture);
+    graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
         mutex_Release(textureReqListMutex);
         return -1;

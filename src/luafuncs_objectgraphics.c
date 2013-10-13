@@ -382,7 +382,11 @@ int button) {
 #ifdef USE_SDL_GRAPHICS
     cameraid = 0;
 #else
-#error "Unimplemented code path"
+    cameraid = graphics_getCameraAt(x, y);
+    if (cameraid < 0) {
+        // nothing further to check
+        return;
+    }
 #endif
     if (cameraid < 0) {
         // no viewport/camera was clicked on.

@@ -30,7 +30,7 @@
 // and a hash map with texture file name -> texture list entry lookup.
 //
 // For loading a texture by path, you will want to do a hash map
-// search by path using graphicstexturelist_GetTextureByName.
+// search by path using graphicstexturelist_getTextureByName.
 // 
 // In case it isn't found, create it on the linear list using
 // graphicstexturelist_AddTextureToList, then add it to the hash map
@@ -89,7 +89,7 @@ struct graphicstexturemanaged {
 };
 
 // Find a texture by doing a hash map lookup:
-struct graphicstexturemanaged* graphicstexturelist_GetTextureByName
+struct graphicstexturemanaged* graphicstexturelist_getTextureByName
 (const char* name);
 
 // Add a texture to the hash map:

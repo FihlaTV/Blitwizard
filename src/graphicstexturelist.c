@@ -102,7 +102,7 @@ struct graphicstexturemanaged* li, struct graphicstexturemanaged* prev) {
     mutex_Release(listMutex);
 }
 
-struct graphicstexturemanaged* graphicstexturelist_GetTextureByName(
+struct graphicstexturemanaged* graphicstexturelist_getTextureByName(
 const char* name) {
     mutex_Lock(listMutex);
     graphicstexturelist_InitializeHashmap();
