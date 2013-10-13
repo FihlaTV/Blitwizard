@@ -6,6 +6,7 @@
 AC_PREREQ([2.60])
 
 AC_INIT([blitwizard], [0.4], [jonasthiem@googlemail.com])
+m4_pattern_allow([AC_DEFINE_DIR])
 
 # Checks for programs, various options:
 
