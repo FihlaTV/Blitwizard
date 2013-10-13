@@ -3,7 +3,10 @@ config.h
 averclone/
 *.apk
 *.a
+*.swo
 *.swp
+*.trs
+*.log
 *~
 thumbs.db
 autom4te.cache
