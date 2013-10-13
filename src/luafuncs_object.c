@@ -454,6 +454,7 @@ struct blitwizardobject* o) {
 // __newindex handler for blitwizard object refs:
 static int luafuncs_bobjnewindex(lua_State* l) {
     int checkForEventHandlers = 0;
+    int updatePosition = 0;
     // first, get blitwizard object:
     if (lua_type(l, 1) != LUA_TUSERDATA) {
         return haveluaerror(l, "__newindex handler wasn't passed a "
@@ -967,6 +968,7 @@ int luafuncs_object_setPosition(lua_State* l) {
         z = 0;
     }
     objectphysics_setPosition(obj, x, y, z);
+    luacfuncs_objectgraphics_updatePosition(obj);
     return 0;
 }
 
