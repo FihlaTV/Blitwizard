@@ -256,6 +256,10 @@ int luafuncs_camera_destroy(lua_State* l) {
         if (e->cameraslot == slot) {
             e->cameraslot = -1;
         }
+        if (e->cameraslot > slot) {
+            // move this slot down by one:
+            e->cameraslot -= 1;
+        }
         e = e->next;
     }
     return 0;

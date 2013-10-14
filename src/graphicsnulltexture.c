@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2013 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,7 +24,7 @@
 #include "config.h"
 #include "os.h"
 
-#ifdef USE_SDL_GRAPHICS
+#ifdef USE_NULL_GRAPHICS
 
 //  various standard headers
 #include <stdio.h>
@@ -45,24 +45,18 @@
 #include "main.h"
 #endif
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
-
 #include "graphicstexture.h"
 #include "graphics.h"
-#include "graphicssdltexturestruct.h"
+#include "graphicsnulltexturestruct.h"
 #include "threading.h"
-
-extern SDL_Window* mainwindow;
-extern SDL_Renderer* mainrenderer;
 
 
 void graphicstexture_Destroy(struct graphicstexture* gt) {
     if (!thread_IsMainThread()) {
         return;
     }
-    if (gt->sdltex) {
-        SDL_DestroyTexture(gt->sdltex);
+    if (gt->pixdata) {
+        free(gt->pixdata);
     }
     free(gt);
 }
@@ -95,30 +89,12 @@ size_t width, size_t height, int format) {
     gt->format = format;
 
     // create hw texture
-    gt->sdltex = SDL_CreateTexture(mainrenderer,
-    SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING,
-    gt->width, gt->height);
-    if (!gt->sdltex) {
+    gt->pixdata = malloc(sizeof(uint8_t) * 4 * gt->width * gt->height);
+    if (!gt->pixdata) {
         graphicstexture_Destroy(gt);
         return NULL;
     }
-
-    // lock texture
-    void* pixels; int pitch;
-    if (SDL_LockTexture(gt->sdltex, NULL, &pixels, &pitch) != 0) {
-        graphicstexture_Destroy(gt);
-        return NULL;
-    }
-
-    // copy pixels into texture
-    memcpy(pixels, data, gt->width * gt->height * 4);
-    // FIXME: we probably need to handle pitch here??
-
-    // unlock texture
-    SDL_UnlockTexture(gt->sdltex);
-
-    // set blend mode
-    SDL_SetTextureBlendMode(gt->sdltex, SDL_BLENDMODE_BLEND);
+    memcpy(gt->pixdata, data, sizeof(uint8_t) * 4 * gt->width * gt->height);
 
     return gt;
 }
@@ -138,21 +114,10 @@ struct graphicstexture* gt, void* pixels) {
     if (!thread_IsMainThread()) {
         return 0;
     }
-    // Lock SDL Texture
-    void* pixelsptr;int pitch;
-    if (SDL_LockTexture(gt->sdltex, NULL, &pixelsptr, &pitch) != 0) {
-        // locking failed, we cannot extract pixels
-        return 0;
-    } else {
-        // Copy texture to provided pixels pointer
-        memcpy(pixels, pixelsptr, gt->width * gt->height * 4);
-
-        // unlock texture again
-        SDL_UnlockTexture(gt->sdltex);
-        return 1;
-    }
+    memcpy(pixels, gt->pixdata, gt->width * gt->height * 4);
+    return 1;
 }
 
 
-#endif  // USE_SDL_GRAPHICS
+#endif  // USE_NULL_GRAPHICS
 

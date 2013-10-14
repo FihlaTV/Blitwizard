@@ -142,6 +142,14 @@ double graphics_GetCamera2DZoom(int index) {
     return camentry[index]->i2d.zoom;
 }
 
+void graphics_SetCamera2DZoom(int index, double zoom) {
+    if (index < 0 || index >= MAXCAMERAS
+    || !camentry[index]) {
+        return 0;
+    }
+    camentry[index]->i2d.zoom = zoom;
+}
+
 void graphics_SetCameraSize(int index, int w, int h) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
@@ -175,6 +183,15 @@ double graphics_GetCamera2DCenterY(int index) {
         return 0;
     }
     return camentry[index]->i2d.centery;
+}
+
+void graphics_SetCamera2DCenterXY(int index, double x, double y) {
+    if (index < 0 || index >= MAXCAMERAS
+    || !camentry[index]) {
+        return 0;
+    }
+    camentry[index]->i2d.centerx = x;
+    camentry[index]->i2d.centery = y;
 }
 
 int graphics_GetCameraX(int index) {

@@ -263,7 +263,6 @@ struct graphicstexturemanaged* gt) {
     mutex_Release(listMutex);
 }
 
-
 void graphicstexturelist_DestroyTexture(
 struct graphicstexturemanaged* gt) {
     int i = 0;

@@ -109,6 +109,9 @@
 
 #ifdef USE_GRAPHICS
 #define HAVE_GRAPHICS
+#ifndef HAVE_2D_GRAPHICS
+#define USE_NULL_GRAPHICS
+#endif
 #endif
 
 #endif  // BLITWIZARD_OS_H_
