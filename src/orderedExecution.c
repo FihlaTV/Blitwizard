@@ -32,6 +32,7 @@
 struct orderedExecutionEntry {
     struct orderedExecutionOrderDependencies deps;
     void* data;
+    int list; // -1: beforeAll list, 0: normal, 1: afterAll
     struct orderedExecutionEntry* prev,* next;
 };
 
@@ -39,6 +40,7 @@ struct orderedExecutionEntryHashBucket {
     void** othersWantThisAfterThem;
     void** othersWantThisBeforeThem;
     void* data;  // the call data ptr
+    struct orderedExecutionEntry* listEntry;
     struct orderedExecutionEntryHashBucket* next,*prev;
 };
 
@@ -87,7 +89,7 @@ uint32_t hashfunc(void* data, uint32_t max) {
 }
 
 struct orderedExecutionEntryHashBucket* orderedExecution_getOrCreateBucket(
-struct orderedExecutionPipeline* p, void* data) {
+struct orderedExecutionPipeline* p, void* data, int create) {
     // get or create the hash bucket for the given data ptr
     uint32_t slot = hashfunc(data, HASHTABLESIZE);
     // see if it already exists:
@@ -98,6 +100,10 @@ struct orderedExecutionPipeline* p, void* data) {
             return hb;
         }
         hb = hb->next;
+    }
+    // if we aren't supposed to creat things, quit here
+    if (!create) {
+        return NULL;
     }
     // we need to add it! allocate fresh bucket entry..
     hb = malloc(sizeof(*hb));
@@ -134,6 +140,24 @@ void* data) {
             return;
         }
         hb = hb->next;
+    }
+}
+
+// add an execution entry into a given linked list:
+static void orderedExecution_addToList(struct orderedExecutionEntry** start,
+struct orderedExecutionEntry* prev, struct orderedExecutionEntry* entry,
+struct orderedExecutionEntry* next, struct orderedExecutionEntry** end) {
+    if (!*start || !*end) {
+        *start = entry;
+        *end = entry;
+    } else if (!prev) {
+        entry->next = *start;
+        (*start)->prev = entry;
+        *start = entry;
+    } else if (!next) {
+        entry->prev = *end;
+        (*end)->next = entry;
+        *end = entry;
     }
 }
 
@@ -186,13 +210,30 @@ struct orderedExecutionOrderDependencies* deps) {
     if (e->deps.afterEntryCount == 0 && e->deps.beforeEntryCount == 0) {
         // ... if nothing wants this before or after it:
         struct orderedExecutionEntryHashBucket* hb = 
-        orderedExecution_getOrCreateBucket(p, data);
+        orderedExecution_getOrCreateBucket(p, data, 1);
+
+        // then add it:
+        if (e->deps.runAfterAll) {
+            orderedExecution_addToList(&p->orderedListAfterAll,
+            p->orderedListAfterAllEnd, e, NULL,
+            &p->orderedListAfterAllEnd);
+        } else if (e->deps.runBeforeAll) {
+            orderedExecution_addToList(&p->orderedListBeforeAll,
+            p->orderedListBeforeAllEnd, e, NULL,
+            &p->orderedListBeforeAllEnd);
+        } else {
+            orderedExecution_addToList(&p->orderedListNormal,
+            p->orderedListNormalEnd, e, NULL,
+            &p->orderedListNormalEnd);
+        }
     }
     return 1;
 }
 
 void orderedExecution_remove(struct orderedExecutionPipeline* p, void* data) {
-
+    struct orderedExecutionEntryHashBucket* hb =
+    orderedExecution_getOrCreateBucket(p, data, 0);
+    orderedExecution_deleteBucket(p, data);
 }
 
 void orderedExecution_do(struct orderedExecutionPipeline* p, void** faulty) {
