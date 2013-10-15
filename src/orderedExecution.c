@@ -34,6 +34,14 @@ struct orderedExecutionEntry {
     struct orderedExecutionEntry* prev,* next;
 };
 
+struct orderedExecutionEntryHashBucket {
+    void** othersWantThisAfterThem;
+    void** othersWantThisBeforeTHem;
+    struct orderedExecutionEntryHashBucket* next,*prev;
+};
+
+#define HASHTABLESIZE 1024
+
 // the execution pipeline with all entries:
 struct orderedExecutionPipeline {
     // those are still completely unsorted:
@@ -50,6 +58,9 @@ struct orderedExecutionPipeline {
 
     // the pool allocator we use:
     struct poolAllocator* allocator;
+
+    // hash table for data pointer -> orderedExecutionEntry
+    struct orderedExecutionEntryHashBucket* table[HASHTABLESIZE];
 };
 
 struct orderedExecutionPipeline* orderedExecution_new(
@@ -68,6 +79,11 @@ void (*func)(void* data)) {
     return pi;
 }
 
+struct orderedExecutionEntryHashBucket* orderedExecution_getOrCreateBucket(
+struct orderedExecutionPipeline* p, void* data) {
+
+}
+
 int orderedExecution_add(struct orderedExecutionPipeline* p, void* data,
 struct orderedExecutionOrderDependencies* deps) {
     // new ordered execution entry struct:
@@ -76,6 +92,7 @@ struct orderedExecutionOrderDependencies* deps) {
         return 0;
     }
     memset(e, 0, sizeof(*e));
+    e->data = data;
     // deep copy of deps:
     memcpy(&e->deps, deps, sizeof(*deps));
     if (e->deps.beforeEntryCount > 0) {
@@ -114,7 +131,9 @@ struct orderedExecutionOrderDependencies* deps) {
 
     // if it doesn't have any deps, this is very easy:
     if (e->deps.afterEntryCount == 0 && e->deps.beforeEntryCount == 0) {
-        
+        // ... if nothing wants this before or after it:
+        struct orderedExecutionEntryHashBucket* hb = 
+        orderedExecution_getOrCreateBucket(p, data);
     }
     return 1;
 }
