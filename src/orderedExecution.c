@@ -21,6 +21,7 @@
 
 */
 
+#include <stdint.h>
 #include <string.h>
 
 #include "poolAllocator.h"
@@ -36,7 +37,8 @@ struct orderedExecutionEntry {
 
 struct orderedExecutionEntryHashBucket {
     void** othersWantThisAfterThem;
-    void** othersWantThisBeforeTHem;
+    void** othersWantThisBeforeThem;
+    void* data;  // the call data ptr
     struct orderedExecutionEntryHashBucket* next,*prev;
 };
 
@@ -79,9 +81,60 @@ void (*func)(void* data)) {
     return pi;
 }
 
+uint32_t hashfunc(void* data, uint32_t max) {
+    uint64_t dataint = (uint64_t)data;
+    return (uint32_t)((uint64_t)dataint % (uint64_t)max);
+}
+
 struct orderedExecutionEntryHashBucket* orderedExecution_getOrCreateBucket(
 struct orderedExecutionPipeline* p, void* data) {
+    // get or create the hash bucket for the given data ptr
+    uint32_t slot = hashfunc(data, HASHTABLESIZE);
+    // see if it already exists:
+    struct orderedExecutionEntryHashBucket* hb = p->table[slot];
+    while (hb) {
+        if (hb->data == data) {
+            // we found it!
+            return hb;
+        }
+        hb = hb->next;
+    }
+    // we need to add it! allocate fresh bucket entry..
+    hb = malloc(sizeof(*hb));
+    if (!hb) {
+        return NULL;
+    }
+    memset(hb, 0, sizeof(*hb));
+    hb->data = data;
+    if (p->table[slot]) {  // prepend to list
+        hb->next = p->table[slot];
+        p->table[slot]->prev = hb;
+    }
+    p->table[slot] = hb;
+    return data;  // return bucket
+}
 
+void orderedExecution_deleteBucket(struct orderedExecutionPipeline* p,
+void* data) {
+    // find the hash bucket and delete it, if found
+    uint32_t slot = hashfunc(data, HASHTABLESIZE);
+    struct orderedExecutionEntryHashBucket* hb = p->table[slot];
+    while (hb) {
+        if (hb->data == data) {
+            // this is the entry we would like to remove
+            if (hb->next) {
+                hb->next->prev = hb->prev;
+            }   
+            if (hb->prev) {
+                hb->prev->next = hb;
+            } else {
+                p->table[slot] = hb->next;
+            }
+            free(hb);
+            return;
+        }
+        hb = hb->next;
+    }
 }
 
 int orderedExecution_add(struct orderedExecutionPipeline* p, void* data,
