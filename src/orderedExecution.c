@@ -37,19 +37,27 @@ struct orderedExecutionEntry {
 };
 
 struct orderedExecutionEntryHashBucket {
+    int scheduledForRemoval;
     void** othersWantThisAfterThem;
+    size_t othersWantThisAfterThemCount;
     void** othersWantThisBeforeThem;
+    size_t othersWantThisBeforeThemCount;
     void* data;  // the call data ptr
     struct orderedExecutionEntry* listEntry;
-    struct orderedExecutionEntryHashBucket* next,*prev;
+    struct orderedExecutionEntryHashBucket* next,* prev;
 };
 
 #define HASHTABLESIZE 1024
 
 // the execution pipeline with all entries:
 struct orderedExecutionPipeline {
-    // those are still completely unsorted:
-    struct orderedExecutionEntry* newUnorderedEntries;
+    // those are scheduled for removal or addition:
+    struct orderedExecutionEntry** entriesToBeAdded;
+    size_t entriesToBeAddedCount;
+    size_t entriesToBeAddedAllocation;
+    void** entriesToBeRemoved;
+    size_t entriesToBeRemovedCount;
+    size_t entriesToBeRemovedAllocation;
 
     // those are nicely sorted already:
     struct orderedExecutionEntry* orderedListBeforeAll;
@@ -66,6 +74,37 @@ struct orderedExecutionPipeline {
     // hash table for data pointer -> orderedExecutionEntry
     struct orderedExecutionEntryHashBucket* table[HASHTABLESIZE];
 };
+
+static int orderedExecution_scheduleEntryForAddRemove(
+void*** list, size_t* listLength, size_t* listAllocation,
+void* data) {
+    // first, ensure list is large enough:
+    if (!*list || *listAllocation == 0) {
+        int i = 8;  // initial list size
+        void** newp = realloc(*list, sizeof(void*) * i);
+        if (!newp) {
+            return 0;
+        }
+        *list = newp;
+        *listAllocation = 0;
+    } else {
+        if (*listAllocation <= *listLength) {
+            // double the allocation:
+            int newAllocation = (*listAllocation) * 2;
+            void** newp = realloc(*list, sizeof(void*) * newAllocation);
+            if (!newp) {
+                return 0;
+            }
+            *list = newp;
+            *listAllocation = newAllocation;
+        }
+    }
+    // now add entry:
+    int i = (*listLength);
+    *listLength = (*listLength)+1;
+    (*list)[i] = data;
+    return 1;
+}
 
 struct orderedExecutionPipeline* orderedExecution_new(
 void (*func)(void* data)) {
@@ -161,8 +200,8 @@ struct orderedExecutionEntry* next, struct orderedExecutionEntry** end) {
     }
 }
 
-int orderedExecution_add(struct orderedExecutionPipeline* p, void* data,
-struct orderedExecutionOrderDependencies* deps) {
+int orderedExecution_add(struct orderedExecutionPipeline* p,
+void* data, struct orderedExecutionOrderDependencies* deps) {
     // new ordered execution entry struct:
     struct orderedExecutionEntry* e = poolAllocator_alloc(p->allocator);
     if (!e) {
@@ -191,8 +230,14 @@ struct orderedExecutionOrderDependencies* deps) {
     sizeof(void*) * e->deps.beforeEntryCount);
     memcpy(e->deps.after, deps->after,
     sizeof(void*) * e->deps.afterEntryCount);
-    // now let's wee what we want to do with this entry:
 
+    return orderedExecution_scheduleEntryForAddRemove(
+    (void***)&p->entriesToBeAdded, &p->entriesToBeAddedCount,
+    &p->entriesToBeAddedAllocation, e);
+}
+
+static int orderedExecution_add_internal(struct orderedExecutionPipeline* p,
+struct orderedExecutionEntry* e) {
     // obvious invalid combination:
     if (e->deps.runAfterAll && e->deps.runBeforeAll) {
         // add to invalid list:
@@ -210,34 +255,86 @@ struct orderedExecutionOrderDependencies* deps) {
     if (e->deps.afterEntryCount == 0 && e->deps.beforeEntryCount == 0) {
         // ... if nothing wants this before or after it:
         struct orderedExecutionEntryHashBucket* hb = 
-        orderedExecution_getOrCreateBucket(p, data, 1);
+        orderedExecution_getOrCreateBucket(p, e->data, 1);
+        hb->data = e->data;
+        hb->listEntry = e;
 
-        // then add it:
-        if (e->deps.runAfterAll) {
-            orderedExecution_addToList(&p->orderedListAfterAll,
-            p->orderedListAfterAllEnd, e, NULL,
-            &p->orderedListAfterAllEnd);
-        } else if (e->deps.runBeforeAll) {
-            orderedExecution_addToList(&p->orderedListBeforeAll,
-            p->orderedListBeforeAllEnd, e, NULL,
-            &p->orderedListBeforeAllEnd);
-        } else {
-            orderedExecution_addToList(&p->orderedListNormal,
-            p->orderedListNormalEnd, e, NULL,
-            &p->orderedListNormalEnd);
+        // check for before/after requirements on this entry:
+        if (hb->othersWantThisAfterThemCount == 0 &&
+        hb->othersWantThisBeforeThemCount == 0) {
+            // just add it at the end of the list:
+            if (e->deps.runAfterAll) {
+                orderedExecution_addToList(&p->orderedListAfterAll,
+                p->orderedListAfterAllEnd, e, NULL,
+                &p->orderedListAfterAllEnd);
+                e->list = 1;
+            } else if (e->deps.runBeforeAll) {
+                orderedExecution_addToList(&p->orderedListBeforeAll,
+                p->orderedListBeforeAllEnd, e, NULL,
+                &p->orderedListBeforeAllEnd);
+                e->list = -1;
+            } else {
+                orderedExecution_addToList(&p->orderedListNormal,
+                p->orderedListNormalEnd, e, NULL,
+                &p->orderedListNormalEnd);
+                e->list = 0;
+            }
+            return 1;
         }
     }
+
+    // this is too complex to handle for us right now:
+    if (p->orderedListInvalid) {
+        e->next = p->orderedListInvalid;
+        p->orderedListInvalid->prev = e;
+    }
+    p->orderedListInvalid = e;
     return 1;
 }
 
-void orderedExecution_remove(struct orderedExecutionPipeline* p, void* data) {
+void orderedExecution_remove(struct orderedExecutionPipeline* p,
+void* data) {
+    // schedule entry for removal:
+    orderedExecution_scheduleEntryForAddRemove(
+    &p->entriesToBeRemoved, &p->entriesToBeRemovedCount,
+    &p->entriesToBeRemovedAllocation, data);
+
+    // tell entry, if it exists, that it is about to be removed:
     struct orderedExecutionEntryHashBucket* hb =
     orderedExecution_getOrCreateBucket(p, data, 0);
+    if (!hb || !hb->listEntry) {
+        return;
+    }
+    hb->scheduledForRemoval = 1;
+}
+
+void orderedExecution_remove_internal(
+struct orderedExecutionPipeline* p, void* data) {
+    struct orderedExecutionEntryHashBucket* hb =
+    orderedExecution_getOrCreateBucket(p, data, 0);
+    if (!hb || !hb->listEntry) {
+        return;
+    }
     orderedExecution_deleteBucket(p, data);
 }
 
-void orderedExecution_do(struct orderedExecutionPipeline* p, void** faulty) {
-
+void orderedExecution_do(struct orderedExecutionPipeline* p,
+void** faulty) {
+    // and and remove entries as scheduled:
+    size_t i = 0;
+    while (i < p->entriesToBeRemovedCount) {
+        orderedExecution_remove_internal(p,
+        p->entriesToBeRemoved[i]);
+        i++;
+    }
+    p->entriesToBeRemovedCount = 0;
+    i = 0;
+    while (i < p->entriesToBeAddedCount) {
+        int r = orderedExecution_add_internal(p,
+        p->entriesToBeAdded[i]);
+        i++;
+    }
+    p->entriesToBeAddedCount = 0;
 }
 
 
