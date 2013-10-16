@@ -73,6 +73,9 @@ struct orderedExecutionPipeline {
 
     // hash table for data pointer -> orderedExecutionEntry
     struct orderedExecutionEntryHashBucket* table[HASHTABLESIZE];
+
+    // the function we want to call in the end:
+    void (*func)(void* data);
 };
 
 static int orderedExecution_scheduleEntryForAddRemove(
@@ -119,6 +122,7 @@ void (*func)(void* data)) {
         free(pi);
         return NULL;
     }
+    pi->func = func;
     return pi;
 }
 
@@ -335,6 +339,24 @@ void** faulty) {
         i++;
     }
     p->entriesToBeAddedCount = 0;
+
+    // handle the actual calls:
+    struct orderedExecutionEntry* e;
+    e = p->orderedListBeforeAll;
+    while (e) {
+        p->func(e);
+        e = e->next;
+    }
+    e = p->orderedListNormal;
+    while (e) {
+        p->func(e);
+        e = e->next;
+    }
+    e = p->orderedListAfterAll;
+    while (e) {
+        p->func(e);
+        e = e->next;
+    }
 }
 
 
