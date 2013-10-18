@@ -140,44 +140,6 @@ static int luacfuncs_getObjectsIterator(lua_State* l) {
     }
 }
 
-/// Set texture filter mode for the given 2d
-// @{blitwizard.object|object}. If you want to alter texture
-// filtering on 3d objects, alter their material properties.
-// @function setTextureFiltering
-// @tparam boolean filter true for filtering which gives things a smoother look (default), false for no filtering
-int luafuncs_object_setTextureFiltering(lua_State* l) {
-    struct blitwizardobject* o =
-    toblitwizardobject(l, 1, 0, "blitwizard.object:setTextureFiltering");
-    if (lua_type(l, 2) != LUA_TBOOLEAN) {
-        return haveluaerror(l, badargument1, 1,
-        "blitwizard.object:setTextureFiltering", "boolean", lua_strtype(l, 2));
-    }
-    if (o->is3d) {
-        return haveluaerror(l, "not a 2d object");
-    }
-    o->textureFilter = (lua_toboolean(l, 2) == 1);
-#ifdef USE_GRAPHICS
-    if (o->graphics && o->graphics->sprite) {
-        graphics2dsprites_setTextureFiltering(o->graphics->sprite,
-        o->textureFilter);
-    }
-#endif
-    return 0;
-}
-
-/// Get the current @{blitwizard.object:setTextureFiltering|
-// texture filter setting} of a @{blitwizard.object|2d object}.
-// @function getTextureFiltering
-// @tparam boolean true if texture filtering enabled, false if not.
-int luafuncs_getTextureFiltering(lua_State* l) {
-    struct blitwizardobject* o =
-    toblitwizardobject(l, 1, 0, "blitwizard.object:setTextureFiltering");
-    if (o->is3d) {
-        return haveluaerror(l, "not a 2d object");
-    }
-    lua_pushboolean(l, o->textureFilter == 1);
-    return 1;
-}
 
 /// Scan for 2d @{blitwizard.object|objects} around the
 // given position in a circle with the given radius.
@@ -1878,6 +1840,44 @@ int luafuncs_object_getVisible(lua_State* l) {
 }
 #endif
 
+/// Set texture filter mode for the given 2d
+// @{blitwizard.object|object}. If you want to alter texture
+// filtering on 3d objects, alter their material properties.
+// @function setTextureFiltering
+// @tparam boolean filter true for filtering which gives things a smoother look (default), false for no filtering
+int luafuncs_object_setTextureFiltering(lua_State* l) {
+    struct blitwizardobject* o =
+    toblitwizardobject(l, 1, 0, "blitwizard.object:setTextureFiltering");
+    if (lua_type(l, 2) != LUA_TBOOLEAN) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:setTextureFiltering", "boolean", lua_strtype(l, 2));
+    }
+    if (o->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    o->textureFilter = (lua_toboolean(l, 2) == 1);
+#ifdef USE_GRAPHICS
+    if (o->graphics && o->graphics->sprite) {
+        graphics2dsprites_setTextureFiltering(o->graphics->sprite,
+        o->textureFilter);
+    }
+#endif
+    return 0;
+}
+
+/// Get the current @{blitwizard.object:setTextureFiltering|
+// texture filter setting} of a @{blitwizard.object|2d object}.
+// @function getTextureFiltering
+// @treturn boolean true if texture filtering enabled, false if not.
+int luafuncs_getTextureFiltering(lua_State* l) {
+    struct blitwizardobject* o =
+    toblitwizardobject(l, 1, 0, "blitwizard.object:setTextureFiltering");
+    if (o->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    lua_pushboolean(l, o->textureFilter == 1);
+    return 1;
+}
 
 /// Change whether an object is shown at all, or whether it is hidden.
 // If you know objects aren't going to be needed at some point or
