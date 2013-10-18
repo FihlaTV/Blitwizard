@@ -93,7 +93,7 @@ float r, float g, float b, float a) {
     }
 }
 
-int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue) {
+int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue, int textureFiltering) {
     if (alpha <= 0) {
         return 1;
     }
@@ -154,6 +154,11 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
     }
     SDL_SetTextureColorMod(gt->sdltex, (red * 255.0f),
     (green * 255.0f), (blue * 255.0f));
+    if (!textureFiltering) {
+        // disable texture filter
+        SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
+        "0", SDL_HINT_OVERRIDE);
+    }
     if (horiflipped) {
         // draw rotated and flipped
         SDL_RenderCopyEx(mainrenderer, gt->sdltex, &src, &dest,
@@ -168,6 +173,11 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
             // draw rotated
             SDL_RenderCopy(mainrenderer, gt->sdltex, &src, &dest);
         }
+    }
+    if (!textureFiltering) {
+        // re-enable texture filter
+        SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
+        "1", SDL_HINT_OVERRIDE);
     }
     return 1;
 }
@@ -185,7 +195,7 @@ static void graphicssdlrender_spriteCallback(
 const struct graphics2dsprite* sprite,
 const char* path, struct graphicstexture* tex,
 double r, double g, double b, double alpha,
-int visible, int cameraId) {
+int visible, int cameraId, int textureFiltering) {
     if (!tex) {
         return;
     }
@@ -205,7 +215,7 @@ int visible, int cameraId) {
     graphicsrender_DrawCropped(tex, x, y, alpha,
     sourceX, sourceY, sourceWidth, sourceHeight, width, height,
     sourceWidth/2, sourceHeight/2, angle, horiflip,
-    r, g, b);
+    r, g, b, textureFiltering);
 }
 
 void graphicsrender_Draw(void) {

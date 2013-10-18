@@ -139,14 +139,14 @@ double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
-int zindex, int visible, int cameraId),
+int zindex, int visible, int cameraId, int texturefiltering),
 void (*spriteModified) (void* handle,
 double x, double y,
 double width, double height, double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
-int zindex, int visible, int cameraId),
+int zindex, int visible, int cameraId, int texturefiltering),
 void (*spriteDeleted) (void* handle)
 );
 
@@ -167,7 +167,7 @@ void (*spriteInformation) (
 const struct graphics2dsprite* sprite,
 const char* path, struct graphicstexture* tex,
 double r, double g, double b, double alpha,
-int visible, int cameraId));
+int visible, int cameraId, int textureFiltering));
 // Sprites will be returned in Z-Index order.
 // (lower index first, and for same z-index
 // with the older sprites first)
@@ -227,6 +227,10 @@ double* screen_sourceW, double* screen_sourceH,
 double* source_angle, int* phoriflip, int compensaterotation);
 // FIXME: This can NOT be safely used outside the doForAllSprites callback!
 // (threading issues)
+
+// Enable or disable texture filtering for a specific sprite:
+void graphics2dsprites_setTextureFiltering(struct graphics2dsprite* sprite,
+int filter);
 
 #ifdef __cplusplus
 }

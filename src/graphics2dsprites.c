@@ -52,6 +52,9 @@ struct graphics2dsprite {
     // (it will be kept around until things with
     // the texture manager callbacks are sorted out)
 
+    // texture filtering (1: enabled, 0: disabled)
+    int textureFiltering;
+
     // texture path:
     char* path;
 
@@ -369,7 +372,7 @@ void (*spriteInformation) (
 const struct graphics2dsprite* sprite,
 const char* path, struct graphicstexture* tex,
 double r, double g, double b, double alpha,
-int visible, int cameraId)) {
+int visible, int cameraId, int textureFiltering)) {
     if (!spriteInformation) {
         return;
     }
@@ -392,18 +395,28 @@ int visible, int cameraId)) {
             spriteInformation(
             s,
             s->path, s->tex, s->r, s->g, s->b, s->alpha,
-            s->visible, s->pinnedToCamera);
+            s->visible, s->pinnedToCamera, s->textureFiltering);
         } else {
             // report sprite as invisible:
             spriteInformation(
             s,
             s->path, s->tex, s->r, s->g, s->b, s->alpha,
-            0, s->pinnedToCamera);
+            0, s->pinnedToCamera, s->textureFiltering);
         }
 
         s = s->next;
     }
 
+    mutex_Release(m);
+}
+
+void graphics2dsprites_setTextureFiltering(struct graphics2dsprite* sprite,
+int filter) {
+    if (!sprite) {
+        return;
+    }
+    mutex_Lock(m);
+    sprite->textureFiltering = filter;
     mutex_Release(m);
 }
 
@@ -638,6 +651,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->r = 1;
     s->g = 1;
     s->b = 1;
+    s->textureFiltering = 1;
     s->pinnedToCamera = -1;
     s->alpha = 1;
     s->visible = 0;

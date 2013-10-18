@@ -57,17 +57,17 @@ extern int inbackground;
 extern int graphics3d;
 extern int mainwindowfullscreen;
 
-void graphicssdlrender_StartFrame(void) {
+void graphicsnullrender_StartFrame(void) {
 }
 
-void graphicssdlrender_CompleteFrame(void) {
+void graphicsnullrender_CompleteFrame(void) {
 }
 
-static void graphicssdlrender_spriteCallback(
+static void graphicsnullrender_spriteCallback(
 const struct graphics2dsprite* sprite,
 const char* path, struct graphicstexture* tex,
 double r, double g, double b, double alpha,
-int visible, int cameraId) {
+int visible, int cameraId, int textureFiltering) {
     if (!tex) {
         return;
     }
@@ -87,13 +87,13 @@ int visible, int cameraId) {
 }
 
 void graphicsrender_Draw(void) {
-    graphicssdlrender_StartFrame();
+    graphicsnullrender_StartFrame();
 
     // render sprites:
     graphics2dsprites_doForAllSprites(
-    &graphicssdlrender_spriteCallback);
+    &graphicsnullrender_spriteCallback);
 
-    graphicssdlrender_CompleteFrame();
+    graphicsnullrender_CompleteFrame();
 }
 
 #endif  // USE_NULL_GRAPHICS

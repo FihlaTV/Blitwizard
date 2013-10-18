@@ -61,6 +61,14 @@ struct blitwizardobject {
     int invisibleToMouse;  // 1: invisible to mouse events, 0: normal
 
     union {
+        struct {  // various stuff for 2d objects
+            int textureFilter;  // 1: yes, 0: no
+        };
+        struct {  // various things for 3d objects
+
+        };
+    };
+    union {
         double z;
         int zindex;
     } vpos;

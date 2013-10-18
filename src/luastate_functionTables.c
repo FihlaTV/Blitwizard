@@ -261,6 +261,8 @@ void luastate_CreateObjectTable(lua_State* l) {
     luastate_registerfunc(l, &luafuncs_object_setInvisibleToMouse,
     "setInvisibleToMouse");
     luastate_registerfunc(l, &luafuncs_object_setParallax, "setParallax");
+    luastate_registerfunc(l, &luafuncs_object_setTextureFiltering,
+    "setTextureFiltering");
 
     // graphics/visual stuff:
     luastate_registergraphics(l, &luafuncs_object_setTransparency,

@@ -229,6 +229,7 @@ glyphWidth, glyphHeight, glyphsPerLine)
             newGlyph:pinToCamera(camera)
             newGlyph:setInvisibleToMouse(true)
             newGlyph:setScale(scale, scale)
+            newGlyph:setTextureFiltering(false)
             newGlyph:set2dTextureClipping((charxslot - 1) * glyphWidth, 
             (charyslot - 1) * glyphHeight, glyphWidth, glyphHeight)
             t.glyphs[#t.glyphs+1] = newGlyph
