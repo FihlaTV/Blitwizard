@@ -536,7 +536,7 @@ int resizable, const char* title, const char* renderer, char** error) {
         mainwindowfullscreen = 1;
     } else {
         mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_MINIMIZED);
+        SDL_WINDOWPOS_CENTERED, width, height, 0);
         mainwindowfullscreen = 0;
     }
 
@@ -602,19 +602,6 @@ int resizable, const char* title, const char* renderer, char** error) {
 
     // notify texture manager that device is back
     texturemanager_deviceRestored();
-
-    // Transfer textures back to SDL
-    /*if (!graphicstexturelist_TransferTexturesToHW()) {
-        SDL_RendererInfo info;
-        SDL_GetRendererInfo(mainrenderer, &info);
-        snprintf(errormsg, sizeof(errormsg),
-        "Failed to create SDL renderer (backend %s): "
-        "Cannot recreate textures", info.name);
-        *error = strdup(errormsg);
-        SDL_DestroyRenderer(mainrenderer);
-        SDL_DestroyWindow(mainwindow);
-        return 0;
-    }*/
 
     // Re-focus window if previously focussed
     if (!inbackground) {
