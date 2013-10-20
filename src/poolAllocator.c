@@ -249,6 +249,10 @@ void poolAllocator_free(struct poolAllocator* p, void* memp) {
     free(memp);
 #else
     if (!memp) {return;}
+    if (p->m) {
+        mutex_Lock(p->m);
+    }
+
     // find the pool this is in, seeking backwards:
     int i = p->poolcount - 1;
     while (i >= 0) {
@@ -278,9 +282,15 @@ void poolAllocator_free(struct poolAllocator* p, void* memp) {
                     p->firstfreepool = i;
                 }
             }
+            if (p->m) {
+                mutex_Release(p->m);
+            }
             return;
         }
         i--;
+    }
+    if (p->m) {
+        mutex_Release(p->m);
     }
     fprintf(stderr, "*******\n");
     fprintf(stderr, "Invalid poolallocator_free on allocator %p, "
