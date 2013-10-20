@@ -251,7 +251,6 @@ static void graphics_ReadVideoModes(void) {
         videomodesy = 0;
     }
 
-    // -> read video modes with SDL per default! (even if using 3d/ogre)
     // allocate space for video modes
     int d = SDL_GetNumVideoDisplays();
     if (d < 1) {

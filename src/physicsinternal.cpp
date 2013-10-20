@@ -971,7 +971,7 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
         e = e->next;
     }
 
-    //add us to the unsorted linear list
+    // add us to the unsorted linear list
     newedge->next = shape->shape2d.b2.edges;
     shape->shape2d.b2.edges = newedge;
 }
@@ -983,7 +983,8 @@ void physics_add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
-    // FIXME FIXME FIXME this function might be complete bollocks, reconsider pls
+    // FIXME FIXME FIXME this function might be complete bollocks,
+    // reconsider pls
     if (not shape->shape2d.type == BW_S2D_EDGE) {
         shape->shape2d.b2.edges = NULL;
     }

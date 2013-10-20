@@ -385,7 +385,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                         x_size, y_size, z_size);
                     }
                 }
-                if (!isok) {
+                if (!isok || 1) {  // || 1 : disable 3d shapes for now
                     // not a valid shape for a 3d object
                     char invalidshape[50];
                     snprintf(invalidshape, sizeof(invalidshape),
@@ -571,7 +571,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
 
                         // done. advance to next point:
                         pointCount++;
-                        lua_pop(l, 1);  // pop two points table
+                        lua_pop(l, 1);  // pop point coordinates table
                     }
                     lua_pop(l, 1);  // pop "points" table
 
@@ -597,6 +597,113 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                             k--;
                         }
                     }
+                }
+                if (strcmp(shapetype, "edge list") == 0) {
+                    // polygon with a multiple points list
+                    isok = 1;
+
+                    lua_pushstring(l, "edges");
+                    lua_gettable(l, 2+i);
+                    if (lua_type(l, -1) != LUA_TTABLE) {
+                        physics_destroyShapes(shapes, argcount);
+                        return haveluaerror(l, badargument2, 2+i,
+                        "blitwizard.object:enableCollision",
+                        "shape \"edge list\" needs \"edges\" specified "
+                        "as a list table containing a list of "
+                        "coordinate point pairs (see documentation)");
+                    }
+                    if (lua_rawlen(l, -1) < 1) {
+                        physics_destroyShapes(shapes, argcount);
+                        return haveluaerror(l, badargument2, 2+i,
+                        "blitwizard.object:enableCollision",
+                        "shape \"edge list\" needs an \"edges\" list with "
+                        "at least 1 pair of points or more");
+                    }
+
+                    // this large loop will extract all point pairs
+                    int pointPairCount = 0;
+                    lua_pushnil(l);
+                    double px[8];
+                    double py[8];
+                    while (lua_next(l, -2)) {
+                        // each list item needs to be a table with two numbers in it:
+                        if (lua_type(l, -1) != LUA_TTABLE
+                        || lua_rawlen(l, -1) != 2) {
+                            physics_destroyShapes(shapes, argcount);
+                            char msg[512];
+                            snprintf(msg, sizeof(msg),
+                            "the \"edges\" list specified "
+                            "has an invalid point pair #%d - "
+                            "not a table with two point tables",
+                            pointPairCount+1);
+                            return haveluaerror(l, badargument2, 2+i,
+                            "blitwizard.object:enableCollision",
+                            msg);
+                        }
+                        // look at the two point tables of the pair:
+                        double coords[2][2];
+                        int c = 0;
+                        while (c < 2) {
+                            lua_pushnumber(l, c);
+                            lua_gettable(l, -2);
+                            static char first[] = "first";
+                            static char second[] = "second";
+                            const char* firstsecond = first;
+                            if (c == 1) {
+                                firstsecond = second;
+                            }
+                            if (lua_type(l, -1) != LUA_TTABLE && lua_rawlen(l, -1) != 2) {
+                                physics_destroyShapes(shapes, argcount);
+                                char msg[512];
+                                snprintf(msg, sizeof(msg),
+                                "the \"edges\" list specified "
+                                "has an invalid point pair #%d - "
+                                "%s point not a table of length 2",
+                                pointPairCount+1, firstsecond);
+                                return haveluaerror(l, badargument2, 2+i,
+                                "blitwizard.object:enableCollision",
+                                msg);
+                            }
+                            // extract coordinates of this point:
+                            int c2 = 0;
+                            while (c2 < 2) {
+                                const char* firstsecond2 = first;
+                                if (c2 == 1) {
+                                    firstsecond2 = second;
+                                }
+                                lua_pushnumber(l, c2);
+                                lua_gettable(l, -2);
+                                if (lua_type(l, -1) != LUA_TNUMBER) {
+                                    physics_destroyShapes(shapes, argcount);
+                                    char msg[512];
+                                    snprintf(msg, sizeof(msg),
+                                    "the \"edges\" list specified "
+                                    "has an invalid point pair #%d - "
+                                    "%s point's %s coordinate not a number",
+                                    pointPairCount+1, firstsecond, firstsecond2);
+                                    return haveluaerror(l, badargument2, 2+i,
+                                    "blitwizard.object:enableCollision",
+                                    msg);
+                                }
+                                // extract point:
+                                coords[c][c2] = lua_tonumber(l, -1);
+                                // pop coordinate from stack:
+                                lua_pop(l, 1);
+                                c2++;
+                            }
+                            // pop point table from stack:
+                            lua_pop(l, 1);
+                            c++;
+                        }
+                        pointPairCount++;
+
+                        // add two point pair as edge to the shape:
+                        physics_add2dShapeEdgeList(GET_SHAPE(shapes, i),
+                        coords[0][0], coords[0][1], coords[1][0], coords[1][1]);
+
+                        lua_pop(l, 1);  // pop two point pair table
+                    }
+                    lua_pop(l, 1);  // pop "edge" table
                 }
                 if (strcmp(shapetype, "circle") == 0) {
                     isok = 1;

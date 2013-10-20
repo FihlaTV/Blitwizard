@@ -26,10 +26,12 @@ function blitwizard.onInit()
     background:pinToCamera()
 
     -- Play song
-    local sound = blitwizard.audio.simpleSound:new("blitwizarddemosongloop.ogg")
-    -- This will play sound "blitwizarddemosongloop.ogg" with volume 1.0 (full),
-    -- and repeat true (enabled, so will repeat forever)
-    sound:play(1, true)
+    local sound = blitwizard.audio.simpleSound:new(
+        "blitwizardtragicallyepic.ogg")
+
+    -- This will play sound "blitwizardtragicallyepic.ogg" with
+    -- full volume (1.0), and repeated forever (repeat parameter true)
+    sound:play(1.0, true)
 end
 
 function blitwizard.onKeyDown(key)
