@@ -607,12 +607,23 @@ void physics_step(struct physicsworld* world) {
                 struct physicsobject* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
                 struct physicsobject2d* obj2d = &obj->object2d;
                 if (obj) {
+                    b2MassData mdata;
+                    obj2d->body->GetMassData(&mdata);
+                    double mass = mdata.mass;
                     if (obj2d->gravityset) {
                         // custom gravity which we want to apply
-                        b->ApplyLinearImpulse(b2Vec2(obj2d->gravityx * forcefactor, obj2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
+                        b->ApplyLinearImpulse(
+                            b2Vec2(obj2d->gravityx * forcefactor * mass,
+                            obj2d->gravityy * forcefactor * mass),
+                            b2Vec2(b->GetPosition().x, b->GetPosition().y)
+                        );
                     } else {
                         // no custom gravity -> apply world gravity
-                        b->ApplyLinearImpulse(b2Vec2(world2d->gravityx * forcefactor, world2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
+                        b->ApplyLinearImpulse(
+                            b2Vec2(world2d->gravityx * forcefactor * mass,
+                            world2d->gravityy * forcefactor * mass),
+                            b2Vec2(b->GetPosition().x, b->GetPosition().y)
+                        );
                     }
                 }
                 b = b->GetNext();
@@ -1270,8 +1281,8 @@ struct physicsobject* physics_createObject_internal(struct physicsworld* world,
                     // TODO: bit messy (no memory avail. check)
                     fixtureDef.shape = new b2PolygonShape;
                     ((b2PolygonShape*)(fixtureDef.shape))->SetAsBox(
-                     s->shape2d.b2.rectangle->width,
-                     s->shape2d.b2.rectangle->height,
+                     s->shape2d.b2.rectangle->width / 2,
+                     s->shape2d.b2.rectangle->height / 2,
                      b2Vec2(s->shape2d.xoffset, s->shape2d.yoffset),
                      s->shape2d.rotation);
                     fixtureDef.friction = 1; // TODO: ???

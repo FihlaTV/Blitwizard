@@ -407,22 +407,24 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                 strcmp(shapetype, "oval") == 0) {
                     isok = 1;
                     // rectangle or oval with width and height
-                    int width,height;
+                    double width,height;
                     lua_pushstring(l, "width");
                     lua_gettable(l, 2+i);
-                    if (lua_type(l, -1) != LUA_TNUMBER) {
+                    if (lua_type(l, -1) != LUA_TNUMBER ||
+                    lua_tonumber(l, -1) <= 0) {
                         physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",
                         "shape \"rectangle\" or \"oval\" needs"
-                        " \"width\" specified as a number");
+                        " \"width\" specified as a positive number");
                     }
                     width = lua_tonumber(l, -1);
                     lua_pop(l, 1);
 
                     lua_pushstring(l, "height");
                     lua_gettable(l, 2+i);
-                    if (lua_type(l, -1) != LUA_TNUMBER) {
+                    if (lua_type(l, -1) != LUA_TNUMBER ||
+                    lua_tonumber(l, -1) <= 0) {
                         physics_destroyShapes(shapes, argcount);
                         return haveluaerror(l, badargument2, 2+i,
                         "blitwizard.object:enableCollision",

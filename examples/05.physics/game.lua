@@ -16,17 +16,11 @@ crateshealth = {}
 -- list of crate splint particles. each particle is a sub list containing:
 -- { x pos, y pos , initial rotation, rotation speed, anim progress (0..1) }
 cratesplints = {}
--- list of all ball physics objects:
-balls = {}
 -- list of smoke particles. each particle is a sub list containing:
 -- { x pos, y pos, current rotation angle, current smoke alpha }
 smokeobjs = {}
 -- meter (physics unit) to pixels factor:
 pixelsperunit = 30 -- meter (physics unit) to pixels factor
--- size of a crate (length of each side):
-cratesize = 64/pixelsperunit
--- size of a ball (diameter):
-ballsize = 24/pixelsperunit
 
 -- Warn if we run without templates
 if blitwizard.templatesinitialised ~= true then
@@ -97,17 +91,19 @@ function blitwizard.onInit()
               {(564-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit} }
 	    }
     })
+    level:setFriction(0.3)
 
 	-- More basic level collision shape:
 	-- (that black obtruding rectangle part in bg.png on the floor/center)
 	levelcollision2 = blitwizard.object:new(
-        blitwizard.object.o2d, "crate.png")
+        blitwizard.object.o2d, nil)
     levelcollision2:enableStaticCollision({
         type="rectangle",
-        width=((382 - 222)/pixelsperunit)*0.5,
+        width=((382 - 222)/pixelsperunit),
         height=((314 - 242)/pixelsperunit)
     })
-    levelcollision2:setPosition(((222 + 382)/2 - halfwidth)/pixelsperunit, ((224 + 314)/2 - halfheight)/pixelsperunit)
+    levelcollision2:setPosition(((222 + 382)/2 - halfwidth)/pixelsperunit,
+        ((242 + 314)/2 - halfheight)/pixelsperunit)
 	levelcollision2:setFriction(0.3)
 end
 
@@ -142,6 +138,8 @@ function blitwizard.onMouseDown(x, y)
         blitwizard.graphics.getCameras()[1]:screenPosTo2dWorldPos(x, y)
 
 	if math.random() > 0.5 then
+        -- the crate has a side length of 64 pixels.
+        -- limit its position so it spawns inside the level:
 		objectposx,objectposy = limitspawnposition(
 		    64/pixelsperunit, objectposx, objectposy)
 
@@ -195,6 +193,8 @@ function blitwizard.onMouseDown(x, y)
             return true
         end)]]--
 	else
+        -- the ball has a diameter of 24 pixels,
+        -- use our neat placement limiter :
         objectposx,objectposy = limitspawnposition(
             24/pixelsperunit, objectposx, objectposy)
 
@@ -209,9 +209,9 @@ function blitwizard.onMouseDown(x, y)
                 diameter=w,
             })
             self:setFriction(0.1)
-            self:setMass(0.4)
+            self:setMass(10)
             self:setAngularDamping(0.3)
-            self:setLinearDamping(0.3)
+            self:setLinearDamping(0.9)
             self:setRestitution(0.3)
         end
         ball:setPosition(objectposx, objectposy)
