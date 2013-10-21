@@ -321,6 +321,7 @@ void cleanupobject(struct blitwizardobject* o, int fullclean) {
 #endif
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
         if (o->physics) {
+            printf("OBJ PHYSICS UNLOAD\n");
             luafuncs_freeObjectPhysicsData(o->physics);
             o->physics = NULL;
         }
@@ -339,6 +340,8 @@ void cleanupobject(struct blitwizardobject* o, int fullclean) {
 
         // clear table in registry:
         luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
+
+        printf("OBJ UNLOAD COMPLETE\n");
     } else {
 #ifdef USE_GRAPHICS
         luacfuncs_objectgraphics_setVisible(o, 0);
@@ -370,6 +373,13 @@ static int garbagecollect_blitwizobjref(lua_State* l) {
 }
 
 static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (o->physics) {
+        printf("OBJ PHYSICS UNLOAD\n");
+        luafuncs_freeObjectPhysicsData(o->physics);
+        o->physics = NULL;
+    }
+#endif
     if (o->deleted && o->refcount <= 0) {
         cleanupobject(o, 1);
 
@@ -886,6 +896,7 @@ int luafuncs_object_destroy(lua_State* l) {
 
     // mark it deleted, and move it over to deletedobjects:
     o->deleted = 1;
+    printf("MARKED FOR DELETION\n");
 
     // do a first temp cleanup:
     cleanupobject(o, 0);
