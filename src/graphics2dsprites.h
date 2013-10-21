@@ -27,6 +27,8 @@
 #include "config.h"
 #include "os.h"
 
+#define VALIDATESPRITEPOS
+
 #ifdef USE_GRAPHICS
 
 #ifdef __cplusplus
@@ -72,6 +74,10 @@ void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite);
 // even if it is set to visible.
 int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite);
 
+// Set parallax effect to sprite
+void graphics2dsprites_setParallaxEffect(struct graphics2dsprite* sprite,
+double value);
+
 // Move a sprite.
 void graphics2dsprites_move(struct graphics2dsprite* sprite,
 double x, double y, double angle);
@@ -79,6 +85,9 @@ double x, double y, double angle);
 // Set sprite to invisible (visible = 0) or back to visible (1).
 void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
 int visible);
+
+// Query whether a sprite is set to visible (=1) or not (=0)
+int graphics2dsprites_getVisible(struct graphics2dsprite* sprite);
 
 // Resize a sprite. Set negative sizes for mirroring,
 // and 0, 0 for width/height if you want to have the sprite
@@ -100,6 +109,9 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite);
 // Set the Z index of the sprite (Defaults to 0):
 void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
 int zindex);
+
+// Get the current Z index of the sprite:
+int graphics2dsprites_getZIndex(struct graphics2dsprite* sprite);
 
 // --- internally used to draw sprites: ---
 
@@ -127,14 +139,14 @@ double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
-int zindex, int visible, int cameraId),
+int zindex, int visible, int cameraId, int texturefiltering),
 void (*spriteModified) (void* handle,
 double x, double y,
 double width, double height, double angle, int horizontalflip,
 int verticalflip,
 double alpha, double r, double g, double b,
 size_t sourceX, size_t sourceY, size_t sourceWidth, size_t sourceHeight,
-int zindex, int visible, int cameraId),
+int zindex, int visible, int cameraId, int texturefiltering),
 void (*spriteDeleted) (void* handle)
 );
 
@@ -151,12 +163,11 @@ void graphics2dsprites_triggerCallbacks(void);
 // For sprites with no texture loaded/available,
 // the tex parameter will be set to NULL.
 void graphics2dsprites_doForAllSprites(
-void (*spriteInformation) (const char* path, struct graphicstexture* tex,
-double x, double y, double width, double height,
-size_t texwidth, size_t texheight,
-double angle, double alpha, double r, double g, double b,
-size_t sourceX, size_t sizeY, size_t sizeWidth, size_t sizeHeight,
-int visible, int cameraId));
+void (*spriteInformation) (
+const struct graphics2dsprite* sprite,
+const char* path, struct graphicstexture* tex,
+double r, double g, double b, double alpha,
+int visible, int cameraId, int textureFiltering));
 // Sprites will be returned in Z-Index order.
 // (lower index first, and for same z-index
 // with the older sprites first)
@@ -177,8 +188,9 @@ int cameraId);
 // Report visibility to texture manager
 void graphics2dsprites_reportVisibility(void);
 
-#define SPRITE_EVENT_TYPE_CLICK 1
-#define SPRITE_EVENT_TYPE_MOTION 2
+#define SPRITE_EVENT_TYPE_CLICK 0
+#define SPRITE_EVENT_TYPE_MOTION 1
+#define SPRITE_EVENT_TYPE_FETCH 2
 #define SPRITE_EVENT_TYPE_COUNT 3
 // Get sprite at the given screen position
 // (e.g. mouse position) with the given camera
@@ -204,6 +216,21 @@ int event, int invisible);
 
 // Return the total amount of 2d sprites.
 size_t graphics2dsprites_Count(void);
+
+// Calculate the size of a given sprite on a given camera:
+void graphics2dsprite_calculateSizeOnScreen(
+const struct graphics2dsprite* sprite,
+int cameraId,
+double* screen_x, double* screen_y, double* screen_w,
+double* screen_h, double* screen_sourceX, double* screen_sourceY,
+double* screen_sourceW, double* screen_sourceH,
+double* source_angle, int* phoriflip, int compensaterotation);
+// FIXME: This can NOT be safely used outside the doForAllSprites callback!
+// (threading issues)
+
+// Enable or disable texture filtering for a specific sprite:
+void graphics2dsprites_setTextureFiltering(struct graphics2dsprite* sprite,
+int filter);
 
 #ifdef __cplusplus
 }

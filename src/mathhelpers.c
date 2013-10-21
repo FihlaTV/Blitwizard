@@ -40,6 +40,17 @@ double getdist(double x, double y, double x2, double y2) {
     return distfromzero(x2,y2);
 }
 
+int pointisccw(double x1, double y1, double x2, double y2, double px, double py) {
+    double angle = getangle(x1, y1, x2, y2);
+    double angle2 = getangle(x2, y2, px, py);
+    if (normalizeangle(angle2-angle) > 0) {
+        // point is to the "left" side -> counter-clockwise
+        return 1;
+    }
+    // point is to the "right" side -> not counter-clockwise
+    return 0;
+}
+
 static double anglefromzero(double x, double y) {
     int substract180 = 0;
     if (x < 0) {

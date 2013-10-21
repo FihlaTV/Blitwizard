@@ -247,9 +247,16 @@ int so_ReverseResolveBlocking(const char* ip, char* hostbuf, int hostbuflen) {
         addressstruct6.sin6_family = AF_INET6;
         #ifdef WINDOWS
         DWORD size = sizeof(addressstruct6.sin6_addr);
-        if (WSAStringToAddress(ip, AF_INET6, NULL, &(addressstruct6.sin6_addr), &size) != 0) {
+        char* sdup = strdup(ip);
+        if (!sdup) {
             return 0;
         }
+        if (WSAStringToAddress(sdup, AF_INET6, NULL,
+        &(addressstruct6.sin6_addr), &size) != 0) {
+            free(sdup);
+            return 0;
+        }
+        free(sdup);
         #else
         inet_pton(AF_INET6, ip, &(addressstruct6.sin6_addr));
         #endif
@@ -567,9 +574,16 @@ int so_AddressToStruct(const char* addr, int iptype, void* structptr) {
         if (iptype == IPTYPE_IPV6) {
         #ifdef IPV6
             DWORD size = sizeof(addressstruct6->sin6_addr);
-            if (WSAStringToAddress(addr, AF_INET6, NULL, &(addressstruct6->sin6_addr), &size) != 0) {
+            char* sdup = strdup(addr);
+            if (!sdup) {
                 return 0;
             }
+            if (WSAStringToAddress(sdup, AF_INET6, NULL,
+            &(addressstruct6->sin6_addr), &size) != 0) {
+                free(sdup);
+                return 0;
+            }
+            free(sdup);
         #else
             return 0;
         #endif

@@ -36,10 +36,10 @@
 int luafuncs_getCameras(lua_State* l);
 int luafuncs_camera_new(lua_State* l);
 int luafuncs_camera_destroy(lua_State* l);
-int luafuncs_camera_gameUnitToPixels(lua_State* l);
+int luafuncs_camera_screenPosTo2dWorldPos(lua_State* l);
 int luafuncs_camera_getPixelDimensionsOnScreen(lua_State* l);
 int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l);
-int luafuncs_camera_getVisible2dAreaDimensions(lua_State* l);
+int luafuncs_camera_getDimensions(lua_State* l);
 int luafuncs_camera_get2dCenter(lua_State* l);
 int luafuncs_camera_set2dCenter(lua_State* l);
 int luafuncs_camera_set2dZoomFactor(lua_State* l);

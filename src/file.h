@@ -24,6 +24,8 @@
 #ifndef BLITWIZARD_FILE_H_
 #define BLITWIZARD_FILE_H_
 
+#include <stdlib.h>
+
 int file_Cwd(const char* path);
 
 char* file_GetCwd(void);

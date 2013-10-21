@@ -45,8 +45,8 @@
 #include "main.h"
 #endif
 
-#include "SDL.h"
-#include "SDL_syswm.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 
 #include "graphicstexture.h"
 #include "graphics.h"
@@ -144,8 +144,8 @@ struct graphicstexture* gt, void* pixels) {
         // locking failed, we cannot extract pixels
         return 0;
     } else {
-        // Copy texture
-        memcpy(pixelsptr, pixels, gt->width * gt->height * 4);
+        // Copy texture to provided pixels pointer
+        memcpy(pixels, pixelsptr, gt->width * gt->height * 4);
 
         // unlock texture again
         SDL_UnlockTexture(gt->sdltex);

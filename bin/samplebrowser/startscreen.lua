@@ -36,7 +36,7 @@ blitwizard engine - source code file
 
 function blitwizard.onInit()
     -- this will open up a graphics window:
-    blitwizard.graphics.setMode(800, 600, "blitwizard", false)
+    blitwizard.graphics.setMode(800 * 1, 600 * 1, "blitwizard", false)
     blitwizard.graphics.getCameras()[1]:set2dZoomFactor(2) -- zoom into things
 
     -- Introduction text:
@@ -45,8 +45,8 @@ function blitwizard.onInit()
     "\n\n  Visit http://www.blitwizard.de/doc-files/api-stable " ..
     "for documentation." ..
     "\n\n  Need help? Check out the forums: http://www.blitwizard.de/forum/"
-    , "default", 1.3)
-    text:move(1.5, 3.5) -- move a bit away from top/left corner
+    , "default", 1)
+    text:setPosition(1.5, 3.5) -- move a bit away from top/left corner
     text:setZIndex(2)
 
     -- Create top bar:
@@ -63,24 +63,22 @@ function blitwizard.onInit()
     bar:setZIndex(1)
 
     -- scale top bar to the width of the visible area
-    -- (camera:getVisible2dAreDimensions(false) returns
+    -- (camera:getDimensions(false) returns
     -- the visible area for pinned objects, so without
     -- zoom as for normal objects):
     function bar:onGeometryLoaded()
-        local w,h = cameras[1]:getVisible2dAreaDimensions(false)
+        local w,h = cameras[1]:getDimensions()
         bar:scaleToDimensions(w, nil)
-        local sx,sy = bar:getScale()
-        local px,py = bar:getDimensions()
     end
 
     -- button for showing sample browser selection
     local button = blitwizard.object:new(
         blitwizard.object.o2d, "browse.png")
-    button:pinToCamera(cameras[1])
+    button:pinToCamera()
 
     -- move to a nice position:
     function button:onGeometryLoaded()
-        local w,h = cameras[1]:getVisible2dAreaDimensions(false)
+        local w,h = cameras[1]:getDimensions()
         self:setScale(0.7, 0.7)
         local tx,th = self:getDimensions()
         self:setPosition(w/2 - tx/2, h/2 + h/6)
@@ -91,13 +89,21 @@ function blitwizard.onInit()
         -- destroy all orbs:
         noOrbs = true
 
+        -- destroy bar, button and text:
+        bar:destroy()
+        button:destroy()
+        text:destroy()
+
         -- launch sample browser list:
         browser.launchSelection()
     end
 
+    -- weaken gravity for nicely floating orbs:
+    blitwizard.physics.set2dGravity(0, 0.2)
+
     -- spawn a few orbs (see spawnOrb code below):
     local i = 0
-    while i < 50 do
+    while i < 10 do
         spawnOrb()
         i = i + 1
     end
@@ -119,6 +125,7 @@ function spawnOrb()
     local v = 0.2 + 6*math.random()
     obj:setScale(v, v)
     obj:setTransparency(math.random() * 0.5 + 0.5)
+    obj:setZIndex(-9999)
 
     -- initialise physics:
     function obj:onGeometryLoaded()

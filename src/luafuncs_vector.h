@@ -21,14 +21,25 @@
 
 */
 
-#ifndef BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
-#define BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
+#ifndef BLItWIZARD_LUAFUNCS_VECTOR_H_
+#define BLITWIZARD_LUAFUNCS_VECTOR_H_
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <assert.h>
 #include "luaheader.h"
 
-void luacfuncs_settimeout_Do(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int luafuncs_setTimeout(lua_State* l);
+int luafuncs_vector_rotate2d(lua_State* l);
 
-#endif  // BLITWIZARD_LUAFUNCS_SETTIMEOUT_H_
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // BLITWIZARD_LUAFUNCS_VECTOR_H_
 

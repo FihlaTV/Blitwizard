@@ -24,9 +24,12 @@
 #include "config.h"
 #include "os.h"
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "logging.h"
+
+int failsafeaudio = 0;
 
 // valid sound buffer sizes for audio:
 #define DEFAULTSOUNDBUFFERSIZE (2048)
@@ -39,7 +42,7 @@
 #ifdef USE_AUDIO
 #ifdef USE_SDL_AUDIO
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 
 static void (*samplecallbackptr)(void*, unsigned int) = NULL;
 static int soundenabled = 0;
@@ -93,6 +96,13 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
         return 0;
     }
 #endif
+
+    // abort if going for float32 audio with failsafe enabled:
+    if (failsafeaudio && !s16) {
+        *error = strdup("Failsafe audio enabled - use 16bit signed int audio");
+        return 0;
+    }
+
     if (!samplecallback) {
         *error = strdup("Need sample callback");
         return 0;
@@ -101,7 +111,7 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
     char preferredbackend[20] = "";
 #ifdef WINDOWS
     if (backend && strcasecmp(backend, "waveout") == 0) {
-        strcpy(preferredbackend, "waveout");
+        strcpy(preferredbackend, "winmm");
     }
     if (backend && (strcasecmp(backend, "directsound") == 0 || strcasecmp(backend, "dsound") == 0)) {
         strcpy(preferredbackend, "directsound");
@@ -120,6 +130,21 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
     if (strlen(b) <= 0) {
         b = NULL;
     }
+
+    // for failsafe audio, redirect some audio outputs to more failsafe ones:
+    if (failsafeaudio) {
+        if (b == NULL || strcmp(b, "directsound") == 0) {
+            // we definitely should pick a safer default.
+    #ifdef WINDOWS
+            strcpy(preferredbackend, "winmm");
+    #else
+            strcpy(preferredbackend, "alsa");
+    #endif
+            b = preferredbackend;
+        }
+    }
+
+    // initialise audio
     if (SDL_AudioInit(b) < 0) {
         snprintf(errbuf,sizeof(errbuf),"Failed to initialize SDL audio: %s", SDL_GetError());
         errbuf[sizeof(errbuf)-1] = 0;
@@ -144,7 +169,7 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
     fmt.freq = 48000;
     if (!s16) {
         fmt.format = AUDIO_F32SYS;
-    }else{
+    } else {
         fmt.format = AUDIO_S16;
     }
     fmt.channels = 2;
@@ -158,15 +183,14 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
         snprintf(errbuf,sizeof(errbuf),"Failed to open SDL audio: %s", SDL_GetError());
         errbuf[sizeof(errbuf)-1] = 0;
         *error = strdup(errbuf);
-        // FIXME: this is a workaround for http:// bugzilla.libsdl.org/show_bug.cgi?id=1343 (will cause a memory leak!)
-        // SDL_AudioQuit();
+        SDL_AudioQuit();
         return 0;
     }
 
-    if (actualfmt.channels != 2 || actualfmt.freq != 48000 || (s16 && actualfmt.format != AUDIO_S16) || (!s16 && actualfmt.format != AUDIO_F32SYS)) {
+    if (actualfmt.channels != 2 || actualfmt.freq != 48000 ||
+    (s16 && actualfmt.format != AUDIO_S16) || (!s16 && actualfmt.format != AUDIO_F32SYS)) {
         *error = strdup("SDL audio delivered wrong/unusable format");
-        // FIXME: this is a workaround for http:// bugzilla.libsdl.org/show_bug.cgi?id=1343 (will cause a memory leak!)
-        // SDL_AudioQuit();
+        SDL_AudioQuit();
         return 0;
     }
 
@@ -322,8 +346,6 @@ void audio_SoundThread(void* userdata) {
     while (1) {
         // the waveOut callback will wake us up when there
         // is stuff to do:
-        // semaphore_Wait(newblocksignal);
-        // queueBlock();
         time_Sleep(100);
         mutex_Lock(waveoutlock);
         if (threadcontrol == 0) {

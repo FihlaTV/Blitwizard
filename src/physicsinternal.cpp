@@ -192,6 +192,11 @@ struct physicsobject2dedgecontext {
     struct edge* edgelist;
 };
 
+struct physicsjoint2d {
+    // Not much to it
+    b2Joint* b2joint;
+};
+
 
 /*
     3d-specific structs
@@ -206,6 +211,10 @@ struct physicsobjectshape3d {
 };
 
 struct physicsworld3d {
+    // TODO
+};
+
+struct physicsjoint3d {
     // TODO
 };
 
@@ -232,6 +241,14 @@ struct physicsworld {
     int is3d;
     void* callbackuserdata;
     int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
+};
+
+struct physicsjoint {
+    union {
+        struct physicsjoint2d joint2d;
+        struct physicsjoint3d joint3d;
+    };
+    struct physicsworld* world;
 };
 
 struct physicsobjectshape {
@@ -385,11 +402,14 @@ b2Contact* contact) {
 
 // handle the contact event and pass it on to the physics callback:
 static void physics_handleContact(b2Contact* contact) {
-    //printf("handlecontact0: %llu\n", time_GetMicroseconds());
     struct physicsobject* obj1 = ((struct bodyuserdata*)contact->GetFixtureA()
         ->GetBody()->GetUserData())->pobj;
     struct physicsobject* obj2 = ((struct bodyuserdata*)contact->GetFixtureB()
         ->GetBody()->GetUserData())->pobj;
+#ifdef VALIDATEBOBJ
+    assert(strcmp(obj1->validatemagic, VALIDATEMAGIC) == 0);
+    assert(strcmp(obj2->validatemagic, VALIDATEMAGIC) == 0);
+#endif
     if (obj1->deleted || obj2->deleted) {
         // one of the objects should be deleted already, ignore collision
         contact->SetEnabled(false);
@@ -433,7 +453,6 @@ static void physics_handleContact(b2Contact* contact) {
     struct physicsworld* w = obj1->pworld;
 
     // return the information through the callback
-    contact->SetEnabled(false);
     if (w->callback) {
         if (!w->callback(w->callbackuserdata, obj1, obj2,
         collidex, collidey, normalx, normaly, impact)) {
@@ -448,7 +467,6 @@ static void physics_handleContact(b2Contact* contact) {
             contact->SetEnabled(true);
         }
     }
-    //printf("handlecontact1: %llu\n", time_GetMicroseconds());
 }
 
 /*
@@ -589,12 +607,23 @@ void physics_step(struct physicsworld* world) {
                 struct physicsobject* obj = ((struct bodyuserdata*)b->GetUserData())->pobj;
                 struct physicsobject2d* obj2d = &obj->object2d;
                 if (obj) {
+                    b2MassData mdata;
+                    obj2d->body->GetMassData(&mdata);
+                    double mass = mdata.mass;
                     if (obj2d->gravityset) {
                         // custom gravity which we want to apply
-                        b->ApplyLinearImpulse(b2Vec2(obj2d->gravityx * forcefactor, obj2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
+                        b->ApplyLinearImpulse(
+                            b2Vec2(obj2d->gravityx * forcefactor * mass,
+                            obj2d->gravityy * forcefactor * mass),
+                            b2Vec2(b->GetPosition().x, b->GetPosition().y)
+                        );
                     } else {
                         // no custom gravity -> apply world gravity
-                        b->ApplyLinearImpulse(b2Vec2(world2d->gravityx * forcefactor, world2d->gravityy * forcefactor), b2Vec2(b->GetPosition().x, b->GetPosition().y));
+                        b->ApplyLinearImpulse(
+                            b2Vec2(world2d->gravityx * forcefactor * mass,
+                            world2d->gravityy * forcefactor * mass),
+                            b2Vec2(b->GetPosition().x, b->GetPosition().y)
+                        );
                     }
                 }
                 b = b->GetNext();
@@ -666,12 +695,11 @@ void _physics_destroy2dShape(struct physicsobjectshape2d* shape) {
         case BW_S2D_POLY:
             struct polygonpoint* p,* p2;
             p = shape->b2.polygonpoints;
-            p2 = NULL;
-            while (p != NULL) {
+            while (p) {
                 p2 = p->next;
                 free(p);
+                p = p2;
             }
-            free(p2);
         break;
         case BW_S2D_CIRCLE:
             delete shape->b2.circle;
@@ -683,8 +711,8 @@ void _physics_destroy2dShape(struct physicsobjectshape2d* shape) {
             while (e != NULL) {
                 e2 = e->next;
                 free(e);
+                e = e2;
             }
-            free(e2);
         break;
         default:
             printerror("Error: Unknown 2D shape type.");
@@ -768,7 +796,7 @@ void physics_set2dShapeRectangle(struct physicsobjectshape* shape, double width,
     if (!rectangle)
         return;
     
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -792,7 +820,7 @@ void physics_set2dShapeOval(struct physicsobjectshape* shape, double width, doub
     //construct oval shape - by manually calculating the vertices
     struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*vertices)*OVALVERTICES);
     
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -828,7 +856,7 @@ void physics_set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
     double radius = diameter/2;
     circle->m_radius = radius - 0.01;
     
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -841,23 +869,21 @@ void physics_set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
-    if (not shape->shape2d.type == BW_S2D_POLY) {
+    if (shape->shape2d.type != BW_S2D_POLY) {
         shape->shape2d.b2.polygonpoints = NULL;
     }
-    struct polygonpoint* p = shape->shape2d.b2.polygonpoints;
-    
-    struct polygonpoint* new_point = (struct polygonpoint*)malloc(sizeof(*new_point));
+   
+    struct polygonpoint* new_point = (struct polygonpoint*)
+        malloc(sizeof(*new_point));
     new_point->x = xoffset;
     new_point->y = yoffset;
     
-    if (p != NULL) {
-      new_point->next = p;
-    }
-    p = new_point;
+    new_point->next = shape->shape2d.b2.polygonpoints;
+    shape->shape2d.b2.polygonpoints = new_point;
     
     shape->shape2d.type = BW_S2D_POLY;
     
@@ -888,7 +914,8 @@ int _physics_check2dEdgeLoop(struct edge* edge, struct edge* target) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
+void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape,
+double x1, double y1, double x2, double y2) {
     struct edge* newedge = (struct edge*)malloc(sizeof(*newedge));
     if (!newedge) {return;}
     memset(newedge, 0, sizeof(*newedge));
@@ -898,11 +925,12 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
     newedge->y2 = y2;
     newedge->adjacentcount = 1;
     
-    //search for adjacent edges
+    // search for adjacent edges
     struct edge* e = shape->shape2d.b2.edges;
     while (e) {
         if (!newedge->adjacent1) {
-            if (fabs(e->x1 - newedge->x1) < EPSILON && fabs(e->y1 - newedge->y1) < EPSILON && e->adjacent1 == NULL) {
+            if (fabs(e->x1 - newedge->x1) < EPSILON
+            && fabs(e->y1 - newedge->y1) < EPSILON && e->adjacent1 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
                 } else {
@@ -914,7 +942,8 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
                 e = e->next;
                 continue;
             }
-            if (fabs(e->x2 - newedge->x1) < EPSILON && fabs(e->y2 - newedge->y1) < EPSILON && e->adjacent2 == NULL) {
+            if (fabs(e->x2 - newedge->x1) < EPSILON
+            && fabs(e->y2 - newedge->y1) < EPSILON && e->adjacent2 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
                 } else {
@@ -928,7 +957,8 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
             }
         }
         if (!newedge->adjacent2) {
-            if (fabs(e->x1 - newedge->x2) < EPSILON && fabs(e->y1 - newedge->y2) < EPSILON && e->adjacent1 == NULL) {
+            if (fabs(e->x1 - newedge->x2) < EPSILON
+            && fabs(e->y1 - newedge->y2) < EPSILON && e->adjacent1 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
                 } else {
@@ -956,7 +986,7 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
         e = e->next;
     }
 
-    //add us to the unsorted linear list
+    // add us to the unsorted linear list
     newedge->next = shape->shape2d.b2.edges;
     shape->shape2d.b2.edges = newedge;
 }
@@ -964,18 +994,19 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
 
 #ifdef USE_PHYSICS2D
 void physics_add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
+        shape->is3d = 0;
     }
     
-    // FIXME FIXME FIXME this function might be complete bollocks, reconsider pls
-    if (not shape->shape2d.type == BW_S2D_EDGE) {
+    if (shape->shape2d.type == BW_S2D_UNINITIALISED) {
+        shape->shape2d.type = BW_S2D_EDGE;
         shape->shape2d.b2.edges = NULL;
     }
     
     _physics_add2dShapeEdgeList_Do(shape, x1, y1, x2, y2);
     
-    struct edge* e = shape->shape2d.b2.edges;
+    /*struct edge* e = shape->shape2d.b2.edges;
     while (e != NULL and e->next != NULL) {
         e = e->next;
     }
@@ -984,7 +1015,7 @@ void physics_add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
     new_edge->y1 = y1;
     new_edge->x2 = x2;
     new_edge->y2 = y2;
-    e->next = new_edge;
+    e->next = new_edge;*/
     
     shape->shape2d.type = BW_S2D_EDGE;
 
@@ -1021,11 +1052,7 @@ void _physics_apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
 
 #ifdef USE_PHYSICS2D
 void physics_set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation) {
-    if (_physics_shapeType(shape) != 1) {
-        _physics_createEmpty2dShape(&(shape->shape2d));
-        printerror("Shouldn't be doing this: Set2dShapeOffsetRotation before "\
-         "having assigned any shape data.");
-    }
+    assert(_physics_shapeType(shape) == 0);
     
     struct physicsobjectshape2d* s = &(shape->shape2d);
     s->xoffset = xoffset;
@@ -1174,11 +1201,11 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
         if (e->inaloop) {
             chain.CreateLoop(varray, e->adjacentcount);
             // More scaling workaround stuff
-            object->orig_shape_info[num_shapes].is_loop = 1;
+            object->orig_shape_info[num_shapes-1].is_loop = 1;
         } else {
             chain.CreateChain(varray, e->adjacentcount+1);
             // And again
-            object->orig_shape_info[num_shapes].is_loop = 0;
+            object->orig_shape_info[num_shapes-1].is_loop = 0;
         }
 
         //add it to our body
@@ -1204,11 +1231,12 @@ void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints,
         ++i;
         p = p->next;
     }
-    b2Vec2* varray = new b2Vec2[i];
+    int num = i;
+    b2Vec2* varray = new b2Vec2[num];
     p = polygonpoints;
     i = 0;
     while (p != NULL) {
-        varray[i].Set(p->x, p->y);
+        varray[(num-1)-i].Set(p->x, p->y);
         ++i;
         p = p->next;
     }
@@ -1253,8 +1281,8 @@ struct physicsobject* physics_createObject_internal(struct physicsworld* world,
                     // TODO: bit messy (no memory avail. check)
                     fixtureDef.shape = new b2PolygonShape;
                     ((b2PolygonShape*)(fixtureDef.shape))->SetAsBox(
-                     s->shape2d.b2.rectangle->width,
-                     s->shape2d.b2.rectangle->height,
+                     s->shape2d.b2.rectangle->width / 2,
+                     s->shape2d.b2.rectangle->height / 2,
                      b2Vec2(s->shape2d.xoffset, s->shape2d.yoffset),
                      s->shape2d.rotation);
                     fixtureDef.friction = 1; // TODO: ???
@@ -1512,7 +1540,9 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
         _physics_fill2dOrigShapeCache(object2d);
     }
     // Secondly, delete all the old fixtures+
+    float oldfriction = 0.5f;
     while (f != NULL) {
+        oldfriction = f->GetFriction();
         body->DestroyFixture(f);
         f = body->GetFixtureList();
     }
@@ -1525,7 +1555,7 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
     
     // Should be able to re-use this
     b2FixtureDef fixtureDef;
-    fixtureDef.friction = 0.5; // TODO: ???
+    fixtureDef.friction = oldfriction;
     fixtureDef.density = 1; // TODO: ???
     
     int i = 0; // orig_shapes[i]
@@ -1598,7 +1628,7 @@ re-allocation of memory for m_vertices."
                     delete poly;
                 break;
                 default:
-                    printerror("fatal.");
+                    printerror("fatal error: unknown physics shape");
                 break;
             } // switch
         } // else
@@ -1822,7 +1852,7 @@ void physics_get2dVelocity_internal(struct physicsobject* obj, double *vx, doubl
 #endif
 
 #ifdef USE_PHYSICS2D
-double physics_get2dAngularVelocity_internal(struct physicsobject* obj, double* omega) {
+double physics_get2dAngularVelocity_internal(struct physicsobject* obj) {
     return obj->object2d.body->GetAngularVelocity();
 }
 #endif
@@ -1842,6 +1872,27 @@ void physics_set2dAngularVelocity_internal(struct physicsobject* obj, double ome
 #ifdef USE_PHYSICS2D
 void physics_apply2dAngularImpulse_internal(struct physicsobject* obj, double impulse) {
     obj->object2d.body->ApplyAngularImpulse(impulse);
+}
+#endif
+
+#ifdef USE_PHYSICS2D
+physicsjoint* physics_add2dObjectDistanceJoint_internal(
+ struct physicsobject* obj1, struct physicsobject* obj2,
+ double distance,
+ double a1x, double a1y, double a2x, double a2y,
+ double frequency, double damping) {
+    b2DistanceJointDef def;
+    def.localAnchorA = b2Vec2(a1x, a1y);
+    def.localAnchorB = b2Vec2(a2x, a2y);
+    def.length = distance;
+    def.frequencyHz = frequency;
+    def.dampingRatio = damping;
+    def.bodyA = obj1->object2d.body;
+    def.bodyB = obj2->object2d.body;
+    obj1->pworld->world2d.w->CreateJoint(&def);
+    // TODO? def.userData? def.collideConnected?
+    // TODO: Create physicsjoint instance etc. etc. and return it
+    return NULL; // lol
 }
 #endif
 

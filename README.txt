@@ -23,7 +23,7 @@ HOW TO USE:
     When using a local compiled copy (e.g. the linux build from the website):
     Open a terminal, change directory to the extracted blitwizard main directory:
         cd /path/to/blitwizard/files/
-    Then type this to run: cd bin/ && ./blitwizard
+    Then type this to run: cd bin/ && chmod +x ./blitwizard && ./blitwizard
     When using a system-wide installation (possible with an own source build
     and "sudo make install" after completing the "make" step):
     Open a terminal and simply type: blitwizard
@@ -39,7 +39,7 @@ of the examples which are located in examples/ in separate sub
 folders. Feel free to modify those .lua files, then rerun the sample
 browser and see how the examples changed!
 
-Check out docs/index.html for acomplete documentation of the
+Check out docs/index.html for a complete documentation of the
 provided functionality of blitwizard for advanced usage.
 (That file is only present for blitwizard releases, not for dev code)
 

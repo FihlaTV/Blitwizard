@@ -38,6 +38,7 @@
 #include "config.h"
 #include "os.h"
 
+#include "file.h"
 #include "luaheader.h"
 #include "luaerror.h"
 #include "graphicstexturemanager.h"
@@ -50,7 +51,11 @@
 // @function gpuMemoryUse
 // @treturn number GPU memory used up in bytes
 int luafuncs_debug_getGpuMemoryUse(lua_State* l) {
+#ifdef USE_GRAPHICS
     lua_pushnumber(l, texturemanager_getGpuMemoryUse());
+#else
+    lua_pushnumber(l, 0);
+#endif
     return 1;
 }
 
@@ -67,12 +72,22 @@ int luafuncs_debug_getGpuMemoryUse(lua_State* l) {
 // @function getTextureUsageInfo
 // @tparam string name the file name which was used for loading the texture, e.g. "myImage.png"
 int luafuncs_debug_getTextureUsageInfo(lua_State* l) {
+#ifdef USE_GRAPHICS
     if (lua_type(l, 1) != LUA_TSTRING) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.debug.getTextureUsageInfo", "string",
         lua_strtype(l, 1));
     }
-    lua_pushnumber(l, texturemanager_getTextureUsageInfo(lua_tostring(l, -1)));
+    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_MakeSlashesCrossplatform(p);
+    lua_pushnumber(l, texturemanager_getTextureUsageInfo(p)); 
+    free(p);
+#else
+    lua_pushnumber(l, -1);
+#endif
     return 1;
 }
 
@@ -91,13 +106,23 @@ int luafuncs_debug_getTextureUsageInfo(lua_State* l) {
 // @function getTextureGpuSizeInfo
 // @tparam string name the file name which was used when loading the texture, e.g. "myImage.png"
 int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l) {
+#ifdef USE_GRAPHICS
     if (lua_type(l, 1) != LUA_TSTRING) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.debug.getTextureUsageInfo", "string",
         lua_strtype(l, 1));
     }
+    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_MakeSlashesCrossplatform(p);
     lua_pushnumber(l,
-        texturemanager_getTextureGpuSizeInfo(lua_tostring(l, -1)));
+        texturemanager_getTextureGpuSizeInfo(p));
+    free(p);
+#else
+    lua_pushnumber(l, 0);
+#endif
     return 1;
 }
 
@@ -119,7 +144,11 @@ int luafuncs_debug_getLogicStats(lua_State* l) {
 // @function getTextureRequestCount
 // @treturn number total number of texture requests
 int luafuncs_debug_getTextureRequestCount(lua_State* l) {
+#ifdef USE_GRAPHICS
     lua_pushnumber(l, texturemanager_getRequestCount());
+#else
+    lua_pushnumber(l, 0);
+#endif
     return 1;
 }
 
@@ -128,7 +157,11 @@ int luafuncs_debug_getTextureRequestCount(lua_State* l) {
 // @function get2dSpriteCount
 // @treturn number total number of 2d sprites
 int luafuncs_debug_get2dSpriteCount(lua_State* l) {
+#ifdef USE_GRAPHICS
     lua_pushnumber(l, graphics2dsprites_Count());
+#else
+    lua_pushnumber(l, 0);
+#endif
     return 1;
 } 
 
@@ -137,7 +170,11 @@ int luafuncs_debug_get2dSpriteCount(lua_State* l) {
 // @function getAudioChannelCount
 // @return number total number of active audio channels
 int luafuncs_debug_getAudioChannelCount(lua_State* l) {
+#ifdef USE_AUDIO
     lua_pushnumber(l, audiomixer_ChannelCount());
+#else
+    lua_pushnumber(l, 0);
+#endif
     return 1;
 }
 

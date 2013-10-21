@@ -244,7 +244,7 @@ int osinfo_CheckForCmdProg(const char* name) {
     strstr(name, "\"") || strstr(name, "\r") || strstr(name, "'")
     || strstr(name, "\t") || strstr(name, ":") || strstr(name, "/")
     || strstr(name, "\\") || strstr(name, "?") || strstr(name, "$")
-    || strstr(name, "`")) {
+    || strstr(name, "`") || strstr(name, "(") || strstr(name, ")")) {
         return 0;
     }
 

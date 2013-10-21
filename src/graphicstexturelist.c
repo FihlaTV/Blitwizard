@@ -38,8 +38,8 @@
 
 #include "logging.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
-#include "SDL_syswm.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 #endif
 #include "graphicstexture.h"
 #include "graphics.h"
@@ -102,7 +102,7 @@ struct graphicstexturemanaged* li, struct graphicstexturemanaged* prev) {
     mutex_Release(listMutex);
 }
 
-struct graphicstexturemanaged* graphicstexturelist_GetTextureByName(
+struct graphicstexturemanaged* graphicstexturelist_getTextureByName(
 const char* name) {
     mutex_Lock(listMutex);
     graphicstexturelist_InitializeHashmap();
@@ -262,7 +262,6 @@ struct graphicstexturemanaged* gt) {
     }
     mutex_Release(listMutex);
 }
-
 
 void graphicstexturelist_DestroyTexture(
 struct graphicstexturemanaged* gt) {

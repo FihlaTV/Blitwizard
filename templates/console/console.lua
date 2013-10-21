@@ -43,6 +43,7 @@ Permission is granted to anyone to use this software for any purpose, including 
  ]]
 dofile(os.templatedir() .. "/font/font.lua")
 
+
 do
     blitwizard.console = {}
 
@@ -54,34 +55,65 @@ do
     local slideSpeed = 0.1
     local consoleDisabled = false
     local consoleLineHeight = 0
-    local consoleHeight = 240 / blitwizard.graphics.getCameras()[1]
-        :gameUnitToPixels()
-    local consoleYPos = -consoleHeight
-    local consoleLinesShown = (function()
-        local text = blitwizard.font.text:new("Hello", "default", 0.8)
-        consoleLineHeight = text:height()
-        local result = math.floor(consoleHeight/text:height())
-        text:destroy()
-        return result-2
-    end)()
-    local commandHistory = { "" }
-    local inCommandHistory = 1
-
-    -- blinking cursor offset (from right side)
-    local blinkCursorOffset = 0
-
-    -- create blinking cursor:
-    local blinkCursorText = blitwizard.font.text:new("|", "default", 1)
-    blinkCursorText:setVisible(false)
-    blinkCursorText:setZIndex(10001)
-
-    -- blinking cursor timing, text input line end in game units:
-    local blinkCursorTime = 0
-    local textEndX = 0 -- line end on screen
+    local consoleHeight = 240 / 40 -- 40 should be roughly gameUnitToPixels
+    local consoleLoaded = false
+    blitwizard.console.consoleLinesShown = 99
 
     -- lines storage:
     local lines = {}
     -- each line is { line = "text", text = blitwizard.font.text or nil }
+
+    -- blinking cursor offset (from right side)
+    local blinkCursorOffset = 0
+
+    -- this will hold the blinking cursor once create:
+    local blinkCursorText = nil
+
+    local function trimConsole()
+        while #lines >
+        blitwizard.console.consoleLinesShown do
+            -- remove first line:
+            if lines[1].text then
+                lines[1].text:destroy()
+            end
+            local i = 1
+            while i < #lines do
+                lines[i] = lines[i+1]
+                i = i + 1
+            end
+            table.remove(lines, #lines)
+        end
+    end
+    local function calculateConsoleLinesShown()
+        local text = blitwizard.font.text:new(
+            "H", "default", 0.8)
+        local result = 0
+        if pcall(function()
+            consoleLineHeight = text:height()
+            result = math.floor(
+                consoleHeight/text:height())
+        end) ~= true then
+            text:destroy()
+            error("couldn't calculate lines")
+        end
+        text:destroy()
+        blitwizard.console.consoleLinesShown = result-2
+        trimConsole()
+    end
+    local commandHistory = { "" }
+    local inCommandHistory = 1
+
+    local function createBlinkingCursor()
+        -- create the blinking cursor
+        blinkCursorText = blitwizard.font.text:new("|", "default", 0.7)
+        blinkCursorText:setVisible(false)
+        blinkCursorText:setZIndex(10001)
+        blinkCursorText:_markAsTemplateObj()
+    end
+
+    -- blinking cursor timing, text input line end in game units:
+    local blinkCursorTime = 0
+    local textEndX = 0 -- line end on screen
 
     -- create background image for console:
     local consoleBg = blitwizard.object:new(blitwizard.object.o2d,
@@ -89,14 +121,20 @@ do
     "/console/console.png")
     consoleBg:setZIndex(9999)
     consoleBg:setVisible(true)
-    consoleBg:pinToCamera(blitwizard.graphics.getCameras()[1])
-    function consoleBg:onGeometryLoaded()
+    consoleBg:pinToCamera()
+    consoleBg:setPosition(0, -10)
+    consoleBg._templateObj = true
+    local function calculateConsoleBgSize()
         -- calculate proper size of the dev console:
+        consoleBg:setScale(1, 1)
         local w,h = consoleBg:getDimensions()
         local cw,ch = blitwizard.graphics.getCameras()[1]:
-        getVisible2dAreaDimensions(false)
+        getDimensions()
         consoleBg:setScale(cw/w, consoleHeight/h)
-        consoleBg:setPosition(0, -h)
+    end
+    function consoleBg:onGeometryLoaded()
+        consoleBg:setVisible(false)
+        pcall(calculateConsoleBgSize)
     end
 
     local function addConsoleLine(line)
@@ -117,20 +155,6 @@ do
         line = line:gsub("\r", "")
 
         lines[#lines+1] = { line = line, text = nil }
-    end
-    local function trimConsole()
-        while #lines > consoleLinesShown do
-            -- remove first line:
-            if lines[1].text then
-                lines[1].text:destroy()
-            end
-            local i = 1
-            while i < #lines do
-                lines[i] = lines[i+1]
-                i = i + 1
-            end
-            table.remove(lines, #lines)
-        end
     end
 
     local printvar = function(var)
@@ -178,7 +202,7 @@ do
                 if insideQuotation == nil then
                     -- start quotation:
                     if part:startswith("[[") then
-                        insideQuotation = "]]"
+                        insideQuotation = "]" .. "]"
                     else
                         insideQuotation = part:sub(1, 1)
                     end
@@ -221,13 +245,32 @@ do
 
     function consoleBg:doAlways()
         trimConsole()
+        
         if consoleOpened then
+            -- this will work as soon as blitwizard.graphics.setMode
+            -- has been called for first time:
+            local f = function()
+                consoleHeight = 240 / blitwizard.graphics.gameUnitToPixels()
+            end
+            if pcall(f) == true then
+                calculateConsoleLinesShown()
+                pcall(calculateConsoleBgSize)
+                if consoleLoaded == false then
+                    consoleLoaded = true
+                    createBlinkingCursor()
+                end
+                consoleBg:setVisible(true)
+            end
+
             local x,y = consoleBg:getPosition()
             if y < 0 then -- slide down
                 y = y + slideSpeed
                 if y > 0 then
                     y = 0
                 end
+            end
+            if y < -consoleHeight then
+                y = -consoleHeight
             end
             consoleBg:setPosition(x, y)
         else
@@ -238,30 +281,42 @@ do
                     y = -consoleHeight
                 end
             end
+            if y > 0 then
+                y = 0
+            end
             consoleBg:setPosition(x, y)
         end
 
         -- place lines properly:
         local x,y = consoleBg:getPosition()
-        if consoleOpened or y > -consoleHeight then
+        if consoleOpened or (y > -consoleHeight + 1.0) then
             -- Cycle through lines, load their text glyphs and move them:
             local i = 1
             while i <= #lines do
                 if lines[i] ~= nil then
                     if lines[i].text == nil then
                         -- load glyphs
-                        lines[i].text = blitwizard.font.text:new(
-                        lines[i].line, "default", 0.88)
-                        lines[i].text:setZIndex(10000)
+                        local newfontobj = nil
+                        pcall(function()
+                            newfontobj = blitwizard.font.text:new(
+                            lines[i].line, "default", 0.7)
+                            newfontobj:setZIndex(10000)
+                            newfontobj:_markAsTemplateObj()
+                        end)
+                        lines[i].text = newfontobj
                     end
-                    lines[i].text:move(0.1,
-                    0.1 + y + ((i - 1) * consoleLineHeight))
+                    if lines[i].text then
+                        lines[i].text:setPosition(0.1,
+                        0.1 + y + ((i - 1) * consoleLineHeight))
+                    end
                 end
                 i = i + 1
             end
         else
             -- hide blinking text cursor:
-            blinkCursorText:setVisible(false)
+            if blinkCursorText ~= nil then
+                blinkCursorText:setVisible(false)
+            end
 
             -- delete the glyph objects of all lines since they're invisible:
             local i = 1
@@ -282,15 +337,20 @@ do
                 consoleTextObj = nil
             end
             if consoleTextObj == nil then
-                consoleTextObj = blitwizard.font.text:new(
-                "> " .. consoleText, "default", 1)
-                consoleTextObj:setZIndex(10000)
+                local textobj = nil
+                pcall(function()
+                    textobj = blitwizard.font.text:new(
+                    "> " .. consoleText, "default", 0.7)
+                    textobj:setZIndex(10000)
+                    textobj:_markAsTemplateObj()
+                end)
+                consoleTextObj = textobj
             end
             -- move the console input line object if it exists:
             if consoleTextObj then
                 -- get a bit of info about screen size etc:
                 local cw,ch = blitwizard.graphics.getCameras()[1]:
-                getVisible2dAreaDimensions(false)
+                getDimensions()
 
                 -- shift to the right when entering very long lines:
                 local shiftleft = 0        
@@ -299,7 +359,7 @@ do
                 end
 
                 -- move console text to calculated position:
-                consoleTextObj:move(0.1 - shiftleft, y + consoleHeight 
+                consoleTextObj:setPosition(0.1 - shiftleft, y + consoleHeight 
                 - consoleLineHeight - 0.1)
 
                 -- remember text ending for blinking cursor:
@@ -314,7 +374,8 @@ do
         end
 
         -- handle blinking cursor
-        if consoleOpened or y > -consoleHeight then
+        if (consoleOpened or y > -consoleHeight)
+        and blinkCursorText ~= nil then
             -- draw blinking cursor
             blinkCursorTime = blinkCursorTime + 1
             if blinkCursorTime > 80 then
@@ -325,15 +386,20 @@ do
                 blinkCursorText:setVisible(true)
 
                 -- get glyph size of input line font:
-                local gw,gh = consoleTextObj:getGlyphDimensions()
-                blinkCursorText:move(textEndPos - blinkCursorOffset * gw
+                local gw,gh = 0.2, 0.2
+                if consoleTextObj then
+                    local gw,gh = consoleTextObj:getGlyphDimensions()
+                end
+                blinkCursorText:setPosition((textEndPos or consoleBg:getDimensions()) - blinkCursorOffset * gw
                 - gw * math.min(0.4, blinkCursorOffset),
                 y + consoleHeight - consoleLineHeight - 0.1)
             else
                 blinkCursorText:setVisible(false)
             end
         else
-            blinkCursorText:setVisible(false)
+            if blinkCursorText then
+                blinkCursorText:setVisible(false)
+            end
         end
     end
 
@@ -381,6 +447,14 @@ do
                 end
             end
             if consoleOpened then
+                if key ~= "f9" then
+                    if key[1] == "f" and #key >= 2 then
+                        return false
+                    end
+                end
+                if key == "escape" then
+                    return false
+                end
                 if key == "backspace" then
                     -- remove one character:
                     if #consoleText > 0 and
@@ -528,8 +602,10 @@ do
         if consoleOpened then
             -- if console is open, append text:
 
-            consoleText = consoleText:sub(1, #consoleText - blinkCursorOffset)
-             .. text .. consoleText:sub(#consoleText + 1 - blinkCursorOffset)
+            consoleText = consoleText:sub(1,
+                #consoleText - blinkCursorOffset)
+             .. text .. consoleText:sub(
+                #consoleText + 1 - blinkCursorOffset)
             updateInputLine = true
             -- this text is for the console
             return true

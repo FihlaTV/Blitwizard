@@ -21,6 +21,7 @@
 
 */
 
+void luastate_CreateVectorTable(lua_State* l);
 void luastate_CreateTimeTable(lua_State* l);
 void luastate_CreateAudioTable(lua_State* l);
 void luastate_CreateSimpleSoundTable(lua_State* l);

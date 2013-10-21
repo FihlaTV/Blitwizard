@@ -34,7 +34,7 @@
 #include "resources.h"
 
 #ifdef SDLRW
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 
 struct audiosourcefile_internaldata {

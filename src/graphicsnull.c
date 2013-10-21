@@ -85,21 +85,6 @@ void graphics_TextureFromHW(struct graphicstexture* gt) {
     return;
 }
 
-void graphicsrender_DrawRectangle(int x, int y, int width, int height, float r, float g, float b, float a) {
-    return;
-}
-
-int graphicsrender_DrawCropped(const char* texname, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue) {
-    // while we cannot truly draw with the null device,
-    // ensure the texture is at least valid and loaded from disk:
-
-    struct graphicstexture* gt = graphicstexturelist_GetTextureByName(texname);
-    if (!gt || gt->threadingptr) {
-        return 0;
-    }
-    return 1;
-}
-
 int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
     if (nulldevicewidth) {
         *width = nulldevicewidth;

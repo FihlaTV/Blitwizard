@@ -28,6 +28,7 @@
 extern "C" {
 #endif
 
+extern volatile int crashed;
 extern char* memorylogbuf;
 void printerror(const char* fmt, ...);
 void printwarning(const char* fmt, ...);

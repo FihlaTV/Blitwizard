@@ -1,19 +1,18 @@
 
 -- Avoid double initialisation
 if blitwizard.templatesinitialised == true then
-	return
+    return
 end
 blitwizard.templatesinitialised = true
 
 -- Load all the templates
 if os.sysname() ~= "Android" then
-	-- Crawl the templates/ folder for templates
-	local templates = os.templatedir()
+    -- Crawl the templates/ folder for templates
+    local templates = os.templatedir()
     if templates == nil then
         os.forcetemplatedir("templates/")
         templates = "templates/"
     end
-    print("template init...")
 	for index,file in ipairs(os.ls(templates)) do
         print("file: " .. file)
 		if os.isdir(templates .. "/" .. file) then
@@ -23,11 +22,10 @@ if os.sysname() ~= "Android" then
 			end
 		end
 	end
-    print("template init end")
 else
-	-- For android, we get a pre-generated Lua file
+    -- For android, we get a pre-generated Lua file
     -- (provided by the android build script in scripts/ folder
     -- which assembled the .apk package)
-	dofile("templates/filelist.lua")
+    dofile("templates/filelist.lua")
 end
 

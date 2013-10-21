@@ -34,7 +34,7 @@
 #ifdef WINDOWS
 #include <windows.h>
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "graphicstexture.h"
 #include "graphics.h"
 #endif
@@ -51,6 +51,7 @@ volatile char* consoleloglines[CONSOLELOGMAXBUFFEREDLINES];
 volatile char* consoleloglinetypes[CONSOLELOGMAXBUFFEREDLINES];
 volatile int consoleloglinecount = 0;
 volatile int mayConsoleLog = 0;
+volatile int crashed = 0;
 mutex* consoleLogMutex = NULL;
 
 __attribute__ ((constructor)) static void prepareMutexes(void) {
@@ -77,11 +78,12 @@ void doConsoleLog() {
     mayConsoleLog = 1;
 
     // flush out all buffered lines:
+    int printto = consoleloglinecount;
     int i = 0;
-    while (i < consoleloglinecount) {
+    while (i < printto) {
         if (consoleloglines[i] && consoleloglinetypes[i]) {
-            char* tp = strdup(consoleloglinetypes[i]);
-            char* tl = strdup(consoleloglines[i]);
+            char* tp = strdup((char*)consoleloglinetypes[i]);
+            char* tl = strdup((char*)consoleloglines[i]);
             mutex_Release(consoleLogMutex);
             luacfuncs_onLog(tp, "%s", tl);
             mutex_Lock(consoleLogMutex);
@@ -89,14 +91,23 @@ void doConsoleLog() {
             free(tl);
         }
         if (consoleloglines[i]) {
-            free(consoleloglines[i]);
+            free((char*)consoleloglines[i]);
         }
         if (consoleloglinetypes[i]) {
-            free(consoleloglinetypes[i]);
+            free((char*)consoleloglinetypes[i]);
         }
         i++;
     }
-    consoleloglinecount = 0;
+    consoleloglinecount -= printto;
+    // if new messages arrived, pull them towards the beginning:
+    if (consoleloglinecount > 0) {
+        int i = 0;
+        while (i < consoleloglinecount) {
+            consoleloglines[i] = consoleloglines[i+printto];
+            consoleloglinetypes[i] = consoleloglinetypes[i+printto];
+            i++;
+        }
+    }
     mutex_Release(consoleLogMutex);
 }
 
@@ -149,24 +160,26 @@ void printerror(const char* fmt, ...) {
 #endif
 #ifdef WINDOWS
     // we want graphical error messages for windows
-    if (!suppressfurthererrors || 1 == 1) {
-        // minimize drawing window if fullscreen
+    // minimize drawing window if fullscreen
 #ifdef USE_GRAPHICS
+    if (!crashed) {
+        // we only want to do this in non-crash situations,
+        // since otherwise this will probably cause worse crashing
         if (graphics_AreGraphicsRunning() && graphics_IsFullscreen()) {
             graphics_MinimizeWindow();
         }
-#endif
-        // show error msg
-        char printerror[4096];
-        snprintf(printerror, sizeof(printerror)-1,
-        "The application cannot continue due to a fatal error:\n\n%s",
-        printline);
-#ifdef USE_SDL_GRAPHICS
-        MessageBox(graphics_GetWindowHWND(), printerror, "Fatal error", MB_OK|MB_ICONERROR);
-#else
-        MessageBox(NULL, printerror, "Fatal error", MB_OK|MB_ICONERROR);
-#endif
     }
+#endif
+    // show error msg
+    char printerror[4096];
+    snprintf(printerror, sizeof(printerror)-1,
+    "The application cannot continue due to a fatal error:\n\n%s",
+    printline);
+#ifdef USE_SDL_GRAPHICS
+    MessageBox(graphics_GetWindowHWND(), printerror, "Fatal error", MB_OK|MB_ICONERROR);
+#else
+    MessageBox(NULL, printerror, "Fatal error", MB_OK|MB_ICONERROR);
+#endif
 #endif
 }
 

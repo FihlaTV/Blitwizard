@@ -4,7 +4,10 @@ config.h
 averclone/
 *.apk
 *.a
+*.swo
 *.swp
+*.trs
+*.log
 *~
 thumbs.db
 autom4te.cache
@@ -17,13 +20,15 @@ scripts/ssetest
 scripts/ssetest.c
 scripts/box2dforwindows.cmake
 src/blitwizard
+src/include
 .deps
 ltmain.sh
 scripts/.buildinfo
 scripts/.depsarebuilt_flags
 scripts/.depsarebuilt_luatarget
 libtool
-m4
+m4/*
+!m4/ac_define_dir.m4
 confdefs.h
 config.ld
 deps

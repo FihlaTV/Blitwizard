@@ -46,7 +46,7 @@
 #endif
 
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 
 #include "graphicstexture.h"
@@ -57,6 +57,18 @@ int graphicsactive = 0;
 
 int graphics_AreGraphicsRunning() {
     return graphicsactive;
+}
+
+double UNIT_TO_PIXELS = 50;
+int unittopixelsset = 0;
+
+void graphics_calculateUnitToPixels(int screenWidth, int screenHeight) {
+    unittopixelsset = 1;
+    double sw = screenWidth;
+    double sh = screenHeight;
+    double size = (screenWidth + screenHeight) / 2;
+    double unittopixels = 50.0 * (size / 700);
+    UNIT_TO_PIXELS = (int)(unittopixels + 0.5);
 }
 
 #endif // USE_GRAPHICS

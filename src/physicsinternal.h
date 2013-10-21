@@ -137,7 +137,7 @@ void physics_apply3dImpulse_internal(struct physicsobject* obj, double forcex, d
 // Change and get velocity
 #ifdef USE_PHYSICS2D
 void physics_get2dVelocity_internal(struct physicsobject* obj, double *vx, double* vy);
-double physics_get2dAngularVelocity_internal(struct physicsobject* obj, double* omega);
+double physics_get2dAngularVelocity_internal(struct physicsobject* obj);
 void physics_set2dVelocity_internal(struct physicsobject* obj, double vx, double vy);
 void physics_set2dAngularVelocity_internal(struct physicsobject* obj, double omega);
 void physics_apply2dAngularImpulse_internal(struct physicsobject* obj, double impulse);
@@ -153,6 +153,22 @@ void physics_set3dAngularVelocityQuaternion_internal(struct physicsobject* obj,
  double qx, double qy, double qz, double qrot);
 void physics_apply3dAngularImpulse_internal(struct physicsobject* obj,
  double qx, double qy, double qz, double qrot); // ? no idea if this is correct
+#endif
+
+// Joints (constraints)
+#ifdef USE_PHYSICS2D
+// a<i><x,y>: Local anchor coordinates on obj<i>
+physicsjoint* physics_add2dObjectDistanceJoint_internal(
+ struct physicsobject* obj1, struct physicsobject* obj2,
+ double distance,
+ double a1x, double a1y, double a2x, double a2y,
+ double frequency, double damping);
+// a<o,w><x,y>: Anchor coordinates on object (local) and world (world)
+physicsjoint* physics_add2dWorldDistanceJoint_internal(
+ struct physicsobject* obj,
+ double distance,
+ double aox, double aoy, double awx, double awy,
+ double frequency, double damping);
 #endif
 
 // Collision test ray

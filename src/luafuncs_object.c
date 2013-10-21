@@ -40,8 +40,9 @@
 
 #include "os.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
+#include "file.h"
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "luaheader.h"
@@ -55,6 +56,7 @@
 #include "luafuncs_objectphysics.h"
 #include "graphics2dsprites.h"
 #include "luafuncs_graphics_camera.h"
+#include "poolAllocator.h"
 
 // some statistics:
 int processedImportantObjects = 0;
@@ -78,6 +80,14 @@ struct addRemoveObject {
     struct addRemoveObject* next;
 };
 struct addRemoveObject* addRemoveImportantObjects = NULL;
+
+// block allocator for blitwizard objects:
+struct poolAllocator* blitwizardObjAllocator = NULL;
+__attribute__((constructor)) static void
+luacfuncs_object_getAllocator(void) {
+    blitwizardObjAllocator = poolAllocator_create(
+    sizeof(struct blitwizardobject), 0);
+}
 
 // an iterator change will cause all iterators to be come invalid.
 static uint64_t iteratorChangeId = 0;
@@ -104,7 +114,15 @@ static int luacfuncs_getObjectsIterator(lua_State* l) {
         "iterator is outdated");
     }
     // iterate further:
-    oid->currentObj = oid->currentObj->next;
+    if (oid->currentObj) {
+        oid->currentObj = oid->currentObj->next;
+    } else {
+        oid->currentObj = objects;
+    }
+    // skip all deleted objects:
+    while (oid->currentObj && oid->currentObj->deleted) {
+        oid->currentObj = oid->currentObj->next;
+    }
     struct blitwizardobject* o = oid->currentObj;
     // pop iterator data:
     lua_pop(l, 1);
@@ -122,6 +140,118 @@ static int luacfuncs_getObjectsIterator(lua_State* l) {
     }
 }
 
+
+/// Scan for 2d @{blitwizard.object|objects} around the
+// given position in a circle with the given radius.
+// (@{blitwizard.object:pinToCamera|Pinned objects} will
+// be ignored)
+// Returns an iterator for all objects found.
+//
+// Use this if you want to make an enemy scan for
+// the player or other things to attack.
+//
+// If you want
+// to have a true visibility check that takes walls
+// into account aswell, combine this with
+// @{blitwizard.physics.ray2d} (see usage example below).
+//
+// Please note this function is potentially <b>slow</b> if
+// there are a lot of objects around.
+//
+// If you want to scan for 3d objects, use
+// @{blitwizard.scanFor3dObjects|scanFor3dObjects}.
+// @function scanFor2dObjects
+// @tparam number x coordinate of position around which to scan
+// @tparam number y coordinate of position around which to scan
+// @tparam number radius the scan radius
+// @treturn function returns an iterator function
+// @usage
+// -- scan for 2d objects around a circle with a radius of 5
+// -- around the position 0,0 and print their exact location
+// for obj in blitwizard.scanForObjects(0, 0, 5)
+//     local x, y = obj:getPosition()
+//     print("Found an object at " .. x .. ", " .. y)
+// end
+//
+// -- scan for 2d objects which can actually be seen
+// -- from position 1,1 with a maximum distance of 3:
+// for obj in blitwizard.scanFor2dObjects(1, 1, 3)
+//     local x, y = obj:getPosition()
+//     if blitwizard.physics.ray2d(1, 1, x, y) == nil then
+//         -- nothing blocks our sight!
+//         print("We can see an object at " .. x .. ", " .. y)
+//     end
+// end
+static int luacfuncs_scanForObjectsIterator(lua_State* l) {
+    // check if the iterated results table is empty:
+    if (lua_rawlen(l, lua_upvalueindex(1)) == 0) {
+        // we reached the end of the object list.
+        // return nil:
+        lua_pushnil(l);
+        return 1;
+    }
+    // get the last object from the table:
+    lua_pushnumber(l, lua_rawlen(l, lua_upvalueindex(1)));
+    lua_gettable(l, lua_upvalueindex(1));
+    // now remove the last object from the table:
+    lua_pushnumber(l, lua_rawlen(l, lua_upvalueindex(1)));
+    lua_pushnil(l);
+    lua_settable(l, lua_upvalueindex(1));
+    // return the object from the table:
+    return 1;
+}
+int luafuncs_scanFor2dObjects(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.scanForObjects", "number",
+        lua_strtype(l, 1));
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.scanForObjects", "number",
+        lua_strtype(l, 2));
+    }
+    if (lua_type(l, 3) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 3,
+        "blitwizard.scanForObjects", "number",
+        lua_strtype(l, 3));
+    }
+    if (lua_tonumber(l, 3) <= 0) {
+        return haveluaerror(l, badargument2,
+        "blitwizard.scanForObjects",
+        "scan range needs to be positive");
+    }
+
+    // ok now we validated all args, extract them:
+    double range = lua_tonumber(l, 3);
+    double x = lua_tonumber(l, 0);
+    double y = lua_tonumber(l, 1);
+
+    // create a table with all objects for the
+    // iterator function:
+    lua_newtable(l);
+    // FIXME: this badly needs a quadtree.
+    struct blitwizardobject* o = objects;
+    while (o) {
+        if (!o->is3d && !o->deleted) {
+#ifdef USE_GRAPHICS
+            if (o->graphics && o->graphics->sprite) {
+                if (o->graphics->pinnedToCamera >= 0) {
+                    // skip pinned sprites
+                    continue;
+                }
+            }
+#endif
+            luacfuncs_pushbobjidref(l, o);
+        } 
+        o = o->next;
+    }
+
+    // now create and return the iterator function:
+    lua_pushcclosure(l, luacfuncs_scanForObjectsIterator, 1);
+    return 1; 
+}
+
 /// Iterate through all existing objects, no matter if 2d or 3d.
 // @function getAllObjects
 // @treturn function returns an iterator function
@@ -135,7 +265,7 @@ int luafuncs_getAllObjects(lua_State* l) {
     struct objectiteratordata* oid = lua_newuserdata(l, sizeof(*oid));
     memset(oid, 0, sizeof(*oid));
     oid->iteratorChangeId = iteratorChangeId;
-    oid->currentObj = objects;
+    oid->currentObj = NULL;
 
     // create closure:
     lua_pushcclosure(l, luacfuncs_getObjectsIterator, 1);
@@ -148,7 +278,7 @@ int luafuncs_getAllObjects(lua_State* l) {
 // and deleted objects.
 // This is mainly for invalidating all iterators (see luafuncs_getAllObjects)
 // because they would otherwise run through a now inconsistent object list.
-void luacfuncs_objectAddedDeleted(struct blitwizardobject* o, int added) {
+void luacfuncs_objectAddedDeleted(__attribute__ ((unused)) struct blitwizardobject* o, int added) {
     if (!added) {
         iteratorChangeId++;
         // wrap over:
@@ -186,7 +316,9 @@ void cleanupobject(struct blitwizardobject* o, int fullclean) {
     // clear up all the graphics, physics, event function things
     // attached to the object:
     if (fullclean) {
+#ifdef USE_GRAPHICS
         luafuncs_objectgraphics_unload(o);
+#endif
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
         if (o->physics) {
             luafuncs_freeObjectPhysicsData(o->physics);
@@ -208,7 +340,9 @@ void cleanupobject(struct blitwizardobject* o, int fullclean) {
         // clear table in registry:
         luacfuncs_object_clearRegistryTable(luastate_GetStatePtr(), o);
     } else {
+#ifdef USE_GRAPHICS
         luacfuncs_objectgraphics_setVisible(o, 0);
+#endif
     }
 }
 
@@ -252,8 +386,13 @@ static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
             o->next->prev = o->prev;
         }
 
+        // free resource path if any
+        if (o->respath) {   
+            free(o->respath);
+        }
+
         // free object
-        free(o);
+        poolAllocator_free(blitwizardObjAllocator, o);
         return 1;
     }
     return 0;
@@ -287,6 +426,7 @@ struct blitwizardobject* o) {
 
     // enable mouse event handling:
     if (!o->invisibleToMouse) {
+#ifdef USE_GRAPHICS
         if (o->haveOnMouseEnter || o->haveOnMouseLeave) {
             luacfuncs_objectgraphics_enableMouseMoveEvent(o, 1);
         } else {
@@ -297,6 +437,7 @@ struct blitwizardobject* o) {
         } else {
             luacfuncs_objectgraphics_enableMouseClickEvent(o, 0);
         }
+#endif
     }
 
     // set as important object if doAlways is set:
@@ -314,6 +455,7 @@ struct blitwizardobject* o) {
 // __newindex handler for blitwizard object refs:
 static int luafuncs_bobjnewindex(lua_State* l) {
     int checkForEventHandlers = 0;
+    int updatePosition = 0;
     // first, get blitwizard object:
     if (lua_type(l, 1) != LUA_TUSERDATA) {
         return haveluaerror(l, "__newindex handler wasn't passed a "
@@ -429,14 +571,16 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
 // or false to make it receive or block mouse events (default: false)
 int luafuncs_object_setInvisibleToMouse(lua_State* l) {
     struct blitwizardobject* o =
-    toblitwizardobject(l, 1, 1, "blitwiz.object:setInvisibleToMouse");
+    toblitwizardobject(l, 1, 0, "blitwizard.object:setInvisibleToMouse");
 
     if (lua_type(l, 2) != LUA_TBOOLEAN) {
         haveluaerror(l, badargument1, 1,
         "blitwizard.object:setInvisibleToMouse", "boolean", lua_strtype(l, 2));
     }
     int b = lua_toboolean(l, 2);
+#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_setInvisibleToMouseEvents(o, b);
+#endif
     return 0;
 }
 
@@ -459,6 +603,8 @@ int luafuncs_object_new(lua_State* l) {
     // actual specified first argument is the second one
     // on the lua stack.
 
+    //printf("[0] entering object:new %llu\n", time_GetMicroseconds());
+
     // first argument needs to be 2d/3d type:
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1, "blitwizard.object:new",
@@ -467,37 +613,55 @@ int luafuncs_object_new(lua_State* l) {
     int is3d = (lua_tointeger(l, 2) == 1);
 
     // second argument, if present, needs to be the resource:
-    const char* resource = NULL;
+    const char* resourcerelative = NULL;
     if (lua_gettop(l) >= 3 && lua_type(l, 3) != LUA_TNIL) {
         if (lua_type(l, 3) != LUA_TSTRING) {
             return haveluaerror(l, badargument1, 2, "blitwizard.object:new",
             "string", lua_strtype(l, 3));
         }
-        resource = lua_tostring(l, 3);
+        resourcerelative = lua_tostring(l, 3);
+    }
+
+    // immediately turn this into an absolute path so os.chdir() is safe:
+    char* resource = NULL;
+    if (resourcerelative) {
+        resource = file_GetAbsolutePathFromRelativePath(
+        resourcerelative);
+        file_MakeSlashesCrossplatform(resource);
+        if (!resource) {
+            return haveluaerror(l, "failed to allocate or determine "
+            "absolute path");
+        }
     }
 
     // create new object
-    struct blitwizardobject* o = malloc(sizeof(*o));
+    struct blitwizardobject* o = poolAllocator_alloc(blitwizardObjAllocator);
     if (!o) {
         luacfuncs_object_clearRegistryTable(l, o);
+        free(resource);
         return haveluaerror(l, "failed to allocate new object");
     }
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
+    o->visible = 1;
+    if (!is3d) {
+        // for 2d objects, set parallax to default of 1:
+        o->parallax = 1;
+
+        // set texture filter on:
+        o->textureFilter = 1;
+    }
+
     // compose object registry entry string
     snprintf(o->regTableName, sizeof(o->regTableName),
-   "bobj_table_%p", o);
+    "bobj_table_%p", o);
 
     // remember resource path:
     if (resource) {
-        o->respath = strdup(resource);
-        if (!o->respath) {
-            luacfuncs_object_clearRegistryTable(l, o);
-            free(o);
-            return haveluaerror(l, "failed to allocate resource path for new "
-            "object");
-        }
+        o->respath = resource;
     }
+
+    //printf("[3] Calling luacfuncs_objectAddedDeleted %llu\n", time_GetMicroseconds());
 
     luacfuncs_objectAddedDeleted(o, 1);
 
@@ -512,7 +676,9 @@ int luafuncs_object_new(lua_State* l) {
     snprintf(o->selfRefName, sizeof(o->selfRefName), "bobj_self_%p", o);
 
     // if resource is present, start loading it:
+#ifdef USE_GRAPHICS
     luafuncs_objectgraphics_load(o, o->respath);
+#endif
 
     // create idref to object, which we will store up to object deletion:
     lua_pushstring(l, o->selfRefName);
@@ -521,6 +687,9 @@ int luafuncs_object_new(lua_State* l) {
 
     // obtain ref again:
     luacfuncs_pushbobjidref(l, o); 
+
+    //printf("[9] done! %llu\n", time_GetMicroseconds());
+    //fflush(stdout);
     return 1;
 }
 
@@ -700,10 +869,15 @@ int args, int* boolreturn) {
 int luafuncs_object_destroy(lua_State* l) {
     // delete the given object
     struct blitwizardobject* o =
-    toblitwizardobject(l, 1, 1, "blitwiz.object:destroy");
+    toblitwizardobject(l, 1, 1, "blitwizard.object:destroy");
 
     // tell getAllObjects() iterator of change:
     luacfuncs_objectAddedDeleted(o, 0);
+
+    // make invisible:
+#ifdef USE_GRAPHICS
+    luacfuncs_objectgraphics_setVisible(o, 0),
+#endif
 
     // remove self ref in registry:
     lua_pushstring(l, o->selfRefName);
@@ -742,14 +916,36 @@ int luafuncs_object_getPosition(lua_State* l) {
 /// Set the object to a new position. Specify two coordinates for 2d
 // objects (x, y) and three for 3d objects (x, y, z).
 //
-// Please note this game position is in <b>game units</b>, not pixels.
+// Please note this game position is in <b>game units</b>,
+// not pixels.<br>
+//  
+// <b>What is a game unit:</b>
 //
-// To find out how much pixels 1 game unit is in the 2d world with
-// a default zoom of 1, check @{blitwizard.graphics.camera:gameUnitToPixels}.
+// Game units are a specific measure which are abstracted from actual
+// pixels. This allows blitwizard to remain largely independent of the
+// @{blitwizard.graphics.setMode|screen resolution} of a game.
 //
-// For the 3d world, one game unit should roughly equal one meter
-// if your game plays in a normal human-scale environment
-// (this works best for the physics).
+// <b>How much is one game unit:</b>
+//
+// For 2d, one game unit is usually around 50 pixels on the screen unless
+// you @{blitwizard.graphics.camera:set2dZoomFactor|zoom around}.
+// For large resolutions it will appear larger though,
+// so a game unit's final size on the screen scales with the screen resolution.
+//
+// For 3d objects, the rule of thumb is 1 game unit should be handled as roughly 1 meter.
+// (this works best for the physics)
+//
+// If you need to run your game at very large zoom factors or very
+// small ones, consider changing your @{blitwizard.object:setScale|object scale}
+// instead of making up for all of it with zooming around largely.
+//
+// To find out how much e.g. a 100x100 pixel texture is in game units
+// at scale 1, check @{blitwizard.graphics.gameUnitToPixels}.
+// (please note! a 100x100 pixel object is NOT necessarily 100x100
+// pixel large on the screen at @{blitwizard.object:setScale|scale 1} - this depends on the
+// @{blitwizard.graphics.setMode|screen resolution}. With larger resolution it will be
+// larger, so it always takes up the same relative amount on screen)
+//
 // @function setPosition
 // @tparam number pos_x x coordinate
 // @tparam number pos_y y coordinate
@@ -778,6 +974,9 @@ int luafuncs_object_setPosition(lua_State* l) {
         z = 0;
     }
     objectphysics_setPosition(obj, x, y, z);
+#ifdef USE_GRAPHICS
+    luacfuncs_objectgraphics_updatePosition(obj);
+#endif
     return 0;
 }
 
@@ -810,12 +1009,82 @@ int luafuncs_object_setTransparency(lua_State* l) {
 // @treturn number transparency from 0 (solid) to 1 (invisible)
 int luafuncs_object_getTransparency(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
-    "blitwizard.object:setTransparency");
+    "blitwizard.object:getTransparency");
 #ifdef USE_GRAPHICS
-    return 1-luacfuncs_objectgraphics_getAlpha(obj);
+    lua_pushnumber(l, 1-luacfuncs_objectgraphics_getAlpha(obj));
+    return 1;
 #else
+    lua_pushnil(l);
     return 1;
 #endif
+}
+
+/// Get the current @{blitwizard.object:setParallax|parallax effect
+// strength} of the given object. (only possible for 2d objects)
+// @function getParallax
+// @treturn number the strength of the effect (a positive number)
+int luafuncs_object_getParallax(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setParallax");
+    if (obj->is3d) {
+        return haveluaerror(l, "getParallax may only be used on 2d objects");
+    }
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (obj->physics && obj->physics->object) {
+        return haveluaerror(l, "no parallax effect available for objects "
+        "with collision");
+    }
+#endif
+    lua_pushnumber(l, obj->parallax);
+    return 1;
+}
+
+/// Enable a 2d parallax effect at a given strength.
+// The <a href="http://en.wikipedia.org/wiki/Parallax">parallax effect</a>
+// simulates depth by displacing objects. Effectively, it just
+// makes them less (for strength > 1.0) or more (< 1.0) displaced
+// depending on the @{blitwizard.graphics.camera:set2dCenter|camera position}
+// than they would normally be.
+//
+// Therefore, use values smaller than 1 (and greater than zero) for
+// close objects, or greater than 1 for far away objects.
+//
+// This function does only work with 2d objects with
+// @{blitwizard.object:enableMovableCollision|no movable collision} and 
+// @{blitwizard.object:enableStaticCollision|no static collision} enabled.
+// It doesn't have any visible effect for
+// @{blitwizard.object:pinToCamera|pinned objects}.
+//
+// Use @{blitwizard.object:getParallax|object:getParallax} to retrieve the
+// current parallax strength on a 2d object with no collision.
+// @function setParallax
+// @tparam number strength of the effect (greater than zero) or 1.0 to disable
+int luafuncs_object_setParallax(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setParallax");
+    if (obj->is3d) {
+        return haveluaerror(l, "setParallax may only be used on 2d objects");
+    }
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (obj->physics && obj->physics->object) {
+        return haveluaerror(l, "cannot enable parallax effect on objects "
+        "with collision");
+    }
+#endif
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:setParallax", "number", lua_strtype(l, 2));
+    }
+    if (lua_tonumber(l, 2) <= 0) {
+        return haveluaerror(l, badargument2, 1,
+        "blitwizard.object:setParallax", "parallax effect strength must be >0."
+        " Use 1.0 for no parallax");
+    }
+    obj->parallax = lua_tonumber(l, 2);
+#ifdef USE_GRAPHICS
+    luacfuncs_objectgraphics_updateParallax(obj);
+#endif
+    return 0;
 }
 
 /// Get the dimensions of an object in game units (with
@@ -842,9 +1111,13 @@ int luafuncs_object_getDimensions(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:setPosition");
     double x, y, z;
+#ifdef USE_GRAPHICS
     if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
         return haveluaerror(l, "Object dimensions not known");
     }
+#else
+    x = 0; y = 0; z = 0;
+#endif
     double sx, sy, sz;
     if (obj->is3d) {
         sx = obj->scale3d.x;
@@ -859,6 +1132,33 @@ int luafuncs_object_getDimensions(lua_State* l) {
     lua_pushnumber(l, y * sy);
     if (obj->is3d) {
         lua_pushnumber(l, z * sz);
+    }
+    return 2+(obj->is3d);
+}
+
+/// Get the original, unscaled dimensions of an object.
+// Returns the same values as @{blitwizard.object:getScale},
+// but with assuming a @{blitwizard.object:setScale|scale factor of 1},
+// even if it's different.
+// @function getOriginalDimensions
+// @treturn number x_size X dimension value
+// @treturn number y_size Y dimension value
+// @treturn number z_size (only for 3d objects) Z dimension value 
+int luafuncs_object_getOriginalDimensions(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setPosition");
+    double x, y, z;
+#ifdef USE_GRAPHICS
+    if (!luacfuncs_objectgraphics_getOriginalDimensions(obj, &x, &y, &z)) {
+        return haveluaerror(l, "Object dimensions not known");
+    }
+#else
+    x = 0; y = 0; z = 0;
+#endif
+    lua_pushnumber(l, x);
+    lua_pushnumber(l, y);
+    if (obj->is3d) {
+        lua_pushnumber(l, z);
     }
     return 2+(obj->is3d);
 }
@@ -935,9 +1235,21 @@ int luafuncs_object_setScale(lua_State* l) {
     }
     double x,y,z;
     x = lua_tonumber(l, 2);
+    if (x <= 0) {
+        return haveluaerror(l, badargument2, 1,
+        "blitwizard.object:setScale", "scale must be positive number");
+    }
     y = lua_tonumber(l, 3);
+    if (y <= 0) {
+        return haveluaerror(l, badargument2, 2,
+        "blitwizard.object:setScale", "scale must be positive number");
+    }
     if (obj->is3d) {
         z = lua_tonumber(l, 4);
+        if (z <= 0) {
+            return haveluaerror(l, badargument2, 3,
+            "blitwizard.object:setScale", "scale must be positive number");
+        }
         obj->scale3d.x = x;
         obj->scale3d.y = y;
         obj->scale3d.z = z;
@@ -945,6 +1257,9 @@ int luafuncs_object_setScale(lua_State* l) {
         obj->scale2d.x = x;
         obj->scale2d.y = y;
     }
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    luacfuncs_object_handleScalingForPhysics(obj);
+#endif
     return 0;
 }
 
@@ -992,14 +1307,17 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
 
     double x,y,z;
     z = 1234;
+#ifdef USE_GRAPHICS
     if (!luacfuncs_objectgraphics_getOriginalDimensions(obj,
     &x, &y, &z)) {
         return haveluaerror(l, "object dimensions not known yet, "
         "wait for onGeometryLoaded event before using this function");
     }
     if (x <= 0 || y <= 0 || z <= 0) {
+#endif
         return haveluaerror(l, "for objects with a size of zero, "
         "there is no way to scale them up to a given size");
+#ifdef USE_GRAPHICS
     }
 
     // get parameters:
@@ -1085,17 +1403,44 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
         obj->scale2d.y = yfactor;
     }
     return 0;
+#endif
 }
 
-/// Set the z-index of the object (only for 2d objects).
+/// Get the @{blitwizard.object:setZIndex|z index} of the given
+// object (only for 2d objects).
+// @function getZIndex
+// @treturn number The current z index
+int luafuncs_object_getZIndex(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getZIndex");
+
+    if (obj->is3d) {
+        return haveluaerror(l, "3d objects don't have a z index");
+    } else {
+#ifdef USE_GRAPHICS
+        if (obj->graphics && obj->graphics->sprite) {
+            lua_pushnumber(l, graphics2dsprites_getZIndex(
+            obj->graphics->sprite));
+            return 1;
+        }
+#else
+        return haveluaerror(l, error_nographics);
+#endif
+    }
+    return 0;
+}
+
+/// Set the z index of the object (only for 2d objects).
 // An object with a higher z index will be drawn above
 // others with a lower z index. If two objects have the same
 // z index, the newer object will be drawn on top.
 //
 // The z index will be internally set to an integer,
-// so use numbers like -25, 0, 1, 2, 3, 99, ...
+// so use numbers like -25, 0, 1, 2, 3, 99, ... and don't use
+// fractional numbers like 0.5.
 //
-// The default z index is 0.
+// The default z index is 0. Use @{blitwizard.object:getZIndex|
+// object:getZIndex} to retrieve the current value for a 2d object.
 // @function setZIndex
 // @tparam number z_index New z index
 int luafuncs_object_setZIndex(lua_State* l) {
@@ -1105,6 +1450,7 @@ int luafuncs_object_setZIndex(lua_State* l) {
         return haveluaerror(l, badargument1, 1,
         "blitwizard.object:setZIndex", "number", lua_strtype(l, 2));
     }
+    
     if (obj->is3d) {
         return haveluaerror(l, "z index can only be set for 2d objects");
     } else {
@@ -1221,30 +1567,58 @@ int luafuncs_object_set2dTextureClipping(lua_State* l) {
 }
 #endif
 
-/// Pin a sprite to a given @{blitwizard.graphics.camera|game camera}.
+/// Pin a 2d object to a given @{blitwizard.graphics.camera|game camera}.
 // 
 // It will only be visible on that given camera, it will ignore the
 // camera's 2d position and zoom and will simply display with default zoom
 // with 0,0 being the upper left corner.
 //
-// It will also be above all unpinned sprites.
+// It will also be above all unpinned 2d object.
 //
 // You might want to use this for on-top interface graphics that shouldn't
 // move with the level but stick to the screen.
+//
+// Unpin a pinned 
 // @function pinToCamera
-// @tparam userdata camera the @{blitwizard.graphics.camera|camera} to pin to, or nil to unpin
+// @tparam userdata (optional) camera the @{blitwizard.graphics.camera|camera} to pin to. If you don't specify any, the default camera will be used
 #ifdef USE_GRAPHICS
 int luafuncs_object_pinToCamera(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
     "blitwizard.object:pinToCamera");
 
+    if (obj->is3d) {
+        return haveluaerror(l, "cannot pin 3d objects");
+    }
+
     int cameraId = -1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         cameraId = toluacameraid(l, 2, 1, "blitwizard.object:pinToCamera");
+    } else {
+        if (graphics_GetCameraCount() <= 0) {
+            return haveluaerror(l, "there are no cameras");
+        }
+        cameraId = 0;
     }
 
     // pin it to the given camera:
     luacfuncs_objectgraphics_pinToCamera(obj, cameraId);
+    return 0;
+}
+#endif
+
+/// Unpin a sprite pinned with @{blitwizard.object.pinToCamera|pinToCamera.
+// @function unpinFromCamera
+#ifdef USE_GRAPHICS
+int luafuncs_object_unpinFromCamera(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:pinToCamera");
+
+    if (obj->is3d) {
+        return haveluaerror(l, "cannot pin or unpin 3d objects");
+    }
+
+    // unpin from camera:
+    luacfuncs_objectgraphics_pinToCamera(obj, -1);
     return 0;
 }
 #endif
@@ -1314,8 +1688,10 @@ int luacfuncs_object_doAllSteps(int count) {
               objects = o->next;
             }
             if (o->next) {
-              o->next->prev = o->prev;
+                o->next->prev = o->prev;
             }
+            o->next = NULL;
+            o->prev = NULL;
 
             // remove from important list:
             if (o->importantPrev || o->importantNext ||
@@ -1331,6 +1707,8 @@ int luacfuncs_object_doAllSteps(int count) {
                     o->importantNext->importantPrev = o->
                     importantPrev;
                 }
+                o->importantPrev = NULL;
+                o->importantNext = NULL;
             }
 
             // add to deleted list:
@@ -1368,6 +1746,8 @@ int luacfuncs_object_doAllSteps(int count) {
                     a->obj->importantNext->importantPrev = a->obj->
                     importantPrev;
                 }
+                a->obj->importantPrev = NULL;
+                a->obj->importantNext = NULL;
             }
         } else {
             if (!a->obj->importantPrev && !a->obj->importantNext &&
@@ -1400,40 +1780,125 @@ int luacfuncs_object_doAllSteps(int count) {
     return count;
 }
 
-void luacfuncs_object_updateGraphics() {
+void luacfuncs_object_updateGraphics(void) {
+#ifdef USE_GRAPHICS
     lua_State* l = luastate_GetStatePtr();
     // update visual representations of objects:
     struct blitwizardobject* o = objects;
     while (o) {
+        if (o->deleted) {
+            o = o->next;
+            continue;
+        }
+
         // attempt to load graphics if not done yet:
         luafuncs_objectgraphics_load(o, o->respath);
 
-        if (luafuncs_objectgraphics_NeedGeometryCallback(o)) {
+        if (luafuncs_objectgraphics_needGeometryCallback(o)) {
+            // the dimensions of the object's graphical representation
+            // are now known. -> fire onGeometryLoaded
             luacfuncs_object_callEvent(l, o, "onGeometryLoaded", 0, NULL);
+        }
+        if (luafuncs_objectgraphics_needVisibleCallback(o)) {
+            // the object has now fully loaded and can be made visible.
+            luacfuncs_objectgraphics_setVisible(o, o->visible);
+
+            // fire onLoaded callback.
+            luacfuncs_object_callEvent(l, o, "onLoaded", 0, NULL);
+            if (o->deleted) {
+                o = o->next;
+                continue;
+            }
+
+            // assuming doAlways() often contains code for placing the
+            // object at its proper position, call it now once:
+            if (o->haveDoAlways) {
+                luacfuncs_object_callEvent(l, o, "doAlways", 0, NULL);
+            }
         }
 
         luacfuncs_objectgraphics_updatePosition(o);
         o = o->next;
     }
+#endif
 }
 
+/// Query whether an object is currently @{blitwizard.object:setVisible|set
+// to be visible or not}. Returns true if visible (the default for objects
+// if not changed), false if not.
+//
+// Please note this is no indication if the object is actually on
+// screen right now.
+// @function getVisible
+// @treturn boolean true if set to be visible (default), false if not
+#ifdef USE_GRAPHICS
+int luafuncs_object_getVisible(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:getVisible");
+    lua_pushboolean(l, obj->visible);
+    return 1;
+}
+#endif
+
+/// Set texture filter mode for the given 2d
+// @{blitwizard.object|object}. If you want to alter texture
+// filtering on 3d objects, alter their material properties.
+// @function setTextureFiltering
+// @tparam boolean filter true for filtering which gives things a smoother look (default), false for no filtering
+int luafuncs_object_setTextureFiltering(lua_State* l) {
+    struct blitwizardobject* o =
+    toblitwizardobject(l, 1, 0, "blitwizard.object:setTextureFiltering");
+    if (lua_type(l, 2) != LUA_TBOOLEAN) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:setTextureFiltering", "boolean", lua_strtype(l, 2));
+    }
+    if (o->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    o->textureFilter = (lua_toboolean(l, 2) == 1);
+#ifdef USE_GRAPHICS
+    if (o->graphics && o->graphics->sprite) {
+        graphics2dsprites_setTextureFiltering(o->graphics->sprite,
+        o->textureFilter);
+    }
+#endif
+    return 0;
+}
+
+/// Get the current @{blitwizard.object:setTextureFiltering|
+// texture filter setting} of a @{blitwizard.object|2d object}.
+// @function getTextureFiltering
+// @treturn boolean true if texture filtering enabled, false if not.
+int luafuncs_getTextureFiltering(lua_State* l) {
+    struct blitwizardobject* o =
+    toblitwizardobject(l, 1, 0, "blitwizard.object:setTextureFiltering");
+    if (o->is3d) {
+        return haveluaerror(l, "not a 2d object");
+    }
+    lua_pushboolean(l, o->textureFilter == 1);
+    return 1;
+}
 
 /// Change whether an object is shown at all, or whether it is hidden.
 // If you know objects aren't going to be needed at some point or
 // if you want to hide them until something specific happens,
 // use this function to hide them temporarily.
 //
+// Use @{blitwizard.object:getVisible|object:getVisible} to query the current
+// value.
 // @function setVisible
 // @tparam boolean visible specify true if you want the object to be shown (default), or false if you want it to be hidden. Please note this has no effect on collision
 #ifdef USE_GRAPHICS
 int luafuncs_object_setVisible(lua_State* l) {
     struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
-    "blitwizard.object:pinToCamera");
+    "blitwizard.object:setVisible");
     if (lua_type(l, 2) != LUA_TBOOLEAN) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.object:pinToCamera", "boolean",
+        "blitwizard.object:setVisible", "boolean",
         lua_strtype(l, 2));
-    }        
+    }
+    // set it visible (or not):
+    obj->visible = lua_toboolean(l, 2);
     luacfuncs_objectgraphics_setVisible(obj,
     lua_toboolean(l, 2));
     return 0;
@@ -1541,4 +2006,32 @@ int luafuncs_object_setVisible(lua_State* l) {
 // an impact on performance.
 // @function onMouseLeave
 
-
+/// Return the object which would be clicked on if the mouse clicked
+// on the given screen position. The screen position shall be specified
+// in zoom-independent game units (similar to the coordinates returned
+// by @{blitwizard.onMouseMove} or by
+// @{blitwizard.graphics.camera:getDimensions} with consider_zoom
+// set to false).
+//
+// This function respects the @{blitwizard.object:setInvisibleToMouse|
+// invisible to mouse setting} of the objects.
+// @function pickObjectAtPosition
+// @tparam number x_pos X position on the screen in game units
+// @tparam number y_pos Y position on the screen in game units
+// @treturn userdata the @{blitwizard.object|object} which would be clicked if the mouse was to click at the given position (or nil if none hit).
+int luafuncs_object_pickObjectAtPosition(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.pickObjectAtPosition",
+        "number", lua_strtype(l, 1));
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 2,
+        "blitwizard.pickObjectAtPosition",
+        "number", lua_strtype(l, 2));
+    }
+    double x = lua_tonumber(l, 1);
+    double y = lua_tonumber(l, 2);
+    
+    return 0;
+}

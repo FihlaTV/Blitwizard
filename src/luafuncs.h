@@ -40,7 +40,6 @@ int luafuncs_dostring_returnvalues(lua_State* l);
 
 // Time:
 int luafuncs_getTime(lua_State* l);
-int luafuncs_sleep(lua_State* l);
 
 // Graphics:
 int luafuncs_getRendererName(lua_State* l);

@@ -35,6 +35,7 @@ int luafuncs_media_simpleSound_setPriority(lua_State* l);
 int luafuncs_media_simpleSound_adjust(lua_State* l);
 int luafuncs_media_pannedSound_new(lua_State* l);
 int luafuncs_media_positionedSound_new(lua_State* l);
+int luafuncs_media_object_stopAllPlayingSounds(lua_State* l);
 void checkAllMediaObjectsForCleanup(void);
 
 #endif  // BLITWIZARD_LUAFUNCS_MEDIA_OBJECT_H_

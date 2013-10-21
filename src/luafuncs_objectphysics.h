@@ -35,6 +35,7 @@
 #include "physics.h"
 #include "objectphysicsdata.h"
 
+int luafuncs_object_angularImpulse2d(lua_State* l);
 int luafuncs_object_enableStaticCollision(lua_State* l);
 int luafuncs_object_enableMovableCollision(lua_State* l);
 int luafuncs_object_disableCollision(lua_State* l);
@@ -49,6 +50,10 @@ int luafuncs_object_setLinearDamping(lua_State* l);
 int luafuncs_object_setGravity(lua_State* l);
 
 int luafuncs_freeObjectPhysicsData(struct objectphysicsdata* d);
+
+// handle possible scale changes and scale the physics hull too
+// (does nothing if no scale change happend)
+void luacfuncs_object_handleScalingForPhysics(struct blitwizardobject* o);
 
 struct physicsobject;
 int luafuncs_globalcollision2dcallback_unprotected(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);

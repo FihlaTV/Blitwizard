@@ -59,6 +59,12 @@ void luacfuncs_objectgraphics_newFrame(void);
 // media cleanup callback:
 void checkAllMediaObjectsForCleanup(void);
 
+// counting current amount of scheduled functions (runDelayed):
+size_t luacfuncs_runDelayed_getScheduledCount(void);
+
+// trigger scheduled runDelayed functions:
+void luacfuncs_runDelayed_Do(void);
+
 // per-object mouse event handling:
 void luacfuncs_objectgraphics_processMouseClick(int x, int y,
 int button);
@@ -68,10 +74,10 @@ int wantquit = 0; // set to 1 if there was a quit event
 int suppressfurthererrors = 0; // a critical error was shown, don't show more
 int windowisfocussed = 0;
 int appinbackground = 0; // app is in background (mobile/Android)
-static int sdlinitialised = 0; // sdl was initialised and needs to be quit
 char* templatepath = NULL; // global template directory path as determined at runtime
 char* gameluapath = NULL; // game.lua path as determined at runtime
 char* binpath = NULL;  // path to blitwizard binary
+extern int failsafeaudio;  // whether audio is set to failsafe or not
 
 #include "threading.h"
 #include "luastate.h"
@@ -87,7 +93,7 @@ char* binpath = NULL;  // path to blitwizard binary
 #include "connections.h"
 #include "listeners.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 #include "graphicstexture.h"
 #include "graphicstexturemanager.h"
@@ -122,16 +128,14 @@ void* main_DefaultPhysics2dPtr() {
 
 void main_Quit(int returncode) {
     listeners_CloseAll();
-    if (sdlinitialised) {
 #ifdef USE_SDL_AUDIO
-        // audio_Quit(); // FIXME: workaround for
-        // http://bugzilla.libsdl.org/show_bug.cgi?id=1396
-        // (causes an unclean shutdown)
+    audio_Quit();
+    // FIXME: make sure this is ok with
+    // http://bugzilla.libsdl.org/show_bug.cgi?id=1396
 #endif
 #ifdef USE_GRAPHICS
-        graphics_Quit();
+    graphics_Quit();
 #endif
-    }
     exit(returncode);
 }
 
@@ -212,19 +216,22 @@ static void quitevent(void) {
 }
 
 static void mousebuttonevent(int button, int release, int x, int y) {
+#ifdef USE_GRAPHICS 
     char* error;
     char onmouseup[] = "blitwizard.onMouseUp";
     const char* funcname = "blitwizard.onMouseDown";
     if (release) {
         funcname = onmouseup;
     }
-    if (!luastate_PushFunctionArgumentToMainstate_Double(x)) {
+    double realx = ((double)x) / UNIT_TO_PIXELS;
+    double realy = ((double)y) / UNIT_TO_PIXELS;
+    if (!luastate_PushFunctionArgumentToMainstate_Double(realx)) {
         printerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
     }
-    if (!luastate_PushFunctionArgumentToMainstate_Double(y)) {
+    if (!luastate_PushFunctionArgumentToMainstate_Double(realy)) {
         printerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
@@ -246,8 +253,10 @@ static void mousebuttonevent(int button, int release, int x, int y) {
     if (!release) {
         luacfuncs_objectgraphics_processMouseClick(x, y, button);
     }
+#endif
 }
 static void mousemoveevent(int x, int y) {
+#ifdef USE_GRAPHICS
     char* error;
     if (!luastate_PushFunctionArgumentToMainstate_Double(x)) {
         printerror("Error when pushing func args to blitwizard.onMouseMove");
@@ -269,6 +278,7 @@ static void mousemoveevent(int x, int y) {
         }
     }
     luacfuncs_objectgraphics_processMouseMove(x, y);
+#endif
 }
 
 static void keyboardevent(const char* key, int release) {
@@ -453,6 +463,64 @@ int attemptTemplateLoad(const char* path) {
     return 1;
 }
 
+#ifdef UNIX
+static void determineBinaryPath(const char* argv0) {
+    if (strlen(argv0) <= 0) {
+        return;
+    }
+
+    // see if this is an absolute path or
+    // definitely a relative path:
+    if (argv0[0] == '/' || (strlen(argv0) > 1
+    && argv0[0] == '.' && argv0[0] == '/')
+    || strstr(argv0, "/")) {
+        // it is. use it:
+        binpath = file_GetAbsolutePathFromRelativePath(argv0);
+        return;
+    }
+
+    // abort if argument is possibly dangerous:
+    const char* name = argv0;
+    if (strstr(name, " ") || strstr(name, "\n") ||
+    strstr(name, "\"") || strstr(name, "\r") || strstr(name, "'")
+    || strstr(name, "\t") || strstr(name, ":") || strstr(name, "/")
+    || strstr(name, "\\") || strstr(name, "?") || strstr(name, "$")
+    || strstr(name, "`") || strstr(name, "(") || strstr(name, ")")) {
+        return;
+    }
+
+    // ok it looks like we were globally run
+    // (system-wide install) with no proper path.
+    // this means we will need to search ourselves:
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd), "type %s", argv0);
+    FILE* f = popen(cmd, "r");
+    if (!f) {
+        return;
+    }
+    char resultbuf[256];
+    char* s = fgets(resultbuf, sizeof(resultbuf), f);
+    fclose(f);
+    // see if this starts with: argv0 is /some/path..
+    if (!s || strlen(s) < strlen(argv0)+strlen(" is ")) {
+        return;
+    }
+    if (memcmp(s, argv0, strlen(argv0)) != 0) {
+        return;
+    }
+    if (memcmp(s+strlen(argv0), " is ", strlen(" is ")) != 0) {
+        return;
+    }
+    if (s[strlen(argv0) + strlen(" is ")] == '/') {
+        // yes! this looks useful.
+        binpath = strdup(s + strlen(argv0) + strlen(" is "));
+        if (binpath[strlen(binpath)-1] == '\n') {
+            binpath[strlen(binpath)-1] = 0;
+        }
+    }
+}
+#endif
+
 
 int luafuncs_ProcessNetEvents(void);
 
@@ -478,9 +546,9 @@ int main(int argc, char** argv) {
     signalhandling_Init();
 
     // set path to blitwizard binary:
-#ifdef UNIX
+#if (defined(UNIX) && !defined(ANDROID))
     if (argc > 0) {
-        binpath = file_GetAbsolutePathFromRelativePath(argv[0]);
+        determineBinaryPath(argv[0]);
     }
 #endif
 
@@ -557,13 +625,21 @@ int main(int argc, char** argv) {
                     printf("   -changedir             Change working directory to "
                            "the\n"
                            "                          folder of the script\n");
+                    printf("   -failsafe-audio        Use 16bit signed int audio and avoid\n"
+                           "                          audio backends known as troublesome\n");
                     printf("   -help                  Show this help text and quit\n");
                     printf("   -templatepath [path]   Check another place for "
                            "templates\n"
                            "                          (not the default "
-                           "\"templates/\")\n");
+                           "\"templates/\"\n"
+                           "                          or system-wide installed)\n");
                     printf("   -version               Show extended version info and quit\n");
                     return 0;
+                }
+                if (strcasecmp(argv[i], "-failsafe-audio") == 0) {
+                    failsafeaudio = 1;
+                    i++;
+                    continue;
                 }
                 if (strcasecmp(argv[i], "-changedir") == 0) {
                     option_changedir = 1;
@@ -948,7 +1024,7 @@ int main(int argc, char** argv) {
     doConsoleLog();
 
 #if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: Calling blitwiz.on_init...");
+    printinfo("Blitwizard startup: Calling blitwiz.onInit...");
 #endif
     doConsoleLog();
 
@@ -990,8 +1066,6 @@ int main(int argc, char** argv) {
         doConsoleLog(); 
         uint64_t timeNow = time_GetMilliseconds();
 
-        // this is a hack for SDL bug http://bugzilla.libsdl.org/show_bug.cgi?id=1422
-
 #ifdef USE_AUDIO
         // simulate audio
         if (simulateaudio) {
@@ -1020,13 +1094,13 @@ int main(int argc, char** argv) {
         uint64_t delta = time_GetMilliseconds()-lastdrawingtime;
 
         // sleep/limit FPS as much as we can
-        if (delta < deltaspan) {
+        if (delta < (deltaspan-10)) {
             // the time passed is smaller than the optimal waiting time
             // -> sleep
             if (connections_NoConnectionsOpen() &&
             !listeners_HaveActiveListeners()) {
                 // no connections, use regular sleep
-                time_Sleep(deltaspan-delta);
+                time_Sleep((deltaspan-10)-delta);
                 connections_SleepWait(0);
             } else {
                 // use connection select wait to get connection events
@@ -1055,9 +1129,11 @@ int main(int argc, char** argv) {
         int physicsiterations = 0;
         int logiciterations = 0;
         time_t iterationStart = time(NULL);
-        int psteps_max = ((float)TIMESTEP/
+#if defined(USE_PHYSICS2D)
+        int psteps2d_max = ((float)TIMESTEP/
         (float)physics_getStepSize(physics2ddefaultworld));
-        psteps_max++;
+        psteps2d_max++;
+#endif
         while (
         // allow maximum of iterations in an attempt to keep up:
         (logictimestamp < timeNow || physicstimestamp < timeNow) &&
@@ -1069,27 +1145,11 @@ int main(int argc, char** argv) {
         // .. unless we're already doing this for >2 seconds:
         && iterationStart + 2 >= time(NULL)
             ) {
-            if (logiciterations < MAXLOGICITERATIONS &&
-            logictimestamp < timeNow && (logictimestamp <= physicstimestamp
-            || physicsiterations >= MAXPHYSICSITERATIONS)) {
-                // check how much logic we might want to do in a batch:
-                int k = (timeNow-logictimestamp)/TIMESTEP;
-                if (k > MAXBATCHEDLOGIC) {
-                    k = MAXBATCHEDLOGIC;
-                }
-                // call logic functions of all objects:
-                int i = luacfuncs_object_doAllSteps(k);
-                doConsoleLog();
-
-                // advance time step:
-                logictimestamp += i * TIMESTEP;
-                logiciterations += i;
-            }
 #ifdef USE_PHYSICS2D
             if (physicsiterations < MAXPHYSICSITERATIONS &&
             physicstimestamp < timeNow && (physicstimestamp <= logictimestamp
             || logiciterations >= MAXLOGICITERATIONS)) {
-                int psteps = psteps_max;
+                int psteps = psteps2d_max;
                 while (psteps > 0) {
                     physics_step(physics2ddefaultworld);
                     physicstimestamp += physics_getStepSize(
@@ -1101,6 +1161,26 @@ int main(int argc, char** argv) {
 #else
             physicstimestamp = timeNow + 2000;
 #endif
+            if (logiciterations < MAXLOGICITERATIONS &&
+            logictimestamp < timeNow && (logictimestamp <= physicstimestamp
+            || physicsiterations >= MAXPHYSICSITERATIONS)) {
+                // check how much logic we might want to do in a batch:
+                int k = (timeNow-logictimestamp)/TIMESTEP;
+                if (k > MAXBATCHEDLOGIC) {
+                    k = MAXBATCHEDLOGIC;
+                }
+                if (k < 1) {
+                    k = 1;
+                }
+
+                // call logic functions of all objects:
+                int i = luacfuncs_object_doAllSteps(k);
+                doConsoleLog();
+
+                // advance time step:
+                logictimestamp += i * TIMESTEP;
+                logiciterations += i;
+            }
         }
 
         // check if we ran out of iterations:
@@ -1122,11 +1202,18 @@ int main(int argc, char** argv) {
             }
         }
 
+        // handle runDelayed calls:
+        luacfuncs_runDelayed_Do();
+
+#ifdef USE_GRAPHICS
         // report visibility of sprites to texture manager:
         graphics2dsprites_reportVisibility();
+#endif
 
+#ifdef USE_GRAPHICS
         // texture manager tick:
         texturemanager_tick();
+#endif
 
         // update object graphics:
         luacfuncs_object_updateGraphics();
@@ -1147,13 +1234,21 @@ int main(int argc, char** argv) {
 
         // we might want to quit if there is nothing else to do
 #ifdef USE_AUDIO
-        if (!graphics_AreGraphicsRunning() &&
+        if (
+#ifdef USE_GRAPHICS
+        !graphics_AreGraphicsRunning() &&
+#endif
         connections_NoConnectionsOpen() &&
-        !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()) {
+        !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()
+        && luacfuncs_runDelayed_getScheduledCount() == 0) {
 #else
-        if (!graphics_AreGraphicsRunning() &&
+        if (
+#ifdef USE_GRAPHICS
+        !graphics_AreGraphicsRunning() &&
+#endif
         connections_NoConnectionsOpen() &&
-        !listeners_HaveActiveListeners()) {
+        !listeners_HaveActiveListeners()
+        && luacfuncs_runDelayed_getScheduledCount() == 0) {
 #endif
             main_Quit(1);
         }
@@ -1168,14 +1263,16 @@ int main(int argc, char** argv) {
 #endif
 
         // do some garbage collection:
-        gcframecount++;
+        /*gcframecount++;
         if (gcframecount > 100) {
             // do a gc step once in a while
             luastate_GCCollect();
-        }
+        }*/
 
         // new frame:
+#ifdef USE_GRAPHICS
         luacfuncs_objectgraphics_newFrame();
+#endif
     }
     main_Quit(0);
     return 0;

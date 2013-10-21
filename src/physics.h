@@ -33,9 +33,12 @@
 extern "C" {
 #endif
 
-// Create and destroy worlds:
+// Structs
 struct physicsworld;
 struct physicsobject;
+struct physicsjoint;
+
+// Create and destroy worlds:
 struct physicsworld* physics_createWorld(int use3dphysics);
 void physics_destroyWorld(struct physicsworld* world);
 void physics_step(struct physicsworld* world);
@@ -79,7 +82,8 @@ size_t physics_getShapeSize(void);  // get size of one shape struct
 #define GET_SHAPE(shapes,x) (struct physicsobjectshape*) \
       (((char*)shapes)+physics_getShapeSize()*x)
 #ifdef USE_PHYSICS2D
-// Set the given shape to one of those specified shapes:
+
+// Set the given shape to one of those specified simple shapes:
 void physics_set2dShapeRectangle(
 struct physicsobjectshape* shape, double width,
 double height);
@@ -88,12 +92,16 @@ struct physicsobjectshape* shape, double width,
 double height);
 void physics_set2dShapeCircle(
 struct physicsobjectshape* shape, double diameter);
+
 // Use those commands multiple times to construct those more complex shapes:
+// polygon shape: WARNING: behaviour undefined if not a valid convex polygon!
 void physics_add2dShapePolygonPoint(
 struct physicsobjectshape* shape, double xoffset, double yoffset);
+// edge shape: (arbitrary list of possibly unconnected edges)
 void physics_add2dShapeEdgeList(
 struct physicsobjectshape* shape, double x1, double y1,
 double x2, double y2);
+
 // Use those commands to move your shapes around from the center:
 void physics_set2dShapeOffsetRotation(
 struct physicsobjectshape* shape, double xoffset,
@@ -203,7 +211,7 @@ void physics_apply3dImpulse(struct physicsobject* obj, double forcex, double for
 // Change and get velocity
 #ifdef USE_PHYSICS2D
 void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy);
-double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega);
+double physics_get2dAngularVelocity(struct physicsobject* obj);
 void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy);
 void physics_set2dAngularVelocity(struct physicsobject* obj, double omega);
 void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse);
@@ -219,6 +227,22 @@ void physics_set3dAngularVelocityQuaternion(struct physicsobject* obj,
  double qx, double qy, double qz, double qrot);
 void physics_apply3dAngularImpulse(struct physicsobject* obj,
  double qx, double qy, double qz, double qrot); // ? no idea if this is correct
+#endif
+
+// Joints (constraints)
+#ifdef USE_PHYSICS2D
+// a<i><x,y>: Local anchor coordinates on obj<i>
+int physics_add2dObjectDistanceJoint(struct physicsobject* obj1,
+ struct physicsobject* obj2,
+ double distance,
+ double a1x, double a1y, double a2x, double a2y,
+ double frequency, double damping);
+// a<o,w><x,y>: Anchor coordinates on object (local) and world (world)
+// TODO: Is this possible w/ b2?
+int physics_add2dWorldDistanceJoint(struct physicsobject* obj,
+ double distance,
+ double aox, double aoy, double awx, double awy,
+ double frequency, double damping);
 #endif
 
 // Collision test ray

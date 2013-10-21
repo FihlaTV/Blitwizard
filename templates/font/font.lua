@@ -91,21 +91,21 @@ glyphWidth, glyphHeight, glyphsPerLine)
         end
     end
     if type(width) ~= "number" and type(width) ~= "nil" then
-        error("bad parameter #4 to blitwizard.font.text:create: expected " ..
+        error("bad parameter #5 to blitwizard.font.text:create: expected " ..
         "number or nil")
     end
     if fontPath ~= "default" or type(glyphWidth) ~= "nil"
     or type(glyphHeight) ~= "nil" or type(glyphsPerLine) ~= "nil" then
         if type(glyphWidth) ~= "number" then
-            error("bad parameter #5 to blitwizard.font.text:create: " ..
-            "expected number")
-        end
-        if type(glyphHeight) ~= "number" then
             error("bad parameter #6 to blitwizard.font.text:create: " ..
             "expected number")
         end
-        if type(glyphsPerLine) ~= "number" then
+        if type(glyphHeight) ~= "number" then
             error("bad parameter #7 to blitwizard.font.text:create: " ..
+            "expected number")
+        end
+        if type(glyphsPerLine) ~= "number" then
+            error("bad parameter #8 to blitwizard.font.text:create: " ..
             "expected number")
         end
     end
@@ -146,16 +146,22 @@ glyphWidth, glyphHeight, glyphsPerLine)
     if type(width) ~= "nil" or (width or 0) < 0 then
         -- calculate horizontal char limit:
         charsPerLine = math.floor(
-            (width * camera:gameUnitToPixels()) / glyphWidth)
+            (width * blitwizard.graphics.gameUnitToPixels()) / glyphWidth)
     end
     charsPerLine = math.max(1, charsPerLine)
     
     -- various information
-    local gameUnitsInPixels = camera:gameUnitToPixels()
+    local gameUnitsInPixels = 0
+    if pcall(function()
+        gameUnitsInPixels = blitwizard.graphics.gameUnitToPixels()
+    end) ~= true then
+        error("cannot create font - no device open?")
+    end
     local glyphXShift = glyphWidth / gameUnitsInPixels
     local glyphYShift = glyphHeight / gameUnitsInPixels
     t._glyphDimensionX = glyphXShift
     t._glyphDimensionY = glyphYShift
+    t._scale = scale
     
     -- convert line breaks:
     text = text:gsub("\r\n", "\n")
@@ -163,28 +169,31 @@ glyphWidth, glyphHeight, glyphsPerLine)
 
     -- see if we need to insert line breaks:
     local maxLineLength = width
-    local lines = {text:split("\n")}
-    text = ""
-    for i,line in ipairs(lines) do
-        while #line > charsPerLine do
-            local str = line:sub(1, charsPerLine)
-            str = str:reverse()
-            local spacePos = str:find(" ")
-            if spacePos == nil or spacePos <= 0 then
-                spacePos = charsPerLine
-            else
-                spacePos = (1 + #str) - spacePos
+    if charsPerLine < #text then
+        -- insert line breaks
+        local lines = {text:split("\n")}
+        text = ""
+        for i,line in ipairs(lines) do
+            while #line > charsPerLine do
+                local str = line:sub(1, charsPerLine)
+                str = str:reverse()
+                local spacePos = str:find(" ")
+                if spacePos == nil or spacePos <= 0 then
+                    spacePos = charsPerLine
+                else
+                    spacePos = (1 + #str) - spacePos
+                end
+                if #text > 0 then
+                    text = text .. "\n"
+                end
+                text = text .. line:sub(1, spacePos-1) 
+                line = line:sub(spacePos+1)
             end
             if #text > 0 then
                 text = text .. "\n"
             end
-            text = text .. line:sub(1, spacePos-1) 
-            line = line:sub(spacePos+1)
+            text = text .. line
         end
-        if #text > 0 then
-            text = text .. "\n"
-        end
-        text = text .. line
     end
 
     -- walk through all glyphs:
@@ -220,20 +229,21 @@ glyphWidth, glyphHeight, glyphsPerLine)
             newGlyph:pinToCamera(camera)
             newGlyph:setInvisibleToMouse(true)
             newGlyph:setScale(scale, scale)
+            newGlyph:setTextureFiltering(false)
             newGlyph:set2dTextureClipping((charxslot - 1) * glyphWidth, 
             (charyslot - 1) * glyphHeight, glyphWidth, glyphHeight)
             t.glyphs[#t.glyphs+1] = newGlyph
 
             -- update overall text block width and height:
-            if t._width < x + glyphWidth then
-                t._width = x + glyphWidth / gameUnitsInPixels
+            if t._width < x + t._glyphDimensionX then
+                t._width = x + t._glyphDimensionX
             end
-            if t._height < y + glyphHeight then
-                t._height = y + glyphHeight / gameUnitsInPixels
+            if t._height < y + t._glyphDimensionY then
+                t._height = y + t._glyphDimensionY
             end
         end
         i = i + 1
-        x = x + glyphWidth / gameUnitsInPixels
+        x = x + t._glyphDimensionX
     end
 
     -- return text:
@@ -252,6 +262,26 @@ function blitwizard.font.text:destroy()
     end
 end
 
+--[[--
+  Enable click events on the given font.
+  Please note this can slow down click event processing
+  considerably if you enable this on lengthy texts.
+
+  Set an @{blitwizard.object:onMouseClick|onMouseClick}
+  function on your text object to receive the click events.
+  @function enableMouseEvents
+]]
+function blitwizard.font.text:enableMouseEvents()
+    local fontobj = self
+    for i,v in ipairs(self.glyphs) do
+        v:setInvisibleToMouse(true)
+        function v:onMouseClick()
+            if fontobj.onMouseClick ~= nil then
+                fontobj:onMouseClick()
+            end
+        end
+    end
+end
 
 --[[--
   Move the text object to the given screen position in game units
@@ -317,7 +347,7 @@ end
   @function width
 ]]
 function blitwizard.font.text:width()
-    return self._width
+    return self._width * self._scale
 end
 
 --[[--
@@ -325,6 +355,12 @@ end
   @function height
 ]]
 function blitwizard.font.text:height()
-    return self._height
+    return self._height * self._scale
+end
+
+function blitwizard.font.text:_markAsTemplateObj()
+    for i,v in ipairs(self.glyphs) do
+        v._templateObj = true
+    end
 end
 

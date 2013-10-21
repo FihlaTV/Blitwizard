@@ -42,6 +42,12 @@ struct objectphysicsdata {
     struct physicsobject* object;
     int deleted;
 
+    // scale at which physics hull was set:
+    double pinitx, pinity, pinitz;
+
+    // scale to which physics hull is currently scaled:
+    double phullx, phully, phullz;
+
     double friction;
     double restitution;
     double lineardamping;

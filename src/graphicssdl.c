@@ -27,6 +27,7 @@
 #ifdef USE_SDL_GRAPHICS
 
 //  various standard headers
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -45,8 +46,8 @@
 #include "main.h"
 #endif
 
-#include "SDL.h"
-#include "SDL_syswm.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 
 #include "graphicstexture.h"
 #include "graphics.h"
@@ -250,7 +251,6 @@ static void graphics_ReadVideoModes(void) {
         videomodesy = 0;
     }
 
-    // -> read video modes with SDL per default! (even if using 3d/ogre)
     // allocate space for video modes
     int d = SDL_GetNumVideoDisplays();
     if (d < 1) {
@@ -400,6 +400,7 @@ HWND graphics_GetWindowHWND() {
 
 int graphics_SetMode(int width, int height, int fullscreen,
 int resizable, const char* title, const char* renderer, char** error) {
+    graphics_calculateUnitToPixels(width, height);
 
 #if defined(ANDROID)
     if (!fullscreen) {
@@ -529,29 +530,48 @@ int resizable, const char* title, const char* renderer, char** error) {
 
     // create window
     if (fullscreen) {
-        mainwindow = SDL_CreateWindow(title, 0,0, width, height, SDL_WINDOW_FULLSCREEN);
+        mainwindow = SDL_CreateWindow(title, 0, 0, width, height,
+        SDL_WINDOW_FULLSCREEN);
         mainwindowfullscreen = 1;
     } else {
-        mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, width, height, 0);
+        mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED, width, height, 0);
         mainwindowfullscreen = 0;
     }
+
     if (!mainwindow) {
-        snprintf(errormsg,sizeof(errormsg),"Failed to open SDL window: %s", SDL_GetError());
+        snprintf(errormsg, sizeof(errormsg),
+        "Failed to open SDL window: %s", SDL_GetError());
         errormsg[sizeof(errormsg)-1] = 0;
         *error = strdup(errormsg);
         return 0;
     }
 
+    // see if we actually ended up with the resolution we wanted:
+    int actualwidth, actualheight;
+    SDL_GetWindowSize(mainwindow, &actualwidth, &actualheight);
+    if (actualwidth != width || actualheight != height) {
+        if (fullscreen) {  // we failed to get the requested resolution:
+            SDL_DestroyWindow(mainwindow);
+            snprintf(errormsg, sizeof(errormsg), "Failed to open "
+            "SDL window: ended up with other resolution than requested");
+            *error = strdup(errormsg);
+            return 0;
+        }
+    }
+
     // Create renderer
     if (!softwarerendering) {
-        mainrenderer = SDL_CreateRenderer(mainwindow, rendererindex, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+        mainrenderer = SDL_CreateRenderer(mainwindow, rendererindex,
+        SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
         if (!mainrenderer) {
             softwarerendering = 1;
             strcpy(preferredrenderer, "software");
         }
     }
     if (softwarerendering) {
-        mainrenderer = SDL_CreateRenderer(mainwindow, -1, SDL_RENDERER_SOFTWARE);
+        mainrenderer = SDL_CreateRenderer(mainwindow, -1,
+        SDL_RENDERER_SOFTWARE);
     }
     if (!mainrenderer) {
         // we failed to create the renderer
@@ -582,19 +602,6 @@ int resizable, const char* title, const char* renderer, char** error) {
     // notify texture manager that device is back
     texturemanager_deviceRestored();
 
-    // Transfer textures back to SDL
-    /*if (!graphicstexturelist_TransferTexturesToHW()) {
-        SDL_RendererInfo info;
-        SDL_GetRendererInfo(mainrenderer, &info);
-        snprintf(errormsg, sizeof(errormsg),
-        "Failed to create SDL renderer (backend %s): "
-        "Cannot recreate textures", info.name);
-        *error = strdup(errormsg);
-        SDL_DestroyRenderer(mainrenderer);
-        SDL_DestroyWindow(mainwindow);
-        return 0;
-    }*/
-
     // Re-focus window if previously focussed
     if (!inbackground) {
         SDL_RaiseWindow(mainwindow);
@@ -609,6 +616,7 @@ int lastfingerdownx,lastfingerdowny;
 void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int button, int release, int x, int y), void (*mousemoveevent)(int x, int y), void (*keyboardevent)(const char* button, int release), void (*textevent)(const char* text), void (*putinbackground)(int background)) {
     if (!graphics3d) {
         SDL_Event e;
+        memset(&e, 0, sizeof(e));
         while (SDL_PollEvent(&e) == 1) {
             if (e.type == SDL_QUIT) {
                 quitevent();
@@ -676,8 +684,8 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
                     // FIXME: just a workaround for
                     // http://bugzilla.libsdl.org/show_bug.cgi?id=1349
                     if (mainwindowfullscreen) {
-                        SDL_SetWindowFullscreen(mainwindow, SDL_FALSE);
-                        SDL_SetWindowFullscreen(mainwindow, SDL_TRUE);
+                        //SDL_SetWindowFullscreen(mainwindow, SDL_FALSE);
+                        //SDL_SetWindowFullscreen(mainwindow, SDL_TRUE);
                     }
 #endif
 #endif
@@ -722,11 +730,18 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
                         sprintf(keybuf,"left");break;
                     case SDLK_RIGHT:
                         sprintf(keybuf,"right");break;
+                    default:
+                        if (strlen(keybuf) == 0) {
+                            snprintf(keybuf, sizeof(keybuf)-1,
+                            "unknown-%d", e.key.keysym.sym);
+                        }
+                        break;
                 }
                 if (strlen(keybuf) > 0) {
                     keyboardevent(keybuf, release);
                 }
             }
+            memset(&e, 0, sizeof(e));
         }
     }
 }

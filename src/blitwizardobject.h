@@ -29,13 +29,22 @@
 #include "os.h"
 #include "objectgraphicsdata.h"
 
+#define VALIDATEMAGIC "489tjtgrniqrua9r"
+
 struct blitwizardobject {
+#ifdef VALIDATEBOBJ
+#ifdef NDEBUG
+#error "cannot validabe blitwizard object with NDEBUG defined"
+#endif
+    char validatemagic[] = VALIDATEBOBJ;
+#endif
     char* respath;  // resource path
     int is3d;  // 0: 2d sprite with z-order value, 1: 3d mesh or sprite
     double x,y;  // 2d: x,y, 3d: x,y,z with z pointing up
     int deleted;  // 1: deleted (deletedobjects), 0: regular (objects)
     int refcount;  // refcount of luaidref references
     int doStepDone;  // used by luacfuncs_object_doAllSteps()
+    int visible;  // 0: invisible, 1: visible (1 is default)
 
     // stuff we stored in the registry:
     char regTableName[64];  // registry table with custom user data
@@ -52,6 +61,14 @@ struct blitwizardobject {
     int invisibleToMouse;  // 1: invisible to mouse events, 0: normal
 
     union {
+        struct {  // various stuff for 2d objects
+            int textureFilter;  // 1: yes, 0: no
+        };
+        struct {  // various things for 3d objects
+
+        };
+    };
+    union {
         double z;
         int zindex;
     } vpos;
@@ -63,8 +80,11 @@ struct blitwizardobject {
     } rotation;
     union {
         struct {
-            double x,y;
-        } scale2d;
+            struct {
+                double x,y;
+            } scale2d;
+            double parallax;
+        };
         struct {
             double x,y,z;
         } scale3d;

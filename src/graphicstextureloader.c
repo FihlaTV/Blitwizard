@@ -35,7 +35,9 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef USE_PHYSFS
 #include "zipfile.h"
+#endif
 #include "graphicstexture.h"
 #include "graphicstextureloader.h"
 #include "graphicstexturelist.h"
@@ -208,6 +210,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
     info->callbackData(info->gtm, (imgdata != NULL), info->userdata);
 }
 
+#ifdef USE_PHYSFS
 struct loaderfuncinfo {
     struct graphicstextureloader_initialLoadingThreadInfo* info;
     struct zipfilereader* file;
@@ -233,6 +236,7 @@ size_t bytes, void* userdata) {
     }
     return i;
 }
+#endif
 
 void graphicstextureloader_InitialLoaderThread(void* userdata) {
     struct graphicstextureloader_initialLoadingThreadInfo* info =
@@ -257,6 +261,7 @@ void graphicstextureloader_InitialLoaderThread(void* userdata) {
         void* handle = img_LoadImageThreadedFromFile(info->path,
         4096, 4096, "rgba", graphicstextureloader_callbackSize,
         graphicstextureloader_callbackData, info);
+#ifdef USE_PHYSFS
     } else if (loc.type == LOCATION_TYPE_ZIP) {
         // prepare image reader info struct:
         struct loaderfuncinfo* lfi = malloc(sizeof(*lfi));
@@ -275,6 +280,7 @@ void graphicstextureloader_InitialLoaderThread(void* userdata) {
         graphicstextureloader_ImageReadFunc, lfi,
         4096, 4096, "rgba", graphicstextureloader_callbackSize,
         graphicstextureloader_callbackData, info);
+#endif
     } else {
         printwarning("[TEXLOAD] unsupported resource location");
         info->callbackDimensions(info->gtm, 0, 0, 0, info->userdata);

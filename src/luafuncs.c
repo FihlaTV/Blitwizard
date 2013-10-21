@@ -41,7 +41,7 @@
 #include "luaerror.h"
 #include "luafuncs.h"
 #ifdef USE_SDL_GRAPHICS
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 #include "graphicstexture.h"
 #ifdef WINDOWS
@@ -63,7 +63,7 @@
 
 #if defined(ANDROID) || defined(__ANDROID__)
 // required for RWops file loading for Android
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #endif
 
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -120,7 +120,6 @@ void luacfuncs_onLog(const char* type, const char* fmt, ...) {
     printline[sizeof(printline)-1] = 0;
     va_end(a);
 
-    luastate_suspendGC();
     if (!luastate_PushFunctionArgumentToMainstate_String(type)) {
         fprintf(stderr, "Error when pushing func args to blitwizard.onLog");
         main_Quit(1); 
@@ -141,7 +140,6 @@ void luacfuncs_onLog(const char* type, const char* fmt, ...) {
             free(error);
         }
     }
-    luastate_resumeGC();
 }
 
 int luafuncs_getTemplateDirectory(lua_State* l) {
@@ -278,14 +276,17 @@ static int luafuncs_printline(void) {
     if (len == 0) {
         return 0;
     }
-    unsigned int i = 0;
-    while (i < len) {
+    int i = 0;
+    while (i < (int)len) {
         if (printlinebuf[i] == '\n') {
             break;
         }
         i++;
     }
-    if (i >= len-1 && printlinebuf[len-1] != '\n') {
+    if (i < 0) {
+        return 0;
+    }
+    if (i >= (int)len-1 && printlinebuf[len-1] != '\n') {
         return 0;
     }
     printlinebuf[i] = 0;
@@ -475,32 +476,6 @@ int luafuncs_getTime(lua_State* l) {
     return 1;
 }
 
-int luafuncs_sleep(lua_State* l) {
-    if (lua_type(l, 1) != LUA_TNUMBER || lua_tonumber(l, 1) < 0) {
-        lua_pushstring(l, "First parameter is not a valid milliseconds number");
-        return lua_error(l);
-    }
-    unsigned int i = lua_tointeger(l, 1);
-    time_Sleep(i);
-    return 0;
-}
-
-int luafuncs_getWindowSize(lua_State* l) {
-#ifdef USE_GRAPHICS
-    unsigned int w,h;
-    if (!graphics_GetWindowDimensions(&w,&h)) {
-        lua_pushstring(l, "Failed to get window size");
-        return lua_error(l);
-    }
-    lua_pushnumber(l, w);
-    lua_pushnumber(l, h);
-    return 2;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
 int luafuncs_trandom(lua_State* l) {
     // try to get higher quality random numbers here
     // (although still not cryptographically safe)
@@ -557,7 +532,7 @@ int luafuncs_getRendererName(lua_State* l) {
     if (!p) {
         lua_pushnil(l);
         return 1;
-    }else{
+    } else {
         lua_pushstring(l, p);
         return 1;
     }
@@ -573,7 +548,7 @@ int luafuncs_getBackendName(lua_State* l) {
     const char* p = audio_GetCurrentBackendName();
     if (p) {
         lua_pushstring(l, p);
-    }else{
+    } else {
         lua_pushstring(l, "null driver");
     }
     return 1;
@@ -583,77 +558,6 @@ int luafuncs_getBackendName(lua_State* l) {
 #endif
 }
 
-int luafuncs_getDesktopDisplayMode(lua_State* l) {
-#ifdef USE_GRAPHICS
-    int w,h;
-    graphics_GetDesktopVideoMode(&w, &h);
-    lua_pushnumber(l, w);
-    lua_pushnumber(l, h);
-    return 2;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
-
-int luafuncs_getDisplayModes(lua_State* l) {
-#ifdef USE_GRAPHICS
-    int c = graphics_GetNumberOfVideoModes();
-    lua_createtable(l, 1, 0);
-
-    // first, add desktop mode
-    int desktopw,desktoph;
-    graphics_GetDesktopVideoMode(&desktopw, &desktoph);
-
-    // resolution table with desktop width, height
-    lua_createtable(l, 2, 0);
-    lua_pushnumber(l, 1);
-    lua_pushnumber(l, desktopw);
-    lua_settable(l, -3);
-    lua_pushnumber(l, 2);
-    lua_pushnumber(l, desktoph);
-    lua_settable(l, -3);
-
-    // add table into our list
-    lua_pushnumber(l, 1);
-    lua_insert(l, -2);
-    lua_settable(l, -3);
-
-    int i = 1;
-    int index = 2;
-    while (i <= c) {
-        // add all supported video modes...
-        int w,h;
-        graphics_GetVideoMode(i, &w, &h);
-
-        // ...but not the desktop mode twice
-        if (w == desktopw && h == desktoph) {
-            i++;
-            continue;
-        }
-
-        // table containing the resolution width, height
-        lua_createtable(l, 2, 0);
-        lua_pushnumber(l, 1);
-        lua_pushnumber(l, w);
-        lua_settable(l, -3);
-        lua_pushnumber(l, 2);
-        lua_pushnumber(l, h);
-        lua_settable(l, -3);
-
-        // add the table into our list
-        lua_pushnumber(l, index);
-        lua_insert(l, -2);
-        lua_settable(l, -3);
-        index++;
-        i++;
-    }
-    return 1;
-#else // ifdef USE_GRAPHICS
-    lua_pushstring(l, compiled_without_graphics);
-    return lua_error(l);
-#endif
-}
 
 /// Set the stepping frequency of the game logic.
 // The default is 16ms. Physics are unaffected.
@@ -710,30 +614,47 @@ int luafuncs_setstep(lua_State* l) {
 /// Specify this function if you want to get notified
 // when the mouse is moved over the @{blitwizard.graphics|graphics output}.
 //
+// The coordinates you get are the same that would be used
+// for @{blitwizard.graphics.camera:screenPosTo2dWorldPos|
+// camera:screenPosTo2dWorldPos} or
+// @{blitwizard.pickObjectAtPosition}.
+//
 // <b>This function does not exist</b> unless you specify/override
 // it.
 // @function onMouseMove
-// @tparam number x_pos mouse X position
-// @tparam number y_pos mouse Y position
+// @tparam number x_pos mouse X position in game units
+// @tparam number y_pos mouse Y position in game units
+// @tparam userdata camera the @{blitwizard.graphics.camera|camera} the mouse moved over (most likely the default camera)
 // @usage
 // -- Listen for mouse evens:
-// function blitwizard.onMouseMove(x, y)
+// function blitwizard.onMouseMove(x, y, camera)
 //     print("Mouse position: x: " .. x .. ", y: " .. y)
 // end
 
 /// Specify this function if you want to get notified
 // when a mouse button is pressed down
-// on the @{blitwizard.graphics|graphics output}.
+// on a @{blitwizard.graphics.camera|camera} in the
+// @{blitwizard.graphics|graphics output}.
+// (Usually, one camera covers the whole graphics output)
+// 
+// If you just want to create a button to be clicked on (or register
+// clicks on objects generally), take a look at
+// @{blitwizard.object:onMouseClick|object:onMouseClick} instead.
+//
+// The coordinates and the @{blitwizard.graphics.camera|camera}
+// are specified in the same manner as for
+// @{blitwizard.onMouseMove}.
 //
 // <b>This function does not exist</b> unless you specify/override
 // it.
 // @function onMouseDown
 // @tparam number x_pos mouse X position
 // @tparam number y_pos mouse Y position
-// @tparam number button mouse button (1 for left, 2 for right)
+// @tparam number button mouse button (1 for left, 2 for right, 3 for middle)
+// @tparam camera the @{blitwizard.graphics.camera|camera} the mouse was clicked on
 // @usage
 // -- Listen for mouse evens:
-// function blitwizard.onMouseDown(x, y, button)
+// function blitwizard.onMouseDown(x, y, button, camera)
 //     print("Mouse down: button: " .. button .. ", x: " .. x .. ", y: " .. y)
 // end
 
@@ -742,12 +663,17 @@ int luafuncs_setstep(lua_State* l) {
 // is released
 // on the @{blitwizard.graphics|graphics output}.
 //
+// The coordinates and the @{blitwizard.graphics.camera|camera}
+// are specified in the same manner as for
+// @{blitwizard.onMouseMove}.
+//
 // <b>This function does not exist</b> unless you specify/override
 // it.
 // @function onMouseUp
 // @tparam number x_pos mouse X position
 // @tparam number y_pos mouse Y position
-// @tparam number button mouse button (1 for left, 2 for right)
+// @tparam number button mouse button (1 for left, 2 for right, 3 for middle)
+// @tparam camera the @{blitwizard.graphics.camera|camera} the mouse was clicked on
 // @usage
 // -- Listen for mouse evens:
 // function blitwizard.onMouseUp(x, y, button)

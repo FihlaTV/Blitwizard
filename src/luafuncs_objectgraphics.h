@@ -36,16 +36,19 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o);
 
 // check if a geometry callback needs to be fired.
 // returns 1 if that is the case, 0 if not.
-int luafuncs_objectgraphics_NeedGeometryCallback(
+int luafuncs_objectgraphics_needGeometryCallback(
 struct blitwizardobject* o);
 
 // check if a visibility callback needs to be fired.
 // returns 1 if that is the case, 0 if not.
-int luafuncs_objectgraphics_NeedVisibleCallback(
+int luafuncs_objectgraphics_needVisibleCallback(
 struct blitwizardobject* o);
 
 // Move graphical representation of object to correct position:
 void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o);
+
+// Update the object's parallax effect to the sprite
+void luacfuncs_objectgraphics_updateParallax(struct blitwizardobject* o);
 
 // get dimensions of object (unscaled/original):
 int luacfuncs_objectgraphics_getOriginalDimensions(
@@ -75,6 +78,9 @@ int id);
 // Change visibility of an object:
 void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
 int visible);
+
+// Query the value set by setVisible:
+int luacfuncs_objectgraphics_getVisible(struct blitwizardobject* o);
 
 // enable/disable mouse events for object:
 void luacfuncs_objectgraphics_enableMouseClickEvent(struct blitwizardobject* o,

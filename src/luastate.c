@@ -37,6 +37,7 @@
 #include "luafuncs_media_object.h"
 #include "luafuncs_os.h"
 #include "luafuncs_string.h"
+#include "luafuncs_rundelayed.h"
 #include "luaerror.h"
 #include "luastate_functionTables.h"
 
@@ -270,7 +271,8 @@ static void luastate_VoidDebug(lua_State* l) {
 static char* whitelist[] = { "string", "os", "math", "blitwizard",
 "io", "_G", "_VERSION", "pairs", "ipairs", "coroutine", "next",
 "tostring", "tonumber", "type", "setmetatable", "getmetatable",
-"load", "table", "error", "pcall", "xpcall", NULL };
+"load", "table", "error", "pcall", "xpcall", "assert", "require",
+"arg", NULL };
 
 static void luastate_ApplyWhitelist(lua_State* l) {
     int repeat = 1;
@@ -315,8 +317,9 @@ static void luastate_ApplyWhitelist(lua_State* l) {
 static lua_State* luastate_New(void) {
     lua_State* l = luaL_newstate();
 
-    lua_gc(l, LUA_GCSETPAUSE, 110);
-    lua_gc(l, LUA_GCSETSTEPMUL, 300);
+    lua_gc(l, LUA_GCSTOP, 0);
+    //lua_gc(l, LUA_GCSETPAUSE, 110);
+    //lua_gc(l, LUA_GCSETSTEPMUL, 300);
 
     // standard libs
     luaL_openlibs(l);
@@ -342,14 +345,24 @@ static lua_State* luastate_New(void) {
     // obtain the blitwiz lib
     lua_getglobal(l, "blitwizard");
 
+    // blitwizard.runDelayed:
+    lua_pushstring(l, "runDelayed");
+    lua_pushcfunction(l, &luafuncs_runDelayed);
+    lua_settable(l, -3);
+
     // blitwizard.object:
     lua_pushstring(l, "object");
     luastate_CreateObjectTable(l);
     lua_settable(l, -3);
 
-    // blitwizard.getObjects():
+    // blitwizard.getAllObjects():
     lua_pushstring(l, "getAllObjects");
     lua_pushcfunction(l, &luafuncs_getAllObjects);
+    lua_settable(l, -3);
+
+    // blitwizard.scanFor2dObjects():
+    lua_pushstring(l, "scanFor2dObjects");
+    lua_pushcfunction(l, &luafuncs_scanFor2dObjects);
     lua_settable(l, -3);
 
     // blitwizard.setStep:
@@ -402,6 +415,10 @@ static lua_State* luastate_New(void) {
     // we still have the module "blitwiz" on the stack here
     lua_pop(l, 1);
 
+    // vector namespace:
+    luastate_CreateVectorTable(l);
+    lua_setglobal(l, "vector");
+
     // obtain math table
     lua_getglobal(l, "math");
 
@@ -425,6 +442,9 @@ static lua_State* luastate_New(void) {
     lua_settable(l, -3);
     lua_pushstring(l, "templatedir");
     lua_pushcfunction(l, &luafuncs_templatedir);
+    lua_settable(l, -3);
+    lua_pushstring(l, "sleep");
+    lua_pushcfunction(l, &luafuncs_sleep);
     lua_settable(l, -3);
     lua_pushstring(l, "gameluapath");
     lua_pushcfunction(l, &luafuncs_gameluapath);
@@ -474,6 +494,7 @@ static lua_State* luastate_New(void) {
     // throw table "string" off the stack
     lua_pop(l, 1);
 
+    // set _VERSION string:
     char vstr[512];
     char is64bit[] = " (64-bit binary)";
 #ifndef _64BIT

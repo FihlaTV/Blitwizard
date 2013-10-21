@@ -35,6 +35,10 @@
 
 int luafuncs_setMode(lua_State* l);
 
+int luafuncs_gameUnitToPixels(lua_State* l);
+
+int luafuncs_forceTextureReload(lua_State* l);
+
 #endif  // USE_GRAPHICS
 
 #endif  // BLITWIZARD_GRAPHICS_H_

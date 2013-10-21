@@ -21,17 +21,6 @@
 
 */
 
-
-/*
-
-    TODO:
-    
-    - Upon entering a callback, set isInCallback
-    - Upon leaving a callback, make the cache -> real transition and delete
-     all cached objects afterwards.
-
-*/
-
 #include "config.h"
 #include "os.h"
 
@@ -161,7 +150,7 @@ struct userdata_wrapper {
 static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force) {
     isInCallback = 1;
     
-    ((struct userdata_wrapper*)userdata)->callback2d(
+    int r = ((struct userdata_wrapper*)userdata)->callback2d(
      ((struct userdata_wrapper*)userdata)->userdata, a, b, x, y,
      normalx, normaly, force);
     
@@ -187,6 +176,7 @@ static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, st
         free(deletedObjects);
         deletedObjects = d;
     }
+    return r;
 }
 #endif
 
@@ -643,15 +633,13 @@ void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
 #endif
 
 #ifdef USE_PHYSICS2D
-double physics_get2dAngularVelocity(struct physicsobject* obj, double* omega) {
+double physics_get2dAngularVelocity(struct physicsobject* obj) {
     struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
-        *omega = c_object->angularvelocity2d;
+        return c_object->angularvelocity2d;
     } else {
-        physics_get2dAngularVelocity_internal(obj, omega);
+        return physics_get2dAngularVelocity_internal(obj);
     }
-    return *omega;
-    // WTF @ this function FIXME FIXME FIXME
 }
 #endif
 

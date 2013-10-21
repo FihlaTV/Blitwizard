@@ -1,11 +1,13 @@
 
-# blitwizard configure.ac - autoconf generated, extended by Jonas Thiem
+# blitwizard configure.ac - autoconf generated, extended by Jonas Thiem et al
 # Process this file with autoreconf to produce a configure script
 # (see autogen.sh)
 
 AC_PREREQ([2.60])
 
 AC_INIT([blitwizard], [0.4], [jonasthiem@googlemail.com])
+m4_pattern_allow([AC_DEFINE_DIR])
+m4_include([m4/ac_define_dir.m4])
 
 # Checks for programs, various options:
 
@@ -792,8 +794,10 @@ SDLADDED=no
 statictest=`echo $STATIC_LIBS_USE | grep lua`
 AS_IF([test -z "$statictest"], [
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DNOLLIMITS"
+    AC_DEFINE([NOLLIMITS], [], [disable use of llimits-based float2int optimisation])
     AS_IF([test "x$SHARED_LUA_5_2" = xyes],[
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DLUA_5_2_HEADER"
+        AC_DEFINE([LUA_5_2_HEADER], [], [Enable use of lua 5.2 include folder])
     ])
 ])
 AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
@@ -803,7 +807,7 @@ AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
         FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lSDL2"
     ], [
         FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardSDL"
-        FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Isdl/include"
+        FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iinclude/sdl"
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS"
     AC_DEFINE([USE_SDL_GRAPHICS], [], [Enable SDL graphics subsystem])
@@ -863,7 +867,7 @@ AS_IF([test "x$AUDIO_FEATURE_ENABLED" = xyes],[
                 FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lSDL2"
             ], [
                 FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lblitwizardSDL"
-                FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Isdl/include"
+                FINAL_INCLUDE_FLAGS="$FINAL_INCLUDE_FLAGS -Iinclude/sdl"
             ])
         ])
         
@@ -990,14 +994,15 @@ cd ..
 
 # Check for -O3 -fno-finite-math-only
 OLD_CFLAGS="$CFLAGS"
-CFLAGS="-O3 -ffast-math -fno-finite-math-only"
-O3_AND_INFINITE_MATH="no"
-AC_MSG_CHECKING([whether CC accepts -O3 -fast-math -fno-finite-math-only])
+CFLAGS="-O2 -fno-math-errno -fno-finite-math-only"
+EXTRA_SPEED_FLAGS="no"
+AC_MSG_CHECKING([whether CC accepts -O2 -fno-math-errno -fno-finite-math-only])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
     [AC_MSG_RESULT([yes])]
-    [O3_AND_INFINITE_MATH="yes"],
+    [EXTRA_SPEED_FLAGS="yes"],
     [AC_MSG_RESULT([no])]
 )
+EXTRA_SPEED_FLAGS="no"
 CFLAGS="$OLD_CFLAGS"
 
 # Decide on some additional cflags:
@@ -1006,11 +1011,11 @@ AS_IF([test "x$enable_debug" = xyes],[
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -g"
 ],[
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -s"
-])
-AS_IF([test "x$O3_AND_INFINITE_MATH" = xyes],[
-    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O3 -ffast-math -fno-finite-math-only"
-],[
-    ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2"
+    AS_IF([test "x$EXTRA_SPEED_FLAGS" = xyes],[
+        ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2 -fno-math-errno -fno-finite-math-only"
+    ],[
+        ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2"
+    ])
 ])
 
 # OS dependant things:
@@ -1043,7 +1048,7 @@ AS_IF([test -z "$maybeos"],[
 
     echo -e "$WRITELINE" > scripts/.buildinfo
     CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS `cd $scriptsdir && sh ./checksse.sh`"   
-    CXXFLAGS="$ADDITIONAL_CFLAGS $CXXFLAGS `cd $scriptdir && sh ./checksse.sh`"
+    CXXFLAGS="$ADDITIONAL_CFLAGS $CXXFLAGS `cd $scriptsdir && sh ./checksse.sh`"
 
     AC_CHECK_LIB([dl], [dlopen],, AC_MSG_ERROR(Cannot find all the necessary functions. Try to install the necessary libraries and headers))
     
@@ -1087,6 +1092,25 @@ AS_IF([test -z "$maybeos"],[
     CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
     CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
     LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -ldbghelp -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lversion"
+    
+    # -lwbemuuid check:
+    AC_MSG_CHECKING([for -lwbemuuid availability])
+    echo "int main(int argc, const char** argv) {return 0;}" > ./test.c
+    rm -f ./testbin
+    $CC -L./ test.c -lwbemuuid -o ./testbin > /dev/null 2>&1
+    rm ./test.c
+    AS_IF([test ! -f ./testbin],[
+        AC_MSG_RESULT([no])
+    ],[
+        AS_IF([test -f ./testbin.exe ],[
+            rm ./testbin.exe
+        ],[
+            rm -f ./testbin
+        ])
+        AC_MSG_RESULT([yes])
+        LIBS="$LIBS -lwbemuuid"
+    ])
+    
     FINAL_LD_FLAGS="-lmingw32 $FINAL_LD_FLAGS"
     STATICSTDCXX="-static-libstdc++"
     AC_SUBST(STATICSTDCXX)
@@ -1110,7 +1134,8 @@ Build flags:
 AC_SUBST(FINAL_INCLUDE_FLAGS)
 AC_SUBST(FINAL_USE_LIB_FLAGS)
 AC_SUBST(FINAL_LD_FLAGS)
-AC_DEFINE([SYSTEM_TEMPLATE_PATH], "\"${datadir}/blitwizard/templates/\"",
+AC_DEFINE_DIR([BWDATADIR], [datadir], [Data directory])
+AC_DEFINE_UNQUOTED([SYSTEM_TEMPLATE_PATH], "$BWDATADIR/blitwizard/templates/",
 [The path to the system-wide installed templates])
 AS_IF([test "x$enable_debug" = xyes],[
     AM_CONDITIONAL([ENABLE_DEBUG], [test 1 = 1])
