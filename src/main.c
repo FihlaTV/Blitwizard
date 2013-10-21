@@ -221,13 +221,15 @@ static void mousebuttonevent(int button, int release, int x, int y) {
     if (release) {
         funcname = onmouseup;
     }
-    if (!luastate_PushFunctionArgumentToMainstate_Double(x)) {
+    double realx = ((double)x) / UNIT_TO_PIXELS;
+    double realy = ((double)y) / UNIT_TO_PIXELS;
+    if (!luastate_PushFunctionArgumentToMainstate_Double(realx)) {
         printerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
     }
-    if (!luastate_PushFunctionArgumentToMainstate_Double(y)) {
+    if (!luastate_PushFunctionArgumentToMainstate_Double(realy)) {
         printerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);

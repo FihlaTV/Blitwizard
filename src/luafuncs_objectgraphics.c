@@ -402,8 +402,8 @@ int button) {
 
         // trigger onMouseClick event:
         lua_State* l = luastate_GetStatePtr();
-        lua_pushnumber(l, x);
-        lua_pushnumber(l, y);
+        lua_pushnumber(l, ((double)x)/UNIT_TO_PIXELS);
+        lua_pushnumber(l, ((double)y)/UNIT_TO_PIXELS);
         lua_pushnumber(l, button);
         luacfuncs_object_callEvent(l, o, "onMouseClick",
         3, 0);

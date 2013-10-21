@@ -363,17 +363,27 @@ int luafuncs_camera_screenPosTo2dWorldPos(lua_State* l) {
     double zoomscale =
     (UNIT_TO_PIXELS * graphics_GetCamera2DZoom(e->cameraslot))
     / (double)UNIT_TO_PIXELS_DEFAULT;
-    tx -= graphics_GetCameraWidth(e->cameraslot) * zoomscale * 0.5f;
-    ty -= graphics_GetCameraHeight(e->cameraslot) * zoomscale * 0.5f;
+    double cameraWidth = graphics_GetCameraWidth(e->cameraslot)
+        / (double)UNIT_TO_PIXELS;
+    double cameraHeight = graphics_GetCameraHeight(e->cameraslot)
+        / (double)UNIT_TO_PIXELS;
+    tx -= (cameraWidth / zoomscale) * 0.5f;
+    ty -= (cameraHeight / zoomscale) * 0.5f;
 
-    // scale on-screen to world coordinate scaling:
-    tx *= (UNIT_TO_PIXELS/(double)UNIT_TO_PIXELS_DEFAULT);
-    ty *= (UNIT_TO_PIXELS/(double)UNIT_TO_PIXELS_DEFAULT);
-    tx /= parallax;
-    ty /= parallax;
+    // apply parallax effect as desired with screen center as parallax center:
+    x -= cameraWidth / 2;
+    y -= cameraHeight / 2;
+    x /= parallax;
+    y /= parallax;
+    x += cameraWidth / 2;
+    y += cameraHeight / 2;
 
-    lua_pushnumber(l, tx);
-    lua_pushnumber(l, ty);
+    // the onscreen coordinates need to be translated into "zoomed" space:
+    x /= graphics_GetCamera2DZoom(e->cameraslot);
+    y /= graphics_GetCamera2DZoom(e->cameraslot);
+
+    lua_pushnumber(l, tx + x);
+    lua_pushnumber(l, ty + y);
     return 2;
 }
 

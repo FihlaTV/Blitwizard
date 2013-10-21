@@ -98,12 +98,17 @@ function blitwizard.onInit()
 	    }
     })
 
-	-- Even more basic level collision as demonstration:
+	-- More basic level collision shape:
 	-- (that black obtruding rectangle part in bg.png on the floor/center)
-	--levelcollision2 = blitwiz.physics2d.createStaticObject()
-	--blitwiz.physics2d.setShapeRectangle(levelcollision2, (382 - 222)/pixelsperunit, (314 - 242)/pixelsperunit)
-	--blitwiz.physics2d.warp(levelcollision2, ((222+382)/2+x)/pixelsperunit, ((242 + 314)/2+y)/pixelsperunit)
-	--blitwiz.physics2d.setFriction(levelcollision2, 0.3)
+	levelcollision2 = blitwizard.object:new(
+        blitwizard.object.o2d, "crate.png")
+    levelcollision2:enableStaticCollision({
+        type="rectangle",
+        width=((382 - 222)/pixelsperunit)*0.5,
+        height=((314 - 242)/pixelsperunit)
+    })
+    levelcollision2:setPosition(((222 + 382)/2 - halfwidth)/pixelsperunit, ((224 + 314)/2 - halfheight)/pixelsperunit)
+	levelcollision2:setFriction(0.3)
 end
 
 function bgimagepos()
@@ -112,32 +117,23 @@ function bgimagepos()
 	return mw/2 - w/2, mh/2 - h/2
 end
 
-function limitcrateposition(x,y)
-	if x - cratesize/2 < 125/pixelsperunit then
-		x = 125/pixelsperunit + cratesize/2
+function limitspawnposition(size, x, y)
+    -- This simply limits the object's spawn position to a
+    -- more reasonable area.
+    -- You could leave this away if you want, it is somewhat
+    -- optional.
+    local w,h = level:getDimensions()
+	if x - size/2 < (125/pixelsperunit)-(w/2) then
+		x = (125/pixelsperunit)-(w/2) + size/2
 	end
-	if x + cratesize/2 > 555/pixelsperunit then
-		x = 555/pixelsperunit - cratesize/2
+	if x + size/2 > (555/pixelsperunit)-(w/2) then
+		x = (555/pixelsperunit)-(w/2) - size/2
 	end
-	if y + cratesize/2 > 230/pixelsperunit then
+	if y + size/2 > (230/pixelsperunit)-(h/2) then
 		-- If we are too low, avoid getting it stuck in the floor
-		y = 130/pixelsperunit - cratesize/2
+		y = (230/pixelsperunit)-(h/2) - size/2
 	end
 	return x,y
-end
-
-function limitballposition(x,y)
-    if x - ballsize/2 < 125/pixelsperunit then
-        x = 125/pixelsperunit + ballsize/2
-    end
-    if x + ballsize/2 > 555/pixelsperunit then
-        x = 555/pixelsperunit - ballsize/2
-    end
-    if y + ballsize/2 > 230/pixelsperunit then
-        -- If we are below the lowest height, avoid getting stuck
-        y = 130/pixelsperunit - ballsize/2
-    end
-    return x,y
 end
 
 function blitwizard.onMouseDown(x, y)
@@ -145,8 +141,9 @@ function blitwizard.onMouseDown(x, y)
 	local objectposx,objectposy =
         blitwizard.graphics.getCameras()[1]:screenPosTo2dWorldPos(x, y)
 
-	if math.random() > 0.5 or true then
-		objectposx,objectposy = limitcrateposition(objectposx, objectposy)
+	if math.random() > 0.5 then
+		objectposx,objectposy = limitspawnposition(
+		    64/pixelsperunit, objectposx, objectposy)
 
 		-- Add a crate
 		local crate = blitwizard.object:new(
@@ -198,19 +195,26 @@ function blitwizard.onMouseDown(x, y)
             return true
         end)]]--
 	else
-		--[[objectposx,objectposy = limitballposition(objectposx, objectposy)
+        objectposx,objectposy = limitspawnposition(
+            24/pixelsperunit, objectposx, objectposy)
 
 		-- Add a ball
-        local ball = blitwiz.physics2d.createMovableObject()
-        blitwiz.physics2d.setShapeCircle(ball, ballsize / 2)
-        blitwiz.physics2d.setMass(ball, 0.4)
-		blitwiz.physics2d.setFriction(ball, 0.1)
-        blitwiz.physics2d.warp(ball, objectposx + imgposx/pixelsperunit, objectposy + imgposy/pixelsperunit)
-        blitwiz.physics2d.setAngularDamping(ball, 0.3)
-		blitwiz.physics2d.setLinearDamping(ball, 0.3)
-		blitwiz.physics2d.setRestitution(ball, 0.6)
-
-        balls[#balls+1] = ball]]
+        local ball = blitwizard.object:new(
+            blitwizard.object.o2d, "ball.png")
+        ball:setZIndex(1)
+        function ball:onLoaded()
+            local w,h = self:getDimensions()
+            self:enableMovableCollision({
+                type="circle",
+                diameter=w,
+            })
+            self:setFriction(0.1)
+            self:setMass(0.4)
+            self:setAngularDamping(0.3)
+            self:setLinearDamping(0.3)
+            self:setRestitution(0.3)
+        end
+        ball:setPosition(objectposx, objectposy)
 	end
 end
 
