@@ -216,6 +216,7 @@ static void quitevent(void) {
 }
 
 static void mousebuttonevent(int button, int release, int x, int y) {
+#ifdef USE_GRAPHICS 
     char* error;
     char onmouseup[] = "blitwizard.onMouseUp";
     const char* funcname = "blitwizard.onMouseDown";
@@ -249,13 +250,13 @@ static void mousebuttonevent(int button, int release, int x, int y) {
             free(error);
         }
     }
-#ifdef USE_GRAPHICS
     if (!release) {
         luacfuncs_objectgraphics_processMouseClick(x, y, button);
     }
 #endif
 }
 static void mousemoveevent(int x, int y) {
+#ifdef USE_GRAPHICS
     char* error;
     if (!luastate_PushFunctionArgumentToMainstate_Double(x)) {
         printerror("Error when pushing func args to blitwizard.onMouseMove");
@@ -276,7 +277,6 @@ static void mousemoveevent(int x, int y) {
             free(error);
         }
     }
-#ifdef USE_GRAPHICS
     luacfuncs_objectgraphics_processMouseMove(x, y);
 #endif
 }
