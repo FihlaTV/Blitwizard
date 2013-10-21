@@ -700,8 +700,8 @@ void _physics_destroy2dShape(struct physicsobjectshape2d* shape) {
             while (e != NULL) {
                 e2 = e->next;
                 free(e);
+                e = e2;
             }
-            free(e2);
         break;
         default:
             printerror("Error: Unknown 2D shape type.");
@@ -785,7 +785,7 @@ void physics_set2dShapeRectangle(struct physicsobjectshape* shape, double width,
     if (!rectangle)
         return;
     
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -809,7 +809,7 @@ void physics_set2dShapeOval(struct physicsobjectshape* shape, double width, doub
     //construct oval shape - by manually calculating the vertices
     struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*vertices)*OVALVERTICES);
     
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -845,7 +845,7 @@ void physics_set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
     double radius = diameter/2;
     circle->m_radius = radius - 0.01;
     
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -858,7 +858,7 @@ void physics_set2dShapeCircle(struct physicsobjectshape* shape, double diameter)
 
 #ifdef USE_PHYSICS2D
 void physics_add2dShapePolygonPoint(struct physicsobjectshape* shape, double xoffset, double yoffset) {
-    if (_physics_shapeType(shape) != 0) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
@@ -983,19 +983,19 @@ double x1, double y1, double x2, double y2) {
 
 #ifdef USE_PHYSICS2D
 void physics_add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
-    if (_physics_shapeType(shape) != 1) {
+    if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
+        shape->is3d = 0;
     }
     
-    // FIXME FIXME FIXME this function might be complete bollocks,
-    // reconsider pls
-    if (not shape->shape2d.type == BW_S2D_EDGE) {
+    if (shape->shape2d.type == BW_S2D_UNINITIALISED) {
+        shape->shape2d.type = BW_S2D_EDGE;
         shape->shape2d.b2.edges = NULL;
     }
     
     _physics_add2dShapeEdgeList_Do(shape, x1, y1, x2, y2);
     
-    struct edge* e = shape->shape2d.b2.edges;
+    /*struct edge* e = shape->shape2d.b2.edges;
     while (e != NULL and e->next != NULL) {
         e = e->next;
     }
@@ -1004,7 +1004,7 @@ void physics_add2dShapeEdgeList(struct physicsobjectshape* shape, double x1, dou
     new_edge->y1 = y1;
     new_edge->x2 = x2;
     new_edge->y2 = y2;
-    e->next = new_edge;
+    e->next = new_edge;*/
     
     shape->shape2d.type = BW_S2D_EDGE;
 
@@ -1041,11 +1041,7 @@ void _physics_apply2dOffsetRotation(struct physicsobjectshape2d* shape2d,
 
 #ifdef USE_PHYSICS2D
 void physics_set2dShapeOffsetRotation(struct physicsobjectshape* shape, double xoffset, double yoffset, double rotation) {
-    if (_physics_shapeType(shape) != 1) {
-        _physics_createEmpty2dShape(&(shape->shape2d));
-        printerror("Shouldn't be doing this: Set2dShapeOffsetRotation before "\
-         "having assigned any shape data.");
-    }
+    assert(_physics_shapeType(shape) == 0);
     
     struct physicsobjectshape2d* s = &(shape->shape2d);
     s->xoffset = xoffset;
@@ -1194,11 +1190,11 @@ void _physics_create2dObjectEdges_End(struct edge* edges,
         if (e->inaloop) {
             chain.CreateLoop(varray, e->adjacentcount);
             // More scaling workaround stuff
-            object->orig_shape_info[num_shapes].is_loop = 1;
+            object->orig_shape_info[num_shapes-1].is_loop = 1;
         } else {
             chain.CreateChain(varray, e->adjacentcount+1);
             // And again
-            object->orig_shape_info[num_shapes].is_loop = 0;
+            object->orig_shape_info[num_shapes-1].is_loop = 0;
         }
 
         //add it to our body

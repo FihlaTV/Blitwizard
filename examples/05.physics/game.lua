@@ -56,7 +56,7 @@ function blitwizard.onInit()
 	level = blitwizard.object:new(blitwizard.object.o2d,
         "bg.png")
     -- this is how much a game unit takes up in pixels:
-    local pixelsperunit = blitwizard.graphics.gameUnitToPixels()
+    pixelsperunit = blitwizard.graphics.gameUnitToPixels()
     -- this is half the size of our image in pixels:
     local halfwidth = 320
     local halfheight = 240
@@ -112,52 +112,6 @@ function bgimagepos()
 	return mw/2 - w/2, mh/2 - h/2
 end
 
-blitwiz = {}
-function blitwiz.on_draw()
-	-- Draw the background image centered:
-	local x,y = bgimagepos()
-	blitwiz.graphics.drawImage("bg.png", {x=x, y=y})
-
-	-- Draw all crates:
-	local imgw,imgh = blitwiz.graphics.getImageSize("crate.png")
-	for index,crate in ipairs(crates) do
-		local x,y = blitwiz.physics2d.getPosition(crate)
-		local rotation = blitwiz.physics2d.getRotation(crate)
-		blitwiz.graphics.drawImage("crate.png", {x=x*pixelsperunit - imgw/2, y=y*pixelsperunit - imgh/2, rotationangle=rotation})
-	end
-
-	-- Draw all balls
-	local imgw,imgh = blitwiz.graphics.getImageSize("ball.png")
-    for index,ball in ipairs(balls) do
-        local x,y = blitwiz.physics2d.getPosition(ball)
-        local rotation = blitwiz.physics2d.getRotation(ball)
-        blitwiz.graphics.drawImage("ball.png", {x=x*pixelsperunit - imgw/2, y=y*pixelsperunit - imgh/2, rotationangle=rotation})
-    end
-
-	-- Draw overall shadows:
-	local x,y = bgimagepos()
-	blitwiz.graphics.drawImage("shadows.png", {x=x, y=y})
-
-    -- Draw crate splints:
-    local imgw,imgh = blitwiz.graphics.getImageSize("cratesplint.png")
-    local i = 1
-    while i <= #cratesplints do
-        blitwiz.graphics.drawImage("cratesplint.png", {x=cratesplints[i][1] - imgw/2, y=cratesplints[i][2] - imgh/2 + cratesplints[i][5] * cratesplints[i][5] * 500, rotationangle=cratesplints[i][3] + cratesplints[i][5]*360*2*cratesplints[i][4], alpha=1 - cratesplints[i][5], scalex=3.5 - cratesplints[i][5]*3.5, scaley=3.5 - cratesplints[i][5]*3.5})
-        i = i + 1
-    end
-
-    -- Draw smoke objects:
-    local imgw,imgh = blitwiz.graphics.getImageSize("smoke.png")
-    local i = 1
-    while i <= #smokeobjs do
-        blitwiz.graphics.drawImage("smoke.png", {x=smokeobjs[i][1] - imgw/2, y=smokeobjs[i][2] - imgh/2, rotationangle=smokeobjs[i][3], alpha=smokeobjs[i][4], scalex=2, scaley=2})
-        i = i + 1
-    end
-
-	-- Draw stats
-	blitwiz.font.draw("default", "Crates: " .. tostring(#crates) .. ", balls: " .. tostring(#balls), 15, 30)
-end
-
 function limitcrateposition(x,y)
 	if x - cratesize/2 < 125/pixelsperunit then
 		x = 125/pixelsperunit + cratesize/2
@@ -186,29 +140,33 @@ function limitballposition(x,y)
     return x,y
 end
 
-function blitwiz.on_mousedown(button, x, y)
-	local imgposx,imgposy = bgimagepos()
-
+function blitwizard.onMouseDown(x, y)
 	-- See where we can add the object
-	local objectposx = (x - imgposx)/pixelsperunit
-	local objectposy = (y - imgposy)/pixelsperunit
+	local objectposx,objectposy =
+        blitwizard.graphics.getCameras()[1]:screenPosTo2dWorldPos(x, y)
 
-	if math.random() > 0.5 then
+	if math.random() > 0.5 or true then
 		objectposx,objectposy = limitcrateposition(objectposx, objectposy)
 
 		-- Add a crate
-		local crate = blitwiz.physics2d.createMovableObject()
-		blitwiz.physics2d.setFriction(crate, 0.4)
-		blitwiz.physics2d.setShapeRectangle(crate, cratesize, cratesize)
-		blitwiz.physics2d.setMass(crate, 30)
-		blitwiz.physics2d.warp(crate, objectposx + imgposx/pixelsperunit, objectposy + imgposy/pixelsperunit)
-		blitwiz.physics2d.setAngularDamping(crate, 0.5)
-		blitwiz.physics2d.setLinearDamping(crate, 0.3)
+		local crate = blitwizard.object:new(
+            blitwizard.object.o2d, "crate.png")
+        crate:setZIndex(1)
+        function crate:onLoaded()
+            local w,h = self:getDimensions()
+            self:enableMovableCollision({
+                type="rectangle",
+                width=w,
+                height=h,
+            })
+            self:setFriction(0.4)
+            self:setMass(30)
+            self:setAngularDamping(0.5)
+            self:setLinearDamping(0.3)
+        end
+        crate:setPosition(objectposx, objectposy)
 
-		crates[#crates+1] = crate
-        crateshealth[#crateshealth+1] = 1
-
-        -- Set a collision callback for the smoke effect
+        --[[-- Set a collision callback for the smoke effect
         blitwiz.physics2d.setCollisionCallback(crate, function(otherobj, x, y, nx, ny, force)
             if force > 4 then
                 smokeobjs[#smokeobjs+1] = { x * pixelsperunit, y * pixelsperunit, math.random()*360, math.min(1, (force-4)/20) }
@@ -238,9 +196,9 @@ function blitwiz.on_mousedown(button, x, y)
                 end
             end
             return true
-        end)
+        end)]]--
 	else
-		objectposx,objectposy = limitballposition(objectposx, objectposy)
+		--[[objectposx,objectposy = limitballposition(objectposx, objectposy)
 
 		-- Add a ball
         local ball = blitwiz.physics2d.createMovableObject()
@@ -252,15 +210,15 @@ function blitwiz.on_mousedown(button, x, y)
 		blitwiz.physics2d.setLinearDamping(ball, 0.3)
 		blitwiz.physics2d.setRestitution(ball, 0.6)
 
-        balls[#balls+1] = ball
+        balls[#balls+1] = ball]]
 	end
 end
 
-function blitwiz.on_close()
+function blitwizard.onClose()
 	os.exit(0)
 end
 
-function blitwiz.on_step()
+--[[function blitwiz.on_step()
     -- animate smoke:
     local i = 1
     while i <= #smokeobjs do
@@ -288,5 +246,5 @@ function blitwiz.on_step()
         end
         i = i + 1
     end
-end
+end]]
 
