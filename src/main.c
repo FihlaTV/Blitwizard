@@ -77,6 +77,7 @@ int appinbackground = 0; // app is in background (mobile/Android)
 char* templatepath = NULL; // global template directory path as determined at runtime
 char* gameluapath = NULL; // game.lua path as determined at runtime
 char* binpath = NULL;  // path to blitwizard binary
+extern int failsafeaudio;  // whether audio is set to failsafe or not
 
 #include "threading.h"
 #include "luastate.h"
@@ -624,13 +625,21 @@ int main(int argc, char** argv) {
                     printf("   -changedir             Change working directory to "
                            "the\n"
                            "                          folder of the script\n");
+                    printf("   -failsafe-audio        Use 16bit signed int audio and avoid\n"
+                           "                          audio backends known as troublesome\n");
                     printf("   -help                  Show this help text and quit\n");
                     printf("   -templatepath [path]   Check another place for "
                            "templates\n"
                            "                          (not the default "
-                           "\"templates/\")\n");
+                           "\"templates/\"\n"
+                           "                          or system-wide installed)\n");
                     printf("   -version               Show extended version info and quit\n");
                     return 0;
+                }
+                if (strcasecmp(argv[i], "-failsafe-audio") == 0) {
+                    failsafeaudio = 1;
+                    i++;
+                    continue;
                 }
                 if (strcasecmp(argv[i], "-changedir") == 0) {
                     option_changedir = 1;

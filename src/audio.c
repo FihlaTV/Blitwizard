@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include "logging.h"
 
+int failsafeaudio = 0;
+
 // valid sound buffer sizes for audio:
 #define DEFAULTSOUNDBUFFERSIZE (2048)
 #define MINSOUNDBUFFERSIZE 512
@@ -94,6 +96,13 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
         return 0;
     }
 #endif
+
+    // abort if going for float32 audio with failsafe enabled:
+    if (failsafeaudio && !s16) {
+        *error = strdup("Failsafe audio enabled - use 16bit signed int audio");
+        return 0;
+    }
+
     if (!samplecallback) {
         *error = strdup("Need sample callback");
         return 0;
@@ -121,6 +130,21 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
     if (strlen(b) <= 0) {
         b = NULL;
     }
+
+    // for failsafe audio, redirect some audio outputs to more failsafe ones:
+    if (failsafeaudio) {
+        if (b == NULL || strcmp(b, "directsound") == 0) {
+            // we definitely should pick a safer default.
+    #ifdef WINDOWS
+            strcpy(preferredbackend, "winmm");
+    #else
+            strcpy(preferredbackend, "alsa");
+    #endif
+            b = preferredbackend;
+        }
+    }
+
+    // initialise audio
     if (SDL_AudioInit(b) < 0) {
         snprintf(errbuf,sizeof(errbuf),"Failed to initialize SDL audio: %s", SDL_GetError());
         errbuf[sizeof(errbuf)-1] = 0;
@@ -163,7 +187,8 @@ unsigned int buffersize, const char* backend, int s16, char** error) {
         return 0;
     }
 
-    if (actualfmt.channels != 2 || actualfmt.freq != 48000 || (s16 && actualfmt.format != AUDIO_S16) || (!s16 && actualfmt.format != AUDIO_F32SYS)) {
+    if (actualfmt.channels != 2 || actualfmt.freq != 48000 ||
+    (s16 && actualfmt.format != AUDIO_S16) || (!s16 && actualfmt.format != AUDIO_F32SYS)) {
         *error = strdup("SDL audio delivered wrong/unusable format");
         SDL_AudioQuit();
         return 0;
