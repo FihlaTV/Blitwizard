@@ -26,6 +26,8 @@
 #include "osinfo.h"
 #include "logging.h"
 #include "graphics.h"
+#include "timefuncs.h"
+#include "threading.h"
 #ifdef UNIX
 #include <signal.h>
 #endif
@@ -202,18 +204,37 @@ static const char* GetCrashInfo(const char* reason) {
     return crashinfo;
 }
 
+static char crashmsgbuf[4096];
+
+static void threadedcrashmsgshow(void* userdata) {
+    osinfo_ShowMessage(crashmsgbuf, 1);
+    exit(1);
+}
+
+static void threadedcrashmsg(const char* msg) {
+    strncpy(crashmsgbuf, msg, sizeof(crashmsgbuf)-1);
+    crashmsgbuf[sizeof(crashmsgbuf)-1] = 0;
+    threadinfo* ti = thread_CreateInfo();
+    if (!ti) {
+        return;
+    }
+    thread_Spawn(ti, threadedcrashmsgshow, NULL);
+}
+
 static void handleerror(const char* name) {
     crashed = 1;
     char msg[4096];
     snprintf(msg, sizeof(msg), FATALERROR_MSG, GetCrashInfo(name));
     fprintf(stderr, "%s\n", msg);
-    osinfo_ShowMessage(msg, 1);
+    threadedcrashmsg(msg);
 
     // at this point, we risk minimizing although it might cause
     // a followup crash:
+    time_Sleep(500);
     graphics_MinimizeWindow();
 
-    exit(1);
+    // wait until we quit:
+    while (1) {time_Sleep(5000);}
 }
 
 #ifdef WINDOWS

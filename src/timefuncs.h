@@ -26,6 +26,7 @@
 
 #include "config.h"
 #include "os.h"
+#include <stdint.h>
 
 uint64_t time_GetMilliseconds(void);
 // Timestamp derived from SDL_GetTicks(),
