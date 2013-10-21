@@ -372,14 +372,34 @@ int luafuncs_media_object_adjust(lua_State* l, int type) {
 // @{blitwizard.audio.simpleSound:play|played} will stop.
 // You may play them again if you wish to do so.
 // @function stopAllPlayingSounds
+// @tparam number fadeout (optional) an amount of seconds in which to fade the sounds out for a softer stop (default: 0 seconds/instant stop)
 int luafuncs_media_object_stopAllPlayingSounds(lua_State* l) {
+    double fadeout = 0;
+    if (lua_type(l, 1) != LUA_TNIL) {
+        if (lua_type(l, 1) != LUA_TNUMBER) {
+            return haveluaerror(l, badargument1, 1,
+            "blitwizard.audio.stopAllPlayingSounds",
+            "number", lua_strtype(l, 1));
+        }
+        fadeout = lua_tonumber(l, 1);
+        if (fadeout < 0) {
+            return haveluaerror(l, badargument2, 1,
+            "blitwizard.audio.stopAlPlayingSounds",
+            "fadeout duration cannot be negative");
+        }
+    }
 #ifdef USE_AUDIO
     unsigned int i = 0;
     unsigned int c = audiomixer_ChannelCount();
     while (i < c) {
         int id = audiomixer_GetIdFromSoundOnChannel(i);
         if (id >= 0) {
-            audiomixer_StopSound(id);
+            if (fadeout > 0) {
+                audiomixer_StopSoundWithFadeout(
+                    id, fadeout);
+            } else {
+                audiomixer_StopSound(id);
+            }
         }
         i++;
     }

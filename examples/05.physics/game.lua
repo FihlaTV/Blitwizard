@@ -38,6 +38,10 @@ function blitwizard.onInit()
         blitwizard.graphics.setMode(640, 480, "Physics", false)
     end
 
+    -- set gravity to default in case it was changed:
+    blitwizard.physics.set2dGravity(
+        0, 9.81 * 0.75) -- assume 1 unit is roughly 1.33 meters
+
 	-- Load image
 	--[[blitwiz.graphics.loadImage("bg.png")
 	blitwiz.graphics.loadImage("crate.png")
@@ -105,6 +109,12 @@ function blitwizard.onInit()
     levelcollision2:setPosition(((222 + 382)/2 - halfwidth)/pixelsperunit,
         ((242 + 314)/2 - halfheight)/pixelsperunit)
 	levelcollision2:setFriction(0.3)
+
+    -- on top of everything, we're putting a neat shadow image
+    -- which makes everything look a bit cooler:
+    local shadows = blitwizard.object:new(
+        blitwizard.object.o2d, "shadows.png")
+    shadows:setZIndex(5)
 end
 
 function bgimagepos()

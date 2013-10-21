@@ -30,8 +30,9 @@ function blitwizard.onInit()
         "blitwizardtragicallyepic.ogg")
 
     -- This will play sound "blitwizardtragicallyepic.ogg" with
-    -- full volume (1.0), and repeated forever (repeat parameter true)
-    sound:play(1.0, true)
+    -- full volume (1.0), repeated forever (repeat parameter true)
+    -- and faded in over 0.500 seconds.
+    sound:play(1.0, true, 0.5)
 end
 
 function blitwizard.onKeyDown(key)

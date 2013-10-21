@@ -98,6 +98,9 @@ function blitwizard.onInit()
         browser.launchSelection()
     end
 
+    -- weaken gravity for nicely floating orbs:
+    blitwizard.physics.set2dGravity(0, 0.2)
+
     -- spawn a few orbs (see spawnOrb code below):
     local i = 0
     while i < 10 do

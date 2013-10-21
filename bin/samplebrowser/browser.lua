@@ -95,8 +95,10 @@ function browser.cleanUpAfterExample()
         i = i + 1
         o = iterator()
     end
+    -- delete event handlers that might have been set:
+    blitwizard.onMouseDown = nil
     -- stop all sounds:
-    blitwizard.audio.stopAllPlayingSounds()
+    blitwizard.audio.stopAllPlayingSounds(2.0)
 end
 
 function browser.destroyBrowser()
