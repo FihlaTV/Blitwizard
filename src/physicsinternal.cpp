@@ -903,7 +903,8 @@ int _physics_check2dEdgeLoop(struct edge* edge, struct edge* target) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1, double y1, double x2, double y2) {
+void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape,
+double x1, double y1, double x2, double y2) {
     struct edge* newedge = (struct edge*)malloc(sizeof(*newedge));
     if (!newedge) {return;}
     memset(newedge, 0, sizeof(*newedge));
@@ -913,11 +914,12 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
     newedge->y2 = y2;
     newedge->adjacentcount = 1;
     
-    //search for adjacent edges
+    // search for adjacent edges
     struct edge* e = shape->shape2d.b2.edges;
     while (e) {
         if (!newedge->adjacent1) {
-            if (fabs(e->x1 - newedge->x1) < EPSILON && fabs(e->y1 - newedge->y1) < EPSILON && e->adjacent1 == NULL) {
+            if (fabs(e->x1 - newedge->x1) < EPSILON
+            && fabs(e->y1 - newedge->y1) < EPSILON && e->adjacent1 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
                 } else {
@@ -929,7 +931,8 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
                 e = e->next;
                 continue;
             }
-            if (fabs(e->x2 - newedge->x1) < EPSILON && fabs(e->y2 - newedge->y1) < EPSILON && e->adjacent2 == NULL) {
+            if (fabs(e->x2 - newedge->x1) < EPSILON
+            && fabs(e->y2 - newedge->y1) < EPSILON && e->adjacent2 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
                 } else {
@@ -943,7 +946,8 @@ void _physics_add2dShapeEdgeList_Do(struct physicsobjectshape* shape, double x1,
             }
         }
         if (!newedge->adjacent2) {
-            if (fabs(e->x1 - newedge->x2) < EPSILON && fabs(e->y1 - newedge->y2) < EPSILON && e->adjacent1 == NULL) {
+            if (fabs(e->x1 - newedge->x2) < EPSILON
+            && fabs(e->y1 - newedge->y2) < EPSILON && e->adjacent1 == NULL) {
                 if (_physics_check2dEdgeLoop(e, newedge)) {
                     newedge->inaloop = 1;
                 } else {
