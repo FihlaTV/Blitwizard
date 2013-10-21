@@ -25,6 +25,7 @@
 #include "os.h"
 #include "osinfo.h"
 #include "logging.h"
+#include "graphics.h"
 #ifdef UNIX
 #include <signal.h>
 #endif
@@ -207,6 +208,11 @@ static void handleerror(const char* name) {
     snprintf(msg, sizeof(msg), FATALERROR_MSG, GetCrashInfo(name));
     fprintf(stderr, "%s\n", msg);
     osinfo_ShowMessage(msg, 1);
+
+    // at this point, we risk minimizing although it might cause
+    // a followup crash:
+    graphics_MinimizeWindow();
+
     exit(1);
 }
 

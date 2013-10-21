@@ -626,7 +626,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                     double px[8];
                     double py[8];
                     while (lua_next(l, -2)) {
-                        // each list item needs to be a table with two numbers in it:
+                        // each list item needs to be a table
+                        // with two numbers in it:
                         if (lua_type(l, -1) != LUA_TTABLE
                         || lua_rawlen(l, -1) != 2) {
                             physics_destroyShapes(shapes, argcount);
@@ -644,7 +645,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                         double coords[2][2];
                         int c = 0;
                         while (c < 2) {
-                            lua_pushnumber(l, c);
+                            lua_pushnumber(l, c + 1);
                             lua_gettable(l, -2);
                             static char first[] = "first";
                             static char second[] = "second";
@@ -652,7 +653,8 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                             if (c == 1) {
                                 firstsecond = second;
                             }
-                            if (lua_type(l, -1) != LUA_TTABLE && lua_rawlen(l, -1) != 2) {
+                            if (lua_type(l, -1) != LUA_TTABLE
+                            || lua_rawlen(l, -1) != 2) {
                                 physics_destroyShapes(shapes, argcount);
                                 char msg[512];
                                 snprintf(msg, sizeof(msg),
@@ -671,7 +673,7 @@ int luafuncs_enableCollision(lua_State* l, int movable) {
                                 if (c2 == 1) {
                                     firstsecond2 = second;
                                 }
-                                lua_pushnumber(l, c2);
+                                lua_pushnumber(l, c2 + 1);
                                 lua_gettable(l, -2);
                                 if (lua_type(l, -1) != LUA_TNUMBER) {
                                     physics_destroyShapes(shapes, argcount);

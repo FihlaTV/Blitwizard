@@ -22,70 +22,88 @@ balls = {}
 -- { x pos, y pos, current rotation angle, current smoke alpha }
 smokeobjs = {}
 -- meter (physics unit) to pixels factor:
-pixelspermeter = 30 -- meter (physics unit) to pixels factor
+pixelsperunit = 30 -- meter (physics unit) to pixels factor
 -- size of a crate (length of each side):
-cratesize = 64/pixelspermeter
+cratesize = 64/pixelsperunit
 -- size of a ball (diameter):
-ballsize = 24/pixelspermeter
+ballsize = 24/pixelsperunit
 
 -- Warn if we run without templates
-if blitwiz.templatesinitialised ~= true then
+if blitwizard.templatesinitialised ~= true then
 	error "The templates/ sub folder with the templates is apparently missing. Please copy it into the same folder as your game.lua before you start up."
 end
 
-function blitwiz.on_init()
+function blitwizard.onInit()
 	-- Open a window
-    function openwindow()
-        blitwiz.graphics.setWindow(640, 480, "Physics", false)
-    end
-    if pcall(openwindow) == false then
-        -- Opening a window failed.
-        -- Open fullscreen at any resolution (for Android)
-        resolution = blitwiz.graphics.getDisplayModes()[1]
-        blitwiz.graphics.setWindow(resolution[1], resolution[2], "Physics", true)
+	if string.lower(os.sysname()) == "android" then
+        -- Fullscreen at screen resolution for Android
+        local w,h = blitiwzard.graphics.getDesktopDisplayMode()
+        blitwizard.graphics.setWindow(w, h, "Physics", true)
+    else
+        -- Windowed at 640x480 for desktop
+        blitwizard.graphics.setMode(640, 480, "Physics", false)
     end
 
 	-- Load image
-	blitwiz.graphics.loadImage("bg.png")
+	--[[blitwiz.graphics.loadImage("bg.png")
 	blitwiz.graphics.loadImage("crate.png")
 	blitwiz.graphics.loadImage("shadows.png")
 	blitwiz.graphics.loadImage("ball.png")
     blitwiz.graphics.loadImage("smoke.png")
-    blitwiz.graphics.loadImage("cratesplint.png")
+    blitwiz.graphics.loadImage("cratesplint.png")]]
 
-	-- Add base level collision (as seen in bg.png)
-	local x,y = bgimagepos()
-	levelcollision = blitwiz.physics2d.createStaticObject()
-	blitwiz.physics2d.setShapeEdges(levelcollision, {
-		{(119+x)/pixelspermeter, (0+y)/pixelspermeter,
-		(119+x)/pixelspermeter, (360+y)/pixelspermeter},
-		
-		{(119+x)/pixelspermeter, (360+y)/pixelspermeter,
-		(397+x)/pixelspermeter, (234+y)/pixelspermeter},
+	-- Add base level with collision (bg.png)
+	level = blitwizard.object:new(blitwizard.object.o2d,
+        "bg.png")
+    -- this is how much a game unit takes up in pixels:
+    local pixelsperunit = blitwizard.graphics.gameUnitToPixels()
+    -- this is half the size of our image in pixels:
+    local halfwidth = 320
+    local halfheight = 240
+    level:enableStaticCollision({
+        type = "edge list",
+        edges = {
+            -- We want to specify nice edges which represent the geometry
+            -- drawn in bg.png (approximately).
+            --
+            -- In an image manipulation program, we looked at bg.png and
+            -- determined the pixel coordinates where edges should run through.
+            --
+            -- Now we specify the pixel coordinates in pairs per point,
+            -- and two pairs for a line:  { {119, 0}, {119, 360} }
+            -- Because this is easiest, we assume so far that 0, 0 is top left
+            -- and 640, 480 is bottom right (the image has the size 640x480).
+            --
+            -- Then we substract half of the image size of all the coordinates
+            -- to make 0,0 the center of the image (instead of top left).
+            --
+            -- Finally, we divide all coordinates by pixelsperunit to get game
+            -- units. Now we have game coordinates of all edge positions!
+            --
+            -- Here is the result (5 edges):
+            { {(119-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit},
+              {(119-halfwidth)/pixelsperunit, (360-halfheight)/pixelsperunit} },
+            
+            { {(119-halfwidth)/pixelsperunit, (360-halfheight)/pixelsperunit},
+              {(397-halfwidth)/pixelsperunit, (234-halfheight)/pixelsperunit} },
 
-		{(397+x)/pixelspermeter, (234+y)/pixelspermeter,
-		(545+x)/pixelspermeter, (371+y)/pixelspermeter},
+            { {(397-halfwidth)/pixelsperunit, (234-halfheight)/pixelsperunit},
+              {(545-halfwidth)/pixelsperunit, (371-halfheight)/pixelsperunit} },
 
-		{(545+x)/pixelspermeter, (371+y)/pixelspermeter,
-		(593+x)/pixelspermeter, (122+y)/pixelspermeter},
+            { {(545-halfwidth)/pixelsperunit, (371-halfheight)/pixelsperunit},
+              {(593-halfwidth)/pixelsperunit, (122-halfheight)/pixelsperunit} },
 
-		{(593+x)/pixelspermeter, (122+y)/pixelspermeter,
-		(564+x)/pixelspermeter, (0+y)/pixelspermeter}
-	})
-	blitwiz.physics2d.setFriction(levelcollision, 0.5)
+            { {(593-halfwidth)/pixelsperunit, (122-halfheight)/pixelsperunit},
+              {(564-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit} }
+	    }
+    })
 
-    -- Testing automatic garbage collection of physics objects:
-    local gctestobj = blitwiz.physics2d.createStaticObject()
-    blitwiz.physics2d.setShapeRectangle(gctestobj, 100/pixelspermeter, 20/pixelspermeter)
-    blitwiz.physics2d.warp(gctestobj, 0, 0)
-    blitwiz.physics2d.setFriction(gctestobj, 0.3)
-    gctestobj = nil
-
-	-- Even more basic level collision (that black rectangle part in bg.png)
-	levelcollision2 = blitwiz.physics2d.createStaticObject()
-	blitwiz.physics2d.setShapeRectangle(levelcollision2, (382 - 222)/pixelspermeter, (314 - 242)/pixelspermeter)
-	blitwiz.physics2d.warp(levelcollision2, ((222+382)/2+x)/pixelspermeter, ((242 + 314)/2+y)/pixelspermeter)
-	blitwiz.physics2d.setFriction(levelcollision2, 0.3)
+	-- Even more basic level collision as demonstration:
+	-- (that black obtruding rectangle part in bg.png on the floor/center)
+	--levelcollision2 = blitwiz.physics2d.createStaticObject()
+	--blitwiz.physics2d.setShapeRectangle(levelcollision2, (382 - 222)/pixelsperunit, (314 - 242)/pixelsperunit)
+	--blitwiz.physics2d.warp(levelcollision2, ((222+382)/2+x)/pixelsperunit, ((242 + 314)/2+y)/pixelsperunit)
+	--blitwiz.physics2d.setFriction(levelcollision2, 0.3)
 end
 
 function bgimagepos()
@@ -94,6 +112,7 @@ function bgimagepos()
 	return mw/2 - w/2, mh/2 - h/2
 end
 
+blitwiz = {}
 function blitwiz.on_draw()
 	-- Draw the background image centered:
 	local x,y = bgimagepos()
@@ -104,7 +123,7 @@ function blitwiz.on_draw()
 	for index,crate in ipairs(crates) do
 		local x,y = blitwiz.physics2d.getPosition(crate)
 		local rotation = blitwiz.physics2d.getRotation(crate)
-		blitwiz.graphics.drawImage("crate.png", {x=x*pixelspermeter - imgw/2, y=y*pixelspermeter - imgh/2, rotationangle=rotation})
+		blitwiz.graphics.drawImage("crate.png", {x=x*pixelsperunit - imgw/2, y=y*pixelsperunit - imgh/2, rotationangle=rotation})
 	end
 
 	-- Draw all balls
@@ -112,7 +131,7 @@ function blitwiz.on_draw()
     for index,ball in ipairs(balls) do
         local x,y = blitwiz.physics2d.getPosition(ball)
         local rotation = blitwiz.physics2d.getRotation(ball)
-        blitwiz.graphics.drawImage("ball.png", {x=x*pixelspermeter - imgw/2, y=y*pixelspermeter - imgh/2, rotationangle=rotation})
+        blitwiz.graphics.drawImage("ball.png", {x=x*pixelsperunit - imgw/2, y=y*pixelsperunit - imgh/2, rotationangle=rotation})
     end
 
 	-- Draw overall shadows:
@@ -140,29 +159,29 @@ function blitwiz.on_draw()
 end
 
 function limitcrateposition(x,y)
-	if x - cratesize/2 < 125/pixelspermeter then
-		x = 125/pixelspermeter + cratesize/2
+	if x - cratesize/2 < 125/pixelsperunit then
+		x = 125/pixelsperunit + cratesize/2
 	end
-	if x + cratesize/2 > 555/pixelspermeter then
-		x = 555/pixelspermeter - cratesize/2
+	if x + cratesize/2 > 555/pixelsperunit then
+		x = 555/pixelsperunit - cratesize/2
 	end
-	if y + cratesize/2 > 230/pixelspermeter then
+	if y + cratesize/2 > 230/pixelsperunit then
 		-- If we are too low, avoid getting it stuck in the floor
-		y = 130/pixelspermeter - cratesize/2
+		y = 130/pixelsperunit - cratesize/2
 	end
 	return x,y
 end
 
 function limitballposition(x,y)
-    if x - ballsize/2 < 125/pixelspermeter then
-        x = 125/pixelspermeter + ballsize/2
+    if x - ballsize/2 < 125/pixelsperunit then
+        x = 125/pixelsperunit + ballsize/2
     end
-    if x + ballsize/2 > 555/pixelspermeter then
-        x = 555/pixelspermeter - ballsize/2
+    if x + ballsize/2 > 555/pixelsperunit then
+        x = 555/pixelsperunit - ballsize/2
     end
-    if y + ballsize/2 > 230/pixelspermeter then
+    if y + ballsize/2 > 230/pixelsperunit then
         -- If we are below the lowest height, avoid getting stuck
-        y = 130/pixelspermeter - ballsize/2
+        y = 130/pixelsperunit - ballsize/2
     end
     return x,y
 end
@@ -171,8 +190,8 @@ function blitwiz.on_mousedown(button, x, y)
 	local imgposx,imgposy = bgimagepos()
 
 	-- See where we can add the object
-	local objectposx = (x - imgposx)/pixelspermeter
-	local objectposy = (y - imgposy)/pixelspermeter
+	local objectposx = (x - imgposx)/pixelsperunit
+	local objectposy = (y - imgposy)/pixelsperunit
 
 	if math.random() > 0.5 then
 		objectposx,objectposy = limitcrateposition(objectposx, objectposy)
@@ -182,7 +201,7 @@ function blitwiz.on_mousedown(button, x, y)
 		blitwiz.physics2d.setFriction(crate, 0.4)
 		blitwiz.physics2d.setShapeRectangle(crate, cratesize, cratesize)
 		blitwiz.physics2d.setMass(crate, 30)
-		blitwiz.physics2d.warp(crate, objectposx + imgposx/pixelspermeter, objectposy + imgposy/pixelspermeter)
+		blitwiz.physics2d.warp(crate, objectposx + imgposx/pixelsperunit, objectposy + imgposy/pixelsperunit)
 		blitwiz.physics2d.setAngularDamping(crate, 0.5)
 		blitwiz.physics2d.setLinearDamping(crate, 0.3)
 
@@ -192,7 +211,7 @@ function blitwiz.on_mousedown(button, x, y)
         -- Set a collision callback for the smoke effect
         blitwiz.physics2d.setCollisionCallback(crate, function(otherobj, x, y, nx, ny, force)
             if force > 4 then
-                smokeobjs[#smokeobjs+1] = { x * pixelspermeter, y * pixelspermeter, math.random()*360, math.min(1, (force-4)/20) }
+                smokeobjs[#smokeobjs+1] = { x * pixelsperunit, y * pixelsperunit, math.random()*360, math.min(1, (force-4)/20) }
             end
             if force > 1 then
                 -- substract health from the crate:
@@ -206,7 +225,7 @@ function blitwiz.on_mousedown(button, x, y)
                             -- health is zero -> destroy crate
                             local j = 1
                             while j <= 2 + math.random() * 8 do
-                                cratesplints[#cratesplints+1] = { x * pixelspermeter + 30 - 60 * math.random(), y * pixelspermeter + 30 - 60 * math.random(), math.random() * 360, math.random()*1, 0 }
+                                cratesplints[#cratesplints+1] = { x * pixelsperunit + 30 - 60 * math.random(), y * pixelsperunit + 30 - 60 * math.random(), math.random() * 360, math.random()*1, 0 }
                                 j = j + 1 
                             end
                             table.remove(crates, i)
@@ -228,7 +247,7 @@ function blitwiz.on_mousedown(button, x, y)
         blitwiz.physics2d.setShapeCircle(ball, ballsize / 2)
         blitwiz.physics2d.setMass(ball, 0.4)
 		blitwiz.physics2d.setFriction(ball, 0.1)
-        blitwiz.physics2d.warp(ball, objectposx + imgposx/pixelspermeter, objectposy + imgposy/pixelspermeter)
+        blitwiz.physics2d.warp(ball, objectposx + imgposx/pixelsperunit, objectposy + imgposy/pixelsperunit)
         blitwiz.physics2d.setAngularDamping(ball, 0.3)
 		blitwiz.physics2d.setLinearDamping(ball, 0.3)
 		blitwiz.physics2d.setRestitution(ball, 0.6)
