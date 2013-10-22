@@ -120,7 +120,12 @@ struct physicsobject2d {
     int movable;
     b2World* world;
     b2Body* body;
-    
+
+#ifndef NDEBUG
+    // track if this object was deleted
+    int _deleted;
+#endif   
+ 
     // needed for scaling, NULL on creation, init on scale
     // Array of pointers
     b2Shape** orig_shapes;
@@ -1471,10 +1476,12 @@ reverse order they were added in."
     }
     object->orig_shapes = (b2Shape**)malloc(sizeof(b2Shape*)*fixture_count);
     if (!object->orig_shapes) {
+        object->orig_shape_count = 0;
         return;
     }
     object->orig_shape_count = fixture_count;
-    
+    assert(object->orig_shapes || object->orig_shape_count == 0);
+ 
     int orig_shape_info_index = orig_shape_info_count-1;
     int fixture_index = fixture_count-1;
     f = body->GetFixtureList();
@@ -1522,7 +1529,16 @@ reverse order they were added in."
 
 #ifdef USE_PHYSICS2D
 void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
+#ifndef NDEBUG
+    // prevent double delete.
+    assert(!object->_deleted);
+    object->_deleted = 1;
+#endif
+    // negative count is invalid:
+    assert(object->orig_shape_count >= 0);
+    // either orig_shapes is not NULL, or the count is 0
     assert(object->orig_shapes || object->orig_shape_count == 0);
+    // delete the original shape info:
     for (int i = 0; i < object->orig_shape_count; ++i) {
         delete object->orig_shapes[i]; // delete shape
     }
