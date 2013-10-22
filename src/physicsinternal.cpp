@@ -1480,7 +1480,10 @@ reverse order they were added in."
         return;
     }
     object->orig_shape_count = fixture_count;
+    // those conditions should now hold true:
     assert(object->orig_shapes || object->orig_shape_count == 0);
+    assert(object->orig_shape_info || object->orig_shape_count == 0);
+    assert(object->orig_shape_count == fixture_count);
  
     int orig_shape_info_index = orig_shape_info_count-1;
     int fixture_index = fixture_count-1;
@@ -1536,7 +1539,7 @@ void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
 #endif
     // negative count is invalid:
     assert(object->orig_shape_count >= 0);
-    // either orig_shapes is not NULL, or the count is 0
+    // if valid, either orig_shapes is not NULL or the count is 0
     assert(object->orig_shapes || object->orig_shape_count == 0);
     // delete the original shape info:
     for (int i = 0; i < object->orig_shape_count; ++i) {
