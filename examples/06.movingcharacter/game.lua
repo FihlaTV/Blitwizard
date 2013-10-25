@@ -8,8 +8,8 @@
 ]]
 
 print("Moving character example in blitwizard")
-pixelspermeter = 30
-cratesize = 64/pixelspermeter
+pixelsperunit = 30
+cratesize = 64/pixelsperunit
 frame = 1 -- animation frame to be displayed (can be 1, 2, 3)
 leftright = 0 -- keyboard left/right input
 animationstate = 0 -- used for timing the animation
@@ -17,70 +17,92 @@ flipped = false -- whether to draw the character flipped (=facing left)
 jump = false -- keyboard jump input
 lastjump = 0 -- remember our last jump to enforce a short no-jump time after each jump
 
-function blitwiz.on_init()
+function blitwizard.onInit()
 	-- Open a window
-	blitwiz.graphics.setWindow(640, 480, "Moving character", false)
+	blitwizard.graphics.setMode(640, 480, "Moving character", false)
 
 	-- Load image
-	blitwiz.graphics.loadImage("bg.png")
+	--[[blitwiz.graphics.loadImage("bg.png")
 	blitwiz.graphics.loadImage("char1.png")
 	blitwiz.graphics.loadImage("char2.png")
-	blitwiz.graphics.loadImage("char3.png")
+	blitwiz.graphics.loadImage("char3.png")]]
 
 	-- Add base level collision
-	local x,y = bgimagepos()
-	levelcollision = blitwiz.physics2d.createStaticObject()
-	blitwiz.physics2d.setShapeEdges(levelcollision, {
-		{(0+x)/pixelspermeter, (245+y)/pixelspermeter,
-        (0+x)/pixelspermeter, (0+y)/pixelspermeter},
-
-		{(0+x)/pixelspermeter, (245+y)/pixelspermeter,
-		(93+x)/pixelspermeter, (297+y)/pixelspermeter},
-
-		{(93+x)/pixelspermeter, (297+y)/pixelspermeter,
-		(151+x)/pixelspermeter, (293+y)/pixelspermeter},
-
-		{(151+x)/pixelspermeter, (293+y)/pixelspermeter,
-		(198+x)/pixelspermeter, (306+y)/pixelspermeter},
-
-		{(198+x)/pixelspermeter, (306+y)/pixelspermeter,
-		(268+x)/pixelspermeter, (375+y)/pixelspermeter},
-	
-		{(268+x)/pixelspermeter, (375+y)/pixelspermeter,
-		(309+x)/pixelspermeter, (350+y)/pixelspermeter},
-
-		{(309+x)/pixelspermeter, (350+y)/pixelspermeter,
-		(357+x)/pixelspermeter, (355+y)/pixelspermeter},
-
-		{(357+x)/pixelspermeter, (355+y)/pixelspermeter,
-		(416+x)/pixelspermeter, (427+y)/pixelspermeter},
-
-		{(416+x)/pixelspermeter, (427+y)/pixelspermeter,
-		(470+x)/pixelspermeter, (431+y)/pixelspermeter},
-
-		{(470+x)/pixelspermeter, (431+y)/pixelspermeter,
-        (512+x)/pixelspermeter, (407+y)/pixelspermeter},
-
-		{(512+x)/pixelspermeter, (407+y)/pixelspermeter,
-        (558+x)/pixelspermeter, (372+y)/pixelspermeter},
-
-		{(558+x)/pixelspermeter, (372+y)/pixelspermeter,
-        (640+x)/pixelspermeter, (364+y)/pixelspermeter},
-
-		{(640+x)/pixelspermeter, (364+y)/pixelspermeter,
-        (640+x)/pixelspermeter, (0+y)/pixelspermeter}
+	level = blitwizard.object:new(blitwizard.object.o2d,
+        "bg.png")
+    local pixelsperunit = blitwizard.graphics.gameUnitToPixels()
+    local halfwidth = 320  -- half the width of bg.png
+    local halfheight = 240  -- half the height of bg.png
+    level:enableStaticCollision({
+        type = "edge list",
+        edges = {
+	        {
+		        {(0-halfwidth)/pixelsperunit, (245-halfheight)/pixelsperunit},
+                {(0-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit},
+            },
+            {
+		        {(0-halfwidth)/pixelsperunit, (245-halfheight)/pixelsperunit},
+		        {(93-halfwidth)/pixelsperunit, (297-halfheight)/pixelsperunit},
+            },
+            {
+		        {(93-halfwidth)/pixelsperunit, (297-halfheight)/pixelsperunit},
+		        {(151-halfwidth)/pixelsperunit, (293-halfheight)/pixelsperunit},
+            },
+            {
+		        {(151-halfwidth)/pixelsperunit, (293-halfheight)/pixelsperunit},
+		        {(198-halfwidth)/pixelsperunit, (306-halfheight)/pixelsperunit},
+            },
+            {
+		        {(198-halfwidth)/pixelsperunit, (306-halfheight)/pixelsperunit},
+		        {(268-halfwidth)/pixelsperunit, (375-halfheight)/pixelsperunit},
+	        },
+            {
+		        {(268-halfwidth)/pixelsperunit, (375-halfheight)/pixelsperunit},
+		        {(309-halfwidth)/pixelsperunit, (350-halfheight)/pixelsperunit},
+            },
+            {
+		        {(309-halfwidth)/pixelsperunit, (350-halfheight)/pixelsperunit},
+		        {(357-halfwidth)/pixelsperunit, (355-halfheight)/pixelsperunit},
+            },
+            {
+		        {(357-halfwidth)/pixelsperunit, (355-halfheight)/pixelsperunit},
+		        {(416-halfwidth)/pixelsperunit, (427-halfheight)/pixelsperunit},
+            },
+            {
+		        {(416-halfwidth)/pixelsperunit, (427-halfheight)/pixelsperunit},
+		        {(470-halfwidth)/pixelsperunit, (431-halfheight)/pixelsperunit},
+            },
+            {
+		        {(470-halfwidth)/pixelsperunit, (431-halfheight)/pixelsperunit},
+                {(512-halfwidth)/pixelsperunit, (407-halfheight)/pixelsperunit},
+            },
+            {
+		        {(512-halfwidth)/pixelsperunit, (407-halfheight)/pixelsperunit},
+                {(558-halfwidth)/pixelsperunit, (372-halfheight)/pixelsperunit},
+            },
+            {
+		        {(558-halfwidth)/pixelsperunit, (372-halfheight)/pixelsperunit},
+                {(640-halfwidth)/pixelsperunit, (364-halfheight)/pixelsperunit},
+            },
+            {
+		        {(640-halfwidth)/pixelsperunit, (364-halfheight)/pixelsperunit},
+                {(640-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit}
+            }
+        }
 	})
-	blitwiz.physics2d.setFriction(levelcollision, 0.5)
+	level:setFriction(levelcollision, 0.5)
 
 	-- Add character
-	char = blitwiz.physics2d.createMovableObject()
-	blitwiz.physics2d.setShapeOval(char, (50+x)/pixelspermeter, (140+y)/pixelspermeter)
+	--[[char = blitwiz.physics2d.createMovableObject()
+	blitwiz.physics2d.setShapeOval(char, (50-halfwidth)/pixelsperunit, (140-halfheight)/pixelsperunit)
 	blitwiz.physics2d.setMass(char, 60)
 	blitwiz.physics2d.setFriction(char, 0.3)
 	--blitwiz.physics2d.setLinearDamping(char, 10)
-	blitwiz.physics2d.warp(char, (456+x)/pixelspermeter, (188+y)/pixelspermeter)
-	blitwiz.physics2d.restrictRotation(char, true)
+	blitwiz.physics2d.warp(char, (456-halfwidth)/pixelsperunit, (188-halfheight)/pixelsperunit)
+	blitwiz.physics2d.restrictRotation(char, true)]]
 end
+
+blitwiz = {}
 
 function bgimagepos()
 	-- Return the position of the background image (normally just 0,0):
@@ -126,7 +148,7 @@ function blitwiz.on_draw()
 	-- Draw the character
 	local x,y = blitwiz.physics2d.getPosition(char)
 	local w,h = blitwiz.graphics.getImageSize("char1.png")
-	blitwiz.graphics.drawImage("char" .. frame .. ".png", {x=x*pixelspermeter - w/2 + bgx, y=y*pixelspermeter - h/2 + bgy, flipped=flipped})
+	blitwiz.graphics.drawImage("char" .. frame .. ".png", {x=x*pixelsperunit - w/2 + bgx, y=y*pixelsperunit - h/2 + bgy, flipped=flipped})
 end
 
 function blitwiz.on_close()
@@ -138,13 +160,13 @@ function blitwiz.on_step()
 	local charx,chary = blitwiz.physics2d.getPosition(char)
 
 	-- Cast a ray to check for the floor
-	local obj,posx,posy,normalx,normaly = blitwiz.physics2d.ray(charx,chary,charx,chary+350/pixelspermeter)
+	local obj,posx,posy,normalx,normaly = blitwiz.physics2d.ray(charx,chary,charx,chary+350/pixelsperunit)
 
 	-- Check if we reach the floor:
 	local charsizex,charsizey = blitwiz.graphics.getImageSize("char1.png")
-	charsizex = charsizex / pixelspermeter
-	charsizey = charsizey / pixelspermeter
-	if obj ~= nil and posy < chary + charsizey/2 + 1/pixelspermeter then
+	charsizex = charsizex / pixelsperunit
+	charsizey = charsizey / pixelsperunit
+	if obj ~= nil and posy < chary + charsizey/2 + 1/pixelsperunit then
 		onthefloor = true
 	end
 
