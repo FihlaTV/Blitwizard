@@ -214,7 +214,8 @@ void audiomixer_StopSoundWithFadeout(int id, float fadeoutseconds) {
 void audiomixer_AdjustSound(int id, float volume, float panning, int noamplify) {
     audio_LockAudioThread();
     int slot = audiomixer_GetChannelSlotById(id);
-    if (slot >= 0 && channels[slot].fadepanvolsource && !channels[slot].fadeoutandstop) {
+    if (slot >= 0 && channels[slot].fadepanvolsource
+    && !channels[slot].fadeoutandstop) {
         audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning, noamplify);
     }
     audio_UnlockAudioThread();
@@ -515,6 +516,21 @@ void audiomixer_GetBuffer(void* buf, unsigned int len) { // SOUND THREAD
             }
         }
     }
+}
+
+unsigned int audiomixer_HighestUsedChannel(void) {
+    unsigned int c = 0;
+    audio_LockAudioThread();
+    int i = MAXCHANNELS - 1;
+    while (i >= 0) {
+        if (channels[i].mixsource) {
+            c = i;
+            break;
+        }
+        i--;
+    }
+    audio_UnlockAudioThread();
+    return c;
 }
 
 unsigned int audiomixer_ChannelCount(void) {

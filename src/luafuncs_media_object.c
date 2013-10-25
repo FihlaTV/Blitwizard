@@ -390,8 +390,8 @@ int luafuncs_media_object_stopAllPlayingSounds(lua_State* l) {
     }
 #ifdef USE_AUDIO
     unsigned int i = 0;
-    unsigned int c = audiomixer_ChannelCount();
-    while (i < c) {
+    unsigned int c = audiomixer_HighestUsedChannel();
+    while (i <= c) {
         int id = audiomixer_GetIdFromSoundOnChannel(i);
         if (id >= 0) {
             if (fadeout > 0) {
