@@ -197,14 +197,14 @@ int luafuncs_ls(lua_State* l) {
 #ifdef USE_PHYSFS
     if (list_virtual) {
         filelist = resource_FileList(pcrossrelative);
-        printf("got filelist for %s: %p\n", pcrossrelative, filelist);
+        //printf("got filelist for %s: %p\n", pcrossrelative, filelist);
     }
 #endif
 
     // get iteration context for "real" on disk directory:
     struct filelistcontext* ctx = filelist_Create(pnative);
-    printf("ctx: %p\n", ctx);
-    printf("pnative: %s\n", pnative);
+   // printf("ctx: %p\n", ctx);
+   // printf("pnative: %s\n", pnative);
 
     if (!ctx && (!list_virtual || !filelist)) {
         char errmsg[500];
@@ -268,11 +268,9 @@ int luafuncs_ls(lua_State* l) {
     }
 
     if (filelist) {
-        printf("pushing file list...\n");
         // add file list to table:
         i = 0;
         while (filelist[i]) {
-            printf("file list entry: %s\n", filelist[i]);
             lua_pushinteger(l, i + 1);
             lua_pushstring(l, filelist[i]);
             lua_settable(l, -3);
