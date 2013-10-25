@@ -9,16 +9,6 @@
 print("Physics example in blitwizard")
 
 -- >> Some global vars we want to use:
--- list of all crate physics objects:
-crates = {}
--- list of health numbers (0..1) for each crate object:
-crateshealth = {}
--- list of crate splint particles. each particle is a sub list containing:
--- { x pos, y pos , initial rotation, rotation speed, anim progress (0..1) }
-cratesplints = {}
--- list of smoke particles. each particle is a sub list containing:
--- { x pos, y pos, current rotation angle, current smoke alpha }
-smokeobjs = {}
 -- meter (physics unit) to pixels factor:
 pixelsperunit = 30 -- meter (physics unit) to pixels factor
 
@@ -41,14 +31,6 @@ function blitwizard.onInit()
     -- set gravity to default in case it was changed:
     blitwizard.physics.set2dGravity(
         0, 9.81 * 0.75) -- assume 1 unit is roughly 1.33 meters
-
-	-- Load image
-	--[[blitwiz.graphics.loadImage("bg.png")
-	blitwiz.graphics.loadImage("crate.png")
-	blitwiz.graphics.loadImage("shadows.png")
-	blitwiz.graphics.loadImage("ball.png")
-    blitwiz.graphics.loadImage("smoke.png")
-    blitwiz.graphics.loadImage("cratesplint.png")]]
 
 	-- Add base level with collision (bg.png)
 	level = blitwizard.object:new(blitwizard.object.o2d,
@@ -170,38 +152,6 @@ function blitwizard.onMouseDown(x, y)
             self:setLinearDamping(0.3)
         end
         crate:setPosition(objectposx, objectposy)
-
-        --[[-- Set a collision callback for the smoke effect
-        blitwiz.physics2d.setCollisionCallback(crate, function(otherobj, x, y, nx, ny, force)
-            if force > 4 then
-                smokeobjs[#smokeobjs+1] = { x * pixelsperunit, y * pixelsperunit, math.random()*360, math.min(1, (force-4)/20) }
-            end
-            if force > 1 then
-                -- substract health from the crate:
-                local i = 1
-                while i <= #crates do
-                    if crates[i] == crate then
-                        local h = crateshealth[i]
-                        h = h - force/500
-                        crateshealth[i] = h
-                        if h <= 0 then
-                            -- health is zero -> destroy crate
-                            local j = 1
-                            while j <= 2 + math.random() * 8 do
-                                cratesplints[#cratesplints+1] = { x * pixelsperunit + 30 - 60 * math.random(), y * pixelsperunit + 30 - 60 * math.random(), math.random() * 360, math.random()*1, 0 }
-                                j = j + 1 
-                            end
-                            table.remove(crates, i)
-                            blitwiz.physics2d.destroyObject(crate)
-                            table.remove(crateshealth, i)
-                        end
-                        break
-                    end
-                    i = i +1
-                end
-            end
-            return true
-        end)]]--
 	else
         -- the ball has a diameter of 24 pixels,
         -- use our neat placement limiter :
@@ -232,33 +182,4 @@ function blitwizard.onClose()
 	os.exit(0)
 end
 
---[[function blitwiz.on_step()
-    -- animate smoke:
-    local i = 1
-    while i <= #smokeobjs do
-        -- adjust alpha:
-        smokeobjs[i][4] = math.max(0, smokeobjs[i][4] - 0.004)
-
-        -- adjust rotation angle:
-        smokeobjs[i][3] = smokeobjs[i][3] + 1
-
-        -- remove from list when invisible:
-        if smokeobjs[i][4] <= 0.05 then
-            table.remove(smokeobjs, i)
-        else
-            i = i + 1
-        end
-    end
-    -- animate splints:
-    local i = 1
-    while i <= #cratesplints do
-        -- do animation:
-        cratesplints[i][5] = cratesplints[i][5] + 0.005
-        if cratesplints[i][5] > 1 then
-            -- remove splint when animation complete:
-            table.remove(cratesplints, i)
-        end
-        i = i + 1
-    end
-end]]
 
