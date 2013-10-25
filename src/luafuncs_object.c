@@ -370,6 +370,12 @@ static int garbagecollect_blitwizobjref(lua_State* l) {
 }
 
 static int luacfuncs_object_deleteIfOk(struct blitwizardobject* o) {
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    if (o->physics) {
+        luafuncs_freeObjectPhysicsData(o->physics);
+        o->physics = NULL;
+    }
+#endif
     if (o->deleted && o->refcount <= 0) {
         cleanupobject(o, 1);
 

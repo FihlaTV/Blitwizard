@@ -168,9 +168,24 @@ int luafuncs_ls(lua_State* l) {
         lua_pushstring(l, "First argument is not a valid path string");
         return lua_error(l);
     }
+    char* pnative = strdup(p);
+    char* pcross = strdup(p);
+    char* pcrossrelative = strdup(p);
+    if (!pnative || !pcross || !pcrossrelative) {
+        free(pnative);
+        free(pcross);
+        free(pcrossrelative);
+        return haveluaerror(l, "failed to allocate file paths");
+    }
+    file_MakeSlashesNative(pnative);
+    file_MakeSlashesCrossplatform(pcross);
+    file_MakePathRelative(pcrossrelative, file_GetCwd());
     int list_virtual = 1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         if (lua_type(l, 2) != LUA_TNUMBER) {
+            free(pnative);
+            free(pcross);
+            free(pcrossrelative);
             return haveluaerror(l, badargument1, 2, "os.ls", "boolean or nil",
             lua_strtype(l, 2));
         }
@@ -181,18 +196,32 @@ int luafuncs_ls(lua_State* l) {
     char** filelist = NULL;
 #ifdef USE_PHYSFS
     if (list_virtual) {
-        filelist = resource_FileList(p);
+        filelist = resource_FileList(pcrossrelative);
+        //printf("got filelist for %s: %p\n", pcrossrelative, filelist);
     }
 #endif
 
     // get iteration context for "real" on disk directory:
-    struct filelistcontext* ctx = filelist_Create(p);
+    struct filelistcontext* ctx = filelist_Create(pnative);
+   // printf("ctx: %p\n", ctx);
+   // printf("pnative: %s\n", pnative);
 
     if (!ctx && (!list_virtual || !filelist)) {
         char errmsg[500];
-        snprintf(errmsg, sizeof(errmsg), "Failed to ls folder: %s", p);
+        snprintf(errmsg, sizeof(errmsg), "failed to ls folder: %s", pnative);
         errmsg[sizeof(errmsg)-1] = 0;
         lua_pushstring(l, errmsg);
+        free(pnative);
+        free(pcross);
+        free(pcrossrelative);
+        if (filelist) {
+            size_t i = 0;
+            while (filelist[i]) {
+                free(filelist[i]);
+                i++;
+            }
+            free(filelist);
+        }
         return lua_error(l);
     }
 
@@ -202,43 +231,54 @@ int luafuncs_ls(lua_State* l) {
     // add all files/folders to file listing table
     char filenamebuf[500];
     int isdir;
-    int returnvalue;
-    int i = 0;
+    int returnvalue = 0;
+    unsigned int i = 0;
     // loop through all files:
-    while ((returnvalue = filelist_GetNextFile(ctx,
-    filenamebuf, sizeof(filenamebuf), &isdir)) == 1) {
-        i++;
-        lua_checkstack(l, 3);
+    if (ctx) {
+        while ((returnvalue = filelist_GetNextFile(ctx,
+        filenamebuf, sizeof(filenamebuf), &isdir)) == 1) {
+            i++;
+            lua_checkstack(l, 3);
 
-        int duplicate = 0;
-        // if we list against virtual folders too,
-        // check for this being a duplicate:
-        if (filelist) {
-            size_t i = 0;
-            while (filelist[i]) {
-                if (strcasecmp(filelist[i], filenamebuf) == 0) {
-                    duplicate = 1;
-                    break;
+            int duplicate = 0;
+            // if we list against virtual folders too,
+            // check for this being a duplicate:
+            if (filelist) {
+                unsigned int i2 = 0;
+                while (filelist[i2]) {
+                    if (strcasecmp(filelist[i2], filenamebuf) == 0) {
+                        duplicate = 1;
+                        break;
+                    }
+                    i2++;
                 }
-                i++;
             }
+            if (duplicate) {
+                // don't add this one.
+                i--;
+                continue;
+            }
+            lua_pushinteger(l, i);
+            lua_pushstring(l, filenamebuf);
+            lua_settable(l, -3);
         }
-        if (duplicate) {
-            // don't add this one.
-            i--;
-            continue;
-        }
-        lua_pushinteger(l, i);
-        lua_pushstring(l, filenamebuf);
-        lua_settable(l, -3);
+
+        // free file list
+        filelist_Free(ctx);
     }
 
-    // free file list
-    filelist_Free(ctx);
-
-    // free virtual file list:
     if (filelist) {
-        size_t i = 0;
+        // add file list to table:
+        i = 0;
+        while (filelist[i]) {
+            lua_pushinteger(l, i + 1);
+            lua_pushstring(l, filelist[i]);
+            lua_settable(l, -3);
+            i++;
+        }
+
+        // free virtual file list:
+        i = 0;
         while (filelist[i]) {
             free(filelist[i]);
             i++;
@@ -251,9 +291,13 @@ int luafuncs_ls(lua_State* l) {
         lua_pop(l, 1); // remove file listing table
 
         char errmsg[500];
-        snprintf(errmsg, sizeof(errmsg), "Error while processing ls in folder: %s", p);
+        snprintf(errmsg, sizeof(errmsg),
+            "Error while processing ls in folder: %s", pnative);
         errmsg[sizeof(errmsg)-1] = 0;
         lua_pushstring(l, errmsg);
+        free(pnative);
+        free(pcross);
+        free(pcrossrelative);
         return lua_error(l);
     }
 

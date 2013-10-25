@@ -34,6 +34,11 @@ blitwizard.net.irc = {}
 
  You can create as many as you like if you want to connect to
  multiple servers at once.
+
+ <i>Keep in mind when releasing your game:</i> please note this module
+ is implemented in the
+ <b>blitwizard templates</b>, so it is unavailable if you don't ship
+ the templates with your game.
  @type connection
 ]]
 blitwizard.net.irc.connection = {}

@@ -120,7 +120,12 @@ struct physicsobject2d {
     int movable;
     b2World* world;
     b2Body* body;
-    
+
+#ifndef NDEBUG
+    // track if this object was deleted
+    int _deleted;
+#endif   
+ 
     // needed for scaling, NULL on creation, init on scale
     // Array of pointers
     b2Shape** orig_shapes;
@@ -1468,8 +1473,14 @@ reverse order they were added in."
         f = f->GetNext();
     }
     object->orig_shapes = (b2Shape**)malloc(sizeof(b2Shape*)*fixture_count);
+    if (!object->orig_shapes) {
+        object->orig_shape_count = 0;
+        return;
+    }
     object->orig_shape_count = fixture_count;
-    
+    // those conditions should now hold true:
+    assert(object->orig_shape_count == fixture_count);
+ 
     int orig_shape_info_index = orig_shape_info_count-1;
     int fixture_index = fixture_count-1;
     f = body->GetFixtureList();
@@ -1492,7 +1503,8 @@ reverse order they were added in."
                 object->orig_shapes[fixture_index] = (b2Shape*)circle;
             break;
             case b2Shape::e_edge:
-                //never happens
+                // never happens.
+                assert(0);
                 //edge = f->GetShape();
             break;
             case b2Shape::e_polygon:
@@ -1503,10 +1515,12 @@ reverse order they were added in."
                 object->orig_shapes[fixture_index] = (b2Shape*)poly;
             break;
             default:
-                printerror("fatal.");
+                assert(0);
+                printerror("unknown fixture type in "
+                "_physics_fill2dOrigShapeCache");
             break;
         }
-        --fixture_index;
+        fixture_index--;
         f = f->GetNext();
     }
 }
@@ -1514,8 +1528,18 @@ reverse order they were added in."
 
 #ifdef USE_PHYSICS2D
 void _physics_delete2dOrigShapeCache(struct physicsobject2d* object) {
-    for (int i = 0; i < object->orig_shape_count; ++i) {
-        delete object->orig_shapes[i]; // delete shape
+#ifndef NDEBUG
+    // prevent double delete.
+    assert(!object->_deleted);
+    object->_deleted = 1;
+#endif
+    // negative count is invalid:
+    assert(object->orig_shape_count >= 0);
+    // delete the original shape info:
+    if (object->orig_shapes) {
+        for (int i = 0; i < object->orig_shape_count; ++i) {
+            delete object->orig_shapes[i]; // delete shape
+        }
     }
     free(object->orig_shapes); // delete array of pointers to shapes
     free(object->orig_shape_info); // delete array of shape info structs
@@ -1538,6 +1562,10 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
     // Firstly, make sure the original shape cache thingy is initialised
     if (object2d->orig_shape_count == 0) {
         _physics_fill2dOrigShapeCache(object2d);
+        if (object2d->orig_shape_count == 0) {
+            // it didn't work. what to do? probably nothing.
+            return;
+        }
     }
     // Secondly, delete all the old fixtures+
     float oldfriction = 0.5f;
