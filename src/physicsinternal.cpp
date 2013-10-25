@@ -822,33 +822,37 @@ void physics_set2dShapeOval(struct physicsobjectshape* shape, double width, doub
         return;
     }
 
-    //construct oval shape - by manually calculating the vertices
-    struct polygonpoint* vertices = (struct polygonpoint*)malloc(sizeof(*vertices)*OVALVERTICES);
-    
     if (_physics_shapeType(shape) < 0) {
         _physics_createEmpty2dShape(&(shape->shape2d));
     }
     
     
-    //go around with the angle in one full circle:
-    int i = 0;
+    // go around with the angle in one full circle:
+    shape->shape2d.b2.polygonpoints = NULL;
+    int i = OVALVERTICES - 1;
     double angle = 0;
-    while (angle < 2*M_PI && i < OVALVERTICES) {
-        //calculate and set vertex point
+    while (angle < 2*M_PI && i >= 0) {
+        struct polygonpoint* p = (struct polygonpoint*)
+            malloc(sizeof(*p));
+        if (!p) {
+            return;
+        }
+        // add in more polygon points:
+        p->next = shape->shape2d.b2.polygonpoints;
+        shape->shape2d.b2.polygonpoints = p;
+
+        // calculate and set vertex point
         double x,y;
         ovalpoint(angle, width, height, &x, &y);
         
-        vertices[i].x = x;
-        vertices[i].y = -y;
-        vertices[i].next = &vertices[i+i];
+        p->x = x;
+        p->y = -y;
         
-        //advance to next position
+        // advance to next position
         angle -= (2*M_PI)/((double)OVALVERTICES);
-        i++;
+        i--;
     }
-    vertices[i-1].next = NULL;
     
-    shape->shape2d.b2.polygonpoints = vertices;
     shape->shape2d.type = BW_S2D_POLY;
 
     shape->is3d = 0;
@@ -1234,6 +1238,7 @@ void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints,
     int i = 0;
     while (p != NULL) {
         ++i;
+        assert(p != p->next);
         p = p->next;
     }
     int num = i;
@@ -1243,6 +1248,7 @@ void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints,
     while (p != NULL) {
         varray[(num-1)-i].Set(p->x, p->y);
         ++i;
+        assert(p != p->next);
         p = p->next;
     }
     _physics_apply2dOffsetRotation(shape2d, varray, i);
@@ -1304,8 +1310,8 @@ struct physicsobject* physics_createObject_internal(struct physicsworld* world,
                     fixtureDef.shape = (new b2CircleShape);
                     ((b2CircleShape*)(fixtureDef.shape))->m_p = b2Vec2(
                      s->shape2d.xoffset, s->shape2d.yoffset);
-                    ((b2CircleShape*)(fixtureDef.shape))->m_radius = s->shape2d.\
-                     b2.circle->m_radius;
+                    ((b2CircleShape*)(fixtureDef.shape))->m_radius =
+                        s->shape2d.b2.circle->m_radius;
                     fixtureDef.friction = 1; // TODO: ???
                     fixtureDef.density = 1;
                     obj->object2d.body->SetFixedRotation(false);
@@ -1315,7 +1321,7 @@ struct physicsobject* physics_createObject_internal(struct physicsworld* world,
                 case BW_S2D_EDGE:
                     _physics_create2dObjectEdges_End(s->shape2d.b2.edges,
                     &obj->object2d, &(s->shape2d));
-                    break;
+                break;
             }
             s += 1;
             ++i;
@@ -1393,10 +1399,10 @@ void _physics_setb2ShapeOval(b2Shape* shape, double width, double height) {
         return;
     }
 
-    //construct oval shape - by manually calculating the vertices
+    // construct oval shape - by manually calculating the vertices
     b2Vec2* vertices = new b2Vec2[OVALVERTICES];
     
-    //go around with the angle in one full circle:
+    // go around with the angle in one full circle:
     int i = 0;
     double angle = 0;
     while (angle < 2*M_PI && i < OVALVERTICES) {

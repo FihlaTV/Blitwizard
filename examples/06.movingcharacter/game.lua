@@ -30,9 +30,11 @@ function blitwizard.onInit()
 	-- Add base level collision
 	level = blitwizard.object:new(blitwizard.object.o2d,
         "bg.png")
+    level:setZIndex(0) -- put nicely in the background
     local pixelsperunit = blitwizard.graphics.gameUnitToPixels()
     local halfwidth = 320  -- half the width of bg.png
     local halfheight = 240  -- half the height of bg.png
+    -- set up the level's collision shape:
     level:enableStaticCollision({
         type = "edge list",
         edges = {
@@ -90,9 +92,68 @@ function blitwizard.onInit()
             }
         }
 	})
-	level:setFriction(levelcollision, 0.5)
+	level:setFriction(0.5)
 
-	-- Add character
+	-- Add animated character.
+	-- The animation code we use here is just a suggestion,
+	-- you could achieve the same result differently.
+    char = blitwizard.object:new(
+        blitwizard.object.o2d, "char1.png")
+    function char:onGeometryLoaded()
+        -- character's texture dimensions were loaded!
+        -- set up the character:
+
+        -- set ourselves invisible:
+        self:setVisible(false)
+        assert(self:getVisible() == false)
+
+        -- load all animation frames as sub objects
+        -- and then show those instead:
+        self.animationFrames = {}
+        local parent = self
+        local i = 1
+        while i <= 3 do
+            -- create new object as visible animation frame:
+            local frame = blitwizard.object:new(
+                blitwizard.object.o2d, "char" .. i .. ".png")
+            function frame:doAlways()
+                -- move sub objects to follow parent (us)
+                local x,y = parent:getPosition()
+                frame:setPosition(x, y)
+                frame:setZIndex(parent:getZIndex())
+            end
+            -- store frame in a list:
+            self.animationFrames[i] = frame
+            i = i + 1
+        end
+
+        -- this function will allow to specify the frame to show:
+        function self:setFrame(frame)
+            self.animationFrames[frame]:setVisible(true)
+            -- hide all other frames:
+            local i = 1
+            while i <= #self.animationFrames do
+                if i ~= frame then
+                    self.animationFrames[i]:setVisible(false)
+                end
+                i = i + 1
+            end
+        end
+
+        -- start with showing the first frame
+        self:setFrame(1)
+
+        -- put ourselves on top of the background:
+        self:setZIndex(2)
+
+        -- enable collision and make this movable:
+        local w,h = self:getDimensions()
+        self:enableMovableCollision({
+            type = "oval",
+            width = w,
+            height = h
+        })
+    end
 	--[[char = blitwiz.physics2d.createMovableObject()
 	blitwiz.physics2d.setShapeOval(char, (50-halfwidth)/pixelsperunit, (140-halfheight)/pixelsperunit)
 	blitwiz.physics2d.setMass(char, 60)
