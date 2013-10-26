@@ -49,6 +49,7 @@ int luafuncs_object_scaleToDimensions(lua_State* l);
 int luafuncs_object_setInvisibleToMouse(lua_State* l);
 int luafuncs_object_setTextureFiltering(lua_State* l);
 int luafuncs_object_getTextureFiltering(lua_State* l);
+int luafuncs_object_set2dFlipped(lua_State* l);
 
 // iterate through all objects:
 int luafuncs_getAllObjects(lua_State* l);

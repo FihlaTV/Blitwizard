@@ -59,10 +59,7 @@
 
 <h1>Module <code>blitwizard</code></h1>
 
-<p>Blitwizard namespace containing the generic
- <a href="../modules/blitwizard.html#Class_object">blitwizard game entity object</a> and various sub
- namespaces for <a href="../modules/blitwizard.physics.html#">physics</a>,
- <a href="../modules/blitwizard.graphics.html#">graphics</a> and more.</p>
+<p></p>
 <p></p>
     <h3>Info:</h3>
     <ul>
@@ -113,15 +110,6 @@
  blitwizard log messages.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#scanFor2dObjects">scanFor2dObjects&nbsp;(x, y, radius)</a></td>
-	<td class="summary">Scan for 2d <a href="../modules/blitwizard.html#Class_object">objects</a> around the
- given position in a circle with the given radius.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
-	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
-	</tr>
-	<tr>
 	<td class="name" ><a href="#cancelDelayedRun">cancelDelayedRun&nbsp;(handle)</a></td>
 	<td class="summary">Cancel a function which was scheduled to be run with
  <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
@@ -131,6 +119,15 @@
 	<td class="name" ><a href="#runDelayed">runDelayed&nbsp;(function, delay, repeat)</a></td>
 	<td class="summary">This function allows scheduling a function to be executed
  after a specified time delay.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#scanFor2dObjects">scanFor2dObjects&nbsp;(x, y, radius)</a></td>
+	<td class="summary">Scan for 2d <a href="../modules/blitwizard.html#Class_object">objects</a> around the
+ given position in a circle with the given radius.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getAllObjects">getAllObjects&nbsp;()</a></td>
+	<td class="summary">Iterate through all existing objects, no matter if 2d or 3d.</td>
 	</tr>
 </table>
 <h2><a href="#Class_object">Class object </a></h2>
@@ -244,6 +241,10 @@
 	<tr>
 	<td class="name" ><a href="#object:setScale">object:setScale&nbsp;(x_scale, y_scale, z_scale)</a></td>
 	<td class="summary">Change an object's scale, also see <a href="../modules/blitwizard.html#object:getScale">blitwizard.object:getScale</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:set2dFlipped">object:set2dFlipped&nbsp;(flip)</a></td>
+	<td class="summary">Set a 2d object to be horizontally or vertically flipped (mirrored).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:scaleToDimensions">object:scaleToDimensions&nbsp;(width, height, z_size)</a></td>
@@ -602,6 +603,91 @@
 
 </dd>
     <dt>
+    <a name = "cancelDelayedRun"></a>
+    <strong>cancelDelayedRun&nbsp;(handle)</strong>
+    </dt>
+    <dd>
+    Cancel a function which was scheduled to be run with
+ <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
+ for it.
+<p> If the cancelled function has already been executed, this function
+ will return false, otherwise it will return true and
+ the function won't be executed anymore.
+<p> For repeated delayed runs (see <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a>/repeat parameter)
+ it will return false if the function has already been
+ executed once or more.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">handle</span>
+            <span class="types"><span class="type">userdata</span></span>
+         the handle returned by <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a></li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "runDelayed"></a>
+    <strong>runDelayed&nbsp;(function, delay, repeat)</strong>
+    </dt>
+    <dd>
+    This function allows scheduling a function to be executed
+ after a specified time delay.
+<p> blitwizard.runDelayed will return instantly, and lateron
+ when the specified amount of time has passed, the function will
+ be run once.
+<p> If you know JavaScript, this function works similar to
+ JavaScript's setTimeout/setInterval.
+<p> The return value of <a href="../modules/blitwizard.html#runDelayed">runDelayed</a>
+ is a handle which you can use to cancel the
+ scheduled function run with <a href="../modules/blitwizard.html#cancelDelayedRun">blitwizard.cancelDelayedRun</a>,
+ as long as it hasn't been run yet.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">function</span>
+            <span class="types"><span class="type">function</span></span>
+         the function which shall be executed later</li>
+        <li><span class="parameter">delay</span>
+            <span class="types"><span class="type">number</span></span>
+         the delay in milliseconds before executing the function</li>
+        <li><span class="parameter">repeat</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) If set to true, repeat the function infinitely with the interval being the specified milliseconds delay, instead of only calling it once. You can still use <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a> to stop it at some point. Default is false (not repeating).</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">userdata</span></span>
+        handle which can be used with <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+  <span class="keyword">function</span> runIn5Seconds()
+      <span class="comment">-- this will print to the developer console (F9):
+</span>      <span class="global">print</span>(<span class="string">"5 seconds are over!"</span>)
+  <span class="keyword">end</span>
+  <span class="keyword">function</span> runEach10Seconds()
+      <span class="comment">-- this will also print to the dev console:
+</span>      <span class="global">print</span>(<span class="string">"This should be written every 10 seconds!"</span>)
+  <span class="keyword">end</span>
+  blitwizard.runDelayed(runIn5Seconds, <span class="number">5000</span>)
+  <span class="keyword">local</span> myHandle = blitwizard.runDelayed(runEach10Seconds,
+      <span class="number">10000</span>, <span class="keyword">true</span>) <span class="comment">-- repeated run
+</span>  <span class="comment">-- now you can use myHandle with blitwizard.cancelDelayedRun to cancel it
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
     <a name = "scanFor2dObjects"></a>
     <strong>scanFor2dObjects&nbsp;(x, y, radius)</strong>
     </dt>
@@ -690,91 +776,6 @@
      <span class="keyword">local</span> x, y = obj:getPosition()
      <span class="global">print</span>(<span class="string">"object at: "</span> .. x .. <span class="string">", "</span> .. y)
  <span class="keyword">end</span></pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "cancelDelayedRun"></a>
-    <strong>cancelDelayedRun&nbsp;(handle)</strong>
-    </dt>
-    <dd>
-    Cancel a function which was scheduled to be run with
- <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a> using the handle you received
- for it.
-<p> If the cancelled function has already been executed, this function
- will return false, otherwise it will return true and
- the function won't be executed anymore.
-<p> For repeated delayed runs (see <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a>/repeat parameter)
- it will return false if the function has already been
- executed once or more.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">handle</span>
-            <span class="types"><span class="type">userdata</span></span>
-         the handle returned by <a href="../modules/blitwizard.html#runDelayed">blitwizard.runDelayed</a></li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "runDelayed"></a>
-    <strong>runDelayed&nbsp;(function, delay, repeat)</strong>
-    </dt>
-    <dd>
-    This function allows scheduling a function to be executed
- after a specified time delay.
-<p> blitwizard.runDelayed will return instantly, and lateron
- when the specified amount of time has passed, the function will
- be run once.
-<p> If you know JavaScript, this function works similar to
- JavaScript's setTimeout/setInterval.
-<p> The return value of <a href="../modules/blitwizard.html#runDelayed">runDelayed</a>
- is a handle which you can use to cancel the
- scheduled function run with <a href="../modules/blitwizard.html#cancelDelayedRun">blitwizard.cancelDelayedRun</a>,
- as long as it hasn't been run yet.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">function</span>
-            <span class="types"><span class="type">function</span></span>
-         the function which shall be executed later</li>
-        <li><span class="parameter">delay</span>
-            <span class="types"><span class="type">number</span></span>
-         the delay in milliseconds before executing the function</li>
-        <li><span class="parameter">repeat</span>
-            <span class="types"><span class="type">boolean</span></span>
-         (optional) If set to true, repeat the function infinitely with the interval being the specified milliseconds delay, instead of only calling it once. You can still use <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a> to stop it at some point. Default is false (not repeating).</li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">userdata</span></span>
-        handle which can be used with <a href="../modules/blitwizard.html#cancelDelayedRun">cancelDelayedRun</a>
-    </ol>
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
-  <span class="keyword">function</span> runIn5Seconds()
-      <span class="comment">-- this will print to the developer console (F9):
-</span>      <span class="global">print</span>(<span class="string">"5 seconds are over!"</span>)
-  <span class="keyword">end</span>
-  <span class="keyword">function</span> runEach10Seconds()
-      <span class="comment">-- this will also print to the dev console:
-</span>      <span class="global">print</span>(<span class="string">"This should be written every 10 seconds!"</span>)
-  <span class="keyword">end</span>
-  blitwizard.runDelayed(runIn5Seconds, <span class="number">5000</span>)
-  <span class="keyword">local</span> myHandle = blitwizard.runDelayed(runEach10Seconds,
-      <span class="number">10000</span>, <span class="keyword">true</span>) <span class="comment">-- repeated run
-</span>  <span class="comment">-- now you can use myHandle with blitwizard.cancelDelayedRun to cancel it
-</span></pre>
     </ul>
 
 </dd>
@@ -1561,6 +1562,28 @@
  <span class="comment">-- scale 3d object to half its original size
 </span> obj3d:setScale(<span class="number">0.5</span>, <span class="number">0.5</span>, <span class="number">0.5</span>)</pre>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "object:set2dFlipped"></a>
+    <strong>object:set2dFlipped&nbsp;(flip)</strong>
+    </dt>
+    <dd>
+    Set a 2d object to be horizontally or vertically flipped (mirrored).
+ This can be helpful if you use a sprite for a 2d character and you
+ animate him to walk to the right, and then simply want to mirror
+ that whole animation to make him walk left instead of redoing it all over.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">flip</span>
+            <span class="types"><span class="type">number</span></span>
+         0 not flipped, 1 flipped horizontally, 2 flipped vertically, 3 flipped both horizontally and vertically</li>
+    </ul>
+
+
+
+
 
 </dd>
     <dt>

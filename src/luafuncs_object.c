@@ -1269,6 +1269,47 @@ int luafuncs_object_setScale(lua_State* l) {
     return 0;
 }
 
+/// Set a 2d object to be horizontally or vertically flipped (mirrored).
+// This can be helpful if you use a sprite for a 2d character and you
+// animate him to walk to the right, and then simply want to mirror
+// that whole animation to make him walk left instead of redoing it all over.
+// @function set2dFlipped
+// @tparam number flip 0 not flipped, 1 flipped horizontally, 2 flipped vertically, 3 flipped both horizontally and vertically
+int luafuncs_object_set2dFlipped(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:set2dFlip");
+    if (obj->is3d) {
+        return haveluaerror(l, "cannot set 2d flip state on 3d object");
+    }
+    if (lua_type(l, 2) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.object:set2dFlip", "number", lua_strtype(l, 2));
+    }
+    int flip = lua_tonumber(l, 2);
+    if (flip < 0 || flip > 3) {
+        return haveluaerror(l, "flip number must be in a range from 0 to 3");
+    }
+    switch (flip) {
+    case 0:
+        obj->vertiFlipped = 0;
+        obj->horiFlipped = 0;
+    break;
+    case 1:
+        obj->vertiFlipped = 0;
+        obj->horiFlipped = 1;
+    break;
+    case 2:
+        obj->vertiFlipped = 1;
+        obj->horiFlipped = 0;
+    break;
+    case 3:
+        obj->vertiFlipped = 1;
+        obj->horiFlipped = 1;
+    break;
+    }
+    return 0; 
+}
+
 /// Scale up an object to precise boundaries in game units.
 // An according @{blitwizard.object:setScale|scale factor}
 // will be picked to achieve this.
