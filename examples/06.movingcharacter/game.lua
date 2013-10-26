@@ -8,14 +8,8 @@
 ]]
 
 print("Moving character example in blitwizard")
-pixelsperunit = 30
-cratesize = 64/pixelsperunit
-frame = 1 -- animation frame to be displayed (can be 1, 2, 3)
 leftright = 0 -- keyboard left/right input
-animationstate = 0 -- used for timing the animation
-flipped = false -- whether to draw the character flipped (=facing left)
 jump = false -- keyboard jump input
-lastjump = 0 -- remember our last jump to enforce a short no-jump time after each jump
 
 function blitwizard.onInit()
 	-- Open a window
@@ -150,29 +144,92 @@ function blitwizard.onInit()
         local w,h = self:getDimensions()
         self:enableMovableCollision({
             type = "oval",
-            width = w,
+            width = w * 0.75,
             height = h
         })
+        self:setMass(60)
+        self:setFriction(0.3)
+        self:setLinearDamping(7)
+        self:restrictRotation(true)
+
+        -- move left and right:
+        function self:doAlways()
+            -- animation frame we want to use:
+            local frame = -1
+
+            -- Various variables:
+            local onthefloor = false
+            local charx, chary = self:getPosition(char)
+
+            -- Cast a ray to check for the floor
+            local obj, posx, posy, normalx, normaly =
+            blitwizard.physics.ray2d(charx, chary, charx,
+            chary+350/pixelsperunit)
+
+            -- Check if we reach the floor:
+            local charsizex, charsizey = self:getDimensions()
+            charsizex = charsizex / pixelsperunit
+            charsizey = charsizey / pixelsperunit
+            if obj ~= nil and posy < chary + charsizey/2 + 1/pixelsperunit then
+                onthefloor = true
+            end
+
+            local walkanim = false
+            local flipped = false
+            -- Enable walking if on the floor
+            if onthefloor == true or true then
+                -- walk
+                local upforce = -0.6
+                if onthefloor then upforce = -3 end
+                if leftright < 0 then
+                    flipped = true
+                    walkanim = true
+                    self:impulse(-6, upforce, charx + 5, chary - 3)
+                end
+                if leftright > 0 then
+                    flipped = false
+                    walkanim = true
+                    self:impulse(6, upforce, charx - 5, chary - 3)
+                end
+                -- jump
+                if jump == true and
+                (self.lastjump or 0) + 500 < blitwizard.time.getTime() then
+                    self.lastjump = blitwizard.time.getTime()
+                    self:impulse(0, -200, charx, chary - 1)
+                end
+            end
+
+            -- Check out how to animate
+            if walkanim == true then
+                -- We walk, animate:
+                frame = 2
+
+                -- our animation state keeps track of switching
+                -- the frames to visualize walking:
+                self.animationstate = (self.animationstate or 0) + 1
+                if self.animationstate >= 13 then
+                    -- half of the animation time is reached,
+                    -- switch to second walk frame
+                    frame = 3
+                end
+                if self.animationstate >= 26 then
+                    -- wrap over at the end of the animation:
+                    self.animationstate = 0
+                    frame = 2
+                end
+            else
+                frame = 1
+            end
+
+            -- set animation frame if changed:
+            if frame > 0 then
+                self:setFrame(frame)
+            end
+        end
     end
-	--[[char = blitwiz.physics2d.createMovableObject()
-	blitwiz.physics2d.setShapeOval(char, (50-halfwidth)/pixelsperunit, (140-halfheight)/pixelsperunit)
-	blitwiz.physics2d.setMass(char, 60)
-	blitwiz.physics2d.setFriction(char, 0.3)
-	--blitwiz.physics2d.setLinearDamping(char, 10)
-	blitwiz.physics2d.warp(char, (456-halfwidth)/pixelsperunit, (188-halfheight)/pixelsperunit)
-	blitwiz.physics2d.restrictRotation(char, true)]]
 end
 
-blitwiz = {}
-
-function bgimagepos()
-	-- Return the position of the background image (normally just 0,0):
-	local w,h = blitwiz.graphics.getImageSize("bg.png")
-    local mw,mh = blitwiz.graphics.getWindowSize()
-	return mw/2 - w/2, mh/2 - h/2
-end
-
-function blitwiz.on_keydown(key)
+function blitwizard.onKeyDown(key)
 	-- Process keyboard walk/jump input
 	if key == "a" then
 		leftright = -1
@@ -185,7 +242,7 @@ function blitwiz.on_keydown(key)
 	end
 end
 
-function blitwiz.on_keyup(key)
+function blitwizard.onKeyUp(key)
 	if key == "a" and leftright < 0 then
 		leftright = 0
 	end
@@ -197,75 +254,7 @@ function blitwiz.on_keyup(key)
 	end
 end
 
-function blitwiz.on_draw()
-	if flipped == nil then
-		flipped = false
-	end
-
-	-- Draw the background image centered:
-	local bgx,bgy = bgimagepos()
-	blitwiz.graphics.drawImage("bg.png", {x=bgx, y=bgy})
-
-	-- Draw the character
-	local x,y = blitwiz.physics2d.getPosition(char)
-	local w,h = blitwiz.graphics.getImageSize("char1.png")
-	blitwiz.graphics.drawImage("char" .. frame .. ".png", {x=x*pixelsperunit - w/2 + bgx, y=y*pixelsperunit - h/2 + bgy, flipped=flipped})
-end
-
-function blitwiz.on_close()
+function blitwizard.onClose()
 	os.exit(0)
-end
-
-function blitwiz.on_step()
-	local onthefloor = false
-	local charx,chary = blitwiz.physics2d.getPosition(char)
-
-	-- Cast a ray to check for the floor
-	local obj,posx,posy,normalx,normaly = blitwiz.physics2d.ray(charx,chary,charx,chary+350/pixelsperunit)
-
-	-- Check if we reach the floor:
-	local charsizex,charsizey = blitwiz.graphics.getImageSize("char1.png")
-	charsizex = charsizex / pixelsperunit
-	charsizey = charsizey / pixelsperunit
-	if obj ~= nil and posy < chary + charsizey/2 + 1/pixelsperunit then
-		onthefloor = true
-	end
-
-	local walkanim = false
-	-- Enable walking if on the floor
-	if onthefloor == true then
-		-- walk
-		if leftright < 0 then
-			flipped = true
-			walkanim = true
-			blitwiz.physics2d.impulse(char, charx + 5, chary - 3, -0.4, -0.6)
-		end
-		if leftright > 0 then
-			flipped = false
-			walkanim = true
-        	blitwiz.physics2d.impulse(char, charx - 5, chary - 3, 0.4, -0.6)
-		end
-		-- jump
-		if jump == true and lastjump + 500 < blitwiz.time.getTime() then
-			lastjump = blitwiz.time.getTime()
-			blitwiz.physics2d.impulse(char, charx, chary - 1, 0, -20)
-		end
-	end
-
-	-- Check out how to animate
-	if walkanim == true then
-		-- We walk, animate:
-		frame = 2
-		animationstate = animationstate + 1
-		if animationstate >= 13 then -- half of the animation time is reached, switch to second walk frame
-			frame = 3
-		end
-		if animationstate >= 26 then -- wrap over at the end of the animation
-			animationstate = 0
-			frame = 2
-		end
-	else
-		frame = 1
-	end
 end
 
