@@ -156,7 +156,7 @@ function blitwizard.onInit()
         })
         self:setMass(120)
         self:setFriction(0.3)
-        --self:setLinearDamping(7)
+        self:setLinearDamping(3)
         self:restrictRotation(true)
 
         -- move left and right:
@@ -173,9 +173,16 @@ function blitwizard.onInit()
             blitwizard.physics.ray2d(charx, chary, charx,
             chary+500/pixelsperunit)
 
-            -- Check if we reach the floor:
+            -- Get our character dimensions:
             local charsizex, charsizey = self:getDimensions()
-            if obj ~= nil and posy < chary + charsizey/2 + 1/pixelsperunit then
+
+            -- Calculate distance to floor:
+            local floordistance =
+            (posy - (chary + charsizey/2))
+
+            -- Check if we reach the floor:
+            if floordistance < 10/pixelsperunit then
+                -- Floor is close enough:
                 onthefloor = true
             end
 
@@ -183,9 +190,16 @@ function blitwizard.onInit()
             local flipped = nil
             -- Enable walking if on the floor
             if onthefloor == true then
-                -- walk
-                local upforce = -0.6
-                if onthefloor then upforce = -3 end
+                -- do walking:
+
+                -- if we're very close to the floor, apply soft up drift
+                -- (this allows easier climbing of hills):
+                local upforce = -3
+                if floordistance > 1/pixelsperunit then
+                    -- too far away, no up drift
+                    upforce = 0
+                end
+
                 if leftright < 0 then
                     flipped = true
                     walkanim = true
@@ -200,13 +214,13 @@ function blitwizard.onInit()
                 if jump == true and
                 (self.lastjump or 0) + 500 < blitwizard.time.getTime() then
                     local jumpdir = 0
-                    local jumpforce = -50
+                    local jumpforce = -100
                     if leftright > 0 then
-                        jumpdir = 7
-                        jumpforce = -45
+                        jumpdir = 30
+                        jumpforce = jumpforce * 0.7
                     elseif leftright < 0 then
-                        jumpdir = -7
-                        jumpforce = -45
+                        jumpdir = -30
+                        jumpforce = jumpforce * 0.7
                     end
                     self.lastjump = blitwizard.time.getTime()
                     self:impulse(jumpdir, jumpforce, charx, chary - 1)
@@ -221,12 +235,12 @@ function blitwizard.onInit()
                 -- our animation state keeps track of switching
                 -- the frames to visualize walking:
                 self.animationstate = (self.animationstate or 0) + 1
-                if self.animationstate >= 13 then
+                if self.animationstate >= 30 then
                     -- half of the animation time is reached,
                     -- switch to second walk frame
                     frame = 3
                 end
-                if self.animationstate >= 26 then
+                if self.animationstate >= 60 then
                     -- wrap over at the end of the animation:
                     self.animationstate = 0
                     frame = 2
