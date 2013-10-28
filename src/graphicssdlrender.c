@@ -165,12 +165,12 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
         rotationangle, &p, SDL_FLIP_HORIZONTAL);
     } else {
         if (rotationangle > 0.001 || rotationangle < -0.001) {
-            // don't rotate the rendered image if it's barely rotated
-            // (this helps the software renderer)
+            // draw rotated
             SDL_RenderCopyEx(mainrenderer, gt->sdltex, &src, &dest,
             rotationangle, &p, SDL_FLIP_NONE);
         } else {
-            // draw rotated
+            // don't rotate the rendered image if it's barely rotated
+            // (this helps the software renderer)
             SDL_RenderCopy(mainrenderer, gt->sdltex, &src, &dest);
         }
     }

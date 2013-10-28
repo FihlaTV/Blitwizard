@@ -92,7 +92,7 @@ function blitwizard.onInit()
 	-- The animation code we use here is just a suggestion,
 	-- you could achieve the same result differently.
     char = blitwizard.object:new(
-        blitwizard.object.o2d, "char1.png")
+        blitwizard.object.o2d, "char3.png")
     function char:onGeometryLoaded()
         -- character's texture dimensions were loaded!
         -- set up the character:
@@ -130,6 +130,15 @@ function blitwizard.onInit()
                 if i ~= frame then
                     self.animationFrames[i]:setVisible(false)
                 end
+                i = i + 1
+            end
+        end
+
+        -- change our set2dFlipped to set the flipped state on our frames:
+        function self:set2dFlipped(value)
+            local i = 1
+            while i <= #self.animationFrames do
+                self.animationFrames[i]:set2dFlipped(value)
                 i = i + 1
             end
         end
@@ -175,7 +184,7 @@ function blitwizard.onInit()
             end
 
             local walkanim = false
-            local flipped = false
+            local flipped = nil
             -- Enable walking if on the floor
             if onthefloor == true or true then
                 -- walk
@@ -224,6 +233,14 @@ function blitwizard.onInit()
             -- set animation frame if changed:
             if frame > 0 then
                 self:setFrame(frame)
+            end
+            -- set flipped state:
+            if flipped ~= nil then
+                if flipped then
+                    self:set2dFlipped(1)
+                else
+                    self:set2dFlipped(0)
+                end
             end
         end
     end
