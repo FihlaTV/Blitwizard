@@ -1936,16 +1936,24 @@ public:
     b2Body* closestcollidedbody;
     b2Vec2 closestcollidedposition;
     b2Vec2 closestcollidednormal;
+    b2Vec2 rayStartingPoint;
 
     mycallback() {
         closestcollidedbody = NULL;
     }
 
-    virtual float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction) {
+    virtual float ReportFixture(b2Fixture* fixture,
+    const b2Vec2& point, const b2Vec2& normal, float32 fraction) {
+        // if ray starting point is inside the fixture,
+        // ignore things.
+        if (fixture->TestPoint(rayStartingPoint)) {
+            // nope, ignore.
+            return 1;  // don't change ray length
+        }
         closestcollidedbody = fixture->GetBody();
         closestcollidedposition = point;
         closestcollidednormal = normal;
-        return fraction;
+        return fraction;  // only check fixtures up to this point
     }
 };
 #endif
@@ -1956,14 +1964,17 @@ int physics_ray2d(struct physicsworld* world, double startx, double starty, doub
     
     // create callback object which finds the closest impact
     mycallback callbackobj;
-    
+    callbackobj.rayStartingPoint = b2Vec2(startx, starty);
+ 
     // cast a ray and have our callback object check for closest impact
-    world2d->w->RayCast(&callbackobj, b2Vec2(startx, starty), b2Vec2(targetx, targety));
+    world2d->w->RayCast(&callbackobj, b2Vec2(startx, starty),
+    b2Vec2(targetx, targety));
     if (callbackobj.closestcollidedbody) {
         // we have a closest collided body, provide hitpoint information:
         *hitpointx = callbackobj.closestcollidedposition.x;
         *hitpointy = callbackobj.closestcollidedposition.y;
-        *objecthit = ((struct bodyuserdata*)callbackobj.closestcollidedbody->GetUserData())->pobj;
+        *objecthit = ((struct bodyuserdata*)callbackobj.
+            closestcollidedbody->GetUserData())->pobj;
         *hitnormalx = callbackobj.closestcollidednormal.x;
         *hitnormaly = callbackobj.closestcollidednormal.y;
         return 1;

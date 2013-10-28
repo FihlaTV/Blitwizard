@@ -15,11 +15,9 @@ function blitwizard.onInit()
 	-- Open a window
 	blitwizard.graphics.setMode(640, 480, "Moving character", false)
 
-	-- Load image
-	--[[blitwiz.graphics.loadImage("bg.png")
-	blitwiz.graphics.loadImage("char1.png")
-	blitwiz.graphics.loadImage("char2.png")
-	blitwiz.graphics.loadImage("char3.png")]]
+    -- Set gravity:
+    blitwizard.physics.set2dGravity(
+        0, 9.81 * 0.5)
 
 	-- Add base level collision
 	level = blitwizard.object:new(blitwizard.object.o2d,
@@ -156,9 +154,9 @@ function blitwizard.onInit()
             width = w * 0.75,
             height = h
         })
-        self:setMass(60)
+        self:setMass(120)
         self:setFriction(0.3)
-        self:setLinearDamping(7)
+        --self:setLinearDamping(7)
         self:restrictRotation(true)
 
         -- move left and right:
@@ -173,12 +171,10 @@ function blitwizard.onInit()
             -- Cast a ray to check for the floor
             local obj, posx, posy, normalx, normaly =
             blitwizard.physics.ray2d(charx, chary, charx,
-            chary+350/pixelsperunit)
+            chary+500/pixelsperunit)
 
             -- Check if we reach the floor:
             local charsizex, charsizey = self:getDimensions()
-            charsizex = charsizex / pixelsperunit
-            charsizey = charsizey / pixelsperunit
             if obj ~= nil and posy < chary + charsizey/2 + 1/pixelsperunit then
                 onthefloor = true
             end
@@ -186,25 +182,34 @@ function blitwizard.onInit()
             local walkanim = false
             local flipped = nil
             -- Enable walking if on the floor
-            if onthefloor == true or true then
+            if onthefloor == true then
                 -- walk
                 local upforce = -0.6
                 if onthefloor then upforce = -3 end
                 if leftright < 0 then
                     flipped = true
                     walkanim = true
-                    self:impulse(-6, upforce, charx + 5, chary - 3)
+                    self:impulse(-2, upforce, charx + 0.2, chary - 3)
                 end
                 if leftright > 0 then
                     flipped = false
                     walkanim = true
-                    self:impulse(6, upforce, charx - 5, chary - 3)
+                    self:impulse(2, upforce, charx - 0.2, chary - 3)
                 end
                 -- jump
                 if jump == true and
                 (self.lastjump or 0) + 500 < blitwizard.time.getTime() then
+                    local jumpdir = 0
+                    local jumpforce = -50
+                    if leftright > 0 then
+                        jumpdir = 7
+                        jumpforce = -45
+                    elseif leftright < 0 then
+                        jumpdir = -7
+                        jumpforce = -45
+                    end
                     self.lastjump = blitwizard.time.getTime()
-                    self:impulse(0, -200, charx, chary - 1)
+                    self:impulse(jumpdir, jumpforce, charx, chary - 1)
                 end
             end
 
