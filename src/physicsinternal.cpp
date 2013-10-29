@@ -1679,7 +1679,7 @@ void physics_setMass_internal(struct physicsobject* obj, double mass) {
         struct physicsobject2d* obj2d = &obj->object2d;
         if (!obj2d->movable) {return;}
         if (!obj2d->body) {return;}
-        if (mass > 0) {
+        /*if (mass > 0) {
             if (obj2d->body->GetType() == b2_staticBody) {
                 obj2d->body->SetType(b2_dynamicBody);
             }
@@ -1688,10 +1688,17 @@ void physics_setMass_internal(struct physicsobject* obj, double mass) {
             if (obj2d->body->GetType() == b2_dynamicBody) {
                 obj2d->body->SetType(b2_staticBody);
             }
-        }
+        }*/
+        assert(mass == 0 || obj2d->body->GetType() == b2_dynamicBody);
+
+        // first, calculate proper default values for mass/inertia
+        obj2d->body->ResetMassData();
+
         b2MassData mdata;
         obj2d->body->GetMassData(&mdata);
+        double inertiaFactor = (mass / mdata.mass);
         mdata.mass = mass;
+        mdata.I *= inertiaFactor;
         obj2d->body->SetMassData(&mdata);
 #endif
     } else {

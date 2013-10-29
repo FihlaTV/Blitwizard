@@ -162,7 +162,6 @@ int texturemanager_saveSystemMemory(void) {
 // If you anxiously want more memory, specify savememory = 2.
 int texturemanager_decideOnPreferredSize(struct graphicstexturemanaged* gtm,
 time_t now, int savememory) {
-    return 0;
     int wantsize = 0;  // 0 = full, 1 = tiny, 2 = low, 3 = medium, 4 = high
     // downscaling based on distance:
     if (gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + SCALEDOWNSECONDS
@@ -181,7 +180,6 @@ time_t now, int savememory) {
             // (or detail distance for quite a while and normal for a short
             // time and we want memory).
             // go down to medium scaling:
-            return -1;
             wantsize = 3;  // medium
             if (gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] +
             SCALEDOWNSECONDSVERYLONG < now &&
@@ -234,7 +232,6 @@ time_t now, int savememory) {
         if (savememory == 2 &&
         gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
         SCALEDOWNSECONDSVERYLONG < now) {
-            // we anxiously want memory.
             // suggest unloading:
             wantsize = -1;
         }
@@ -596,9 +593,9 @@ request, int listLocked) {
                 }
             }
         }
-        if (texturemanager_saveGPUMemory() == 2) {
+        /*if (texturemanager_saveGPUMemory() == 2) {
             donotload = 1;
-        }
+        }*/  // this is not a good solution since no texture
         if (!donotload) {
 #ifdef DEBUGTEXTUREMANAGER
             printinfo("[TEXMAN] initial texture fetch for %s", gtm->path);

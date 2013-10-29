@@ -169,7 +169,7 @@ struct texturerequesthandle* request, int visibility);
 #define SCALEDOWNSECONDS 30
 
 // helps with debugging downscaling:
-//#define ULTRAFASTDOWNSCALE
+#define ULTRAFASTDOWNSCALE
 
 
 #ifdef ULTRAFASTDOWNSCALE
