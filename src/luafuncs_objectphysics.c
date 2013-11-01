@@ -1245,7 +1245,8 @@ int luafuncs_object_setFriction(lua_State* l) {
         "blitwizard.object:setFriction",
         "number", lua_strtype(l, 2));
     }
-    obj->physics->friction = lua_tonumber(l, 2);
+    double friction = lua_tonumber(l, 2);
+    obj->physics->friction = friction;
     applyobjectsettings(obj);
     return 0;
 }
@@ -1336,9 +1337,53 @@ int luafuncs_object_setLinearDamping(lua_State* l) {
     return 0;
 }
 
+/// Get the mass of an object. This is only applicable
+// for objects with movable collision enabled.
+//
+// The mass of an object may be altered with
+// @{blitwizard.object:setMass|setMass}.
+// @function getMass
+// @treturn number mass The mass of the object in kilograms.
+// @treturn number mass_center_x The x coordinate of the mass center (relative to object enter).
+// @treturn number mass_center_y The y coordinate of the mass center.
+// @treturn number mass_center_z (only returned for 3d objects) The z coordinate of the mass center.
+int luafuncs_object_getMass(lua_State* l) {
+    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
+    "blitwizard.object:setMass");
+    if (!obj->physics || !obj->physics->object) {
+        lua_pushstring(l, "object has no shape");
+        return lua_error(l);
+    }
+    if (!obj->physics->movable) {
+        lua_pushstring(l, "Mass can be only be obtained for movable objects");
+        return lua_error(l);
+    }
+    lua_pushnumber(l, physics_getMass(obj->physics->object));
+    double centerx,centery,centerz;
+    if (obj->is3d) {
+#ifdef USE_PHYSICS3D
+        physics_get3dMassCenterOffset(obj->physics->object,
+        &centerx, &centery, &centerz);
+#endif
+    } else {
+        physics_get2dMassCenterOffset(obj->physics->object,
+        &centerx, &centery);
+        centerz = 0;
+    }
+    lua_pushnumber(l, centerx);
+    lua_pushnumber(l, centery);
+    if (obj->is3d) {
+        lua_pushnumber(l, centerz);
+    }
+    return 3+(obj->is3d ? 1 : 0);
+}
+
 /// Set the mass and the center of an object. Only applicable for
 // objects with movable collision enabled. (objects with static
 // collision have infinite mass since they're not movable)
+//
+// Obtain the mass that is currently set to an object with
+// @{blitwizard.object:getMass|object:getMass}.
 // @function setMass
 // @tparam number mass Set the mass of the object in kilograms. You should experiment and pick mass here which works well for you (it shouldn't be very small or very large), rather than using the most truthful numbers.
 // @tparam number mass_center_x (optional) Set the x coordinate of the mass center (default: 0)

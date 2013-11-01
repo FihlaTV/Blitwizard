@@ -43,6 +43,7 @@ int luafuncs_object_restrictRotation(lua_State* l);
 int luafuncs_object_restrictRotationAroundAxis(lua_State* l);
 int luafuncs_object_impulse(lua_State* l);
 int luafuncs_object_setMass(lua_State* l);
+int luafuncs_object_getMass(lua_State* l);
 int luafuncs_object_setRestitution(lua_State* l);
 int luafuncs_object_setFriction(lua_State* l);
 int luafuncs_object_setAngularDamping(lua_State* l);

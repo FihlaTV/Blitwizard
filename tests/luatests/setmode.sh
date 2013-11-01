@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test confirms blitiwzard.object:new works.
+# This test confirms blitwizard.object:new works.
 # It will also test the init event function.
 
 source preparetest.sh

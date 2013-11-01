@@ -1700,6 +1700,10 @@ void physics_setMass_internal(struct physicsobject* obj, double mass) {
         mdata.mass = mass;
         mdata.I *= inertiaFactor;
         obj2d->body->SetMassData(&mdata);
+#ifndef NDEBUG
+        obj2d->body->GetMassData(&mdata);
+        assert(mdata.mass == mass);
+#endif
 #endif
     } else {
 #ifdef USE_PHYSICS3D
@@ -1786,6 +1790,7 @@ void physics_set2dRotationRestriction_internal(struct physicsobject* obj, int re
 void physics_setFriction_internal(struct physicsobject* obj, double friction) {
     if (not obj->is3d) {
 #ifdef USE_PHYSICS2D
+        double mass = physics_getMass_internal(obj);
         b2Fixture* f = obj->object2d.body->GetFixtureList();
         while (f) {
             f->SetFriction(friction);
@@ -1796,6 +1801,7 @@ void physics_setFriction_internal(struct physicsobject* obj, double friction) {
             e->contact->ResetFriction();
             e = e->next;
         }
+        physics_setMass_internal(obj, mass);
 #endif
     } else {
 #ifdef USE_PHYSICS3D

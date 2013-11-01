@@ -293,6 +293,8 @@ void luastate_CreateObjectTable(lua_State* l) {
     "impulse");
     luastate_register2d3dphysics(l, &luafuncs_object_setMass,
     "setMass");
+    luastate_register2d3dphysics(l, &luafuncs_object_getMass,
+    "getMass");
     luastate_register2d3dphysics(l, &luafuncs_object_setRestitution,
     "setRestitution");
     luastate_register2d3dphysics(l, &luafuncs_object_setFriction,

@@ -97,7 +97,6 @@ function blitwizard.onInit()
 
         -- set ourselves invisible:
         self:setVisible(false)
-        assert(self:getVisible() == false)
 
         -- load all animation frames as sub objects
         -- and then show those instead:
