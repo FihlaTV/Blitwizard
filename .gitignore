@@ -4,6 +4,7 @@ config.h
 averclone/
 deps.txt
 deps.zip
+test-driver
 *.apk
 *.a
 *.swo
