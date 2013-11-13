@@ -201,6 +201,7 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
     if (nulldevicetitle) {
         nulldevicetitle = strdup("");
     }
+    graphics_calculateUnitToPixels(nulldevicewidth, nulldeviceheight);
     graphicsvisible = 1;
     return 1;
 }

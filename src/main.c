@@ -979,9 +979,9 @@ int main(int argc, char** argv) {
     // free template dir now that we've loaded things:
     free(option_templatepath);
 
-
 #if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: Executing lua start script...");
+    printinfo("[main] android: blitwizard startup: "
+    "executing lua start script...");
 #endif
 
     // push command line arguments into script state:
@@ -995,7 +995,8 @@ int main(int argc, char** argv) {
         i++;
     }
     if (pushfailure) {
-        printerror("Error: Couldn't push all script arguments into script state");
+        printerror("Error: couldn't push all script arguments "
+        "into script state");
         main_Quit(1);
         return 1;
     }
@@ -1013,7 +1014,8 @@ int main(int argc, char** argv) {
         if (error == NULL) {
             error = outofmem;
         }
-        printerror("Error: an error occured when running \"%s\": %s", script, error);
+        printerror("Error: an error occured when running \"%s\": %s",
+        script, error);
         if (error != outofmem) {
             free(error);
         }
@@ -1025,15 +1027,14 @@ int main(int argc, char** argv) {
     // enable blitwizard.onLog
     doConsoleLog();
 
-#if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: Calling blitwiz.onInit...");
-#endif
+    printinfo("[main] blitwizard startup: calling blitwiz.onInit...");
     doConsoleLog();
 
     // call init
     if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1,
     &error, NULL, NULL)) {
-        printerror("Error: An error occured when calling blitwizard.onInit: %s",error);
+        printerror("Error: an error occured when calling "
+        "blitwizard.onInit: %s",error);
         if (error != outofmem) {
             free(error);
         }
@@ -1044,9 +1045,7 @@ int main(int argc, char** argv) {
     doConsoleLog();
 
     // when graphics or audio is open, run the main loop
-#if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: Entering main loop...");
-#endif
+    printinfo("[main] blitwizard startup: Entering main loop...");
     doConsoleLog();
 
     // Initialise audio when it isn't
@@ -1276,6 +1275,7 @@ int main(int argc, char** argv) {
         luacfuncs_objectgraphics_newFrame();
 #endif
     }
+    printinfo("[main] nothing interesting remains running; quit!");
     main_Quit(0);
     return 0;
 }
