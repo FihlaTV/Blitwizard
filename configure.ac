@@ -425,7 +425,7 @@ AS_IF([test -z "$maybeos"],[
         NEED_XHEADERS="yes"
     ])
     AC_CHECK_HEADERS([X11/Xlib.h],,[
-        AC_WARN([Cannot find Xlib header files required for Ogre3D and SDL2. No Ogre or SDL2 support possible.])
+        AC_WARN([Cannot find Xlib header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
         OGRE_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
         SDL_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
         AUDIO_FEATURE_ENABLED="no, need SDL2"
@@ -434,7 +434,7 @@ AS_IF([test -z "$maybeos"],[
     ])
     AS_IF([test "x$NEED_XHEADERS" = xyes], [
         AC_CHECK_HEADERS([X11/extensions/Xext.h],,[
-            AC_MSG_ERROR([Cannot find Xext header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
+            AC_WARN([Cannot find Xext header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
             OGRE_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
             SDL_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
             AUDIO_FEATURE_ENABLED="no, need SDL2"

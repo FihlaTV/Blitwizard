@@ -2,6 +2,8 @@ stamp-*
 config.h.in
 config.h
 averclone/
+deps.txt
+deps.zip
 *.apk
 *.a
 *.swo
