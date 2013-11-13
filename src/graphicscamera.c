@@ -44,11 +44,19 @@
 #define MAXCAMERAS 16
 struct cameraentry* camentry[MAXCAMERAS];
 
+void addFirstCamera(void);
 __attribute__((constructor)) void clearCameraEntries(void) {
     int i = 0;
     while (i < MAXCAMERAS) {
         camentry[i] = NULL;
         i++;
+    }
+    addFirstCamera();
+}
+
+void addFirstCamera(void) {
+    if (camentry[0] == NULL) {
+        graphics_AddCamera();
     }
 }
 
