@@ -1197,7 +1197,9 @@ int main(int argc, char** argv) {
                 // but we hit the iteration limit
                 physicstimestamp = time_GetMilliseconds();
                 logictimestamp = time_GetMilliseconds();
-                printwarning("Warning: logic is too slow, maximum logic iterations have been reached (%d)", (int)MAXLOGICITERATIONS);
+                printwarning("[main] warning: logic is too slow, "
+                "maximum logic iterations have been reached (%d)",
+                (int)MAXLOGICITERATIONS);
             } else {
                 // we don't need to iterate anymore -> everything is fine
             }
@@ -1251,6 +1253,7 @@ int main(int argc, char** argv) {
         !listeners_HaveActiveListeners()
         && luacfuncs_runDelayed_getScheduledCount() == 0) {
 #endif
+            printinfo("[main] nothing interesting remains running; quit!");
             main_Quit(1);
         }
 
@@ -1275,7 +1278,6 @@ int main(int argc, char** argv) {
         luacfuncs_objectgraphics_newFrame();
 #endif
     }
-    printinfo("[main] nothing interesting remains running; quit!");
     main_Quit(0);
     return 0;
 }

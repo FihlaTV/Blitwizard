@@ -181,10 +181,10 @@ static void graphics2dsprites_recalculateSpriteShortcuts(void) {
             lastZIndex = spr->zindex;
             lastPinnedState = (spr->pinnedToCamera >= 0);
             sinceLastShortcut = 0;
+            shortcutsFilled++;
             if (shortcutsFilled >= SPRITESHORTCUTCOUNT) {
                 break;
             }
-            shortcutsFilled++;
         }
         sinceLastShortcut++;
         spr = spr->prev;

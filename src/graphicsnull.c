@@ -55,7 +55,7 @@ static unsigned int nulldevicewidth = 0;
 static unsigned int nulldeviceheight = 0;
 static unsigned int nulldevicefullscreen = 0;
 static char* nulldevicetitle = NULL;
-int graphicsvisible;
+extern int graphicsactive;  // whether any graphics are running or not
 
 int graphics_HaveValidWindow() {
     if (nulldevicewidth && nulldeviceheight) {
@@ -95,7 +95,7 @@ int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
 }
 
 void graphics_Close(int preservetextures) {
-    graphicsvisible = 0;
+    graphicsactive = 0;
     nulldevicewidth = 0;
     nulldeviceheight = 0;
     if (nulldevicetitle) {
@@ -202,7 +202,7 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
         nulldevicetitle = strdup("");
     }
     graphics_calculateUnitToPixels(nulldevicewidth, nulldeviceheight);
-    graphicsvisible = 1;
+    graphicsactive = 1;
     return 1;
 }
 

@@ -29,6 +29,7 @@
 
 //  various standard headers
 #include <stdio.h>
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -56,7 +57,7 @@ __attribute__((constructor)) void clearCameraEntries(void) {
 
 void addFirstCamera(void) {
     if (camentry[0] == NULL) {
-        graphics_AddCamera();
+        assert(graphics_AddCamera() == 0);
     }
 }
 
@@ -85,10 +86,12 @@ int graphics_AddCamera(void) {
             memset(camentry[i], 0, sizeof(*camentry[i]));
             camentry[i]->width = 100;
             camentry[i]->height = 100;
+            camentry[i]->i2d.zoom = 1.0f;
             return i;
         }
         i++;
     }
+    return -1;
 }
 
 void graphics_DeleteCamera(int index) {
@@ -110,9 +113,11 @@ void graphics_DeleteCamera(int index) {
 }
 
 int graphics_getCameraAt(int x, int y) {
-    int c = graphics_GetCameraCount();
     int i = 0;
-    while (i < c) {
+    while (i < MAXCAMERAS) {
+        if (!camentry[i]) {
+             continue;
+        }
         int cx = graphics_GetCameraX(i);
         int cy = graphics_GetCameraY(i);
         int cw = graphics_GetCameraWidth(i);
@@ -147,14 +152,16 @@ double graphics_GetCamera2DZoom(int index) {
     || !camentry[index]) {
         return 0;
     }
+    assert(camentry[index]->i2d.zoom > 0);
     return camentry[index]->i2d.zoom;
 }
 
 void graphics_SetCamera2DZoom(int index, double zoom) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
-        return 0;
+        return;
     }
+    assert(zoom > 0);
     camentry[index]->i2d.zoom = zoom;
 }
 
@@ -196,7 +203,7 @@ double graphics_GetCamera2DCenterY(int index) {
 void graphics_SetCamera2DCenterXY(int index, double x, double y) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
-        return 0;
+        return;
     }
     camentry[index]->i2d.centerx = x;
     camentry[index]->i2d.centery = y;

@@ -27,7 +27,6 @@ struct cameraentry {
         double zoom;
         double aspectratio;
         double centerx, centery;
-
     } i2d;
 };
 
