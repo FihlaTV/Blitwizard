@@ -156,8 +156,11 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
     (green * 255.0f), (blue * 255.0f));
     if (!textureFiltering) {
         // disable texture filter
-        SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
-        "0", SDL_HINT_OVERRIDE);
+        /* SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
+        "0", SDL_HINT_OVERRIDE); */
+
+        // this doesn't work. we will need to wait for:
+        // https://bugzilla.libsdl.org/show_bug.cgi?id=2167
     }
     if (horiflipped) {
         // draw rotated and flipped

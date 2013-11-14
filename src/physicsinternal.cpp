@@ -1779,11 +1779,13 @@ void physics_unsetGravity_internal(struct physicsobject* obj) {
 
 #ifdef USE_PHYSICS2D
 void physics_set2dRotationRestriction_internal(struct physicsobject* obj, int restricted) {
+    double mass = physics_getMass_internal(obj);
     if (restricted) {
         obj->object2d.body->SetFixedRotation(true);
     } else {
         obj->object2d.body->SetFixedRotation(false);
     }
+    physics_setMass_internal(obj, mass);
 }
 #endif
 

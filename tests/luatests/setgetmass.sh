@@ -30,6 +30,7 @@ function obj:doAlways()
 end
 
 -- get mass after setting friction:
+assert(5 == obj:getMass())
 obj:setFriction(0.7)
 assert(5 == obj:getMass())
 " > ./test.lua
