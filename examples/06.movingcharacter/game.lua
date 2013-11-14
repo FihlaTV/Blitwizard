@@ -153,7 +153,7 @@ function blitwizard.onInit()
             width = w * 0.75,
             height = h
         })
-        self:setMass(120)
+        self:setMass(4)
         self:setFriction(0.3)
         self:setLinearDamping(3)
         self:restrictRotation(true)

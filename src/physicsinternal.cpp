@@ -1702,7 +1702,7 @@ void physics_setMass_internal(struct physicsobject* obj, double mass) {
         obj2d->body->SetMassData(&mdata);
 #ifndef NDEBUG
         obj2d->body->GetMassData(&mdata);
-        assert(mdata.mass == mass);
+        assert(fabs(mdata.mass - mass) < 0.005);
 #endif
 #endif
     } else {
