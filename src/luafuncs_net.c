@@ -401,7 +401,8 @@ static void luafuncs_parsestreamsettings(lua_State* l, int stackindex,
 
 /// This is how you should submit settings to @{connection:new}.
 // (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it
-// yourself with concrete settings values)
+// yourself with concrete settings values. See @{connection:new}'s usage
+// example!)
 // @table settings
 // @tfield string server the target server's host name or ip address
 // @tfield number port the target server's TCP/IP port you want to connect to
