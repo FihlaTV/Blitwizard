@@ -403,6 +403,15 @@ static void luafuncs_parsestreamsettings(lua_State* l, int stackindex,
 // (THIS TABLE DOESN'T EXIST, it is just a guide on how to construct it
 // yourself with concrete settings values)
 // @table settings
+// @tfield string server the target server's host name or ip address
+// @tfield number port the target server's TCP/IP port you want to connect to
+// @tfield boolean linebuffered (optional) whether you want the read callback to collect full lines up to the next line break and then return you those complete lines (=linebuffered set to true), or to pass on whatever it receives instantly no matter whether it is just a partial line or not (=linebuffered set to false)
+// @tfield boolean lowdelay (optional) this allows you to enable low delay sending.
+//
+// If disabled (the default), sending on a connection will sometimes be delayed (for a few milliseconds) to assemble more data in a bigger packet.
+// This notably increases connection throughput (=you can send more data in the same amount of time), but it also increases connection latency (=the amount of time delay between sending out a specific data item and the target receiving it).
+//
+// If enabled, you will get degraded data throughput but smaller latency. This is only recommended if the data is extremely time-critical, e.g. player positions in a fast-paced action game.
 
 /// Create a new network connection to the given target.
 // @function new

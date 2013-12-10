@@ -63,8 +63,8 @@
  If you wnat to create a multiplayer game, you may want to have a look at it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
     </ul>
 
@@ -110,6 +110,28 @@
  yourself with concrete settings values)
 
 
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">server</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the target server's host name or ip address
+        </li>
+        <li><span class="parameter">port</span>
+            <span class="types"><span class="type">number</span></span>
+         the target server's TCP/IP port you want to connect to
+        </li>
+        <li><span class="parameter">linebuffered</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) whether you want the read callback to collect full lines up to the next line break and then return you those complete lines (=linebuffered set to true), or to pass on whatever it receives instantly no matter whether it is just a partial line or not (=linebuffered set to false)
+        </li>
+        <li><span class="parameter">lowdelay</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) this allows you to enable low delay sending.
+<p> If disabled (the default), sending on a connection will sometimes be delayed (for a few milliseconds) to assemble more data in a bigger packet.
+ This notably increases connection throughput (=you can send more data in the same amount of time), but it also increases connection latency (=the amount of time delay between sending out a specific data item and the target receiving it).
+<p> If enabled, you will get degraded data throughput but smaller latency. This is only recommended if the data is extremely time-critical, e.g. player positions in a fast-paced action game.
+        </li>
+    </ul>
 
 
 
