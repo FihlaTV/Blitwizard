@@ -21,7 +21,7 @@
 
 */
 
-int luafuncs_netopen(lua_State* l);
+int luafuncs_netnew(lua_State* l);
 int luafuncs_netserver(lua_State* l);
 int luafuncs_netsend(lua_State* l);
 int luafuncs_netset(lua_State* l);

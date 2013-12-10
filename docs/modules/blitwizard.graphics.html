@@ -38,13 +38,14 @@
 
 
 <h2>Modules</h2>
-<ul>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../modules/blitwizard.html">blitwizard</a></li>
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
   <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
   <li><a href="../modules/blitwizard.debug.html">blitwizard.debug</a></li>
   <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
   <li><strong>blitwizard.graphics</strong></li>
+  <li><a href="../modules/blitwizard.net.html">blitwizard.net</a></li>
   <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
   <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
@@ -58,7 +59,6 @@
 <div id="content">
 
 <h1>Module <code>blitwizard.graphics</code></h1>
-
 <p>The blitwizard graphics namespace allows to set up the graphics device
  for graphical 2d/3d output.</p>
 <p></p>
@@ -73,88 +73,87 @@
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#setMode">setMode&nbsp;(width, height, title, fullscreen, renderer)</a></td>
-	<td class="summary">This function sets the graphics mode.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#gameUnitToPixels">gameUnitToPixels&nbsp;()</a></td>
-	<td class="summary">Get the extent (in pixels) of a 2d object that make up
- one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
- object scale of 1.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getWindowSize">getWindowSize&nbsp;()</a></td>
-	<td class="summary">Get the current size of the graphics output window
- (which was set using <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>) in pixels.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getDisplayModes">getDisplayModes&nbsp;()</a></td>
-	<td class="summary">Get all supported display modes as a list.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#forceTextureReload">forceTextureReload&nbsp;(path)</a></td>
-	<td class="summary">Force a specified texture to be reloaded from disk
- (from the original file path).</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getDesktopDisplayMode">getDesktopDisplayMode&nbsp;()</a></td>
-	<td class="summary">Get the current display mode of the desktop.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#createDynamicTexture">createDynamicTexture&nbsp;(texture_name, lua_file_name, callback, parameters)</a></td>
+	<td class="name" ><a href="#createDynamicTexture">createDynamicTexture (texture_name, lua_file_name, callback, parameters)</a></td>
 	<td class="summary">Create a runtime-created texture with the given name,
  and the given lua file which gets executed to create
  the image, and the given callback function which
  gets executed once the texture has been created.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#getCameras">getCameras&nbsp;()</a></td>
+	<td class="name" ><a href="#forceTextureReload">forceTextureReload (path)</a></td>
+	<td class="summary">Force a specified texture to be reloaded from disk
+ (from the original file path).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#gameUnitToPixels">gameUnitToPixels ()</a></td>
+	<td class="summary">Get the extent (in pixels) of a 2d object that make up
+ one ??? at a default
+ object scale of 1.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getCameras">getCameras ()</a></td>
 	<td class="summary">Get a table array with all currently active cameras.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getDesktopDisplayMode">getDesktopDisplayMode ()</a></td>
+	<td class="summary">Get the current display mode of the desktop.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getDisplayModes">getDisplayModes ()</a></td>
+	<td class="summary">Get all supported display modes as a list.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getWindowSize">getWindowSize ()</a></td>
+	<td class="summary">Get the current size of the graphics output window
+ (which was set using <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>) in pixels.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#setMode">setMode (width, height, title, fullscreen, renderer)</a></td>
+	<td class="summary">This function sets the graphics mode.</td>
 	</tr>
 </table>
 <h2><a href="#Class_camera">Class camera </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#camera:destroy">camera:destroy&nbsp;(camera)</a></td>
+	<td class="name" ><a href="#camera:destroy">camera:destroy (camera)</a></td>
 	<td class="summary">Destroy the given camera.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:new">camera:new&nbsp;()</a></td>
-	<td class="summary">Add a new camera.</td>
+	<td class="name" ><a href="#camera:get2dZoomFactor">camera:get2dZoomFactor ()</a></td>
+	<td class="summary">Get the 2d zoom factor (defaults to 1).</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:screenPosTo2dWorldPos">camera:screenPosTo2dWorldPos&nbsp;(pos_x, pos_y, parallax)</a></td>
-	<td class="summary">Specify a 2d position in the range from 0,0 to
- w,h with w,h being the camera visible area size
- as from <a href="../modules/blitwizard.graphics.html#camera:getDimensions">
- getDimensions</a> with consider_zoom set to <b>false</b>.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#camera:set2dCenter">camera:set2dCenter&nbsp;(x_position, y_position)</a></td>
-	<td class="summary">Set the camera's 2d center which is the position in the 2d world
- centered by the camera.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#camera:getDimensions">camera:getDimensions&nbsp;(consider_zoom)</a></td>
+	<td class="name" ><a href="#camera:getDimensions">camera:getDimensions (consider_zoom)</a></td>
 	<td class="summary">Get the size of the camera in game units (so the size of the
  visible world area it shows).</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:getPixelDimensionsOnScreen">camera:getPixelDimensionsOnScreen&nbsp;()</a></td>
+	<td class="name" ><a href="#camera:getPixelDimensionsOnScreen">camera:getPixelDimensionsOnScreen ()</a></td>
 	<td class="summary">Get the dimensions of a camera on the actual
  screen.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:setPixelDimensionsOnScreen">camera:setPixelDimensionsOnScreen&nbsp;(width, height)</a></td>
-	<td class="summary">Set the dimensions of a camera on the screen.</td>
+	<td class="name" ><a href="#camera:new">camera:new ()</a></td>
+	<td class="summary">Add a new camera.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:get2dZoomFactor">camera:get2dZoomFactor&nbsp;()</a></td>
-	<td class="summary">Get the 2d zoom factor (defaults to 1).</td>
+	<td class="name" ><a href="#camera:screenPosTo2dWorldPos">camera:screenPosTo2dWorldPos (pos_x, pos_y, parallax)</a></td>
+	<td class="summary">Specify a 2d position in the range from 0,0 to
+ w,h with w,h being the camera visible area size
+ as from ??? with consider_zoom set to <b>false</b>.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#camera:set2dZoomFactor">camera:set2dZoomFactor&nbsp;(zoom_factor)</a></td>
+	<td class="name" ><a href="#camera:set2dCenter">camera:set2dCenter (x_position, y_position)</a></td>
+	<td class="summary">Set the camera's 2d center which is the position in the 2d world
+ centered by the camera.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:set2dZoomFactor">camera:set2dZoomFactor (zoom_factor)</a></td>
 	<td class="summary">Set the 2d zoom factor.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#camera:setPixelDimensionsOnScreen">camera:setPixelDimensionsOnScreen (width, height)</a></td>
+	<td class="summary">Set the dimensions of a camera on the screen.</td>
 	</tr>
 </table>
 
@@ -165,57 +164,99 @@
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
     <dt>
-    <a name = "setMode"></a>
-    <strong>setMode&nbsp;(width, height, title, fullscreen, renderer)</strong>
+    <a name = "createDynamicTexture"></a>
+    <strong>createDynamicTexture (texture_name, lua_file_name, callback, parameters)</strong>
     </dt>
     <dd>
-    This function sets the graphics mode.
- You can specify a resolution, whether your game should run in a window
- or fullscreen, and if windowed whether the window is resizable.
-<p> If you run in full screen, you should only use screen resolutions
- (width/height) present in <a href="../modules/blitwizard.graphics.html#getDisplayModes">blitwizard.graphics.getDisplayModes</a>.
-<p> Feel free to use this function multiple times to change the mode again
- if you feel like doing so.
-<p> If you specify no parameters, the graphics output will be closed again.
-<p> Throws an error if graphics initialisation fails.
+    Create a runtime-created texture with the given name,
+ and the given lua file which gets executed to create
+ the image, and the given callback function which
+ gets executed once the texture has been created.
+ Add additional parameters which get passed
+ to the lua function in the file.
+<p> This allows the creation of textures from
+ code at runtime, rather than just loading regular image
+ files.
+<p> For the given lua file name, you can also specify actual
+ lua source code (as a string) instead of a file name.
+<p> The only functions available to that
+ executed lua file (or provided lua code) will be those
+ in the ??? module (and some basic lua functions).
+<p> After the callback has been called, the texture
+ can be used e.g. for ???.
+<p> Please note the dynamic image creation is <b>not optimised for speed</b>
+ and it might take a while (a few seconds) for the callback to fire
+ or even longer, depending on what your image creation function does.
+<p> The image creation function gets run <i>in parallel</i> to your game
+ though, so it won't block or stop anything until it's complete.
+
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">width</span>
-            <span class="types"><span class="type">number</span></span>
-         Set the width of the output in pixels</li>
-        <li><span class="parameter">height</span>
-            <span class="types"><span class="type">height</span></span>
-         Set the height of the output in pixels</li>
-        <li><span class="parameter">title</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         (optional) Set the window title shown in the title bar. You can also specify nil if you want the default</li>
-        <li><span class="parameter">fullscreen</span>
-            <span class="types"><span class="type">boolean</span></span>
-         (optional) Specify if you want to run fullscreen or windowed</li>
-        <li><span class="parameter">renderer</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         (optional) Specify a specific renderer you want. Available renderers are "direct3d" (Windows only), "opengl" and "software". Software rendering is slow and should only be used as a fallback. It's also only available if you compiled with SDL graphics. If you don't specify a renderer, the best one will be used</li>
+        <li><span class="parameter">texture_name</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the name of the dynamic texture. Any string you like, but it mustn't have been used for a previous dynamic texture already.
+        </li>
+        <li><span class="parameter">lua_file_name</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the name of a lua file to be executed. It will be run similar to dofile() does it, but inside the context of image creation with just ??? available. It needs to return an ??? at the end. Instead of a lua code file name, you can actually specify actual lua code aswell (as a string containing lua code, not a function)
+        </li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         the callback function which will be called when the image creation was completed. As first parameter, it will be passed the texture_name string, as second true/or false depending on the success, and in case of failure (false), the third parameter will be an error string
+        </li>
+        <li><span class="parameter">parameters</span>
+            <span class="types"><span class="type">any</span></span>
+         (optional) any additional parameters here..
+        </li>
     </ul>
 
 
 
 
-    <h3>Usage:</h3>
+
+</dd>
+    <dt>
+    <a name = "forceTextureReload"></a>
+    <strong>forceTextureReload (path)</strong>
+    </dt>
+    <dd>
+    Force a specified texture to be reloaded from disk
+ (from the original file path).
+<p> This is useful if you want to allow the user to change
+ images which you can then reload on-the-fly.
+<p> However, this shouldn't be a function you call regularly
+ midgame. It can hang:
+<p> <b>Important:</b> In rare cases, this function can cause
+ a freeze of 1-3 seconds. Display some sort of loading
+ indicator before you're calling it to avoid user confusion
+ in such cases!
+<p> <b>Note about callbacks:</b>
+ Please note the ??? might fire again
+ on 2d <a href="../modules/blitwizard.html#Class_object">objects</a> using the texture.
+
+
+
+    <h3>Parameters:</h3>
     <ul>
-        <pre class="example">
- <span class="comment">-- Open a window with 800 x 600 pixel size and title "Test"
-</span> blitwizard.graphics.setMode(<span class="number">800</span>, <span class="number">600</span>, <span class="string">"Test"</span>)</pre>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the file path of the texture to be unloaded
+        </li>
     </ul>
+
+
+
+
 
 </dd>
     <dt>
     <a name = "gameUnitToPixels"></a>
-    <strong>gameUnitToPixels&nbsp;()</strong>
+    <strong>gameUnitToPixels ()</strong>
     </dt>
     <dd>
     Get the extent (in pixels) of a 2d object that make up
- one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
+ one ??? at a default
  object scale of 1.
 <p> This value allows you to calculate how large an object
  would end up in game units if you're aware of the size
@@ -223,10 +264,11 @@
 
 
 
+
     <h3>Returns:</h3>
     <ol>
 
-          <span class="types"><span class="type">number</span></span>
+           <span class="types"><span class="type">number</span></span>
         pixels The amount of pixels that equals one game unit at default zoom of 1
     </ol>
 
@@ -246,22 +288,46 @@
 
 </dd>
     <dt>
-    <a name = "getWindowSize"></a>
-    <strong>getWindowSize&nbsp;()</strong>
+    <a name = "getCameras"></a>
+    <strong>getCameras ()</strong>
     </dt>
     <dd>
-    Get the current size of the graphics output window
- (which was set using <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>) in pixels.
+    Get a table array with all currently active cameras.
+ (per default, this is only one)
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a></span>
+        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getDesktopDisplayMode"></a>
+    <strong>getDesktopDisplayMode ()</strong>
+    </dt>
+    <dd>
+    Get the current display mode of the desktop.
+ You might want to use this with <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>
+ if you don't want to change the resolution in fullscreen
+ at all (but instead use whatever the current resolution is).
+
 
 
     <h3>Returns:</h3>
     <ol>
         <li>
-          <span class="types"><span class="type">number</span></span>
-        width</li>
+           <span class="types"><span class="type">number</span></span>
+        width in pixels</li>
         <li>
-          <span class="types"><span class="type">number</span></span>
-        height</li>
+           <span class="types"><span class="type">number</span></span>
+        height in pixels</li>
     </ol>
 
 
@@ -270,7 +336,7 @@
 </dd>
     <dt>
     <a name = "getDisplayModes"></a>
-    <strong>getDisplayModes&nbsp;()</strong>
+    <strong>getDisplayModes ()</strong>
     </dt>
     <dd>
     Get all supported display modes as a list.
@@ -281,10 +347,11 @@
 
 
 
+
     <h3>Returns:</h3>
     <ol>
 
-          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a></span>
         list of resolution tables
     </ol>
 
@@ -301,57 +368,23 @@
 
 </dd>
     <dt>
-    <a name = "forceTextureReload"></a>
-    <strong>forceTextureReload&nbsp;(path)</strong>
+    <a name = "getWindowSize"></a>
+    <strong>getWindowSize ()</strong>
     </dt>
     <dd>
-    Force a specified texture to be reloaded from disk
- (from the original file path).
-<p> This is useful if you want to allow the user to change
- images which you can then reload on-the-fly.
-<p> However, this shouldn't be a function you call regularly
- midgame. It can hang:
-<p> <b>Important:</b> In rare cases, this function can cause
- a freeze of 1-3 seconds. Display some sort of loading
- indicator before you're calling it to avoid user confusion
- in such cases!
-<p> <b>Note about callbacks:</b>
- Please note the <a href="../modules/blitwizard.html#object:onGeometryLoaded">
- geometry callback</a> might fire again
- on 2d <a href="../modules/blitwizard.html#Class_object">objects</a> using the texture.
+    Get the current size of the graphics output window
+ (which was set using <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>) in pixels.
 
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">path</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the file path of the texture to be unloaded</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "getDesktopDisplayMode"></a>
-    <strong>getDesktopDisplayMode&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the current display mode of the desktop.
- You might want to use this with <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>
- if you don't want to change the resolution in fullscreen
- at all (but instead use whatever the current resolution is).
 
 
     <h3>Returns:</h3>
     <ol>
         <li>
-          <span class="types"><span class="type">number</span></span>
-        width in pixels</li>
+           <span class="types"><span class="type">number</span></span>
+        width</li>
         <li>
-          <span class="types"><span class="type">number</span></span>
-        height in pixels</li>
+           <span class="types"><span class="type">number</span></span>
+        height</li>
     </ol>
 
 
@@ -359,76 +392,59 @@
 
 </dd>
     <dt>
-    <a name = "createDynamicTexture"></a>
-    <strong>createDynamicTexture&nbsp;(texture_name, lua_file_name, callback, parameters)</strong>
+    <a name = "setMode"></a>
+    <strong>setMode (width, height, title, fullscreen, renderer)</strong>
     </dt>
     <dd>
-    Create a runtime-created texture with the given name,
- and the given lua file which gets executed to create
- the image, and the given callback function which
- gets executed once the texture has been created.
- Add additional parameters which get passed
- to the lua function in the file.
-<p> This allows the creation of textures from
- code at runtime, rather than just loading regular image
- files.
-<p> For the given lua file name, you can also specify actual
- lua source code (as a string) instead of a file name.
-<p> The only functions available to that
- executed lua file (or provided lua code) will be those
- in the ??? module (and some basic lua functions).
-<p> After the callback has been called, the texture
- can be used e.g. for <a href="../modules/blitwizard.html#object:new">blitwizard.object:new</a>.
-<p> Please note the dynamic image creation is <b>not optimised for speed</b>
- and it might take a while (a few seconds) for the callback to fire
- or even longer, depending on what your image creation function does.
-<p> The image creation function gets run <i>in parallel</i> to your game
- though, so it won't block or stop anything until it's complete.
+    This function sets the graphics mode.
+ You can specify a resolution, whether your game should run in a window
+ or fullscreen, and if windowed whether the window is resizable.
+<p> If you run in full screen, you should only use screen resolutions
+ (width/height) present in <a href="../modules/blitwizard.graphics.html#getDisplayModes">blitwizard.graphics.getDisplayModes</a>.
+<p> Feel free to use this function multiple times to change the mode again
+ if you feel like doing so.
+<p> If you specify no parameters, the graphics output will be closed again.
+<p> Throws an error if graphics initialisation fails.
+
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">texture_name</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the name of the dynamic texture. Any string you like, but it mustn't have been used for a previous dynamic texture already.</li>
-        <li><span class="parameter">lua_file_name</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the name of a lua file to be executed. It will be run similar to dofile() does it, but inside the context of image creation with just ??? available. It needs to return an ??? at the end. Instead of a lua code file name, you can actually specify actual lua code aswell (as a string containing lua code, not a function)</li>
-        <li><span class="parameter">callback</span>
-            <span class="types"><span class="type">function</span></span>
-         the callback function which will be called when the image creation was completed. As first parameter, it will be passed the texture_name string, as second true/or false depending on the success, and in case of failure (false), the third parameter will be an error string</li>
-        <li><span class="parameter">parameters</span>
-            <span class="types"><span class="type">any</span></span>
-         (optional) any additional parameters here..</li>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         Set the width of the output in pixels
+        </li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">height</span></span>
+         Set the height of the output in pixels
+        </li>
+        <li><span class="parameter">title</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         (optional) Set the window title shown in the title bar. You can also specify nil if you want the default
+        </li>
+        <li><span class="parameter">fullscreen</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) Specify if you want to run fullscreen or windowed
+        </li>
+        <li><span class="parameter">renderer</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         (optional) Specify a specific renderer you want. Available renderers are "direct3d" (Windows only), "opengl" and "software". Software rendering is slow and should only be used as a fallback. It's also only available if you compiled with SDL graphics. If you don't specify a renderer, the best one will be used
+        </li>
     </ul>
 
 
 
 
-
-</dd>
-    <dt>
-    <a name = "getCameras"></a>
-    <strong>getCameras&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get a table array with all currently active cameras.
- (per default, this is only one)
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
-    </ol>
-
-
-
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Open a window with 800 x 600 pixel size and title "Test"
+</span> blitwizard.graphics.setMode(<span class="number">800</span>, <span class="number">600</span>, <span class="string">"Test"</span>)</pre>
+    </ul>
 
 </dd>
 </dl>
     <h2><a name="Class_camera"></a>Class camera </h2>
-        Blitwizard camera object which represents a render camera.
+
 <p> A render camera has a rectangle on the screen which is a sort of
  "window" that shows a view into the 2d/3d world of your
  blitwizard game.
@@ -440,7 +456,7 @@
 <p> <b>Important:</b> If you want to show a different part of the game world,
  this is where you want to be! Grab the first camera from
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> and let's go:
-<p> Use <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">camera:set2dCenter</a>
+<p> Use ???
  to modify the 2d world
  position shown, and
  ???
@@ -450,18 +466,20 @@
     <dl class="function">
     <dt>
     <a name = "camera:destroy"></a>
-    <strong>camera:destroy&nbsp;(camera)</strong>
+    <strong>camera:destroy (camera)</strong>
     </dt>
     <dd>
     Destroy the given camera.
 <p> It will be removed from the <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> list
  and all references you still have to it will become invalid.
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">camera</span>
             <span class="types"><span class="type">userdata</span></span>
-         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to be destroyed</li>
+         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to be destroyed
+        </li>
     </ul>
 
 
@@ -470,8 +488,105 @@
 
 </dd>
     <dt>
+    <a name = "camera:get2dZoomFactor"></a>
+    <strong>camera:get2dZoomFactor ()</strong>
+    </dt>
+    <dd>
+    Get the 2d zoom factor (defaults to 1).  See also
+ ???.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        zoom_factor the zoom factor of the camera
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:getDimensions"></a>
+    <strong>camera:getDimensions (consider_zoom)</strong>
+    </dt>
+    <dd>
+    Get the size of the camera in game units (so the size of the
+ visible world area it shows).
+<p> consider_zoom = false gives you the area of
+ ??? which the camera
+ shows, which is not influenced by zoom. (this is the default if
+ consider_zoom is no specified at all)
+<p> consider_zoom = true is a special case useful for 2d,
+ which gives you the camera's dimensions according to the current
+ zoom factor.
+<p> The result of this function depends on the camera's
+ ???, the camera's
+ ??? (for consider_zoom set to true) and the camera's
+ ???.
+<p> <i>Note on ??? 2d objects:</i>
+ If you want to know the area visible in game units for
+ ??? which are unaffected
+ by camera zoom when drawn, specify <i>false</i> as first parameter
+ for not taking the zoom into account.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">consider_zoom</span>
+            <span class="types"><span class="type">boolean</span></span>
+         (optional) defaults to false.
+ Specifies whether the 2d zoom factor should be taken into account.
+ Set to <i>true</i> if yes, <i>false</i> if not.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        width the width of the camera in game units</li>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        height the height of the camera in game units</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:getPixelDimensionsOnScreen"></a>
+    <strong>camera:getPixelDimensionsOnScreen ()</strong>
+    </dt>
+    <dd>
+    Get the dimensions of a camera on the actual
+ screen.  It usually fills the whole window (= the full size of the
+ resolution you specified in <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>),
+ but that may be changed with
+ ???.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        width Width of the camera on the screen in pixels</li>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        height Height of the camera on the screen in pixels</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "camera:new"></a>
-    <strong>camera:new&nbsp;()</strong>
+    <strong>camera:new ()</strong>
     </dt>
     <dd>
     Add a new camera.
@@ -479,7 +594,8 @@
  it will be automatically part of the list of all followup
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> calls aswell.
 <p> If you want to get rid of it again, check out
- <a href="../modules/blitwizard.graphics.html#camera:destroy">blitwizard.graphics.camera:destroy</a>.
+ ???.
+
 
 
 
@@ -489,40 +605,43 @@
 </dd>
     <dt>
     <a name = "camera:screenPosTo2dWorldPos"></a>
-    <strong>camera:screenPosTo2dWorldPos&nbsp;(pos_x, pos_y, parallax)</strong>
+    <strong>camera:screenPosTo2dWorldPos (pos_x, pos_y, parallax)</strong>
     </dt>
     <dd>
     Specify a 2d position in the range from 0,0 to
  w,h with w,h being the camera visible area size
- as from <a href="../modules/blitwizard.graphics.html#camera:getDimensions">
- getDimensions</a> with consider_zoom set to <b>false</b>.
+ as from ??? with consider_zoom set to <b>false</b>.
 <p> (So the position you specify is the coordinates a
- <a href="../modules/blitwizard.html#object:pinToCamera">pinned object</a> would have on screen
+ ??? would have on screen
  or the coordinates you get from <a href="../modules/blitwizard.html#onMouseMove">blitwizard.onMouseMove</a>)
 <p> The position can also be smaller than 0,0 or larger than the
  actual camera dimensions, in which case you'll get an out-of-screen
  world position as a result.
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">pos_x</span>
             <span class="types"><span class="type">number</span></span>
-         the X coordinate of the screen position</li>
+         the X coordinate of the screen position
+        </li>
         <li><span class="parameter">pos_y</span>
             <span class="types"><span class="type">number</span></span>
-         the Y coordinate of the screen position</li>
+         the Y coordinate of the screen position
+        </li>
         <li><span class="parameter">parallax</span>
             <span class="types"><span class="type">number</span></span>
-         (optional) if you want, specify the <a href="../modules/blitwizard.html#object:setParallax">parallax</a> effect strength to get the world position displaced accordingly for an object with that parallax effect strength</li>
+         (optional) if you want, specify the ??? effect strength to get the world position displaced accordingly for an object with that parallax effect strength
+        </li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
         <li>
-          <span class="types"><span class="type">number</span></span>
+           <span class="types"><span class="type">number</span></span>
         X coordinate of the resulting world position</li>
         <li>
-          <span class="types"><span class="type">number</span></span>
+           <span class="types"><span class="type">number</span></span>
         Y coordinate of the resulting world position</li>
     </ol>
 
@@ -532,27 +651,30 @@
 </dd>
     <dt>
     <a name = "camera:set2dCenter"></a>
-    <strong>camera:set2dCenter&nbsp;(x_position, y_position)</strong>
+    <strong>camera:set2dCenter (x_position, y_position)</strong>
     </dt>
     <dd>
     Set the camera's 2d center which is the position in the 2d world
  centered by the camera.  This allows you to move the camera's shown
  part of the 2d world around, focussing on other places.
 <p> The position is specified in <b>game units</b> (the same units used
- for specifying the <a href="../modules/blitwizard.html#object:setPosition">position of objects</a>).
+ for specifying the ???).
  The camera initially looks at position 0, 0.
 <p> If you want the camera to follow a 2d object, simply use this function
  to set the 2d center to the coordinates of the object (you can do this
- in the object's <a href="../modules/blitwizard.html#object:doAlways">doAlways</a> function).
+ in the object's ??? function).
+
 
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">x_position</span>
             <span class="types"><span class="type">number</span></span>
-         X position of the 2d point to look at</li>
+         X position of the 2d point to look at
+        </li>
         <li><span class="parameter">y_position</span>
             <span class="types"><span class="type">number</span></span>
-         Y position of the 2d point to look at</li>
+         Y position of the 2d point to look at
+        </li>
     </ul>
 
 
@@ -568,126 +690,8 @@
 
 </dd>
     <dt>
-    <a name = "camera:getDimensions"></a>
-    <strong>camera:getDimensions&nbsp;(consider_zoom)</strong>
-    </dt>
-    <dd>
-    Get the size of the camera in game units (so the size of the
- visible world area it shows).
-<p> consider_zoom = false gives you the area of
- <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a> which the camera
- shows, which is not influenced by zoom. (this is the default if
- consider_zoom is no specified at all)
-<p> consider_zoom = true is a special case useful for 2d,
- which gives you the camera's dimensions according to the current
- zoom factor.
-<p> The result of this function depends on the camera's
- <a href="../modules/blitwizard.graphics.html#camera:getPixelDimensionsOnScreen">
- actual size in pixels on the screen</a>, the camera's
- <a href="../modules/blitwizard.graphics.html#camera:get2dZoomFactor">
- 2d zoom factor</a> (for consider_zoom set to true) and the camera's
- ???.
-<p> <i>Note on <a href="../modules/blitwizard.html#object:pinToCamera">pinned</a> 2d objects:</i>
- If you want to know the area visible in game units for
- <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a> which are unaffected
- by camera zoom when drawn, specify <i>false</i> as first parameter
- for not taking the zoom into account.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">consider_zoom</span>
-            <span class="types"><span class="type">boolean</span></span>
-         (optional) defaults to false.
- Specifies whether the 2d zoom factor should be taken into account.
- Set to <i>true</i> if yes, <i>false</i> if not.</li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        width the width of the camera in game units</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        height the height of the camera in game units</li>
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "camera:getPixelDimensionsOnScreen"></a>
-    <strong>camera:getPixelDimensionsOnScreen&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the dimensions of a camera on the actual
- screen.  It usually fills the whole window (= the full size of the
- resolution you specified in <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>),
- but that may be changed with
- <a href="../modules/blitwizard.graphics.html#camera:setPixelDimensionsOnScreen">
- camera:setPixelDimensionsOnScreen</a>.
-
-
-    <h3>Returns:</h3>
-    <ol>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        width Width of the camera on the screen in pixels</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        height Height of the camera on the screen in pixels</li>
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "camera:setPixelDimensionsOnScreen"></a>
-    <strong>camera:setPixelDimensionsOnScreen&nbsp;(width, height)</strong>
-    </dt>
-    <dd>
-    Set the dimensions of a camera on the screen.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">width</span>
-            <span class="types"><span class="type">number</span></span>
-         Width of the camera on the screen in pixels</li>
-        <li><span class="parameter">height</span>
-            <span class="types"><span class="type">number</span></span>
-         Height of the camera on the screen in pixels</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "camera:get2dZoomFactor"></a>
-    <strong>camera:get2dZoomFactor&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the 2d zoom factor (defaults to 1).  See also
- <a href="../modules/blitwizard.graphics.html#camera:set2dZoomFactor">blitwizard.graphics.camera:set2dZoomFactor</a>.
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">number</span></span>
-        zoom_factor the zoom factor of the camera
-    </ol>
-
-
-
-
-</dd>
-    <dt>
     <a name = "camera:set2dZoomFactor"></a>
-    <strong>camera:set2dZoomFactor&nbsp;(zoom_factor)</strong>
+    <strong>camera:set2dZoomFactor (zoom_factor)</strong>
     </dt>
     <dd>
     Set the 2d zoom factor.  Only the 2d layer will be affected.
@@ -695,11 +699,38 @@
  a small zoom factor will show more surroundings from a larger distance.
  (e.g. 2 means twice as large, 0.5 means half as large)
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">zoom_factor</span>
             <span class="types"><span class="type">number</span></span>
-         the new zoom factor</li>
+         the new zoom factor
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "camera:setPixelDimensionsOnScreen"></a>
+    <strong>camera:setPixelDimensionsOnScreen (width, height)</strong>
+    </dt>
+    <dd>
+    Set the dimensions of a camera on the screen.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">number</span></span>
+         Width of the camera on the screen in pixels
+        </li>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">number</span></span>
+         Height of the camera on the screen in pixels
+        </li>
     </ul>
 
 
@@ -713,7 +744,7 @@
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
-<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.12</a></i>
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.0</a></i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

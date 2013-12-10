@@ -21,7 +21,8 @@ HOW TO USE:
 
   * Run on LINUX/BSD/MAC:
     When using a local compiled copy (e.g. the linux build from the website):
-    Open a terminal, change directory to the extracted blitwizard main directory:
+    Open a terminal, change directory to the extracted blitwizard main
+    directory:
         cd /path/to/blitwizard/files/
     Then type this to run: cd bin/ && chmod +x ./blitwizard && ./blitwizard
     When using a system-wide installation (possible with an own source build

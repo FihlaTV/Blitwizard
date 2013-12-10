@@ -37,13 +37,14 @@
 
 
 <h2>Modules</h2>
-<ul>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../modules/blitwizard.html">blitwizard</a></li>
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
   <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
   <li><a href="../modules/blitwizard.debug.html">blitwizard.debug</a></li>
   <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
   <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="../modules/blitwizard.net.html">blitwizard.net</a></li>
   <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
   <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
@@ -57,7 +58,6 @@
 <div id="content">
 
 <h1>Module <code>os</code></h1>
-
 <p>This is the Lua "os" standard module, as extended by blitwizard.</p>
 <p>
  (<a href="http://www.lua.org/manual/5.2/manual.html#6.9">Check here for the documentation of the Lua "os" standard functions</a>)
@@ -75,66 +75,66 @@
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#sysname">sysname&nbsp;()</a></td>
-	<td class="summary">Return the name of the operating system your game is
- currently running on.</td>
+	<td class="name" ><a href="#chdir">chdir (directory)</a></td>
+	<td class="summary">Change the current working directory to the specified directory</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#sysversion">sysversion&nbsp;()</a></td>
-	<td class="summary">Return the detailed version of the operating system
- your game is currently running on.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#exists">exists&nbsp;(path)</a></td>
+	<td class="name" ><a href="#exists">exists (path)</a></td>
 	<td class="summary">Check if a given path to a file or directory exists
  (it points to a valid file or directory).</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#isdir">isdir&nbsp;(path)</a></td>
-	<td class="summary">Check if the given path points to a directory or not.</td>
+	<td class="name" ><a href="#forcetemplatedir">forcetemplatedir (path)</a></td>
+	<td class="summary">Set the template folder to a given path if not previously set.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#ls">ls&nbsp;(directory, virtual_files)</a></td>
-	<td class="summary">Returns a table array containing all the file names of the
- files in the specified directory.</td>
+	<td class="name" ><a href="#gameluapath">gameluapath ()</a></td>
+	<td class="summary">Get the path of the game.lua file which has been loaded at startup.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#getcwd">getcwd&nbsp;()</a></td>
+	<td class="name" ><a href="#getcwd">getcwd ()</a></td>
 	<td class="summary">Get an absolute path to the current working directory
  (sometimes(!) this is where the blitwizard binary is located
  - but not necessarily)</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#chdir">chdir&nbsp;(directory)</a></td>
-	<td class="summary">Change the current working directory to the specified directory</td>
+	<td class="name" ><a href="#isdir">isdir (path)</a></td>
+	<td class="summary">Check if the given path points to a directory or not.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#openConsole">openConsole&nbsp;()</a></td>
+	<td class="name" ><a href="#ls">ls (directory, virtual_files)</a></td>
+	<td class="summary">Returns a table array containing all the file names of the
+ files in the specified directory.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#openConsole">openConsole ()</a></td>
 	<td class="summary">Open a visible console window (in addition to the regular blitwizard
  graphics output window)
  where the standard output of blitwizard can be read.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#templatedir">templatedir&nbsp;()</a></td>
-	<td class="summary">Get the absolute folder path of the template directory.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#forcetemplatedir">forcetemplatedir&nbsp;(path)</a></td>
-	<td class="summary">Set the template folder to a given path if not previously set.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#gameluapath">gameluapath&nbsp;()</a></td>
-	<td class="summary">Get the path of the game.lua file which has been loaded at startup.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#reload">reload&nbsp;()</a></td>
+	<td class="name" ><a href="#reload">reload ()</a></td>
 	<td class="summary">This function reloads the game.lua file that has been initially loaded
  by blitwizard on startup.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#sleep">sleep&nbsp;(milliseconds)</a></td>
+	<td class="name" ><a href="#sleep">sleep (milliseconds)</a></td>
 	<td class="summary">This function lets the whole blitwizard process freeze for the given
  amount of milliseconds.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#sysname">sysname ()</a></td>
+	<td class="summary">Return the name of the operating system your game is
+ currently running on.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#sysversion">sysversion ()</a></td>
+	<td class="summary">Return the detailed version of the operating system
+ your game is currently running on.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#templatedir">templatedir ()</a></td>
+	<td class="summary">Get the absolute folder path of the template directory.</td>
 	</tr>
 </table>
 
@@ -145,40 +145,21 @@
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
     <dt>
-    <a name = "sysname"></a>
-    <strong>sysname&nbsp;()</strong>
+    <a name = "chdir"></a>
+    <strong>chdir (directory)</strong>
     </dt>
     <dd>
-    Return the name of the operating system your game is
- currently running on.
+    Change the current working directory to the specified directory
 
 
-    <h3>Returns:</h3>
-    <ol>
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">directory</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         path
+        </li>
+    </ul>
 
-          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-        Operating system name
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "sysversion"></a>
-    <strong>sysversion&nbsp;()</strong>
-    </dt>
-    <dd>
-    Return the detailed version of the operating system
- your game is currently running on.
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-        Operating system version
-    </ol>
 
 
 
@@ -186,24 +167,26 @@
 </dd>
     <dt>
     <a name = "exists"></a>
-    <strong>exists&nbsp;(path)</strong>
+    <strong>exists (path)</strong>
     </dt>
     <dd>
     Check if a given path to a file or directory exists
  (it points to a valid file or directory).
  Returns true if that is the case, or false if not.
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">path</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         file or directory path</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         file or directory path
+        </li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
 
-          <span class="types"><span class="type">boolean</span></span>
+           <span class="types"><span class="type">boolean</span></span>
         true if target exists, false if not
     </ol>
 
@@ -212,25 +195,93 @@
 
 </dd>
     <dt>
+    <a name = "forcetemplatedir"></a>
+    <strong>forcetemplatedir (path)</strong>
+    </dt>
+    <dd>
+    Set the template folder to a given path if not previously set.
+ You will most likely never use this function, the templates need
+ them to work in some cases.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         template directory
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "gameluapath"></a>
+    <strong>gameluapath ()</strong>
+    </dt>
+    <dd>
+    Get the path of the game.lua file which has been loaded at startup.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+        absolute file path to game.lua if a file on disk,
+ relative path to game.lua if loaded from a .zip archive
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getcwd"></a>
+    <strong>getcwd ()</strong>
+    </dt>
+    <dd>
+    Get an absolute path to the current working directory
+ (sometimes(!) this is where the blitwizard binary is located
+ - but not necessarily)
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+        absolute directory path
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "isdir"></a>
-    <strong>isdir&nbsp;(path)</strong>
+    <strong>isdir (path)</strong>
     </dt>
     <dd>
     Check if the given path points to a directory or not.
  If it points to a file or to nothing, this function returns false.
  If it points to a directory, it returns true.
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">path</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         directory path</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         directory path
+        </li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
 
-          <span class="types"><span class="type">boolean</span></span>
+           <span class="types"><span class="type">boolean</span></span>
         true if target is directory, false if not
     </ol>
 
@@ -240,7 +291,7 @@
 </dd>
     <dt>
     <a name = "ls"></a>
-    <strong>ls&nbsp;(directory, virtual_files)</strong>
+    <strong>ls (directory, virtual_files)</strong>
     </dt>
     <dd>
     Returns a table array containing all the file names of the
@@ -254,14 +305,17 @@
  to examine any directory supplied by the user and not part of your
  project)
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">directory</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         path, empty string ("") for current directory</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         path, empty string ("") for current directory
+        </li>
         <li><span class="parameter">virtual_files</span>
             <span class="types"><span class="type">boolean</span></span>
-         (optional) Specify true to list virtual files inside virtual directories aswell (the default behaviour), false to list only files in the actual file system on disk</li>
+         (optional) Specify true to list virtual files inside virtual directories aswell (the default behaviour), false to list only files in the actual file system on disk
+        </li>
     </ul>
 
 
@@ -278,48 +332,8 @@
 
 </dd>
     <dt>
-    <a name = "getcwd"></a>
-    <strong>getcwd&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get an absolute path to the current working directory
- (sometimes(!) this is where the blitwizard binary is located
- - but not necessarily)
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-        absolute directory path
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "chdir"></a>
-    <strong>chdir&nbsp;(directory)</strong>
-    </dt>
-    <dd>
-    Change the current working directory to the specified directory
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">directory</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         path</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
     <a name = "openConsole"></a>
-    <strong>openConsole&nbsp;()</strong>
+    <strong>openConsole ()</strong>
     </dt>
     <dd>
     Open a visible console window (in addition to the regular blitwizard
@@ -335,74 +349,11 @@
 
 
 
-</dd>
-    <dt>
-    <a name = "templatedir"></a>
-    <strong>templatedir&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the absolute folder path of the template directory.
- Returns nil if no template directory was found.
-<p> The template directory contains common Lua extensions
- for blitwizard which offer font rendering and more.
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-        absolute folder path of template directory (or nil if none).
- Can be a relative path if loaded from a .zip archive
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "forcetemplatedir"></a>
-    <strong>forcetemplatedir&nbsp;(path)</strong>
-    </dt>
-    <dd>
-    Set the template folder to a given path if not previously set.
- You will most likely never use this function, the templates need
- them to work in some cases.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">path</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         template directory</li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "gameluapath"></a>
-    <strong>gameluapath&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get the path of the game.lua file which has been loaded at startup.
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-        absolute file path to game.lua if a file on disk,
- relative path to game.lua if loaded from a .zip archive
-    </ol>
-
-
-
 
 </dd>
     <dt>
     <a name = "reload"></a>
-    <strong>reload&nbsp;()</strong>
+    <strong>reload ()</strong>
     </dt>
     <dd>
     This function reloads the game.lua file that has been initially loaded
@@ -417,10 +368,11 @@
 
 
 
+
 </dd>
     <dt>
     <a name = "sleep"></a>
-    <strong>sleep&nbsp;(milliseconds)</strong>
+    <strong>sleep (milliseconds)</strong>
     </dt>
     <dd>
     This function lets the whole blitwizard process freeze for the given
@@ -431,13 +383,81 @@
 <p> If you're just looking into running a function after some time has passed,
  you most likely want to use <a href="../modules/blitwizard.html#runDelayed">runDelayed</a> instead.
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">milliseconds</span>
             <span class="types"><span class="type">number</span></span>
-         the amount of milliseconds to sleep the whole process</li>
+         the amount of milliseconds to sleep the whole process
+        </li>
     </ul>
 
+
+
+
+
+</dd>
+    <dt>
+    <a name = "sysname"></a>
+    <strong>sysname ()</strong>
+    </dt>
+    <dd>
+    Return the name of the operating system your game is
+ currently running on.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+        Operating system name
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "sysversion"></a>
+    <strong>sysversion ()</strong>
+    </dt>
+    <dd>
+    Return the detailed version of the operating system
+ your game is currently running on.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+        Operating system version
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "templatedir"></a>
+    <strong>templatedir ()</strong>
+    </dt>
+    <dd>
+    Get the absolute folder path of the template directory.
+ Returns nil if no template directory was found.
+<p> The template directory contains common Lua extensions
+ for blitwizard which offer font rendering and more.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+        absolute folder path of template directory (or nil if none).
+ Can be a relative path if loaded from a .zip archive
+    </ol>
 
 
 
@@ -449,7 +469,7 @@
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
-<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.12</a></i>
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.0</a></i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

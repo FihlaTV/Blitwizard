@@ -158,10 +158,10 @@ void luastate_CreatePhysicsTable(lua_State* l) {
     luastate_register3dphysics(l, &luafuncs_ray3d, "ray3d");
 }
 
-void luastate_CreateNetTable(lua_State* l) {
+void luastate_CreateConnectionTable(lua_State* l) {
     lua_newtable(l);
-    lua_pushstring(l, "open");
-    lua_pushcfunction(l, &luafuncs_netopen);
+    lua_pushstring(l, "new");
+    lua_pushcfunction(l, &luafuncs_netnew);
     lua_settable(l, -3);
     lua_pushstring(l, "server");
     lua_pushcfunction(l, &luafuncs_netserver);
@@ -174,6 +174,13 @@ void luastate_CreateNetTable(lua_State* l) {
     lua_settable(l, -3);
     lua_pushstring(l, "close");
     lua_pushcfunction(l, &luafuncs_netclose);
+    lua_settable(l, -3);
+}
+
+void luastate_CreateNetTable(lua_State* l) {
+    lua_newtable(l);
+    lua_pushstring(l, "connection");
+    luastate_CreateConnectionTable(l);
     lua_settable(l, -3);
 }
 

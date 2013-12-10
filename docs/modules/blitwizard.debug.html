@@ -37,13 +37,14 @@
 
 
 <h2>Modules</h2>
-<ul>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../modules/blitwizard.html">blitwizard</a></li>
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
   <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
   <li><strong>blitwizard.debug</strong></li>
   <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
   <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="../modules/blitwizard.net.html">blitwizard.net</a></li>
   <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
   <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
@@ -57,7 +58,6 @@
 <div id="content">
 
 <h1>Module <code>blitwizard.debug</code></h1>
-
 <p>This namespace contains various functions to obtain information
  about the many complex subsystems working in blitwizard.</p>
 <p>
@@ -77,37 +77,37 @@
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#gpuMemoryUse">gpuMemoryUse&nbsp;()</a></td>
-	<td class="summary">Get GPU memory used for all textures loaded by blitwizard in bytes.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getTextureUsageInfo">getTextureUsageInfo&nbsp;(name)</a></td>
-	<td class="summary">Get usage information on a given texture.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getTextureGpuSizeInfo">getTextureGpuSizeInfo&nbsp;(name)</a></td>
-	<td class="summary">Get information of whether a texture is currently
- loaded into GPU memory, and at which size.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getLogicStats">getLogicStats&nbsp;()</a></td>
-	<td class="summary">Get some metrics of the logic processing pipeline
- of blitwizard (see return values).</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#getTextureRequestCount">getTextureRequestCount&nbsp;()</a></td>
-	<td class="summary">Get the total number of texture requests currently
- managed by the texture manager.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#get2dSpriteCount">get2dSpriteCount&nbsp;()</a></td>
+	<td class="name" ><a href="#get2dSpriteCount">get2dSpriteCount ()</a></td>
 	<td class="summary">Get the total number of 2d sprites which are currently
  active.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#getAudioChannelCount">getAudioChannelCount&nbsp;()</a></td>
+	<td class="name" ><a href="#getAudioChannelCount">getAudioChannelCount ()</a></td>
 	<td class="summary">Get the amount of sounds which are playing at this
  very moment.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getLogicStats">getLogicStats ()</a></td>
+	<td class="summary">Get some metrics of the logic processing pipeline
+ of blitwizard (see return values).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getTextureGpuSizeInfo">getTextureGpuSizeInfo (name)</a></td>
+	<td class="summary">Get information of whether a texture is currently
+ loaded into GPU memory, and at which size.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getTextureRequestCount">getTextureRequestCount ()</a></td>
+	<td class="summary">Get the total number of texture requests currently
+ managed by the texture manager.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getTextureUsageInfo">getTextureUsageInfo (name)</a></td>
+	<td class="summary">Get usage information on a given texture.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#gpuMemoryUse">gpuMemoryUse ()</a></td>
+	<td class="summary">Get GPU memory used for all textures loaded by blitwizard in bytes.</td>
 	</tr>
 </table>
 
@@ -118,18 +118,20 @@
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
     <dt>
-    <a name = "gpuMemoryUse"></a>
-    <strong>gpuMemoryUse&nbsp;()</strong>
+    <a name = "get2dSpriteCount"></a>
+    <strong>get2dSpriteCount ()</strong>
     </dt>
     <dd>
-    Get GPU memory used for all textures loaded by blitwizard in bytes.
+    Get the total number of 2d sprites which are currently
+ active.
+
 
 
     <h3>Returns:</h3>
     <ol>
 
-          <span class="types"><span class="type">number</span></span>
-        GPU memory used up in bytes
+           <span class="types"><span class="type">number</span></span>
+        total number of 2d sprites
     </ol>
 
 
@@ -137,26 +139,47 @@
 
 </dd>
     <dt>
-    <a name = "getTextureUsageInfo"></a>
-    <strong>getTextureUsageInfo&nbsp;(name)</strong>
+    <a name = "getAudioChannelCount"></a>
+    <strong>getAudioChannelCount ()</strong>
     </dt>
     <dd>
-    Get usage information on a given texture.
- This represents an indication of how much a texture
- is currently drawn on screen.
-<p> If it's not used at all, you'll get -1.
- Otherwise you'll get a number >= 0, and a smaller
- number indicates higher usage/more detail usage.
-<p> This usage information is used by blitwizard to decide
- on which textures to unload.
+    Get the amount of sounds which are playing at this
+ very moment.
 
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">name</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the file name which was used for loading the texture, e.g. "myImage.png"</li>
-    </ul>
 
+
+    <h3>Returns:</h3>
+    <ol>
+
+        number total number of active audio channels
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getLogicStats"></a>
+    <strong>getLogicStats ()</strong>
+    </dt>
+    <dd>
+    Get some metrics of the logic processing pipeline
+ of blitwizard (see return values).
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        processedImportantObjects</li>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        processedNormalObjects</li>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        processedBoringObjects</li>
+    </ol>
 
 
 
@@ -164,7 +187,7 @@
 </dd>
     <dt>
     <a name = "getTextureGpuSizeInfo"></a>
-    <strong>getTextureGpuSizeInfo&nbsp;(name)</strong>
+    <strong>getTextureGpuSizeInfo (name)</strong>
     </dt>
     <dd>
     Get information of whether a texture is currently
@@ -178,11 +201,13 @@
  and it only shows in a scaled down version or not at all,
  please report a bug: https://github.com/JonasT/blitwizard/issues
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">name</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the file name which was used when loading the texture, e.g. "myImage.png"</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the file name which was used when loading the texture, e.g. "myImage.png"
+        </li>
     </ul>
 
 
@@ -191,44 +216,19 @@
 
 </dd>
     <dt>
-    <a name = "getLogicStats"></a>
-    <strong>getLogicStats&nbsp;()</strong>
-    </dt>
-    <dd>
-    Get some metrics of the logic processing pipeline
- of blitwizard (see return values).
-
-
-    <h3>Returns:</h3>
-    <ol>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        processedImportantObjects</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        processedNormalObjects</li>
-        <li>
-          <span class="types"><span class="type">number</span></span>
-        processedBoringObjects</li>
-    </ol>
-
-
-
-
-</dd>
-    <dt>
     <a name = "getTextureRequestCount"></a>
-    <strong>getTextureRequestCount&nbsp;()</strong>
+    <strong>getTextureRequestCount ()</strong>
     </dt>
     <dd>
     Get the total number of texture requests currently
  managed by the texture manager.
 
 
+
     <h3>Returns:</h3>
     <ol>
 
-          <span class="types"><span class="type">number</span></span>
+           <span class="types"><span class="type">number</span></span>
         total number of texture requests
     </ol>
 
@@ -237,38 +237,47 @@
 
 </dd>
     <dt>
-    <a name = "get2dSpriteCount"></a>
-    <strong>get2dSpriteCount&nbsp;()</strong>
+    <a name = "getTextureUsageInfo"></a>
+    <strong>getTextureUsageInfo (name)</strong>
     </dt>
     <dd>
-    Get the total number of 2d sprites which are currently
- active.
+    Get usage information on a given texture.
+ This represents an indication of how much a texture
+ is currently drawn on screen.
+<p> If it's not used at all, you'll get -1.
+ Otherwise you'll get a number >= 0, and a smaller
+ number indicates higher usage/more detail usage.
+<p> This usage information is used by blitwizard to decide
+ on which textures to unload.
 
 
-    <h3>Returns:</h3>
-    <ol>
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the file name which was used for loading the texture, e.g. "myImage.png"
+        </li>
+    </ul>
 
-          <span class="types"><span class="type">number</span></span>
-        total number of 2d sprites
-    </ol>
 
 
 
 
 </dd>
     <dt>
-    <a name = "getAudioChannelCount"></a>
-    <strong>getAudioChannelCount&nbsp;()</strong>
+    <a name = "gpuMemoryUse"></a>
+    <strong>gpuMemoryUse ()</strong>
     </dt>
     <dd>
-    Get the amount of sounds which are playing at this
- very moment.
+    Get GPU memory used for all textures loaded by blitwizard in bytes.
+
 
 
     <h3>Returns:</h3>
     <ol>
 
-        number total number of active audio channels
+           <span class="types"><span class="type">number</span></span>
+        GPU memory used up in bytes
     </ol>
 
 
@@ -281,7 +290,7 @@
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
-<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.12</a></i>
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.0</a></i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

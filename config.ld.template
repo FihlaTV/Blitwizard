@@ -1,5 +1,9 @@
 -- LDoc configuration file
 wrap = true
+sort = function(a, b)
+    print("comparing: " .. a .. "," .. b)
+    return b > a
+end
 merge = true
 file = { INSERT_FILES_HERE }
 title = "Blitwizard API reference"

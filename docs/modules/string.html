@@ -37,13 +37,14 @@
 
 
 <h2>Modules</h2>
-<ul>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../modules/blitwizard.html">blitwizard</a></li>
   <li><a href="../modules/blitwizard.audio.html">blitwizard.audio</a></li>
   <li><a href="../modules/blitwizard.console.html">blitwizard.console</a></li>
   <li><a href="../modules/blitwizard.debug.html">blitwizard.debug</a></li>
   <li><a href="../modules/blitwizard.font.html">blitwizard.font</a></li>
   <li><a href="../modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="../modules/blitwizard.net.html">blitwizard.net</a></li>
   <li><a href="../modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
   <li><a href="../modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
   <li><a href="../modules/blitwizard.physics.html">blitwizard.physics</a></li>
@@ -57,7 +58,6 @@
 <div id="content">
 
 <h1>Module <code>string</code></h1>
-
 <p>This is the Lua "string" standard module, as extended by blitwizard.</p>
 <p>
 (<a href="http://www.lua.org/manual/5.2/manual.html#6.4">Check here for the documentation of the Lua "string" standard functions</a>)
@@ -75,17 +75,17 @@
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#split">split&nbsp;(string, delimiter, max_splits)</a></td>
+	<td class="name" ><a href="#endswith">endswith (examined_string, search_string)</a></td>
+	<td class="summary">Check if a given string ends with another.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#split">split (string, delimiter, max_splits)</a></td>
 	<td class="summary">Split up a given string with a given delimiter,
  and return it as an array.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#startswith">startswith&nbsp;(examined_string, search_string)</a></td>
+	<td class="name" ><a href="#startswith">startswith (examined_string, search_string)</a></td>
 	<td class="summary">Check if a given string starts with another.</td>
-	</tr>
-	<tr>
-	<td class="name" ><a href="#endswith">endswith&nbsp;(examined_string, search_string)</a></td>
-	<td class="summary">Check if a given string ends with another.</td>
 	</tr>
 </table>
 
@@ -96,8 +96,43 @@
     <h2><a name="Functions"></a>Functions</h2>
     <dl class="function">
     <dt>
+    <a name = "endswith"></a>
+    <strong>endswith (examined_string, search_string)</strong>
+    </dt>
+    <dd>
+    Check if a given string ends with another.
+ (The other string being shorter or the same length)
+ Also compare to <a href="../modules/string.html#startswith">startswith</a>
+<p> Returns true if the first specified string contains
+ the second at the very end, false if not.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">examined_string</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the string of which you want to examine the end
+        </li>
+        <li><span class="parameter">search_string</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the starting string you search inside the examined string
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        true if the search string is the examined string's end, false if not
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "split"></a>
-    <strong>split&nbsp;(string, delimiter, max_splits)</strong>
+    <strong>split (string, delimiter, max_splits)</strong>
     </dt>
     <dd>
     Split up a given string with a given delimiter,
@@ -107,17 +142,21 @@
  will be split up as often as the delimiter was found
  (and you'll get delimiter+1 string parts).
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">string</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         string to be split</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         string to be split
+        </li>
         <li><span class="parameter">delimiter</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         delimiter which is searched in the string, and where the string is split</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         delimiter which is searched in the string, and where the string is split
+        </li>
         <li><span class="parameter">max_splits</span>
             <span class="types"><span class="type">number</span></span>
-         (number) Maximum number of splits to be done</li>
+         (number) Maximum number of splits to be done
+        </li>
     </ul>
 
 
@@ -127,7 +166,7 @@
 </dd>
     <dt>
     <a name = "startswith"></a>
-    <strong>startswith&nbsp;(examined_string, search_string)</strong>
+    <strong>startswith (examined_string, search_string)</strong>
     </dt>
     <dd>
     Check if a given string starts with another.
@@ -135,53 +174,24 @@
 <p> Returns true if the first specified string contains
  the second at the beginning, false if not.
 
+
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">examined_string</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the string of which you want to examine the beginning</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the string of which you want to examine the beginning
+        </li>
         <li><span class="parameter">search_string</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the starting string you search inside the examined string</li>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the starting string you search inside the examined string
+        </li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
 
-          <span class="types"><span class="type">boolean</span></span>
+           <span class="types"><span class="type">boolean</span></span>
         true if the search string matches the examined string's beginning, false if not
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "endswith"></a>
-    <strong>endswith&nbsp;(examined_string, search_string)</strong>
-    </dt>
-    <dd>
-    Check if a given string ends with another.
- (The other string being shorter or the same length)
- Also compare to <a href="../modules/string.html#startswith">startswith</a>
-<p> Returns true if the first specified string contains
- the second at the very end, false if not.
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">examined_string</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the string of which you want to examine the end</li>
-        <li><span class="parameter">search_string</span>
-            <span class="types"><a class="type" href="../modules/string.html#">string</a></span>
-         the starting string you search inside the examined string</li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-          <span class="types"><span class="type">boolean</span></span>
-        true if the search string is the examined string's end, false if not
     </ol>
 
 
@@ -194,7 +204,7 @@
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
-<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3.12</a></i>
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.0</a></i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
