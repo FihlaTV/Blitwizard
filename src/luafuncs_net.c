@@ -416,10 +416,30 @@ static void luafuncs_parsestreamsettings(lua_State* l, int stackindex,
 /// Create a new network connection to the given target.
 // @function new
 // @tparam table settings a table with the available @{connection.settings|settings} in it you want to choose
-// @tparam function open_callback a callback function that will be called when the connection has beeen successfully opened. As soon as the connection is open, you may use @{blitwizard.net.connection:send|connection:send}.
-// @tparam function read_callback a callback function that will be called when the connection has been opened at some point and data has arrived (sent by whomever you opened a connection to). As a parameter, the data (string) will be passed which arrived.
-// @tparam function close_callback a callback function that will be called when your connection was closed (or it failed to open). It will be triggered both by an explicit connection close through @{blitwizard.net.connection:close|connection:close}, and a connection closing because your connection target has closed it.
+// @tparam function open_callback a callback function that will be called when the connection has beeen successfully opened. As soon as the connection is open, you may use @{connection:send|connection:send}. The first parameter should be 'self' for the connection that was opened. (see usage example below)
+// @tparam function read_callback a callback function that will be called when the connection has been opened at some point and data has arrived (sent by whomever you opened a connection to). The first parameter should be 'self'. As second parameter, the data (string) will be passed which arrived.
+// @tparam function close_callback a callback function that will be called when your connection was closed (or it failed to open). It will be triggered both by an explicit connection close through @{connection:close|connection:close}, and a connection closing because your connection target has closed it. The first parameter should be 'self'. (see usage example below)
 // @treturn userdata the new @{connection}
+// @usage
+//   -- open up a connection to google.com, request the contents
+//   -- and print out the response:
+//   my_connection = blitwizard.net.connection:new(
+//       {server="google.com", port=80, linebuffered=true},
+//   function(self)
+//       print("Connected! Send request:")
+//       -- this is a simple http request:
+//       self:send("GET / HTTP/1.1")
+//       self:send("User-Agent: blitwizard demo")
+//       self.send("")
+//   end,
+//   function(self, line)
+//       -- Received a line of data. Print it out:
+//       print(" >> " .. line)
+//   end,
+//   function(self)
+//       -- Connection was closed!
+//       print("Connection was closed. Goodbye!")
+//   end)
 int luafuncs_netnew(lua_State* l) {
     int haveconnect = 0;
     int haveread = 0;

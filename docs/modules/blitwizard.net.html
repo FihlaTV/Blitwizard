@@ -63,9 +63,9 @@
  If you wnat to create a multiplayer game, you may want to have a look at it.</p>
     <h3>Info:</h3>
     <ul>
+        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
         <li><strong>License</strong>: zlib</li>
         <li><strong>Copyright</strong>: 2011-2013</li>
-        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
     </ul>
 
 
@@ -168,15 +168,15 @@
         </li>
         <li><span class="parameter">open_callback</span>
             <span class="types"><span class="type">function</span></span>
-         a callback function that will be called when the connection has beeen successfully opened. As soon as the connection is open, you may use ???.
+         a callback function that will be called when the connection has beeen successfully opened. As soon as the connection is open, you may use <a href="../modules/blitwizard.net.html#connection:send">connection:send</a>. The first parameter should be 'self' for the connection that was opened. (see usage example below)
         </li>
         <li><span class="parameter">read_callback</span>
             <span class="types"><span class="type">function</span></span>
-         a callback function that will be called when the connection has been opened at some point and data has arrived (sent by whomever you opened a connection to). As a parameter, the data (string) will be passed which arrived.
+         a callback function that will be called when the connection has been opened at some point and data has arrived (sent by whomever you opened a connection to). The first parameter should be 'self'. As second parameter, the data (string) will be passed which arrived.
         </li>
         <li><span class="parameter">close_callback</span>
             <span class="types"><span class="type">function</span></span>
-         a callback function that will be called when your connection was closed (or it failed to open). It will be triggered both by an explicit connection close through ???, and a connection closing because your connection target has closed it.
+         a callback function that will be called when your connection was closed (or it failed to open). It will be triggered both by an explicit connection close through <a href="../modules/blitwizard.net.html#connection:close">connection:close</a>, and a connection closing because your connection target has closed it. The first parameter should be 'self'. (see usage example below)
         </li>
     </ul>
 
@@ -189,6 +189,29 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+   <span class="comment">-- open up a connection to google.com, request the contents
+</span>   <span class="comment">-- and print out the response:
+</span>   my_connection = blitwizard.net.connection:new(
+       {server=<span class="string">"google.com"</span>, port=<span class="number">80</span>, linebuffered=<span class="keyword">true</span>},
+   <span class="keyword">function</span>(self)
+       <span class="global">print</span>(<span class="string">"Connected! Send request:"</span>)
+       <span class="comment">-- this is a simple http request:
+</span>       self:send(<span class="string">"GET / HTTP/1.1"</span>)
+       self:send(<span class="string">"User-Agent: blitwizard demo"</span>)
+       self.send(<span class="string">""</span>)
+   <span class="keyword">end</span>,
+   <span class="keyword">function</span>(self, line)
+       <span class="comment">-- Received a line of data. Print it out:
+</span>       <span class="global">print</span>(<span class="string">" &gt;&gt; "</span> .. line)
+   <span class="keyword">end</span>,
+   <span class="keyword">function</span>(self)
+       <span class="comment">-- Connection was closed!
+</span>       <span class="global">print</span>(<span class="string">"Connection was closed. Goodbye!"</span>)
+   <span class="keyword">end</span>)</pre>
+    </ul>
 
 </dd>
     <dt>
