@@ -22,7 +22,7 @@
 */
 
 /// The blitwizard net namespace contains networking functionality.
-// If you wnat to create a multiplayer game, you may want to have a look at it.
+// If you want to create a multiplayer game, you may want to have a look at it.
 // @author Jonas Thiem  (jonas.thiem@googlemail.com)
 // @copyright 2011-2013
 // @license zlib
@@ -44,6 +44,89 @@
 #include "listeners.h"
 #include "luafuncs.h"
 
+/// Close the server which was opened at the given port.
+// This will also close down all connections you accepted through it.
+// @function server_close
+// @tparam number the port of the server listener to be closed
+int luafuncs_netserver_close(lua_State* l) {
+    if (lua_type(l, 1) != LUA_TNUMBER) {
+        if (lua_gettop(l) < 1 || lua_type(l, 1) != LUA_TNUMBER) {
+            return haveluaerror(l, badargument1, 1, "blitwizard.net.server_close", "number", lua_strtype(l, 1));
+        }
+    }
+    // it is a server port
+    if (!listeners_CloseByPort(lua_tointeger(l, 1))) {
+        return haveluaerror(l, "Cannot close server at port %d"
+            " - was there a server running at this port?",
+            lua_tointeger(l, 1));
+    } else {
+        // wipe the callback aswell
+        char p[512];
+        snprintf(p, sizeof(p), "serverlistenercallback%d",
+            (int)lua_tointeger(l, 1));
+        lua_pushstring(l, p);
+        lua_pushnil(l);
+        lua_settable(l, LUA_REGISTRYINDEX);
+    }
+    return 0;
+}
+
+/// Open up a server listener at the given port number. This will allow you to
+// get incoming connections at the given port, accept them and then exchange
+// data with them. A server can receive an arbitrary amount of client
+// connections at once.
+// @function server_open
+// @tparam number port the port to open a server at
+// @tparam function accept_callback this function will be called every time you
+// get a new connection. The first parameter is the listener port number,
+// the second parameter the new @{connection}. You may want to use
+// @{connection:set} on each new connection to set a read callback so you can
+// receive data from it.
+int luafuncs_netserver_open(lua_State* l) {
+    // get parameters:
+    if (lua_gettop(l) < 1 || lua_type(l, 1) != LUA_TNUMBER) {
+        return haveluaerror(l, badargument1, 1, "blitwizard.net.server_open",
+        "number", lua_strtype(l, 1));
+    }
+    int port = lua_tointeger(l, 1);
+    if (port < 1 || port > 65535) {
+        return haveluaerror(l, badargument2, 1, "blitwizard.net.server_open",
+        "port not in valid range");
+    }
+    if (lua_gettop(l) < 2 || lua_type(l, 2) != LUA_TFUNCTION) {
+        return haveluaerror(l, badargument1, 2, "blitwizard.net.server_open",
+        "function", lua_strtype(l, 2));
+    }
+
+    // clean up stack from everything we don't want:
+    if (lua_gettop(l) > 2) {
+        lua_pop(l, lua_gettop(l)-2);
+    }
+
+    // create server listener:
+    int result = listeners_Create(port, 0, l);
+    if (!result) {
+        if (port > 1024) {
+            return haveluaerror(l, "cannot start server at %d - is "
+            "that port already in use?", port);
+        } else {
+            return haveluaerror(l, "cannot start server at %d - is "
+            "that port already in use?\nIMPORTANT: You used a port <= 1024."
+            " This program might need special privilegues to use this port.",
+            port);
+        }
+    }
+    char p[512];
+    snprintf(p, sizeof(p), "serverlistenercallback%d", port);
+    lua_pushstring(l, p);
+    lua_insert(l, -2);
+    lua_settable(l, LUA_REGISTRYINDEX);
+
+    // return the port in case of success:
+    lua_pushnumber(l, port);
+    return 1;
+}
+
 /// Blitwizard network connection type. Represents a network connection.
 // @type connection
 struct luanetstream {
@@ -51,7 +134,7 @@ struct luanetstream {
 };
 
 static struct luanetstream* toluanetstream(lua_State* l, int index) {
-    char invalid[] = "Not a valid net stream reference";
+    char invalid[] = "not a valid blitwizard.net.connection";
     if (lua_type(l, index) != LUA_TUSERDATA) {
         lua_pushstring(l, invalid);
         lua_error(l);
@@ -406,7 +489,11 @@ static void luafuncs_parsestreamsettings(lua_State* l, int stackindex,
 // @table settings
 // @tfield string server the target server's host name or ip address
 // @tfield number port the target server's TCP/IP port you want to connect to
-// @tfield boolean linebuffered (optional) whether you want the read callback to collect full lines up to the next line break and then return you those complete lines (=linebuffered set to true), or to pass on whatever it receives instantly no matter whether it is just a partial line or not (=linebuffered set to false)
+// @tfield boolean linebuffered (optional) whether you want the read callback
+// to collect full lines up to the next line break and then return you those
+// complete lines (=linebuffered set to true), or to pass on whatever it
+// receives instantly no matter whether it is just a partial line or not
+// (=linebuffered set to false)
 // @tfield boolean lowdelay (optional) this allows you to enable low delay sending.
 //
 // If disabled (the default), sending on a connection will sometimes be delayed (for a few milliseconds) to assemble more data in a bigger packet.
@@ -497,26 +584,10 @@ int luafuncs_netsend(lua_State* l) {
 /// Close the given connection. You will no longer be able to send things on it.
 // @function close
 int luafuncs_netclose(lua_State* l) {
-    if (lua_gettop(l) >= 1 && lua_type(l, 1) == LUA_TNUMBER) {
-        // it is a server port
-        if (!listeners_CloseByPort(lua_tointeger(l, 1))) {
-            return haveluaerror(l, "Cannot close server at port %d"
-                " - was there a server running at this port?",
-                lua_tointeger(l, 1));
-        } else {
-            // wipe the callback aswell
-            char p[512];
-            snprintf(p, sizeof(p), "serverlistenercallback%d",
-                (int)lua_tointeger(l, 1));
-            lua_pushstring(l, p);
-            lua_pushnil(l);
-            lua_settable(l, LUA_REGISTRYINDEX);
-        }
-        return 0;
-    }
     struct luanetstream* netstream = toluanetstream(l, 1);
     if (!connections_CheckIfConnected(netstream->c)) {
-        lua_pushstring(l, "Cannot close a stream which is already closed");
+        lua_pushstring(l, "cannot close a connection which is "
+            "already closed");
         return lua_error(l);
     }
     if (netstream->c->outbufbytes <= 0) {
@@ -546,18 +617,21 @@ int luafuncs_netclose(lua_State* l) {
 int luafuncs_netset(lua_State* l) {
     struct luanetstream* netstream = toluanetstream(l, 1);
     if (!connections_CheckIfConnected(netstream->c)) {
-        lua_pushstring(l, "Cannot set callbacks to a closed stream");
+        lua_pushstring(l, "blitwizard.net.connection:set: "
+             "cannot set callbacks to a closed connection");
         return lua_error(l);
     }
 
     // check/retrieve callbacks:
     int haveconnect,haveread,haveerror;
-    luafuncs_checkcallbackparameters(l, 3, "blitwiz.net.set", &haveconnect, &haveread, &haveerror);
+    luafuncs_checkcallbackparameters(l, 3, "blitwizard.net.connection:set",
+        &haveconnect, &haveread, &haveerror);
 
     // obtain settings:
     int linebuffered = -1;
     int lowdelay = -1;
-    luafuncs_parsestreamsettings(l, 1, 1, "blitwiz.net.set", 0, NULL, NULL, &linebuffered, &lowdelay);
+    luafuncs_parsestreamsettings(l, 1, 1, "blitwizard.net.connection:set",
+        0, NULL, NULL, &linebuffered, &lowdelay);
 
     // set callbacks:
     luacfuncs_setcallbacks(l, netstream->c, 3, haveconnect,
@@ -609,8 +683,8 @@ static int connectedevents(struct connection* c) {
 
         char funcName[128];
         snprintf(funcName, sizeof(funcName),
-        "blitwizard.object event function "
-        "\"blitwizard.net.stream:connectCallback\"");
+        "blitwizard.net.connection event function "
+        "\"blitwizard.net.stream:onConnected\"");
         luacfuncs_onError(funcName, e);
         lua_pop(l, 2); // pop error message, error handler
         return 0;
@@ -659,52 +733,14 @@ static int readevents(struct connection* c, char* data, unsigned int datalength)
 
         char funcName[124];
         snprintf(funcName, sizeof(funcName),
-        "blitwizard.object event function "
-        "\"blitwizard.net.stream:readCallback\"");
+        "blitwizard.connection event function "
+        "\"blitwizard.net.connection:onRead\"");
         luacfuncs_onError(funcName, e);
         lua_pop(l, 2); // pop error message, error handler
         return 0;
     }
     lua_pop(l, 1); // pop error handler
 
-    return 1;
-}
-
-int luafuncs_netserver(lua_State* l) {
-    // get parameters:
-    if (lua_gettop(l) < 1 || lua_type(l, 1) != LUA_TNUMBER) {
-        return haveluaerror(l, badargument1, 1, "blitwiz.net.server", "number", lua_strtype(l, 1));
-    }
-    int port = lua_tointeger(l, 1);
-    if (port < 1 || port > 65535) {
-        return haveluaerror(l, badargument2, 1, "blitwiz.net.server", "port not in valid range");
-    }
-    if (lua_gettop(l) < 2 || lua_type(l, 2) != LUA_TFUNCTION) {
-        return haveluaerror(l, badargument1, 2, "blitwiz.net.server", "function", lua_strtype(l, 2));
-    }
-
-    // clean up stack from everything we don't want:
-    if (lua_gettop(l) > 2) {
-        lua_pop(l, lua_gettop(l)-2);
-    }
-
-    // create server listener:
-    int result = listeners_Create(port, 0, l);
-    if (!result) {
-        if (port > 1024) {
-            return haveluaerror(l, "Cannot start server at %d - is that port already in use?", port);
-        } else {
-            return haveluaerror(l, "Cannot start server at %d - is that port already in use?\nIMPORTANT: You used a port <= 1024. This program might need special privilegues to use this port.", port);
-        }
-    }
-    char p[512];
-    snprintf(p, sizeof(p), "serverlistenercallback%d", port);
-    lua_pushstring(l, p);
-    lua_insert(l, -2);
-    lua_settable(l, LUA_REGISTRYINDEX);
-
-    // return the port in case of success:
-    lua_pushnumber(l, port);
     return 1;
 }
 
@@ -735,7 +771,8 @@ int connectionevents(int port, int socket, const char* ip, void* sslptr, void* u
     lua_pushnumber(l, port);
 
     // create a new connection which we can pass on to the callback:
-    struct luaidref* iptr = createnetstreamobj(l, NULL); // FIXME: this should be pcall'ed probably
+    struct luaidref* iptr = createnetstreamobj(l, NULL);
+        // FIXME: this should be pcall'ed probably
 
     struct connection* c = ((struct luanetstream*)iptr->ref.ptr)->c;
     memset(c, 0, sizeof(*c));
@@ -778,8 +815,8 @@ int connectionevents(int port, int socket, const char* ip, void* sslptr, void* u
 
         char funcName[128];
         snprintf(funcName, sizeof(funcName),
-        "blitwizard.object event function "
-        "\"blitwizard.net.server:serverCallback\"");
+        "blitwizard.net event function "
+        "\"<blitwizard server callback>\"");
         luacfuncs_onError(funcName, e);
         lua_pop(l, 2); // pop error message, error handler
         return 0;
@@ -843,8 +880,8 @@ static int errorevents(struct connection* c, int error) {
         const char* e = lua_tostring(l, -1);
         char funcName[128];
         snprintf(funcName, sizeof(funcName),
-        "blitwizard.object event function "
-        "\"blitwizard.net.stream:closeCallback\"");
+        "blitwizard.connection event function "
+        "\"blitwizard.net.connection:onClosed\"");
         luacfuncs_onError(funcName, e);
         lua_pop(l, 2); // pop error message, error handler
         return 0;

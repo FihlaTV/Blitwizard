@@ -163,9 +163,6 @@ void luastate_CreateConnectionTable(lua_State* l) {
     lua_pushstring(l, "new");
     lua_pushcfunction(l, &luafuncs_netnew);
     lua_settable(l, -3);
-    lua_pushstring(l, "server");
-    lua_pushcfunction(l, &luafuncs_netserver);
-    lua_settable(l, -3);
     lua_pushstring(l, "set");
     lua_pushcfunction(l, &luafuncs_netset);
     lua_settable(l, -3);
@@ -181,6 +178,12 @@ void luastate_CreateNetTable(lua_State* l) {
     lua_newtable(l);
     lua_pushstring(l, "connection");
     luastate_CreateConnectionTable(l);
+    lua_settable(l, -3);
+    lua_pushstring(l, "server_open");
+    lua_pushcfunction(l, &luafuncs_netserver_open);
+    lua_settable(l, -3);
+    lua_pushstring(l, "server_close");
+    lua_pushcfunction(l, &luafuncs_netserver_close);
     lua_settable(l, -3);
 }
 

@@ -1027,7 +1027,7 @@ int main(int argc, char** argv) {
     // enable blitwizard.onLog
     doConsoleLog();
 
-    printinfo("[main] blitwizard startup: calling blitwiz.onInit...");
+    printinfo("[main] blitwizard startup: calling blitwizard.onInit...");
     doConsoleLog();
 
     // call init

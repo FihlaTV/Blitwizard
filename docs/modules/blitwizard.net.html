@@ -32,6 +32,7 @@
 
 <h2>Contents</h2>
 <ul>
+<li><a href="#Functions">Functions</a></li>
 <li><a href="#Class_connection">Class connection </a></li>
 </ul>
 
@@ -60,15 +61,26 @@
 <h1>Module <code>blitwizard.net</code></h1>
 <p>The blitwizard net namespace contains networking functionality.</p>
 <p>
- If you wnat to create a multiplayer game, you may want to have a look at it.</p>
+ If you want to create a multiplayer game, you may want to have a look at it.</p>
     <h3>Info:</h3>
     <ul>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
+        <li><strong>Copyright</strong>: 2011-2013</li>
     </ul>
 
 
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#server_close">server_close (the)</a></td>
+	<td class="summary">Close the server which was opened at the given port.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#server_open">server_open (port, accept_callback)</a></td>
+	<td class="summary">Open up a server listener at the given port number.</td>
+	</tr>
+</table>
 <h2><a href="#Class_connection">Class connection </a></h2>
 <table class="function_list">
 	<tr>
@@ -97,6 +109,63 @@
 <br/>
 
 
+    <h2><a name="Functions"></a>Functions</h2>
+    <dl class="function">
+    <dt>
+    <a name = "server_close"></a>
+    <strong>server_close (the)</strong>
+    </dt>
+    <dd>
+    Close the server which was opened at the given port.
+ This will also close down all connections you accepted through it.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">the</span>
+            <span class="types"><span class="type">number</span></span>
+         port of the server listener to be closed
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "server_open"></a>
+    <strong>server_open (port, accept_callback)</strong>
+    </dt>
+    <dd>
+    Open up a server listener at the given port number.  This will allow you to
+ get incoming connections at the given port, accept them and then exchange
+ data with them. A server can receive an arbitrary amount of client
+ connections at once.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">port</span>
+            <span class="types"><span class="type">number</span></span>
+         the port to open a server at
+        </li>
+        <li><span class="parameter">accept_callback</span>
+            <span class="types"><span class="type">function</span></span>
+         this function will be called every time you
+ get a new connection. The first parameter is the listener port number,
+ the second parameter the new <a href="../modules/blitwizard.net.html#Class_connection">connection</a>. You may want to use
+ <a href="../modules/blitwizard.net.html#connection:set">connection:set</a> on each new connection to set a read callback so you can
+ receive data from it.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
     <h2><a name="Class_connection"></a>Class connection </h2>
           Represents a network connection.
     <dl class="function">
@@ -123,7 +192,11 @@
         </li>
         <li><span class="parameter">linebuffered</span>
             <span class="types"><span class="type">boolean</span></span>
-         (optional) whether you want the read callback to collect full lines up to the next line break and then return you those complete lines (=linebuffered set to true), or to pass on whatever it receives instantly no matter whether it is just a partial line or not (=linebuffered set to false)
+         (optional) whether you want the read callback
+ to collect full lines up to the next line break and then return you those
+ complete lines (=linebuffered set to true), or to pass on whatever it
+ receives instantly no matter whether it is just a partial line or not
+ (=linebuffered set to false)
         </li>
         <li><span class="parameter">lowdelay</span>
             <span class="types"><span class="type">boolean</span></span>
