@@ -688,7 +688,16 @@ void connections_Close(struct connection* c) {
 
 int connections_NoConnectionsOpen() {
     if (connectionlist) {
-        return 0;
+        int nonemptyconnection = 0;
+        struct connection* c = connectionlist;
+        while (c) {
+            if (c->error < 0) {
+                nonemptyconnection = 1;
+                break;
+            }
+            c = c->next;
+        }
+        return (!nonemptyconnection);
     }
     return 1;
 }
