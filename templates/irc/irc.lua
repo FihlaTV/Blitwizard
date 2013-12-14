@@ -85,14 +85,15 @@ nickname, port)
 
     server.nickname = nickname
     server.connection = 
-    blitwizard.net.open({server=name, port=port, linebuffered=true},
-        function(stream)
-            blitwizard.net.send(stream,
+    blitwizard.net.connection:new(
+    {server=name, port=port, linebuffered=true},
+        function(self)
+            self:send(
             "Nick " .. nickname .. "\nUser " .. nickname ..
             " 0 0 :" .. nickname .. "\n")
             server.nickname = nickname
         end,
-        function(stream, line)
+        function(self, line)
             callback_on_event(server, "raw", line)
             -- split up IRC arguments:
             local args = {string.split(line, " ")}
@@ -132,7 +133,7 @@ nickname, port)
                 i = i + 1
             end
             -- parse IRC numerics ere:
-            if string.starts(args[1], ":") and #args >= 2 then
+            if string.startswith(args[1], ":") and #args >= 2 then
                 local actor = string.split(string.sub(args[1], 2), "!", 1)
                 if args[2] == "001" then
                     server.connected = true
@@ -146,6 +147,11 @@ nickname, port)
                             server.channels[args[4]].joinDelayed = false
                             callback_on_event(server, "enter",
                             args[4], server.nickname)
+                            for event in ipairs(server.channels[args[4]].
+                                    delayedEvents) do
+                                callback_on_event(server, table.unpack(event))
+                            end
+                            server.channels[args[4]].delayedEvents = {}
                         end
                     end
                 end
@@ -229,7 +235,7 @@ nickname, port)
                 end
             end
             if string.lower(args[1]) == "ping" then
-                blitwizard.net.send(stream, "PONG :" .. args[2] .. "\n")
+                self:send("PONG :" .. args[2] .. "\n")
             end
         end,
         function(stream, errmsg)
@@ -286,8 +292,8 @@ function blitwizard.net.irc.connection:quit(reason)
     if reason == nil then
         reason = "Bye"
     end
-    blitwizard.net.send(self.connection, "QUIT :" .. reason .. "\n")
-    blitwizard.net.close(self.connection)
+    self.connection:send("QUIT :" .. reason .. "\n")
+    self.connection:close()
     self.connection = nil
 end
 
@@ -317,7 +323,7 @@ function blitwizard.net.irc.connection:enterRoom(channel)
     channel = channel:gsub("\r", " ")
     channel = string.split(channel, " ", 1)
     channel = channel:gsub(",", "")
-    blitwizard.net.send(self["connection"], "JOIN " .. channel .. "\n")
+    self["connection"]:send("JOIN " .. channel .. "\n")
 end
 
 --[[--
@@ -330,7 +336,7 @@ end
    @tparam string msg the message you want to send to the person
 ]]
 function blitwizard.net.irc.connection:talkToPerson(nickname, msg)
-    blitwizard.net.send(self["connection"],
+    self["connection"]:send(
     "PRIVMSG " .. nickname .. " :" .. string.split(
         string.split(msg, "\n", 2)[1], "\r", 2)[1] .. "\n")
 end
@@ -345,7 +351,7 @@ end
 function blitwizard.net.irc.connection:talkToRoom(channel, msg)
     if self.channels[channel] ~= nil then
         if not self.channels[channel].joinDelayed then
-            blitwizard.net.send(self["connection"], "PRIVMSG " .. channel ..
+            self["connection"]:send("PRIVMSG " .. channel ..
             " :" ..
             string.split(string.split(msg, "\n", 2), "\r", 2) .. "\n")
             return
@@ -368,7 +374,7 @@ end
 function blitwizard.net.irc.connection:doRoomAction(channel, msg)
     if self.channels[channel] ~= nil then
         if not self.channels[channel].joinDelayed then
-            blitwizard.net.send(self["connection"], "PRIVMSG " .. channel ..
+            self["connection"]:send("PRIVMSG " .. channel ..
             " :\001ACTION " ..
             string.split(string.split(msg, "\n", 2), "\r", 2) ..
             "\001\n")
