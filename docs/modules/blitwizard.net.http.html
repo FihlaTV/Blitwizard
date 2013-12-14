@@ -30,6 +30,11 @@
   <li><a href="../index.html">Index</a></li>
 </ul>
 
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Tables">Tables</a></li>
+</ul>
 
 
 <h2>Modules</h2>
@@ -54,15 +59,127 @@
 <div id="content">
 
 <h1>Module <code>blitwizard.net.http</code></h1>
-<p></p>
-<p></p>
+<p>This is the HTTP module which allows you to fetch web documents.</p>
+<p>
+ You can use this to automatically download patches/updates, high score lists
+ etc.</p>
 
 
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#get">get (url, response_callback)</a></td>
+	<td class="summary">Use this function to get a web document.</td>
+	</tr>
+</table>
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" ><a href="#response">response</a></td>
+	<td class="summary">This illustrates the response table you get from the <a href="../modules/blitwizard.net.http.html#get">http.get function's
+ reponse_callback</a>.</td>
+	</tr>
+</table>
 
 <br/>
 <br/>
 
 
+    <h2><a name="Functions"></a>Functions</h2>
+    <dl class="function">
+    <dt>
+    <a name = "get"></a>
+    <strong>get (url, response_callback)</strong>
+    </dt>
+    <dd>
+    Use this function to get a web document.
+<p> The function will issue a callback once the requested document is available.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">url</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the url of the web document, e.g. http://www.blitwizard.de/
+        </li>
+        <li><span class="parameter">response_callback</span>
+            <span class="types"><span class="type">function</span></span>
+         the function which will be called once the
+  document arrived (or when arrival failed). The first and only paramater is a
+  <a href="../modules/blitwizard.net.http.html#response">response</a> table that contains the document (or the error on failure) and
+  various additional information.
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+   blitwizard.net.http.get(<span class="string">"http://www.blitwizard.de/"</span>,
+       <span class="keyword">function</span>(response)
+           <span class="keyword">if</span> response.response_code == <span class="number">200</span> <span class="keyword">then</span>
+               <span class="global">print</span>(<span class="string">"Document arrived! Here it is:\n"</span> .. response.content)
+           <span class="keyword">else</span>
+               <span class="global">print</span>(<span class="string">"Failed to obtain document! Error code: "</span> ..
+                   response.response_code)
+           <span class="keyword">end</span>
+       <span class="keyword">end</span>
+   )</pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2><a name="Tables"></a>Tables</h2>
+    <dl class="function">
+    <dt>
+    <a name = "response"></a>
+    <strong>response</strong>
+    </dt>
+    <dd>
+    This illustrates the response table you get from the <a href="../modules/blitwizard.net.http.html#get">http.get function's
+ reponse_callback</a>.
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">response_code</span>
+            <span class="types"><span class="type">number</span></span>
+         the HTTP response code. 200 means success,
+  anything else indicates an error. All errors are usually indicated by the server,
+  search the internet for HTTP response codes if you need more detailed information
+  on how to interpret them. The exception is response code 999, which issued
+  locally by blitwizard in case the server couldn't be contacted at all.
+        </li>
+        <li><span class="parameter">string</span>
+            <span class="types"><span class="type">headers</span></span>
+         contains a string with all the response HTTP headers
+  sent by the server. This is for advanced HTTP tricks, and usually not needed.
+        </li>
+        <li><span class="parameter">string</span>
+            <span class="types"><span class="type">headers</span></span>
+         contains a string with all the response HTTP headers
+  sent by the server. This is for advanced HTTP tricks, and usually not needed.
+        </li>
+        <li><span class="parameter">string</span>
+            <span class="types"><span class="type">headers</span></span>
+         contains a string with all the response HTTP headers
+  sent by the server. This is for advanced HTTP tricks, and usually not needed.
+        </li>
+        <li><span class="parameter">string</span>
+            <span class="types"><span class="type">headers</span></span>
+         contains a string with all the response HTTP headers
+  sent by the server. This is for advanced HTTP tricks, and usually not needed.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
 
 
 </div> <!-- id="content" -->

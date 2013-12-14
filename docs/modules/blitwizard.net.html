@@ -64,8 +64,8 @@
  If you want to create a multiplayer game, you may want to have a look at it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>License</strong>: zlib</li>
         <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
+        <li><strong>License</strong>: zlib</li>
         <li><strong>Copyright</strong>: 2011-2013</li>
     </ul>
 
@@ -275,7 +275,7 @@
        <span class="comment">-- this is a simple http request:
 </span>       self:send(<span class="string">"GET / HTTP/1.1"</span>)
        self:send(<span class="string">"User-Agent: blitwizard demo"</span>)
-       self.send(<span class="string">""</span>)
+       self:send(<span class="string">""</span>)
    <span class="keyword">end</span>,
    <span class="keyword">function</span>(self, line)
        <span class="comment">-- Received a line of data. Print it out:

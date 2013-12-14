@@ -17,10 +17,55 @@ Permission is granted to anyone to use this software for any purpose, including 
 ]]
 
 --[[--
-@module blitwizard.net.http
+ This is the HTTP module which allows you to fetch web documents.
+ You can use this to automatically download patches/updates, high score lists
+ etc.
+ @module blitwizard.net.http
 ]]
 
 blitwizard.net.http = {}
+
+--[[--
+ This illustrates the response table you get from the @{get|http.get function's
+ reponse_callback}.
+ @table response
+ @tfield number response_code the HTTP response code. 200 means success,
+  anything else indicates an error. All errors are usually indicated by the server,
+  search the internet for HTTP response codes if you need more detailed information
+  on how to interpret them. The exception is response code 999, which issued
+  locally by blitwizard in case the server couldn't be contacted at all.
+ @tfield content string the received content. In case of an error code, it usually
+  contains the error message (or nothing).
+ @tfield mime_type string the mime type which the server reports for the document,
+  e.g. "text/plain" for plain text documents, "text/html" for HTML documents, etc.
+ @tfield server_name string the server name (as reported by the server itself).
+  May be nil on failure of if the server doesn't report a name.
+ @tfield headers string contains a string with all the response HTTP headers
+  sent by the server. This is for advanced HTTP tricks, and usually not needed.
+]]
+
+--[[--
+ Use this function to get a web document.
+
+ The function will issue a callback once the requested document is available.
+ @function get
+ @tparam string url the url of the web document, e.g. http://www.blitwizard.de/
+ @tparam function response_callback the function which will be called once the
+  document arrived (or when arrival failed). The first and only parameter is a
+  @{response} table that contains the document (or the error on failure) and
+  various additional information.
+ @usage
+   blitwizard.net.http.get("http://www.blitwizard.de/",
+       function(response)
+           if response.response_code == 200 then
+               print("Document arrived! Here it is:\n" .. response.content)
+           else
+               print("Failed to obtain document! Error code: " ..
+                   response.response_code)
+           end
+       end
+   )
+]]
 
 blitwizard.net.http.get = function(url, callback, headers)
     --   *** Blitwizard HTTP interface ***
@@ -75,7 +120,7 @@ blitwizard.net.http.get = function(url, callback, headers)
     end
 
     -- first, check and remove http://
-    if not string.starts(url, "http://") then
+    if not string.startswith(url, "http://") then
         error("bad argument #1 to `blitwizard.net.http.get`: " ..
         "not a http link (please remember https is not supported)")
     end
@@ -119,7 +164,7 @@ blitwizard.net.http.get = function(url, callback, headers)
         resource = "/"
     end
     resource = string.gsub(resource, " ", "%20")
-    if not string.starts(resource, "/") then
+    if not string.startswith(resource, "/") then
         resource = "/" .. resource
     end
 
@@ -143,18 +188,18 @@ blitwizard.net.http.get = function(url, callback, headers)
     end
 
     local streamdata = {}
-    local stream = blitwizard.net.open({server=server_name, port=port},
-    function(stream)
-        blitwizard.net.send(stream, final_headers .. "\n")
+    local stream = blitwizard.net.connection:new(
+    {server=server_name, port=port},
+    function(self)
+        self:send(final_headers .. "\n")
     end,
-    function(stream, data)
+    function(self, data)
         if streamdata["data"] == nil then
             streamdata["data"] = ""
         end
         streamdata["data"] = streamdata["data"] .. data
-        --print("stream data: " .. data)
     end,
-    function(stream, errormsg)
+    function(self, errormsg)
         if streamdata["data"] ~= nil then
             --print("blib")
             if #streamdata["data"] > 0 then
@@ -163,7 +208,7 @@ blitwizard.net.http.get = function(url, callback, headers)
                 data["response_code"] = 200
                 --parse response code:
                 local datastr = streamdata["data"]
-                if string.starts(datastr, "HTTP/") then
+                if string.startswith(datastr, "HTTP/") then
                     local blub,response_code = string.split(datastr, " ", 2)
                     if tostring(tonumber(response_code)) == response_code then
                         if tonumber(response_code) ~= 200 then
@@ -211,7 +256,7 @@ blitwizard.net.http.get = function(url, callback, headers)
                     headerstable[i] = string.gsub(headerstable[i], ": ", ":")
                     
                     -- chunked transfer encoding
-                    if string.starts(string.lower(headerstable[i]),
+                    if string.startswith(string.lower(headerstable[i]),
                     "transfer-encoding:") then
                         local v = ({string.split(string.lower(headerstable[i]),
                         ":", 1)})[2]
@@ -221,14 +266,14 @@ blitwizard.net.http.get = function(url, callback, headers)
                     end
  
                     -- mime type
-                    if string.starts(string.lower(headerstable[i]),
+                    if string.startswith(string.lower(headerstable[i]),
                     "content-type:") then
                         data.mime_type = ({string.split(
                         string.lower(headerstable[i]), ":", 1)})[2]
                     end
 
                     -- server name
-                    if string.starts(string.lower(headerstable[i]),
+                    if string.startswith(string.lower(headerstable[i]),
                     "server:") then
                         data.server_name = ({string.split(
                         string.lower(headerstable[i]), ":", 1)})[2]
@@ -244,10 +289,10 @@ blitwizard.net.http.get = function(url, callback, headers)
                         local newdata = ""
 
                         -- Trim leading chunk size line break if any
-                        if string.starts(data.content, "\r") then
+                        if string.startswith(data.content, "\r") then
                             data.content = string.sub(data.content, 2)
                         end
-                        if string.starts(data.content, "\n") then
+                        if string.startswith(data.content, "\n") then
                             data.content = string.sub(data.content, 2)
                         end
 
@@ -272,10 +317,10 @@ blitwizard.net.http.get = function(url, callback, headers)
                         end
 
                         -- Trim leading data line break:
-                        if string.starts(data.content, "\r") then
+                        if string.startswith(data.content, "\r") then
                             data.content = string.sub(data.content, 1)
                         end
-                        if string.starts(data.content, "\n") then
+                        if string.startswith(data.content, "\n") then
                             data.content = string.sub(data.content, 1)
                         end
 
@@ -316,7 +361,7 @@ blitwizard.net.http._header_present = function(headerblock, header)
     header = string.lower(header)
     headerblock = string.lower(headerblock)
 
-    if string.starts(headerblock, header) then
+    if string.startswith(headerblock, header) then
         return true
     end
     if string.find(headerblock, header, 1, true) ~= nil then
@@ -329,7 +374,7 @@ blitwizard.net.http._merge_headers = function(headerblock1, headerblock2)
     -- Merge headers and remove duplicated entries
     local lines = {string.split(headerblock2, "\n")}
     for number,line in ipairs(lines) do
-        if string.ends(line, "\r") then
+        if string.endswith(line, "\r") then
             if #line > 1 then
                 line = string.sub(line, 1, #line - 1)
             else
