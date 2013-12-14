@@ -137,10 +137,6 @@
 <h2><a href="#Class_object">Class object </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#object.force">object.force</a></td>
-	<td class="summary">Apply a rotational impulse onto a 2d object (which will make it rotate as if pushed).</td>
-	</tr>
-	<tr>
 	<td class="name" ><a href="#object.shape_info">object.shape_info</a></td>
 	<td class="summary">This is how you should submit shape info to
  <a href="../modules/blitwizard.html#object:enableStaticCollision">object:enableStaticCollision</a> and
@@ -148,6 +144,10 @@
  (THIS TABLE DOESN'T EXIST, it is just a
  guide on how to construct it yourself)
 <p> All shape sizes, dimensions etc are specified in game units.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:angularImpulse2d">object:angularImpulse2d (force)</a></td>
+	<td class="summary">Apply a rotational impulse onto a 2d object (which will make it rotate as if pushed).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:destroy">object:destroy ()</a></td>
@@ -825,38 +825,6 @@
 
     <dl class="function">
     <dt>
-    <a name = "object.force"></a>
-    <strong>object.force</strong>
-    </dt>
-    <dd>
-    Apply a rotational impulse onto a 2d object (which will make it rotate as if pushed).
- While ??? might seem easier,
- this will actually take obstacles and collision into account.
-<p> Use ??? for 3d objects.
-<p> This function will only work if the object has movable collision enabled through
- <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>.
-
-
-    <ul>
-        <li><span class="parameter">force</span>
-            <span class="types"><span class="type">number</span></span>
-         the rotational force (positive for counter-clockwise, negative for clockwise)
-        </li>
-    </ul>
-
-
-
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">
- <span class="comment">-- apply an angular impulse to a 2d object with collsion enabled,
-</span> <span class="comment">-- and make it turn left:
-</span> obj:angularImpulse2d(<span class="number">0.2</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
     <a name = "object.shape_info"></a>
     <strong>object.shape_info</strong>
     </dt>
@@ -974,6 +942,39 @@
 </span>     <span class="keyword">local</span> w,h = myobject:getDimensions()
      myobject:enableMovableCollision({<span class="global">type</span>=<span class="string">'rectangle'</span>, width=w, height=h})
  <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:angularImpulse2d"></a>
+    <strong>object:angularImpulse2d (force)</strong>
+    </dt>
+    <dd>
+    Apply a rotational impulse onto a 2d object (which will make it rotate as if pushed).
+ While ??? might seem easier,
+ this will actually take obstacles and collision into account.
+<p> Use ??? for 3d objects.
+<p> This function will only work if the object has movable collision enabled through
+ <a href="../modules/blitwizard.html#object:enableMovableCollision">object:enableMovableCollision</a>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">force</span>
+            <span class="types"><span class="type">number</span></span>
+         the rotational force (positive for counter-clockwise, negative for clockwise)
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- apply an angular impulse to a 2d object with collsion enabled,
+</span> <span class="comment">-- and make it turn left:
+</span> obj:angularImpulse2d(<span class="number">0.2</span>)</pre>
     </ul>
 
 </dd>

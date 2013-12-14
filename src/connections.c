@@ -24,6 +24,8 @@
 #include "config.h"
 #include "os.h"
 
+#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -75,6 +77,12 @@ static int connections_SetSocket(struct connection* c, int iptype) {
 // Attempt connect:
 static int connections_TryConnect(struct connection* c, const char* target) {
     // first, in case of ipv4, ensure we have an ipv4 socket:
+#ifdef CONNECTIONSDEBUG
+    int ipv4 = 0;
+    if (isipv4ip(target)) {
+        ipv4 = 1;
+    }
+#endif
     if (c->iptype == IPTYPE_IPV6 && isipv4ip(target)) {
         if (!connections_SetSocket(c, IPTYPE_IPV4)) {
 #ifdef CONNECTIONSDEBUG
@@ -86,7 +94,8 @@ static int connections_TryConnect(struct connection* c, const char* target) {
     // connect:
     int result;
 #ifdef CONNECTIONSDEBUG
-    printinfo("[connections] TryConnect on %d: %s:%d", c->socket, target, c->targetport);
+    printinfo("[connections] TryConnect on %d/ipv4:%d: %s:%d", c->socket, ipv4,
+        target, c->targetport);
 #endif
     if (0) { // ssl
         result = so_ConnectSSLSocketToIP(c->socket, target, c->targetport, &c->sslptr);
@@ -113,6 +122,9 @@ static int connections_TryConnect(struct connection* c, const char* target) {
 // Set error and report it back immediately:
 static void connections_E(struct connection* c,
 int (*errorcallback)(struct connection* c, int error), int error) {
+#ifdef CONNECTIONSDEBUG
+    printinfo("[connections] connections_E triggered.");
+#endif
     if (!c->errorreported) {
         c->errorreported = 1;
         c->error = error;

@@ -701,13 +701,14 @@ int so_ConnectSSLSocketToIP(int socket, const char* ip, unsigned int port, void*
 #endif
 
     // ( 4 ) --- connect!
+    printf("socket: %d\n", socket);
     int r;
     if (iptype == IPTYPE_IPV6) {
         errno = 0;
         #ifdef IPV6
         r = connect(socket, (struct sockaddr*)&addressstruct6, sizeof(struct sockaddr_in6));
         #endif
-    }else{
+    } else {
         errno = 0;
         char buf[512];
         r = connect(socket, (struct sockaddr*)&addressstruct4, sizeof(struct sockaddr_in));
@@ -727,6 +728,7 @@ int so_ConnectSSLSocketToIP(int socket, const char* ip, unsigned int port, void*
         return 1;
     }
     #endif
+    printf("connect() errno: %d\n", errno);
     return 0;
 }
 int so_SelectWait(int maximumsleeptime) {

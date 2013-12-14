@@ -28,6 +28,7 @@
 // @license zlib
 // @module blitwizard.net
 
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,7 +48,7 @@
 /// Close the server which was opened at the given port.
 // This will also close down all connections you accepted through it.
 // @function server_close
-// @tparam number the port of the server listener to be closed
+// @tparam number port the port of the server listener to be closed
 int luafuncs_netserver_close(lua_State* l) {
     if (lua_type(l, 1) != LUA_TNUMBER) {
         if (lua_gettop(l) < 1 || lua_type(l, 1) != LUA_TNUMBER) {
@@ -56,7 +57,7 @@ int luafuncs_netserver_close(lua_State* l) {
     }
     // it is a server port
     if (!listeners_CloseByPort(lua_tointeger(l, 1))) {
-        return haveluaerror(l, "Cannot close server at port %d"
+        return haveluaerror(l, "cannot close server at port %d"
             " - was there a server running at this port?",
             lua_tointeger(l, 1));
     } else {
@@ -136,11 +137,14 @@ struct luanetstream {
 static struct luanetstream* toluanetstream(lua_State* l, int index) {
     char invalid[] = "not a valid blitwizard.net.connection";
     if (lua_type(l, index) != LUA_TUSERDATA) {
+        printf("not userdata. type is: %d (%s)\n", lua_type(l, index),
+            lua_strtype(l, index));
         lua_pushstring(l, invalid);
         lua_error(l);
         return NULL;
     }
     if (lua_rawlen(l, index) != sizeof(struct luaidref)) {
+        printf("wrong size (should be sizeof(struct luaidref))\n");
         lua_pushstring(l, invalid);
         lua_error(l);
         return NULL;
@@ -148,6 +152,7 @@ static struct luanetstream* toluanetstream(lua_State* l, int index) {
     struct luaidref* idref = (struct luaidref*)lua_touserdata(l, index);
     if (!idref || idref->magic != IDREF_MAGIC
             || idref->type != IDREF_NETSTREAM) {
+        printf("wrong magic, or not a netstream\n");
         lua_pushstring(l, invalid);
         lua_error(l);
         return NULL;
@@ -256,6 +261,9 @@ static int garbagecollect_netstream(lua_State* l) {
 
 static struct luaidref* createnetstreamobj(lua_State* l,
         struct connection* use_connection) {
+    // resize stack:
+    luaL_checkstack(l, 10,
+    "insufficient stack to obtain connection table");
     // Create a luaidref userdata struct which points to a luanetstream:
     struct luaidref* ref = lua_newuserdata(l, sizeof(*ref));
     struct luanetstream* obj = malloc(sizeof(*obj));
@@ -279,7 +287,7 @@ static struct luaidref* createnetstreamobj(lua_State* l,
         if (!obj->c) {
             free(obj);
             lua_pop(l, 1);
-            lua_pushstring(l, "Failed to allocate netstream "
+            lua_pushstring(l, "failed to allocate netstream "
                 "connection struct");
             lua_error(l);
             return NULL;
@@ -295,11 +303,8 @@ static struct luaidref* createnetstreamobj(lua_State* l,
 
     // we want __index to go to blitwizard.net.connection:
     lua_newtable(l);  // new metatable.
-    // resize stack:
-    luaL_checkstack(l, 5,
-    "insufficient stack to obtain connection table");
     // prepare to set __index:
-    lua_pushstring(l, "__newindex");
+    lua_pushstring(l, "__index");
     lua_getglobal(l, "blitwizard");
     if (lua_type(l, -1) == LUA_TTABLE) {
         // get blitwizard.net:
@@ -314,7 +319,7 @@ static struct luaidref* createnetstreamobj(lua_State* l,
             lua_insert(l, -2);
             lua_pop(l, 1); // remove blitwizard.net namespace
             if (lua_type(l, -1) == LUA_TTABLE) {
-                lua_rawset(l, -3);  // setting __index, removes connection
+                lua_rawset(l, -3);  // removes __index + connections table
                 lua_setmetatable(l, -2); // setting metatable, removes table
                 // stack is now empty (except from new userdata)! done!
             } else {
@@ -327,8 +332,14 @@ static struct luaidref* createnetstreamobj(lua_State* l,
         }
     } else {
         // broken blitwizard namespace.
-        lua_pop(l, 3);  // broken blitwizard namespace, "__index", metatable
+        lua_pop(l, 3);  // broken namespace, "__index", metatable
     }
+
+    // do a test member get:
+    lua_pushstring(l, "send");
+    lua_gettable(l, -2);
+    assert(lua_type(l, -1) == LUA_TFUNCTION);
+    lua_pop(l, 1);
 
     // make sure it gets garbage collected lateron:
     luastate_SetGCCallback(l, -1, (int (*)(void*))&garbagecollect_netstream);
@@ -380,6 +391,7 @@ static void luacfuncs_setcallbacks(lua_State* l, void* cptr, int stackindex,
         regname[sizeof(regname)-1] = 0;
         lua_pushstring(l, regname);
         lua_pushvalue(l, stackindex);
+        assert(lua_type(l, -1) == LUA_TFUNCTION);
         lua_settable(l, LUA_REGISTRYINDEX);
     }
     if (haveread) {
@@ -387,6 +399,7 @@ static void luacfuncs_setcallbacks(lua_State* l, void* cptr, int stackindex,
         regname[sizeof(regname)-1] = 0;
         lua_pushstring(l, regname);
         lua_pushvalue(l, stackindex+1);
+        assert(lua_type(l, -1) == LUA_TFUNCTION);
         lua_settable(l, LUA_REGISTRYINDEX);
     }
     if (haveerror) {
@@ -394,6 +407,7 @@ static void luacfuncs_setcallbacks(lua_State* l, void* cptr, int stackindex,
         regname[sizeof(regname)-1] = 0;
         lua_pushstring(l, regname);
         lua_pushvalue(l, stackindex+2);
+        assert(lua_type(l, -1) == LUA_TFUNCTION);
         lua_settable(l, LUA_REGISTRYINDEX);
     }
 }
@@ -518,7 +532,7 @@ static void luafuncs_parsestreamsettings(lua_State* l, int stackindex,
 //       -- this is a simple http request:
 //       self:send("GET / HTTP/1.1")
 //       self:send("User-Agent: blitwizard demo")
-//       self.send("")
+//       self:send("")
 //   end,
 //   function(self, line)
 //       -- Received a line of data. Print it out:
@@ -534,7 +548,7 @@ int luafuncs_netnew(lua_State* l) {
     int haveerror = 0;
 
     // check for the callback parameters (will throw lua error if faulty):
-    luafuncs_checkcallbackparameters(l, 5, "blitwizard.net.connection:new",
+    luafuncs_checkcallbackparameters(l, 3, "blitwizard.net.connection:new",
         &haveconnect, &haveread, &haveerror);
 
     int port;
@@ -554,9 +568,12 @@ int luafuncs_netnew(lua_State* l) {
     }
 
     luacfuncs_setcallbacks(l, ((struct luanetstream*)idref->ref.ptr)->c,
-        2, haveconnect, haveread, haveerror);
+        3, haveconnect, haveread, haveerror);
 
     // attempt to connect:
+#ifdef CONNECTIONSDEBUG
+    printinfo("[connections] connections_Init"); 
+#endif
     connections_Init(((struct luanetstream*)idref->ref.ptr)->c, server,
         port, linebuffered, lowdelay, haveread,
         clearconnectioncallbacks, (void*)l);
@@ -672,6 +689,7 @@ static int connectedevents(struct connection* c) {
         lua_pop(l, 1);
         return 1;
     }
+    assert(lua_type(l, -1) == LUA_TFUNCTION);
 
     // push reference to the connection:
     createnetstreamobj(l, c);
@@ -855,22 +873,22 @@ static int errorevents(struct connection* c, int error) {
     // push error message:
     switch (error) {
         case CONNECTIONERROR_INITIALISATIONFAILED:
-            lua_pushstring(l, "Initialisation of stream failed");
+            lua_pushstring(l, "initialisation of stream failed");
             break;
         case CONNECTIONERROR_NOSUCHHOST:
-            lua_pushstring(l, "No such host");
+            lua_pushstring(l, "no such host");
             break;
         case CONNECTIONERROR_CONNECTIONFAILED:
-            lua_pushstring(l, "Failed to connect");
+            lua_pushstring(l, "failed to connect");
             break;
         case CONNECTIONERROR_CONNECTIONCLOSED:
-            lua_pushstring(l, "Connection closed");
+            lua_pushstring(l, "connection closed");
             break;
         case CONNECTIONERROR_CONNECTIONAUTOCLOSE:
-            lua_pushstring(l, "Connection was auto-closed due to lack of activity and missing Lua references");
+            lua_pushstring(l, "connection was auto-closed due to lack of activity and missing Lua references");
             break;
         default:
-            lua_pushstring(l, "Unknown connection error");
+            lua_pushstring(l, "unknown connection error");
             break;
     }
 
@@ -894,6 +912,7 @@ static int errorevents(struct connection* c, int error) {
 int luafuncs_ProcessNetEvents() {
     int result = listeners_CheckForConnections(&connectionevents);
     if (!result) {
+        printf("CheckForConnection: failure\n");
         return 0;
     }
     result = connections_CheckAll(&connectedevents, &readevents, &errorevents);

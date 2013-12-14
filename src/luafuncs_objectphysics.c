@@ -1111,6 +1111,7 @@ int luafuncs_object_impulse(lua_State* l) {
 //
 // This function will only work if the object has movable collision enabled through
 // @{object:enableMovableCollision|object:enableMovableCollision}.
+// @function angularImpulse2d
 // @tparam number force the rotational force (positive for counter-clockwise, negative for clockwise)
 // @usage
 // -- apply an angular impulse to a 2d object with collsion enabled,

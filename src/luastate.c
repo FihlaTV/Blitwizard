@@ -117,7 +117,16 @@ void luastate_PrintStackDebug() {
 void luastate_SetGCCallback(void* luastate, int tablestackindex,
 int (*callback)(void*)) {
     lua_State* l = luastate;
-    lua_newtable(l);
+    luaL_checkstack(l, 5,
+    "insufficient stack to set gc callback on metatable");
+    if (!lua_getmetatable(l, tablestackindex)) {
+        lua_newtable(l);
+    } else {
+        if (lua_type(l, -1) != LUA_TTABLE) {
+            lua_pop(l, 1);
+            lua_newtable(l);
+        }
+    }
     lua_pushstring(l, "__gc");
     lua_pushcfunction(l, (lua_CFunction)callback);
     lua_rawset(l, -3);
