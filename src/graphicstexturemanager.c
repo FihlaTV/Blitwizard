@@ -1224,7 +1224,8 @@ int texturemanager_getTextureUsageInfo(const char* texture) {
     int usage = -1;
     int i = USING_AT_COUNT-1;
     while (i >= 0) {
-        if (gtm->lastUsage[i] + 5 >= time(NULL)) {
+        assert(gtm->lastUsage[i] <= time(NULL));
+        if (gtm->lastUsage[i] + 1 >= time(NULL)) {
             usage = i;
             // lower is better, so continue the loop:
         }

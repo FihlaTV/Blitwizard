@@ -25,15 +25,16 @@ if blitwizard.console == nil then
 end
 
 -- open up graphics
-blitwizard.graphics.setMode(640, 480, \"Test\")
+blitwizard.graphics.setMode(640, 480, \"Test\", false)
 
 blitwizard.runDelayed(function()
     -- verify console.png is not visible
     if pcall(function()
-        assert(blitwizard.getTextureUsageInfo(os.templatedir() ..
-        \"/font/default.png\") == -1)
+        assert(blitwizard.debug.getTextureUsageInfo(os.templatedir() ..
+        \"/font/default.png\") < 0)
     end) ~= true then
-        print(\"console image is reported as used and shouldn't be\")
+        print(\"console image is reported as used and shouldn't be, at: \" ..
+        os.time())
         os.exit(1)
     end
 
@@ -43,7 +44,7 @@ blitwizard.runDelayed(function()
     blitwizard.runDelayed(function()
         -- verify console.png is now visible:
         if pcall(function()
-            assert(blitwizard.getTextureUsageInfo(os.templatedir() ..
+            assert(blitwizard.debug.getTextureUsageInfo(os.templatedir() ..
             \"/font/default.png\") >= 0)
         end) ~= true then
             print(\"console image isn't reported as used and should be\")
@@ -54,7 +55,7 @@ blitwizard.runDelayed(function()
         print(\"success\")
         os.exit(0)
     end, 500)
-end, 500)
+end, 5000)
 " > ./test.lua
 $RUNBLITWIZARD ./test.lua &> ./testoutput
 echo "Lua script output: `cat ./testoutput`"
