@@ -18,11 +18,6 @@ function blitwizard.onInit()
     -- Open a window
     blitwizard.graphics.setMode(640, 480, "Simple Car")
     
-    -- Think of a car position at the very left of the screen:
-    carx = (blitwizard.graphics.getCameras()[1]:getDimensions()) / 2 - 0.2
-    -- We will use this later in the step function and
-    -- increase it steadily for a moving car.
-
     -- create background object:
     local bg = blitwizard.object:new(
     blitwizard.object.o2d, "background.png")
