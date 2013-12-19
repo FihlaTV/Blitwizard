@@ -47,7 +47,7 @@ function blitwizard.onInit()
         end
     end    
 
-    -- create in-front night mask for nice vignette:
+    -- create in-front night mask for a nice vignette effect:
     local mask = blitwizard.object:new(
     blitwizard.object.o2d, "nightmask.png")
     mask:setZIndex(3)
