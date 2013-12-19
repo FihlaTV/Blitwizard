@@ -27,7 +27,7 @@ function blitwizard.onInit()
     local car = blitwizard.object:new(
     blitwizard.object.o2d, "car.png")
     car:setZIndex(2)
-    function car:onGeometryLoaded()
+    function car:onGeometryLoaded() -- this will be called by blitwizard.
         -- now the texture size of the car is known
         -- (texture is at least partially loaded).
 
