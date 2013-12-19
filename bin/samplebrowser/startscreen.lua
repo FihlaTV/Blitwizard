@@ -99,7 +99,12 @@ function blitwizard.onInit()
     end
 
     -- weaken gravity for nicely floating orbs:
-    blitwizard.physics.set2dGravity(0, 0.2)
+    if pcall(function()
+        blitwizard.physics.set2dGravity(0, 0.2)
+    end) ~= true then
+        -- apparently, no physics support. skip the orbs!
+        return
+    end
 
     -- spawn a few orbs (see spawnOrb code below):
     local i = 0
