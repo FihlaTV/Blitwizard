@@ -13,7 +13,7 @@ print("Simple car example in blitwizard")
 function blitwizard.onInit()
     -- This function is called right after blitwizard has
     -- started. You would normally want to open up a
-    -- window here with blitwiz.graphics.setWindow().
+    -- window here with blitwizard.graphics.setMode().
     
     -- Open a window
     blitwizard.graphics.setMode(640, 480, "Simple Car")
@@ -28,9 +28,12 @@ function blitwizard.onInit()
     blitwizard.object.o2d, "car.png")
     car:setZIndex(2)
     function car:onGeometryLoaded()
-        -- now the textur size of the car is known
+        -- now the texture size of the car is known
         -- (texture is at least partially loaded).
-        -- make it slowly move along the bottom of the screen:
+
+        -- make it slowly move along the bottom of the screen,
+        -- and make it warp back to the left side if it ever reaches
+        -- the right side of the screen:
         function self:doAlways()
             -- get current pos and window size:
             local x,y = self:getPosition()
