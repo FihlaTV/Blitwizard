@@ -38,21 +38,24 @@ function blitwizard.onInit()
 
         function self:doAlways()  -- this will be called repeatedly.
             -- get current position of us (= the car) and the window size:
-            local x,y = self:getPosition()
-            local w,h = blitwizard.graphics.getCameras()[1]:getDimensions()
+            local carx,cary = self:getPosition()
+            local windowwidth,windowheight = blitwizard.graphics.
+                getCameras()[1]:getDimensions()
 
             -- get size of ourselves (= the car)
-            local iw, ih = self:getDimensions()
+            local carwidth, carheight = self:getDimensions()
 
-            -- calculate a position sligtly right to our current position,
-            -- and warp from right to left border if we reached the right:
-            x = x + 0.05
-            if x >= w/2 + iw/2 then
-                x = -(w/2) - iw/2
+            -- calculate a position slightly right to our current position.
+            -- If we reach the right screen border, make the position
+            -- wrap to the left border again:
+            carx = carx + 0.05
+            if carx >= windowwidth/2 + carwidth/2 then
+                -- whoops, right screen border...
+                carx = -(windowwidth/2) - carwidth/2  -- warp to the left!
             end
 
-            -- set calculated position to us:
-            self:setPosition(x, h/2-ih/2)
+            -- set the calculated position to us:
+            self:setPosition(carx, windowheight/2-carheight/2)
         end
     end    
 
