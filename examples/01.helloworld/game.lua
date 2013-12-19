@@ -13,10 +13,9 @@ print("Hello world example in blitwizard")
 
 -- All blitwizard.on* functions (e.g. blitwizard.onInit)
 -- are predetermined by blitwizard and are called when
--- various things happen (if you have added them to
--- your program).
+-- various things happen.
 -- This allows you to react to certain events
--- (e.g. program has loaded, the window is redrawn etc.).
+-- (e.g. program has loaded or the user has closed the program window).
 
 -- For more information on which callback functions are
 -- available, check the other examples or see the full
@@ -37,31 +36,35 @@ function blitwizard.onInit()
     -- Open a window
     blitwizard.graphics.setMode(640, 480, "Hello World", false)
 
-    -- Create hello world:
+    -- Create an image which says "hello world":
     local helloworld = blitwizard.object:new(
     blitwizard.object.o2d, "hello_world.png")
     helloworld:setPosition(0, -2)
 
-    -- Create system info title:
+    -- Create system info title (image saying "System info:"):
     local si = blitwizard.object:new(
     blitwizard.object.o2d, "system_info.png")
-    si:pinToCamera()
+    si:pinToCamera()  -- this should be "slapped onto the camera",
+        -- which means it will always stick with the camera
+        -- (unlike regular world objects)
 
-    -- Create system info text:
+    -- Create system info text showing some nice system info:
     local stxt = blitwizard.font.text:new(
     _VERSION .. ",\nrunning on: "  ..
     os.sysname() .. " (" .. os.sysversion() ..
     ")")
 
-    -- Set text invisible until we placed it on its proper position:
+    -- Set text invisible until we placed it at its proper position:
     stxt:setVisible(false)
 
     -- As soon as the system info image (si) is loaded,
-    -- we would like to place it accordingly and move
-    -- the text aswell.
-    -- It needs to be loaded so we know its dimensions.
+    -- we would like to place the image and the text accordingly.
+    -- It needs to be loaded first, so we know its dimensions.
     function si:onGeometryLoaded()
-        -- place at left bottom:
+        -- When this is called by blitwizard, the system info image (si)
+        -- was loaded.
+
+        -- place the image at left bottom:
         local camw,camh =
         blitwizard.graphics.getCameras()[1]:getDimensions()
 
@@ -70,11 +73,11 @@ function blitwizard.onInit()
         
         self:setPosition(1, camh - imgh - 1)
 
-        -- move text aswell:
+        -- move text as well, slightly below the image's new position:
         local mx,my = self:getPosition()
         stxt:setPosition(mx + 0.5, my + 1)
 
-        -- now since text is at proper position, make it visible:
+        -- now since text is at proper position, make it visible too:
         stxt:setVisible(true)
     end
 end

@@ -21,12 +21,12 @@ function blitwizard.onInit()
     -- create background object:
     local bg = blitwizard.object:new(
     blitwizard.object.o2d, "background.png")
-    bg:setZIndex(1)
+    bg:setZIndex(1)  -- this should be in the back/behind the car, layer 1
 
     -- create car object:    
     local car = blitwizard.object:new(
     blitwizard.object.o2d, "car.png")
-    car:setZIndex(2)
+    car:setZIndex(2) -- this should be in front of the background, on layer 2
     function car:onGeometryLoaded() -- this will be called by blitwizard.
         -- now the texture size of the car is known
         -- (texture is at least partially loaded).
@@ -62,7 +62,7 @@ function blitwizard.onInit()
     -- create in-front night mask for a nice vignette effect:
     local mask = blitwizard.object:new(
     blitwizard.object.o2d, "nightmask.png")
-    mask:setZIndex(3)
+    mask:setZIndex(3)  -- this should be above the car, on layer 3
 end
 
 
