@@ -31,21 +31,27 @@ function blitwizard.onInit()
         -- now the texture size of the car is known
         -- (texture is at least partially loaded).
 
-        -- make it slowly move along the bottom of the screen,
-        -- and make it warp back to the left side if it ever reaches
-        -- the right side of the screen:
-        function self:doAlways()
-            -- get current pos and window size:
+        -- We will now set a doAlways() function on the car,
+        -- which will be called repeatedly as long as the game runs.
+        -- (we don't want to do this earlier because now we know
+        -- how large the car is, based on the texture size.)
+
+        function self:doAlways()  -- this will be called repeatedly.
+            -- get current position of us (= the car) and the window size:
             local x,y = self:getPosition()
             local w,h = blitwizard.graphics.getCameras()[1]:getDimensions()
-            -- get size of the car image (=us)
+
+            -- get size of ourselves (= the car)
             local iw, ih = self:getDimensions()
-            -- advance position and warp from right to left border:
+
+            -- calculate a position sligtly right to our current position,
+            -- and warp from right to left border if we reached the right:
             x = x + 0.05
             if x >= w/2 + iw/2 then
                 x = -(w/2) - iw/2
             end
-            -- set final position to car:
+
+            -- set calculated position to us:
             self:setPosition(x, h/2-ih/2)
         end
     end    
