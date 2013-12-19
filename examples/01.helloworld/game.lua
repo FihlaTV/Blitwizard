@@ -29,12 +29,12 @@ if blitwizard.templatesinitialised ~= true then
 end
 
 function blitwizard.onInit()
-	-- This function is called right after blitwizard has
-	-- started.
-	-- You may want to open up a window here,
-	-- using blitwizard.graphics.setMode().
+    -- This function is called right after blitwizard has
+    -- started.
+    -- You may want to open up a window here,
+    -- using blitwizard.graphics.setMode().
 
-	-- Open a window
+    -- Open a window
     blitwizard.graphics.setMode(640, 480, "Hello World", false)
 
     -- Create hello world:
@@ -80,34 +80,34 @@ function blitwizard.onInit()
 end
 
 function blitwizard.onKeyDown(key)
-	-- When pressing space, we can switch between
-	-- accelerated and software rendering with this:
-	if key == "space" then
-		if switchedtosoftware ~= true then
-			blitwizard.graphics.setMode(600, 480,
+    -- When pressing space, we can switch between
+    -- accelerated and software rendering with this:
+    if key == "space" then
+        if switchedtosoftware ~= true then
+            blitwizard.graphics.setMode(600, 480,
             "Hello World", false, "software")
-			switchedtosoftware = true
-			print("Now: software mode")
-		else
-			blitwizard.graphics.setMode(600, 480,
+            switchedtosoftware = true
+            print("Now: software mode")
+        else
+            blitwizard.graphics.setMode(600, 480,
             "Hello World", false)
-			switchedtosoftware = false
-			print("Now: accelerated mode")
-		end
-	end
-	-- When escape is pressed, we want to quit
+            switchedtosoftware = false
+            print("Now: accelerated mode")
+        end
+    end
+    -- When escape is pressed, we want to quit
     if key == "escape" then
-		os.exit(0)
-	end
+        os.exit(0)
+    end
 end
 
 function blitwizard.onClose()
-	-- This function gets called whenever the user clicks
-	-- the close button in the window title bar.
-	
-	-- The user has attempted to close the window,
-	-- so we want to respect his wishes and quit :-)
-	os.exit(0)
+    -- This function gets called whenever the user clicks
+    -- the close button in the window title bar.
+    
+    -- The user has attempted to close the window,
+    -- so we want to respect his wishes and quit :-)
+    os.exit(0)
 end
 
 

@@ -10,11 +10,11 @@
 print("Scaling/rotation example in blitwizard")
 
 function blitwizard.onInit()
-	-- Open a window
-	blitwizard.graphics.setMode(640, 480, "Scaling/Rotating", false)
+    -- Open a window
+    blitwizard.graphics.setMode(640, 480, "Scaling/Rotating", false)
 
-	print("We are scaling using the renderer: "
-        .. blitwizard.graphics.getRendererName())	
+    print("We are scaling using the renderer: "
+        .. blitwizard.graphics.getRendererName())   
 
     -- Create rotating object:
     rotatingObject = blitwizard.object:new(
@@ -42,9 +42,9 @@ function blitwizard.onInit()
 end
 
 function blitwizard.onClose()
-	-- The user has attempted to close the window,
-	-- so we want to respect his wishes and quit :-)
-	os.exit(0)
+    -- The user has attempted to close the window,
+    -- so we want to respect his wishes and quit :-)
+    os.exit(0)
 end
 
 

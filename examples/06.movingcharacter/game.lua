@@ -12,15 +12,15 @@ leftright = 0 -- keyboard left/right input
 jump = false -- keyboard jump input
 
 function blitwizard.onInit()
-	-- Open a window
-	blitwizard.graphics.setMode(640, 480, "Moving character", false)
+    -- Open a window
+    blitwizard.graphics.setMode(640, 480, "Moving character", false)
 
     -- Set gravity:
     blitwizard.physics.set2dGravity(
         0, 9.81 * 0.5)
 
-	-- Add base level collision
-	level = blitwizard.object:new(blitwizard.object.o2d,
+    -- Add base level collision
+    level = blitwizard.object:new(blitwizard.object.o2d,
         "bg.png")
     level:setZIndex(0) -- put nicely in the background
     local pixelsperunit = blitwizard.graphics.gameUnitToPixels()
@@ -30,65 +30,65 @@ function blitwizard.onInit()
     level:enableStaticCollision({
         type = "edge list",
         edges = {
-	        {
-		        {(0-halfwidth)/pixelsperunit, (245-halfheight)/pixelsperunit},
+            {
+                {(0-halfwidth)/pixelsperunit, (245-halfheight)/pixelsperunit},
                 {(0-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit},
             },
             {
-		        {(0-halfwidth)/pixelsperunit, (245-halfheight)/pixelsperunit},
-		        {(93-halfwidth)/pixelsperunit, (297-halfheight)/pixelsperunit},
+                {(0-halfwidth)/pixelsperunit, (245-halfheight)/pixelsperunit},
+                {(93-halfwidth)/pixelsperunit, (297-halfheight)/pixelsperunit},
             },
             {
-		        {(93-halfwidth)/pixelsperunit, (297-halfheight)/pixelsperunit},
-		        {(151-halfwidth)/pixelsperunit, (293-halfheight)/pixelsperunit},
+                {(93-halfwidth)/pixelsperunit, (297-halfheight)/pixelsperunit},
+                {(151-halfwidth)/pixelsperunit, (293-halfheight)/pixelsperunit},
             },
             {
-		        {(151-halfwidth)/pixelsperunit, (293-halfheight)/pixelsperunit},
-		        {(198-halfwidth)/pixelsperunit, (306-halfheight)/pixelsperunit},
+                {(151-halfwidth)/pixelsperunit, (293-halfheight)/pixelsperunit},
+                {(198-halfwidth)/pixelsperunit, (306-halfheight)/pixelsperunit},
             },
             {
-		        {(198-halfwidth)/pixelsperunit, (306-halfheight)/pixelsperunit},
-		        {(268-halfwidth)/pixelsperunit, (375-halfheight)/pixelsperunit},
-	        },
-            {
-		        {(268-halfwidth)/pixelsperunit, (375-halfheight)/pixelsperunit},
-		        {(309-halfwidth)/pixelsperunit, (350-halfheight)/pixelsperunit},
+                {(198-halfwidth)/pixelsperunit, (306-halfheight)/pixelsperunit},
+                {(268-halfwidth)/pixelsperunit, (375-halfheight)/pixelsperunit},
             },
             {
-		        {(309-halfwidth)/pixelsperunit, (350-halfheight)/pixelsperunit},
-		        {(357-halfwidth)/pixelsperunit, (355-halfheight)/pixelsperunit},
+                {(268-halfwidth)/pixelsperunit, (375-halfheight)/pixelsperunit},
+                {(309-halfwidth)/pixelsperunit, (350-halfheight)/pixelsperunit},
             },
             {
-		        {(357-halfwidth)/pixelsperunit, (355-halfheight)/pixelsperunit},
-		        {(416-halfwidth)/pixelsperunit, (427-halfheight)/pixelsperunit},
+                {(309-halfwidth)/pixelsperunit, (350-halfheight)/pixelsperunit},
+                {(357-halfwidth)/pixelsperunit, (355-halfheight)/pixelsperunit},
             },
             {
-		        {(416-halfwidth)/pixelsperunit, (427-halfheight)/pixelsperunit},
-		        {(470-halfwidth)/pixelsperunit, (431-halfheight)/pixelsperunit},
+                {(357-halfwidth)/pixelsperunit, (355-halfheight)/pixelsperunit},
+                {(416-halfwidth)/pixelsperunit, (427-halfheight)/pixelsperunit},
             },
             {
-		        {(470-halfwidth)/pixelsperunit, (431-halfheight)/pixelsperunit},
+                {(416-halfwidth)/pixelsperunit, (427-halfheight)/pixelsperunit},
+                {(470-halfwidth)/pixelsperunit, (431-halfheight)/pixelsperunit},
+            },
+            {
+                {(470-halfwidth)/pixelsperunit, (431-halfheight)/pixelsperunit},
                 {(512-halfwidth)/pixelsperunit, (407-halfheight)/pixelsperunit},
             },
             {
-		        {(512-halfwidth)/pixelsperunit, (407-halfheight)/pixelsperunit},
+                {(512-halfwidth)/pixelsperunit, (407-halfheight)/pixelsperunit},
                 {(558-halfwidth)/pixelsperunit, (372-halfheight)/pixelsperunit},
             },
             {
-		        {(558-halfwidth)/pixelsperunit, (372-halfheight)/pixelsperunit},
+                {(558-halfwidth)/pixelsperunit, (372-halfheight)/pixelsperunit},
                 {(640-halfwidth)/pixelsperunit, (364-halfheight)/pixelsperunit},
             },
             {
-		        {(640-halfwidth)/pixelsperunit, (364-halfheight)/pixelsperunit},
+                {(640-halfwidth)/pixelsperunit, (364-halfheight)/pixelsperunit},
                 {(640-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit}
             }
         }
-	})
-	level:setFriction(0.5)
+    })
+    level:setFriction(0.5)
 
-	-- Add animated character.
-	-- The animation code we use here is just a suggestion,
-	-- you could achieve the same result differently.
+    -- Add animated character.
+    -- The animation code we use here is just a suggestion,
+    -- you could achieve the same result differently.
     char = blitwizard.object:new(
         blitwizard.object.o2d, "char3.png")
     function char:onGeometryLoaded()
@@ -265,31 +265,31 @@ function blitwizard.onInit()
 end
 
 function blitwizard.onKeyDown(key)
-	-- Process keyboard walk/jump input
-	if key == "a" then
-		leftright = -1
-	end
-	if key == "d" then
-		leftright = 1
-	end
-	if key == "w" then
-		jump = true
-	end
+    -- Process keyboard walk/jump input
+    if key == "a" then
+        leftright = -1
+    end
+    if key == "d" then
+        leftright = 1
+    end
+    if key == "w" then
+        jump = true
+    end
 end
 
 function blitwizard.onKeyUp(key)
-	if key == "a" and leftright < 0 then
-		leftright = 0
-	end
-	if key == "d" and leftright > 0 then
-		leftright = 0
-	end
-	if key == "w" then
-		jump = false
-	end
+    if key == "a" and leftright < 0 then
+        leftright = 0
+    end
+    if key == "d" and leftright > 0 then
+        leftright = 0
+    end
+    if key == "w" then
+        jump = false
+    end
 end
 
 function blitwizard.onClose()
-	os.exit(0)
+    os.exit(0)
 end
 

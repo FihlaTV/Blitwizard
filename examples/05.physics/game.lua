@@ -14,12 +14,12 @@ pixelsperunit = 30 -- meter (physics unit) to pixels factor
 
 -- Warn if we run without templates
 if blitwizard.templatesinitialised ~= true then
-	error "The templates/ sub folder with the templates is apparently missing. Please copy it into the same folder as your game.lua before you start up."
+    error "The templates/ sub folder with the templates is apparently missing. Please copy it into the same folder as your game.lua before you start up."
 end
 
 function blitwizard.onInit()
-	-- Open a window
-	if string.lower(os.sysname()) == "android" then
+    -- Open a window
+    if string.lower(os.sysname()) == "android" then
         -- Fullscreen at screen resolution for Android
         local w,h = blitiwzard.graphics.getDesktopDisplayMode()
         blitwizard.graphics.setWindow(w, h, "Physics", true)
@@ -32,8 +32,8 @@ function blitwizard.onInit()
     blitwizard.physics.set2dGravity(
         0, 9.81 * 0.75) -- assume 1 unit is roughly 1.33 meters
 
-	-- Add base level with collision (bg.png)
-	level = blitwizard.object:new(blitwizard.object.o2d,
+    -- Add base level with collision (bg.png)
+    level = blitwizard.object:new(blitwizard.object.o2d,
         "bg.png")
     -- this is how much a game unit takes up in pixels:
     pixelsperunit = blitwizard.graphics.gameUnitToPixels()
@@ -75,13 +75,13 @@ function blitwizard.onInit()
 
             { {(593-halfwidth)/pixelsperunit, (122-halfheight)/pixelsperunit},
               {(564-halfwidth)/pixelsperunit, (0-halfheight)/pixelsperunit} }
-	    }
+        }
     })
     level:setFriction(0.3)
 
-	-- More basic level collision shape:
-	-- (that black obtruding rectangle part in bg.png on the floor/center)
-	levelcollision2 = blitwizard.object:new(
+    -- More basic level collision shape:
+    -- (that black obtruding rectangle part in bg.png on the floor/center)
+    levelcollision2 = blitwizard.object:new(
         blitwizard.object.o2d, nil)
     levelcollision2:enableStaticCollision({
         type="rectangle",
@@ -90,7 +90,7 @@ function blitwizard.onInit()
     })
     levelcollision2:setPosition(((222 + 382)/2 - halfwidth)/pixelsperunit,
         ((242 + 314)/2 - halfheight)/pixelsperunit)
-	levelcollision2:setFriction(0.3)
+    levelcollision2:setFriction(0.3)
 
     -- on top of everything, we're putting a neat shadow image
     -- which makes everything look a bit cooler:
@@ -100,9 +100,9 @@ function blitwizard.onInit()
 end
 
 function bgimagepos()
-	local w,h = blitwiz.graphics.getImageSize("bg.png")
+    local w,h = blitwiz.graphics.getImageSize("bg.png")
     local mw,mh = blitwiz.graphics.getWindowSize()
-	return mw/2 - w/2, mh/2 - h/2
+    return mw/2 - w/2, mh/2 - h/2
 end
 
 function limitspawnposition(size, x, y)
@@ -111,32 +111,32 @@ function limitspawnposition(size, x, y)
     -- You could leave this away if you want, it is somewhat
     -- optional.
     local w,h = level:getDimensions()
-	if x - size/2 < (125/pixelsperunit)-(w/2) then
-		x = (125/pixelsperunit)-(w/2) + size/2
-	end
-	if x + size/2 > (555/pixelsperunit)-(w/2) then
-		x = (555/pixelsperunit)-(w/2) - size/2
-	end
-	if y + size/2 > (230/pixelsperunit)-(h/2) then
-		-- If we are too low, avoid getting it stuck in the floor
-		y = (230/pixelsperunit)-(h/2) - size/2
-	end
-	return x,y
+    if x - size/2 < (125/pixelsperunit)-(w/2) then
+        x = (125/pixelsperunit)-(w/2) + size/2
+    end
+    if x + size/2 > (555/pixelsperunit)-(w/2) then
+        x = (555/pixelsperunit)-(w/2) - size/2
+    end
+    if y + size/2 > (230/pixelsperunit)-(h/2) then
+        -- If we are too low, avoid getting it stuck in the floor
+        y = (230/pixelsperunit)-(h/2) - size/2
+    end
+    return x,y
 end
 
 function blitwizard.onMouseDown(x, y)
-	-- See where we can add the object
-	local objectposx,objectposy =
+    -- See where we can add the object
+    local objectposx,objectposy =
         blitwizard.graphics.getCameras()[1]:screenPosTo2dWorldPos(x, y)
 
-	if math.random() > 0.5 then
+    if math.random() > 0.5 then
         -- the crate has a side length of 64 pixels.
         -- limit its position so it spawns inside the level:
-		objectposx,objectposy = limitspawnposition(
-		    64/pixelsperunit, objectposx, objectposy)
+        objectposx,objectposy = limitspawnposition(
+            64/pixelsperunit, objectposx, objectposy)
 
-		-- Add a crate
-		local crate = blitwizard.object:new(
+        -- Add a crate
+        local crate = blitwizard.object:new(
             blitwizard.object.o2d, "crate.png")
         crate:setZIndex(1)
         function crate:onLoaded()
@@ -152,13 +152,13 @@ function blitwizard.onMouseDown(x, y)
             self:setLinearDamping(0.3)
         end
         crate:setPosition(objectposx, objectposy)
-	else
+    else
         -- the ball has a diameter of 24 pixels,
         -- use our neat placement limiter :
         objectposx,objectposy = limitspawnposition(
             24/pixelsperunit, objectposx, objectposy)
 
-		-- Add a ball
+        -- Add a ball
         local ball = blitwizard.object:new(
             blitwizard.object.o2d, "ball.png")
         ball:setZIndex(1)
@@ -175,11 +175,11 @@ function blitwizard.onMouseDown(x, y)
             self:setRestitution(0.3)
         end
         ball:setPosition(objectposx, objectposy)
-	end
+    end
 end
 
 function blitwizard.onClose()
-	os.exit(0)
+    os.exit(0)
 end
 
 
