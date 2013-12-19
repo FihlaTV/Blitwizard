@@ -11,16 +11,6 @@
 
 print("Hello world example in blitwizard")
 
--- All blitwizard.on* functions (e.g. blitwizard.onInit)
--- are predetermined by blitwizard and are called when
--- various things happen.
--- This allows you to react to certain events
--- (e.g. program has loaded or the user has closed the program window).
-
--- For more information on which callback functions are
--- available, check the other examples or see the full
--- documentation at http://www.blitwizard.de/doc-files/api-stable
-
 -- Warn if we run without templates (you can remove this from
 -- your own game if you wish to, it is just for convenience)
 if blitwizard.templatesinitialised ~= true then
