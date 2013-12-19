@@ -28,7 +28,7 @@ function blitwizard.onInit()
     blitwizard.object.o2d, "background.png")
     bg:setZIndex(1)
 
-    -- creat car object:    
+    -- create car object:    
     local car = blitwizard.object:new(
     blitwizard.object.o2d, "car.png")
     car:setZIndex(2)
