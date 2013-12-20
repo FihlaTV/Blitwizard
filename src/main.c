@@ -228,19 +228,19 @@ static void mousebuttonevent(int button, int release, int x, int y) {
     double realx = ((double)x) / UNIT_TO_PIXELS;
     double realy = ((double)y) / UNIT_TO_PIXELS;
     if (!luastate_PushFunctionArgumentToMainstate_Double(realx)) {
-        printerror("Error when pushing func args to %s", funcname);
+        printfatalerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
     }
     if (!luastate_PushFunctionArgumentToMainstate_Double(realy)) {
-        printerror("Error when pushing func args to %s", funcname);
+        printfatalerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
     }
     if (!luastate_PushFunctionArgumentToMainstate_Double(button)) {
-        printerror("Error when pushing func args to %s", funcname);
+        printfatalerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
@@ -261,13 +261,15 @@ static void mousemoveevent(int x, int y) {
 #ifdef USE_GRAPHICS
     char* error;
     if (!luastate_PushFunctionArgumentToMainstate_Double(x)) {
-        printerror("Error when pushing func args to blitwizard.onMouseMove");
+        printfatalerror("Error when pushing func args to "
+            "blitwizard.onMouseMove");
         fatalscripterror();
         main_Quit(1);
         return;
     }
     if (!luastate_PushFunctionArgumentToMainstate_Double(y)) {
-        printerror("Error when pushing func args to blitwizard.onMouseMove");
+        printfatalerror("Error when pushing func args to "
+            "blitwizard.onMouseMove");
         fatalscripterror();
         main_Quit(1);
         return;
@@ -305,7 +307,8 @@ static void keyboardevent(const char* key, int release) {
     // Call function template function first:
     int returnboolean = 0;
     if (!luastate_PushFunctionArgumentToMainstate_String(key)) {
-        printerror("Error when pushing func args to %s", funcname_templates);
+        printfatalerror("Error when pushing func args to %s",
+            funcname_templates);
         fatalscripterror();
         main_Quit(1);
     }
@@ -326,7 +329,7 @@ static void keyboardevent(const char* key, int release) {
 
     // otherwise, call the regular event function now:
     if (!luastate_PushFunctionArgumentToMainstate_String(key)) {
-        printerror("Error when pushing func args to %s", funcname);
+        printfatalerror("Error when pushing func args to %s", funcname);
         fatalscripterror();
         main_Quit(1);
         return;
@@ -346,7 +349,7 @@ static void textevent(const char* text) {
     // first, call the undocumented template pre-event function:
     int returnboolean = 0;
     if (!luastate_PushFunctionArgumentToMainstate_String(text)) {
-        printerror("Error when pushing func args to "
+        printfatalerror("Error when pushing func args to "
         "blitwizard._onText_Templates");
         fatalscripterror();
         main_Quit(1);
@@ -370,7 +373,7 @@ static void textevent(const char* text) {
     // since the template event function didn't object, continue with
     // regular event function:
     if (!luastate_PushFunctionArgumentToMainstate_String(text)) {
-        printerror("Error when pushing func args to blitwizard.onText");
+        printfatalerror("Error when pushing func args to blitwizard.onText");
         fatalscripterror();
         main_Quit(1);
         return;
@@ -410,7 +413,7 @@ int attemptTemplateLoad(const char* path) {
     // path to init.lua:
     char* p = malloc(strlen(path) + 1 + strlen("init.lua") + 1);
     if (!p) {
-        printerror("Error: failed to allocate string when "
+        printfatalerror("Error: failed to allocate string when "
         "attempting to run templates init.lua");
         main_Quit(1);
         return 0;
@@ -451,7 +454,7 @@ int attemptTemplateLoad(const char* path) {
         if (error == NULL) {
             error = outofmem;
         }
-        printerror("Error: An error occured when running "
+        printfatalerror("Error: An error occured when running "
         "templates init.lua: %s", error);
         if (error != outofmem) {
             free(error);
@@ -575,7 +578,7 @@ int main(int argc, char** argv) {
     // we want to store the script arguments so we can pass them to lua:
     char** scriptargs = malloc(sizeof(char*) * MAXSCRIPTARGS);
     if (!scriptargs) {
-        printerror("Error: failed to allocate script args space");
+        printfatalerror("Error: failed to allocate script args space");
         return 1;
     }
     int scriptargcount = 0;
@@ -592,7 +595,7 @@ int main(int argc, char** argv) {
                 }
                 option_templatepath = strdup(argv[i]);
                 if (!option_templatepath) {
-                    printerror("Error: failed to strdup() template "
+                    printfatalerror("Error: failed to strdup() template "
                     "path argument");
                     main_Quit(1);
                     return 1;
@@ -789,7 +792,7 @@ int main(int argc, char** argv) {
     if (!option_templatepath) {
         option_templatepath = strdup("templates/");
         if (!option_templatepath) {
-            printerror("Error: failed to allocate initial template path");
+            printfatalerror("Error: failed to allocate initial template path");
             main_Quit(1);
             return 1;
         }
@@ -827,7 +830,8 @@ int main(int argc, char** argv) {
             }
             filenamebuf = file_AddComponentToPath(script, "game.lua");
             if (!filenamebuf) {
-                printerror("Error: failed to add component to script path");
+                printfatalerror("Error: failed to add component to "
+                    "script path");
                 main_Quit(1);
                 return 1;
             }
@@ -839,7 +843,7 @@ int main(int argc, char** argv) {
     int scriptdiskfile = 0;
     struct resourcelocation s;
     if (!resources_LocateResource(script, &s)) {
-        printerror("Error: cannot locate script file \"%s\"", script);
+        printfatalerror("Error: cannot locate script file \"%s\"", script);
         main_Quit(1);
         return 1;
     } else {
@@ -857,7 +861,7 @@ int main(int argc, char** argv) {
         gameluapath = strdup(script);
     }
     if (!gameluapath) { // string allocation failed
-        printerror("Error: failed to allocate script path (gameluapath)");
+        printfatalerror("Error: failed to allocate script path (gameluapath)");
         main_Quit(1);
         return 1;
     } else {
@@ -870,14 +874,14 @@ int main(int argc, char** argv) {
     if (option_changedir) {
         char* p = file_GetAbsoluteDirectoryPathFromFilePath(script);
         if (!p) {
-            printerror("Error: NULL returned for absolute directory");
+            printfatalerror("Error: NULL returned for absolute directory");
             main_Quit(1);
             return 1;
         }
         char* newfilenamebuf = file_GetFileNameFromFilePath(script);
         if (!newfilenamebuf) {
             free(p);
-            printerror("Error: NULL returned for file name");
+            printfatalerror("Error: NULL returned for file name");
             main_Quit(1);
             return 1;
         }
@@ -887,7 +891,7 @@ int main(int argc, char** argv) {
         filenamebuf = newfilenamebuf;
         if (!file_Cwd(p)) {
             free(filenamebuf);
-            printerror("Error: Cannot cd to \"%s\"", p);
+            printfatalerror("Error: Cannot cd to \"%s\"", p);
             free(p);
             main_Quit(1);
             return 1;
@@ -903,7 +907,7 @@ int main(int argc, char** argv) {
     // initialise graphics
 #ifdef USE_GRAPHICS
     if (!graphics_Init(&error)) {
-        printerror("Error: Failed to initialise graphics: %s",error);
+        printfatalerror("Error: Failed to initialise graphics: %s",error);
         free(error);
         fatalscripterror();
         main_Quit(1);
@@ -920,7 +924,7 @@ int main(int argc, char** argv) {
     // initialise physics
     physics2ddefaultworld = physics_createWorld(0);
     if (!physics2ddefaultworld) {
-        printerror("Error: Failed to initialise Box2D physics");
+        printfatalerror("Error: Failed to initialise Box2D physics");
         fatalscripterror();
         main_Quit(1);
         return 1;
@@ -995,7 +999,7 @@ int main(int argc, char** argv) {
         i++;
     }
     if (pushfailure) {
-        printerror("Error: couldn't push all script arguments "
+        printfatalerror("Error: couldn't push all script arguments "
         "into script state");
         main_Quit(1);
         return 1;
@@ -1014,7 +1018,7 @@ int main(int argc, char** argv) {
         if (error == NULL) {
             error = outofmem;
         }
-        printerror("Error: an error occured when running \"%s\": %s",
+        printfatalerror("Error: an error occured when running \"%s\": %s",
         script, error);
         if (error != outofmem) {
             free(error);
@@ -1033,7 +1037,7 @@ int main(int argc, char** argv) {
     // call init
     if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1,
     &error, NULL, NULL)) {
-        printerror("Error: an error occured when calling "
+        printfatalerror("Error: an error occured when calling "
         "blitwizard.onInit: %s",error);
         if (error != outofmem) {
             free(error);

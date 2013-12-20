@@ -158,6 +158,24 @@ void printerror(const char* fmt, ...) {
     memorylog("\n");
     consolelog("error", printline);
 #endif
+}
+
+void printfatalerror(const char* fmt, ...) {
+    char printline[2048];
+    va_list a;
+    va_start(a, fmt);
+    vsnprintf(printline, sizeof(printline)-1, fmt, a);
+    printline[sizeof(printline)-1] = 0;
+    va_end(a);
+#ifdef ANDROID
+    __android_log_print(ANDROID_LOG_ERROR, "blitwizard", "%s", printline);
+#else
+    fprintf(stderr, "%s\n",printline);
+    fflush(stderr);
+    memorylog(printline);
+    memorylog("\n");
+    consolelog("error", printline);
+#endif
 #ifdef WINDOWS
     // we want graphical error messages for windows
     // minimize drawing window if fullscreen
