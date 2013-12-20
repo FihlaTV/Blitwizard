@@ -349,7 +349,7 @@ end
   @function width
 ]]
 function blitwizard.font.text:width()
-    return self._width * self._scale
+    return self._width -- * self._scale
 end
 
 --[[--
@@ -357,7 +357,7 @@ end
   @function height
 ]]
 function blitwizard.font.text:height()
-    return self._height * self._scale
+    return self._height -- * self._scale
 end
 
 function blitwizard.font.text:_markAsTemplateObj()
