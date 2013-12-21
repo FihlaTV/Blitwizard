@@ -69,6 +69,11 @@ blitwizard.font.text = {}
 
 function blitwizard.font.text:new(text, fontPath, scale, camera, width,
 glyphWidth, glyphHeight, glyphsPerLine)
+    local glyphSpacingX = 0
+    local glyphSpacingY = 0
+    local glyphPreSpacingX = 0
+    local glyphPreSpacingY = 0
+
     -- parameter validation:
     if type(text) ~= "string" then
         error("bad parameter #1 to blitwizard.font.text:create: expected " ..
@@ -130,7 +135,10 @@ glyphWidth, glyphHeight, glyphsPerLine)
     if fontPath == "default" then
         -- use default settings:
         fontPath = os.templatedir() .. "/font/default.png"
-        glyphWidth = 7
+        glyphPreSpacingX = 0.1
+        glyphWidth = 6.8
+        glyphSpacingX = 1.2
+        glyphSpacingY = 1
         glyphHeight = 14
         glyphsPerLine = 32
     end
@@ -232,8 +240,13 @@ glyphWidth, glyphHeight, glyphsPerLine)
             newGlyph:setInvisibleToMouse(true)
             newGlyph:setScale(scale, scale)
             newGlyph:setTextureFiltering(false)
-            newGlyph:set2dTextureClipping((charxslot - 1) * glyphWidth, 
-            (charyslot - 1) * glyphHeight, glyphWidth, glyphHeight)
+            newGlyph:set2dTextureClipping(
+                glyphPreSpacingX +
+                (charxslot - 1) * (glyphWidth + glyphSpacingX),
+                glyphPreSpacingY +
+                (charyslot - 1) * (glyphHeight + glyphSpacingY),
+                glyphWidth, glyphHeight
+            )
             t.glyphs[#t.glyphs+1] = newGlyph
 
             -- update overall text block width and height:

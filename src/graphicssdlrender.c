@@ -226,7 +226,7 @@ void graphicsrender_Draw(void) {
 
     // render sprites:
     graphics2dsprites_doForAllSprites(
-    &graphicssdlrender_spriteCallback);
+        &graphicssdlrender_spriteCallback);
 
     graphicssdlrender_CompleteFrame();
 }
