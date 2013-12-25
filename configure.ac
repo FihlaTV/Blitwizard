@@ -1008,8 +1008,10 @@ CFLAGS="$OLD_CFLAGS"
 # Decide on some additional cflags:
 ADDITIONAL_CFLAGS=""
 AS_IF([test "x$enable_debug" = xyes],[
+    DEBUGGING_SYMBOLS="yes (not recommended for final release)"
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -g"
 ],[
+    DEBUGGING_SYMBOLS="no (recommended for final release)"
     ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -s"
     AS_IF([test "x$EXTRA_SPEED_FLAGS" = xyes],[
         ADDITIONAL_CFLAGS="$ADDITIONAL_CFLAGS -O2 -fno-math-errno -fno-finite-math-only"
@@ -1178,6 +1180,7 @@ This results in the following feature set:
   3D physics simulation support: ${PHYSICS3D_FEATURE_ENABLED}
   Fast float-to-int conversion: ${FAST_FLOAT2INT_FEATURE_ENABLED}
   Zip archive resource loading: ${ZIP_FEATURE_ENABLED}
+  Debugging symbols: ${DEBUGGING_SYMBOLS}
 "
 
 
