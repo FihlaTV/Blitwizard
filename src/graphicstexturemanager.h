@@ -169,11 +169,17 @@ struct texturerequesthandle* request, int visibility);
 #define SCALEDOWNSECONDS 30
 
 // helps with debugging downscaling:
-#define ULTRAFASTDOWNSCALE
+//#define ULTRAFASTDOWNSCALE
 
 
 #ifdef ULTRAFASTDOWNSCALE
+#warning "-------------------------------------"
 #warning "debugging with ultra fast down scale!"
+#warning "         !!! !!! !!! !!! !!!         "
+#warning "    THIS SHOULD NEVER BE ENABLED     "
+#warning "          IN A REGULAR BUILD         "
+#warning "         !!! !!! !!! !!! !!!         "
+#warning "-------------------------------------"
 #undef SCALEDOWNSECONDS
 #define SCALEDOWNSECONDS 2
 #undef SCALEDOWNSECONDSLONG
