@@ -68,6 +68,13 @@ int width, int height, void* userdata) {
     struct graphicstextureloader_initialLoadingThreadInfo* info =
     userdata;
     if (width > 0 && height > 0) {
+        // set the size to the gtm texture struct:
+        texturemanager_lockForTextureAccess();
+        info->gtm->width = info->width;
+        info->gtm->height = info->height;
+        texturemanager_releaseFromTextureAccess();
+
+        // report back the size:
         info->callbackDimensions(info->gtm, width, height,
         1, info->userdata);
         info->width = width;
@@ -290,7 +297,7 @@ void graphicstextureloader_InitialLoaderThread(void* userdata) {
     }
 }
 
-void graphicstextureloader_DoInitialLoading(struct graphicstexturemanaged* gtm,
+void graphicstextureloader_doInitialLoading(struct graphicstexturemanaged* gtm,
 void (*callbackDimensions)(struct graphicstexturemanaged* gtm,
 size_t width, size_t height, int success,
 void* userdata),

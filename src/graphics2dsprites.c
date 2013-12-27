@@ -70,6 +70,7 @@ struct graphics2dsprite {
     // texture info:
     struct graphicstexture* tex;
     struct texturerequesthandle* request;
+    int textureHandlingDone;
 
     // position, size info:
     double x, y, width, height, angle;
@@ -280,6 +281,23 @@ struct graphics2dsprite* sprite, double alpha) {
 }
 
 // this callback will be called by the texture manager:
+static void graphics2dsprites_textureHandlingDoneCallback(
+__attribute__ ((unused)) struct texturerequesthandle* request,
+void* userdata) {
+    struct graphics2dsprite* s = userdata;
+
+    mutex_Lock(m);
+
+    if (s->deleted) {
+        mutex_Release(m);
+        return;
+    }
+
+    s->textureHandlingDone = 1;
+    mutex_Release(m);
+}
+
+// this callback will be called by the texture manager:
 static void graphics2dsprites_textureSwitchCallback(
 __attribute__ ((unused)) struct texturerequesthandle* request,
 struct graphicstexture* texture, void* userdata) {
@@ -335,7 +353,8 @@ int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite) {
     }
 
     mutex_Lock(m);
-    if (sprite->tex) {
+    if (sprite->tex || sprite->textureHandlingDone) {
+        // texture is there, or texture manager won't load it now.
         mutex_Release(m);
         return 1;
     }
@@ -676,6 +695,7 @@ const char* texturePath, double x, double y, double width, double height) {
     s->request = texturemanager_requestTexture(
     s->path, graphics2dsprites_dimensionInfoCallback,
     graphics2dsprites_textureSwitchCallback,
+    graphics2dsprites_textureHandlingDoneCallback,
     s);
 #ifdef EXTRADEBUG
     assert(graphics2dsprites_Count()

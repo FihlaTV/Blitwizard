@@ -101,13 +101,16 @@ struct texturerequesthandle;
 // give your texture higher priority if usage is high.
 //
 // BEWARE OF THE CALLBACKS: Inside the callbacks, don't
-// call the texture manager api. This will break things.
+// call the texture manager api ever. This will break things.
+// (Because of deadlocks/threading issues)
 struct texturerequesthandle* texturemanager_requestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
 size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
 struct graphicstexture* texture, void* userdata),
+void (*textureHandlingDone)(struct texturerequesthandle* request,
+void* userdata),
 void* userdata);
 
 // Use texturemanager_UsingRequest to report back how much

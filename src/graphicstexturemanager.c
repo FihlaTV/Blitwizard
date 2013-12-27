@@ -77,17 +77,23 @@ struct texturerequesthandle {
 
     // callback information:
     void (*textureDimensionInfoCallback)(
-    struct texturerequesthandle* request,
-    size_t width, size_t height, void* userdata);
+        struct texturerequesthandle* request,
+        size_t width, size_t height, void* userdata);
     void (*textureSwitchCallback)(
-    struct texturerequesthandle* request,
-    struct graphicstexture* texture, void* userdata);
+        struct texturerequesthandle* request,
+        struct graphicstexture* texture, void* userdata);
+    void (*textureHandlingDoneCallback)(
+        struct texturerequesthandle* request,
+        void* userdata);
     void* userdata;
 
     // remember if we already handed a texture to this request:
     struct graphicstexture* handedTexture;
     struct graphicstexturescaled* handedTextureScaledEntry;
- 
+
+    // remember whether we issued a texture handling callback:
+    int textureHandlingDoneIssued;
+
     // if the request was cancelled, the callbacks
     // are gone and must not be used anymore:
     int canceled;
@@ -572,7 +578,25 @@ request, int listLocked) {
         }
         j++;
     }
+
+    // for textures of unknown sizes, we really would love to
+    // know the size:
+    if (gtm->width == 0 && gtm->height == 0) {
+        relevant = 1;
+    }
+
     if (!relevant) {  // not used for ages, do not process
+        if (!request->textureHandlingDoneIssued) {
+            // the requester really should know we don't care
+            // to process this.
+            request->textureHandlingDoneCallback(
+                request, request->userdata);
+            request->textureHandlingDoneIssued = 1;
+#ifdef DEBUGTEXTUREMANAGER
+            printinfo("[TEXMAN] not even a slight sign of usage, unloading: "
+                "%s", gtm->path);
+#endif
+        }
         if (!listLocked) {
             mutex_Release(textureReqListMutex);
         }
@@ -607,7 +631,7 @@ request, int listLocked) {
 
             // fire up the threaded loading process which
             // gives us the texture in the most common sizes
-            graphicstextureloader_DoInitialLoading(gtm,
+            graphicstextureloader_doInitialLoading(gtm,
             texturemanager_initialLoadingDimensionsCallback,
             texturemanager_initialLoadingDataCallback,
             request);
@@ -724,9 +748,11 @@ static void texturemanager_initialLoadingDataCallback
 struct texturerequesthandle* texturemanager_requestTexture(
 const char* path,
 void (*textureDimensionInfo)(struct texturerequesthandle* request,
-size_t width, size_t height, void* userdata),
+    size_t width, size_t height, void* userdata),
 void (*textureSwitch)(struct texturerequesthandle* request,
-struct graphicstexture* texture, void* userdata),
+    struct graphicstexture* texture, void* userdata),
+void (*textureHandlingDone)(struct texturerequesthandle* request,
+    void* userdata),
 void* userdata) {
 #ifdef DEBUGTEXTUREMANAGER
     //printf("[TEXMAN] [REQUEST] new request for %s, new total "
@@ -741,6 +767,7 @@ void* userdata) {
     memset(request, 0, sizeof(*request));
     request->textureSwitchCallback = textureSwitch;
     request->textureDimensionInfoCallback = textureDimensionInfo;
+    request->textureHandlingDoneCallback = textureHandlingDone;
     request->userdata = userdata;
 
     // locate according texture entry:
@@ -749,19 +776,13 @@ void* userdata) {
     if (!gtm) {
         // add new texture entry:
         gtm = graphicstexturelist_AddTextureToList(
-        path);
+            path);
         if (!gtm) {
             poolAllocator_free(textureReqBlockAlloc, request);
             return NULL;
         }
         graphicstexturelist_AddTextureToHashmap(
         gtm);
-
-        // assume initial usage:
-        gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] =
-        time(NULL);
-        gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] =
-        time(NULL);
     }
     request->gtm = gtm;
 
@@ -934,12 +955,23 @@ int newsize) {
             request->handedTextureScaledEntry = &gtm->scalelist[newsize];
             request->handedTextureScaledEntry->refcount++;
         }
+        if (!request->textureHandlingDoneIssued) {
+            request->textureHandlingDoneCallback(
+                request, request->userdata);
+            request->textureHandlingDoneIssued = 1;
+        }
     }
     if (newsize < 0) {
         // move request to unhandled request list:
         // (so it will try to re-obtain the texture if it's now
         // without any)
         texturemanager_moveRequestToUnhandled(request);
+        // notify the requester that we're not going to load their texture:
+        if (!request->textureHandlingDoneIssued) {
+            request->textureHandlingDoneCallback(
+                request, request->userdata);
+            request->textureHandlingDoneIssued = 1;
+        }
     }
 }
 
@@ -956,9 +988,10 @@ struct graphicstexturemanaged* gtm, int newsize) {
 #ifdef DEBUGTEXTUREMANAGER
     if (gtm->preferredSize != newsize) {
         printinfo("[TEXMAN] new size for %s: %d", gtm->path, newsize);
-        gtm->preferredSize = newsize;
     }
 #endif
+    gtm->preferredSize = newsize;
+
     if (newsize >= 0) {
         if (gtm->scalelist[newsize].locked) {
             // texture is locked, cannot use.
@@ -1043,11 +1076,23 @@ static void texturemanager_adaptTextures(void) {
 }
 
 void texturemanager_tick(void) {
+    // measure when we started:
+    uint64_t start = time_GetMilliseconds();
+
     mutex_Lock(textureReqListMutex);
     currentuploads = 0;
     texturemanager_processUnhandledRequests();
     texturemanager_adaptTextures();
     mutex_Release(textureReqListMutex);
+
+    // measure end and emit warning if this took too long:
+    uint64_t end = time_GetMilliseconds();
+    uint64_t delta = end - start;
+    if (delta > 500) {
+        printwarning("[TEXMAN] huge hang (%d ms) detected. This shouldn't"
+            " happen. If you can reproduce this, please notify blitwizard"
+            " developers.", (int)delta);
+    }
 }
 
 uint64_t texturemanager_getGpuMemoryUse() {

@@ -1097,6 +1097,12 @@ int main(int argc, char** argv) {
 #endif
         // see how much time as already passed since the last frame:
         uint64_t delta = time_GetMilliseconds()-lastdrawingtime;
+        if (delta > 400) {
+#ifndef NDEBUG
+            printwarning("[main] huge hang (%d ms) detected",
+            (int)delta);
+#endif
+        }
 
         // sleep/limit FPS as much as we can
         if (delta < (deltaspan-10)) {

@@ -1973,6 +1973,40 @@ int luafuncs_object_setVisible(lua_State* l) {
 //     self:getDimensions()[2])
 //   end
 
+/// Set this event function to a custom function of
+// yours to get notified when the object has been fully
+// loaded and it is actually drawn *if* not set to
+// @{object:setVisible|invisible}.
+//
+// Objects are immediately created, but their graphics
+// need a few moments to be loaded. This callback's purpose
+// is to indicate when that happened to its full extent.
+//
+// The @{object:onGeometryLoaded|onGeometryLoaded callback}
+// happens at an earlier stage when the object dimensions
+// are already known from its graphics representation,
+// but the graphics aren't fully loaded and shown yet.
+//
+// Consequently, this callback will always happen after
+// the @{object:onGeometryLoaded|object:onGeometryLoaded}
+// callback.
+//
+// If the object is set to @{object:setVisible|invisible}
+// at some point before this callback happens, the callback
+// will still be triggered as usual but the object's graphics
+// may or may not be loaded. You have no guarantee it
+// shows up instantly if you set it to visible again.
+// @function onGeometryLoaded
+// @usage
+//   -- create some sprite from "mysprite.png"
+//   local object = blitwizard.object:new(blitwizard.object.o2d,
+//       "mysprite.png")
+//   -- now let's see when it is actually fully loaded and shown:
+//   function object:onLoaded()
+//       -- now it is actually visible on screen!
+//       print("sprite is now visible!")
+//   end
+
 /// Set this event function to a custom function of yours
 // to have the object do something
 // over and over again moderately fast (4 times a second).
