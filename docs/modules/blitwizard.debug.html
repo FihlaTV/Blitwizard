@@ -61,16 +61,14 @@
 <p>This namespace contains various functions to obtain information
  about the many complex subsystems working in blitwizard.</p>
 <p>
-<p> This is mainly useful for blitwizard developers or if you want
- to report a back and intend to add some additional information
- to your blitwizard bug report.
-<p> Your regular blitwizard game will probably not need any of the information
- available here.</p>
+<p> YOU SHOULD NOT NEED ANY OF THIS IN A REGULAR GAME.
+<p> This is mainly useful for blitwizard developers, or if you want
+ to collect information on a blitwizard bug.</p>
     <h3>Info:</h3>
     <ul>
+        <li><strong>Copyright</strong>: 2013</li>
         <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Copyright</strong>: 2013</li>
     </ul>
 
 
@@ -80,6 +78,10 @@
 	<td class="name" ><a href="#get2dSpriteCount">get2dSpriteCount ()</a></td>
 	<td class="summary">Get the total number of 2d sprites which are currently
  active.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getAllTextures">getAllTextures ()</a></td>
+	<td class="summary">Return a complete list of all currently known textures.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#getAudioChannelCount">getAudioChannelCount ()</a></td>
@@ -109,6 +111,10 @@
 	<td class="name" ><a href="#gpuMemoryUse">gpuMemoryUse ()</a></td>
 	<td class="summary">Get GPU memory used for all textures loaded by blitwizard in bytes.</td>
 	</tr>
+	<tr>
+	<td class="name" ><a href="#printGlobalTextureInfo">printGlobalTextureInfo ()</a></td>
+	<td class="summary">This prints out a listing of all known textures and their current state.</td>
+	</tr>
 </table>
 
 <br/>
@@ -136,6 +142,37 @@
 
 
 
+
+</dd>
+    <dt>
+    <a name = "getAllTextures"></a>
+    <strong>getAllTextures ()</strong>
+    </dt>
+    <dd>
+    Return a complete list of all currently known textures.
+ This allows you to query on their detailed state with
+ <a href="../modules/blitwizard.debug.html#getTextureGpuSizeInfo">debug.getTextureGpuSizeInfo</a>
+ or <a href="../modules/blitwizard.debug.html#getTextureUsageInfo">debug.getTextureUsageInfo</a>.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a></span>
+        a list of all texture names
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+  <span class="global">print</span>(<span class="string">"Listing all textures:"</span>)
+  <span class="keyword">for</span> _,tex <span class="keyword">in</span> <span class="global">ipairs</span>(blitwizard.<span class="global">debug</span>.getAllTextures()) <span class="keyword">do</span>
+      <span class="global">print</span>(<span class="string">"Texture: "</span> .. tex)
+  <span class="keyword">end</span></pre>
+    </ul>
 
 </dd>
     <dt>
@@ -279,6 +316,24 @@
            <span class="types"><span class="type">number</span></span>
         GPU memory used up in bytes
     </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "printGlobalTextureInfo"></a>
+    <strong>printGlobalTextureInfo ()</strong>
+    </dt>
+    <dd>
+    This prints out a listing of all known textures and their current state.
+ Please note in any other scenario than smaller test games, this list
+ is possibly HUGE.
+<p> This function is implemented in the templates and not available without
+ the "templates" folder.
+
+
+
 
 
 

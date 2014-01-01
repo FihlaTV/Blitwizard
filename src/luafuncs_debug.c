@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,16 +24,16 @@
 /// This namespace contains various functions to obtain information
 // about the many complex subsystems working in blitwizard.
 //
-// This is mainly useful for blitwizard developers or if you want
-// to report a back and intend to add some additional information
-// to your blitwizard bug report.
+// YOU SHOULD NOT NEED ANY OF THIS IN A REGULAR GAME.
 //
-// Your regular blitwizard game will probably not need any of the information
-// available here.
+// This is mainly useful for blitwizard developers, or if you want
+// to collect information on a blitwizard bug.
 // @author Jonas Thiem (jonas.thiem@gmail.com)
 // @copyright 2013
 // @license zlib
 // @module blitwizard.debug
+
+#include <string.h>
 
 #include "config.h"
 #include "os.h"
@@ -41,6 +41,7 @@
 #include "file.h"
 #include "luaheader.h"
 #include "luaerror.h"
+#include "graphicstexturelist.h"
 #include "graphicstexturemanager.h"
 #include "luafuncs_debug.h"
 #include "luafuncs_object.h"
@@ -178,4 +179,76 @@ int luafuncs_debug_getAudioChannelCount(lua_State* l) {
     return 1;
 }
 
+
+__attribute__ ((unused)) static int luafuncs_niliterator(lua_State* l) {
+    lua_pushnil(l);
+    return 1;
+}
+
+static int addindex = 1;
+static int luacfuncs_addTextureToLuaTable(
+        struct graphicstexturemanaged* gtm,
+        __attribute__ ((unused)) struct graphicstexturemanaged* prevgtm,
+        void* userdata) {
+    lua_State* l = userdata;
+    if (!lua_checkstack(l, 5)) {
+        return 1;
+    }
+    // table target index:
+    lua_pushnumber(l, addindex);
+    // remove double slashes:
+    char* s = strdup(gtm->path);
+    if (!s) {
+        lua_pop(l, 1);
+        return 1;
+    }
+    int i = 0;
+    unsigned int len = strlen(s);
+    while (i < len - 1) {
+        if ((s[i] == '/' && s[i + 1] == '/') ||
+                (s[i] == '\\' && s[i + 1] == '\\')) {
+            memmove(s + i, s + i + 1, len - i);
+            len--;
+        }
+        i++;
+    }
+    // push result:
+    lua_pushstring(l, s);
+    lua_settable(l, -3);
+    addindex++;
+    return 1;
+}
+
+/// Return a complete list of all currently known textures.
+// This allows you to query on their detailed state with
+// @{blitwizard.debug.getTextureGpuSizeInfo|debug.getTextureGpuSizeInfo}
+// or @{blitwizard.debug.getTextureUsageInfo|debug.getTextureUsageInfo}.
+// @function getAllTextures
+// @treturn table a list of all texture names
+// @usage
+//  print("Listing all textures:")
+//  for _,tex in ipairs(blitwizard.debug.getAllTextures()) do
+//      print("Texture: " .. tex)
+//  end
+int luafuncs_debug_getAllTextures(lua_State* l) {
+#ifdef USE_GRAPHICS
+    lua_newtable(l);
+    addindex = 1;
+    graphicstexturelist_doForAllTextures(
+        luacfuncs_addTextureToLuaTable, l);
+    return 1;
+#else
+    lua_pushcfunction(l, &luafuncs_niliterator);
+    return 1;
+#endif
+}
+
+
+/// This prints out a listing of all known textures and their current state.
+// Please note in any other scenario than smaller test games, this list
+// is possibly HUGE.
+//
+// This function is implemented in the templates and not available without
+// the "templates" folder.
+// @function printGlobalTextureInfo
 

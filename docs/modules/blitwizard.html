@@ -67,9 +67,9 @@
 <p> <b>Please note 3d graphics are currently <span style="color:#ff0000">not supported.</span></b></p>
     <h3>Info:</h3>
     <ul>
+        <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
         <li><strong>License</strong>: zlib</li>
-        <li><strong>Copyright</strong>: 2011-2013</li>
     </ul>
 
 
@@ -236,6 +236,13 @@
 	<td class="name" ><a href="#object:new">object:new (type, resource)</a></td>
 	<td class="summary">Create a new blitwizard object which is represented as a 2d or
  3d object in the game world.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#object:onGeometryLoaded">object:onGeometryLoaded ()</a></td>
+	<td class="summary">Set this event function to a custom function of
+ yours to get notified when the object has been fully
+ loaded and it is actually drawn *if* not set to
+ <a href="../modules/blitwizard.html#object:setVisible">invisible</a>.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#object:onGeometryLoaded">object:onGeometryLoaded ()</a></td>
@@ -1509,6 +1516,50 @@
         <pre class="example">
  <span class="comment">-- Create a new 2d sprite object from the image file myimage.png
 </span> <span class="keyword">local</span> obj = blitwizard.object:new(blitwizard.object.o2d, <span class="string">"myimage.png"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "object:onGeometryLoaded"></a>
+    <strong>object:onGeometryLoaded ()</strong>
+    </dt>
+    <dd>
+    Set this event function to a custom function of
+ yours to get notified when the object has been fully
+ loaded and it is actually drawn *if* not set to
+ <a href="../modules/blitwizard.html#object:setVisible">invisible</a>.
+<p> Objects are immediately created, but their graphics
+ need a few moments to be loaded. This callback's purpose
+ is to indicate when that happened to its full extent.
+<p> The <a href="../modules/blitwizard.html#object:onGeometryLoaded">onGeometryLoaded callback</a>
+ happens at an earlier stage when the object dimensions
+ are already known from its graphics representation,
+ but the graphics aren't fully loaded and shown yet.
+<p> Consequently, this callback will always happen after
+ the <a href="../modules/blitwizard.html#object:onGeometryLoaded">object:onGeometryLoaded</a>
+ callback.
+<p> If the object is set to <a href="../modules/blitwizard.html#object:setVisible">invisible</a>
+ at some point before this callback happens, the callback
+ will still be triggered as usual but the object's graphics
+ may or may not be loaded. You have no guarantee it
+ shows up instantly if you set it to visible again.
+
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+   <span class="comment">-- create some sprite from "mysprite.png"
+</span>   <span class="keyword">local</span> object = blitwizard.object:new(blitwizard.object.o2d,
+       <span class="string">"mysprite.png"</span>)
+   <span class="comment">-- now let's see when it is actually fully loaded and shown:
+</span>   <span class="keyword">function</span> object:onLoaded()
+       <span class="comment">-- now it is actually visible on screen!
+</span>       <span class="global">print</span>(<span class="string">"sprite is now visible!"</span>)
+   <span class="keyword">end</span></pre>
     </ul>
 
 </dd>

@@ -2113,6 +2113,6 @@ int luafuncs_object_pickObjectAtPosition(lua_State* l) {
     }
     double x = lua_tonumber(l, 1);
     double y = lua_tonumber(l, 2);
-    
+    // FIXME !!   
     return 0;
 }

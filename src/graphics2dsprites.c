@@ -979,6 +979,12 @@ void graphics2dsprites_reportVisibility(void) {
                 continue;
             }
 
+            if (!sprite->visible || sprite->alpha <= 0) {
+                // sprite is set to invisible;
+                i++;
+                continue;
+            }
+
             // get camera settings:
             int sw = graphics_GetCameraWidth(i);
             int sh = graphics_GetCameraHeight(i);

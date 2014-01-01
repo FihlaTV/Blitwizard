@@ -67,7 +67,7 @@ uint64_t gpuMemUse = 0;
 int noTextureUploads = 0;
 
 // max gpu uploads per tick:
-int maxuploads = 100;
+int maxuploads = 1;
 int currentuploads = 0;
 
 mutex* textureReqListMutex = NULL;
@@ -293,9 +293,9 @@ static void texturemanager_scaleTextureThread(void* userdata) {
         malloc(info->scaletarget->width *
         info->scaletarget->height * 4);
 #ifdef DEBUGTEXTUREMANAGER
-        printinfo("[TEXMAN] scaling %s to %u, %u",
-        info->scaletarget->parent->path,
-        info->scaletarget->width, info->scaletarget->height);
+        //printinfo("[TEXMAN] scaling %s to %u, %u",
+        //info->scaletarget->parent->path,
+        //info->scaletarget->width, info->scaletarget->height);
 #endif
 
         if (info->scaletarget->pixels) {
@@ -592,10 +592,6 @@ request, int listLocked) {
             request->textureHandlingDoneCallback(
                 request, request->userdata);
             request->textureHandlingDoneIssued = 1;
-#ifdef DEBUGTEXTUREMANAGER
-            printinfo("[TEXMAN] not even a slight sign of usage, unloading: "
-                "%s", gtm->path);
-#endif
         }
         if (!listLocked) {
             mutex_Release(textureReqListMutex);
@@ -1075,14 +1071,29 @@ static void texturemanager_adaptTextures(void) {
     NULL);
 }
 
+uint64_t lastUploadReset = 0;
 void texturemanager_tick(void) {
     // measure when we started:
     uint64_t start = time_GetMilliseconds();
 
+    // lock global mutex:
     mutex_Lock(textureReqListMutex);
-    currentuploads = 0;
+
+    // reset the texture uploads to 0 every 200ms:
+    if (lastUploadReset + 200 < start) {
+        currentuploads = 0;
+        lastUploadReset = start;
+    }
+    // process unhandled requests to get them
+    // the currently loaded textures,
+    // and start loading new ones in the first place:
     texturemanager_processUnhandledRequests();
+
+    // process currently loaded textures for
+    // being downscaled or upscaled based on usage:
     texturemanager_adaptTextures();
+
+    // release global mutex:
     mutex_Release(textureReqListMutex);
 
     // measure end and emit warning if this took too long:

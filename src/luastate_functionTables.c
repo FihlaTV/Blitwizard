@@ -333,6 +333,8 @@ void luastate_CreateDebugTable(lua_State* l) {
     "get2dSpriteCount");
     luastate_registerfunc(l, &luafuncs_debug_getAudioChannelCount,
     "getAudioChannelCount");
+    luastate_registerfunc(l, &luafuncs_debug_getAllTextures,
+        "getAllTextures");
 }
 
 void luastate_CreateSimpleSoundTable(lua_State* l) {
