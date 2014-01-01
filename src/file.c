@@ -39,6 +39,17 @@
 
 #include "file.h"
 
+char* file_getCanonicalPath(const char* path) {
+    char* s = file_getAbsolutePathFromRelativePath(path);
+    if (!s) {
+        return NULL;
+    }
+    file_makeSlashesNative(s);
+    // remove double slashes
+    file_removeDoubleSlashes(s);
+    return s;
+}
+
 static char file_NativeSlash(void) {
 #ifdef WINDOWS
         return '\\';
@@ -65,7 +76,7 @@ static int file_IsDirectorySeparator(char c) {
     return 0;
 }
 
-void file_MakeSlashesNative(char* path) {
+void file_makeSlashesNative(char* path) {
     unsigned int i = 0;
     char nativeslash = file_NativeSlash();
     while (i < strlen(path)) {
@@ -76,7 +87,7 @@ void file_MakeSlashesNative(char* path) {
     }
 }
 
-void file_MakeSlashesCrossplatform(char* path) {
+void file_makeSlashesCrossplatform(char* path) {
     unsigned int i = 0;
     while (i < strlen(path)) {
         if (file_IsDirectorySeparator(path[i])) {
@@ -140,7 +151,7 @@ int file_Cwd(const char* path) {
     if (!pathcopy) {
         return 0;
     }
-    file_MakeSlashesNative(pathcopy);
+    file_makeSlashesNative(pathcopy);
 #ifdef WINDOWS
     if (SetCurrentDirectory(pathcopy) == 0) {
         free(pathcopy);
@@ -295,7 +306,7 @@ char* file_AddComponentToPath(const char* path, const char* component) {
 }
 
 void file_StripComponentFromPath(char* path) {
-    file_MakeSlashesNative(path);
+    file_makeSlashesNative(path);
 
     int repeat = 1;
     while (repeat) {
@@ -314,7 +325,7 @@ void file_StripComponentFromPath(char* path) {
     }
 }
 
-char* file_GetAbsolutePathFromRelativePath(const char* path) {
+char* file_getAbsolutePathFromRelativePath(const char* path) {
     // cancel for absolute paths
     if (!file_IsPathRelative(path)) {
         return strdup(path);
@@ -388,7 +399,7 @@ int file_IsPathRelative(const char* path) {
 #endif
 }
 
-char* file_GetAbsoluteDirectoryPathFromFilePath(const char* path) {
+char* file_getAbsoluteDirectoryPathFromFilePath(const char* path) {
     char* p = file_GetDirectoryPathFromFilePath(path);
     if (!p) {
         return NULL;
@@ -398,7 +409,7 @@ char* file_GetAbsoluteDirectoryPathFromFilePath(const char* path) {
         return p;
     }
 
-    char* p2 = file_GetAbsolutePathFromRelativePath(p);
+    char* p2 = file_getAbsolutePathFromRelativePath(p);
     if (!p2) {
         return NULL;
     }
@@ -516,7 +527,7 @@ int file_DeleteFile(const char* name) {
 #endif
 }
 
-void file_RemoveDoubleSlashes(char* path) {
+void file_removeDoubleSlashes(char* path) {
     unsigned int i = 0;
     int previousslash = 0;
     while (i < strlen(path)) {
@@ -571,7 +582,7 @@ unsigned int file_CountPathComponents(const char* path) {
     return c;
 }
 
-void file_MakePathRelative(char* path, const char* base) {
+void file_makePathRelative(char* path, const char* base) {
     if (file_IsPathRelative(base)) {
         return;
     }
@@ -585,10 +596,10 @@ void file_MakePathRelative(char* path, const char* base) {
         free(base_unified);
         return;
     }
-    file_RemoveDoubleSlashes(path_unified);
-    file_MakeSlashesCrossplatform(path_unified);
-    file_RemoveDoubleSlashes(base_unified);
-    file_MakeSlashesCrossplatform(base_unified);
+    file_removeDoubleSlashes(path_unified);
+    file_makeSlashesCrossplatform(path_unified);
+    file_removeDoubleSlashes(base_unified);
+    file_makeSlashesCrossplatform(base_unified);
     if (strlen(path_unified) < strlen(base_unified)) {
         // not a sub dir.
         free(path_unified);

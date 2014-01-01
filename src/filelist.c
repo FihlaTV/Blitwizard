@@ -58,7 +58,7 @@ struct filelistcontext* filelist_Create(const char* path) {
     if (!p) {
         return NULL;
     }
-    file_MakeSlashesNative(p);
+    file_makeSlashesNative(p);
 
     // handle current directory properly:
     if (strcasecmp(p, "") == 0) {

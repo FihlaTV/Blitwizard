@@ -287,13 +287,14 @@ int luafuncs_forceTextureReload(lua_State* l) {
         "blitwizard.graphics.forceTextureReload",
         "string", lua_strtype(l, 1));
     }
-    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, 1));
+    char* p = file_getAbsolutePathFromRelativePath(lua_tostring(l, 1));
     if (!p) {
-        return;
+        return 0;
     }
-    file_MakeSlashesCrossplatform(p);
+    file_makeSlashesCrossplatform(p);
     texturemanager_wipeTexture(p);
     free(p);
+    return 0;
 #else // ifdef USE_GRAPHICS
     lua_pushstring(l, compiled_without_graphics);
     return lua_error(l);

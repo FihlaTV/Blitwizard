@@ -422,7 +422,7 @@ int attemptTemplateLoad(const char* path) {
     p[strlen(path)] = '/';
     memcpy(p+strlen(path)+1, "init.lua", strlen("init.lua"));
     p[strlen(path)+1+strlen("init.lua")] = 0;
-    file_MakeSlashesNative(p);
+    file_makeSlashesNative(p);
 
     int loadFromZip = 0;
     struct resourcelocation loc;
@@ -445,7 +445,7 @@ int attemptTemplateLoad(const char* path) {
     if (templatepath) {
         free(templatepath);
     }
-    templatepath = file_GetAbsolutePathFromRelativePath(path);
+    templatepath = file_getAbsolutePathFromRelativePath(path);
 
     // run file:
     char outofmem[] = "Out of memory";
@@ -480,7 +480,7 @@ static void determineBinaryPath(const char* argv0) {
     && argv0[0] == '.' && argv0[0] == '/')
     || strstr(argv0, "/")) {
         // it is. use it:
-        binpath = file_GetAbsolutePathFromRelativePath(argv0);
+        binpath = file_getAbsolutePathFromRelativePath(argv0);
         return;
     }
 
@@ -600,7 +600,7 @@ int main(int argc, char** argv) {
                     main_Quit(1);
                     return 1;
                 }
-                file_MakeSlashesNative(option_templatepath);
+                file_makeSlashesNative(option_templatepath);
                 i++;
                 continue;
             }
@@ -796,7 +796,7 @@ int main(int argc, char** argv) {
             main_Quit(1);
             return 1;
         }
-        file_MakeSlashesNative(option_templatepath);
+        file_makeSlashesNative(option_templatepath);
     }
 
     // load internal resources appended to this binary,
@@ -856,7 +856,7 @@ int main(int argc, char** argv) {
  
     // compose game.lua path variable (for os.gameluapath())
     if (scriptdiskfile) {
-        gameluapath = file_GetAbsolutePathFromRelativePath(script);
+        gameluapath = file_getAbsolutePathFromRelativePath(script);
     } else {
         gameluapath = strdup(script);
     }
@@ -866,13 +866,13 @@ int main(int argc, char** argv) {
         return 1;
     } else {
         if (gameluapath) {
-            file_MakeSlashesCrossplatform(gameluapath);
+            file_makeSlashesCrossplatform(gameluapath);
         }
     }
 
     // check if we want to change directory to the provided script path:
     if (option_changedir) {
-        char* p = file_GetAbsoluteDirectoryPathFromFilePath(script);
+        char* p = file_getAbsoluteDirectoryPathFromFilePath(script);
         if (!p) {
             printfatalerror("Error: NULL returned for absolute directory");
             main_Quit(1);

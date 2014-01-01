@@ -79,11 +79,11 @@ int luafuncs_debug_getTextureUsageInfo(lua_State* l) {
         "blitwizard.debug.getTextureUsageInfo", "string",
         lua_strtype(l, 1));
     }
-    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, -1));
+    char* p = file_getCanonicalPath(lua_tostring(l, -1));
     if (!p) {
         return haveluaerror(l, "path allocation failed");
     }
-    file_MakeSlashesCrossplatform(p);
+    file_makeSlashesCrossplatform(p);
     lua_pushnumber(l, texturemanager_getTextureUsageInfo(p)); 
     free(p);
 #else
@@ -113,11 +113,11 @@ int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l) {
         "blitwizard.debug.getTextureUsageInfo", "string",
         lua_strtype(l, 1));
     }
-    char* p = file_GetAbsolutePathFromRelativePath(lua_tostring(l, -1));
+    char* p = file_getCanonicalPath(lua_tostring(l, -1));
     if (!p) {
         return haveluaerror(l, "path allocation failed");
     }
-    file_MakeSlashesCrossplatform(p);
+    file_makeSlashesCrossplatform(p);
     lua_pushnumber(l,
         texturemanager_getTextureGpuSizeInfo(p));
     free(p);

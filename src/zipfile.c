@@ -332,7 +332,7 @@ size_t sizeinfile, int encrypted) {
         free(zfa);
         return NULL;
     }
-    file_MakeSlashesNative(zfa->fname);
+    file_makeSlashesNative(zfa->fname);
 
     // open file:
     zfa->f = fopen(zfa->fname, "rb");
@@ -436,8 +436,8 @@ static char* getfilepath(struct zipfile* f, const char* path) {
     memcpy(p, f->mountpoint, strlen(f->mountpoint));
     memcpy(p+strlen(f->mountpoint), path, strlen(path));
     p[strlen(f->mountpoint)+strlen(path)] = 0;
-    file_MakeSlashesCrossplatform(p);
-    file_RemoveDoubleSlashes(p);
+    file_makeSlashesCrossplatform(p);
+    file_removeDoubleSlashes(p);
     if (strlen(p) > 0) {
         if (p[strlen(p)-1] == '/' 
 #ifdef WINDOWS

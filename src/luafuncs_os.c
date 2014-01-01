@@ -177,9 +177,9 @@ int luafuncs_ls(lua_State* l) {
         free(pcrossrelative);
         return haveluaerror(l, "failed to allocate file paths");
     }
-    file_MakeSlashesNative(pnative);
-    file_MakeSlashesCrossplatform(pcross);
-    file_MakePathRelative(pcrossrelative, file_GetCwd());
+    file_makeSlashesNative(pnative);
+    file_makeSlashesCrossplatform(pcross);
+    file_makePathRelative(pcrossrelative, file_GetCwd());
     int list_virtual = 1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         if (lua_type(l, 2) != LUA_TNUMBER) {
@@ -393,7 +393,7 @@ int luafuncs_forcetemplatedir(lua_State* l) {
     if (templatepath) {
         return haveluaerror(l, "template path already detected");
     } else {
-        templatepath = file_GetAbsolutePathFromRelativePath(
+        templatepath = file_getAbsolutePathFromRelativePath(
         lua_tostring(l, 1));
     }
     return 0;

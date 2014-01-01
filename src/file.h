@@ -30,7 +30,9 @@ int file_Cwd(const char* path);
 
 char* file_GetCwd(void);
 
-char* file_GetAbsolutePathFromRelativePath(const char* path);
+char* file_getCanonicalPath(const char* path);
+
+char* file_getAbsolutePathFromRelativePath(const char* path);
 
 int file_DoesFileExist(const char* path);
 
@@ -40,7 +42,7 @@ int file_IsPathRelative(const char* path);
 
 char* file_GetDirectoryPathFromFilePath(const char* path);
 
-char* file_GetAbsoluteDirectoryPathFromFilePath(const char* path);
+char* file_getAbsoluteDirectoryPathFromFilePath(const char* path);
 
 char* file_GetFileNameFromFilePath(const char* path);
 
@@ -52,9 +54,9 @@ unsigned int file_CountPathComponents(const char* path);
 
 void file_StripComponentFromPath(char* path);
 
-void file_MakeSlashesNative(char* path);
+void file_makeSlashesNative(char* path);
 
-void file_MakeSlashesCrossplatform(char* path);
+void file_makeSlashesCrossplatform(char* path);
 
 char* file_GetUserFileDir(void);
 
@@ -66,9 +68,9 @@ int file_CreateDirectory(const char* name);
 
 int file_DeleteFile(const char* name);
 
-void file_MakePathRelative(char* path, const char* base);
+void file_makePathRelative(char* path, const char* base);
 
-void file_RemoveDoubleSlashes(char* path);
+void file_removeDoubleSlashes(char* path);
 
 #endif  // BLITWIZARD_FILE_H_
 

@@ -50,6 +50,7 @@
 #include "poolAllocator.h"
 #include "imgloader/imgloader.h"
 #include "diskcache.h"
+#include "file.h"
 
 // texture system memory budget in megabyte:
 uint64_t textureSysMemoryBudgetMin = 100;
@@ -750,6 +751,11 @@ void (*textureSwitch)(struct texturerequesthandle* request,
 void (*textureHandlingDone)(struct texturerequesthandle* request,
     void* userdata),
 void* userdata) {
+    char* canonicalPath = file_getCanonicalPath(path);
+    if (!canonicalPath) {
+        return NULL;
+    }
+    file_makeSlashesCrossplatform(canonicalPath);
 #ifdef DEBUGTEXTUREMANAGER
     //printf("[TEXMAN] [REQUEST] new request for %s, new total "
     //"count: %llu\n", path, texturemanager_getRequestCount());
@@ -758,6 +764,7 @@ void* userdata) {
     struct texturerequesthandle* request =
     poolAllocator_alloc(textureReqBlockAlloc);
     if (!request) {
+        free(canonicalPath);
         return NULL;
     }
     memset(request, 0, sizeof(*request));
@@ -768,13 +775,14 @@ void* userdata) {
 
     // locate according texture entry:
     struct graphicstexturemanaged* gtm =
-    graphicstexturelist_getTextureByName(path);
+    graphicstexturelist_getTextureByName(canonicalPath);
     if (!gtm) {
         // add new texture entry:
         gtm = graphicstexturelist_AddTextureToList(
-            path);
+            canonicalPath);
         if (!gtm) {
             poolAllocator_free(textureReqBlockAlloc, request);
+            free(canonicalPath);
             return NULL;
         }
         graphicstexturelist_AddTextureToHashmap(
@@ -807,6 +815,7 @@ void* userdata) {
 
     mutex_Release(textureReqListMutex);
 
+    free(canonicalPath);
     return request;
 }
 

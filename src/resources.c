@@ -338,7 +338,7 @@ int encrypted) {
     }
 
     // get an absolute path just in case it isn't one:
-    char* path = file_GetAbsolutePathFromRelativePath(fname);
+    char* path = file_getAbsolutePathFromRelativePath(fname);
     if (!path) {
         return 0;
     }
@@ -362,7 +362,7 @@ int encrypted) {
     }
 
     // get an absolute path:
-    char* path = file_GetAbsolutePathFromRelativePath(
+    char* path = file_getAbsolutePathFromRelativePath(
     first_commandline_arg);
     if (!path) {
         return 0;
@@ -524,7 +524,7 @@ struct resourcelocation* location) {
         if (!archivepath) {
             return 0;
         }
-        file_MakeSlashesCrossplatform(archivepath);
+        file_makeSlashesCrossplatform(archivepath);
 
         // check resource archives:
         struct resourcearchive* a = resourcearchives;
@@ -572,7 +572,7 @@ struct resourcelocation* location) {
             location->type = LOCATION_TYPE_DISK;
 
             // get an absolute path to the resource:
-            char* apath = file_GetAbsolutePathFromRelativePath(path);
+            char* apath = file_getAbsolutePathFromRelativePath(path);
             if (!apath) {
                 return 0;
             }
@@ -586,7 +586,7 @@ struct resourcelocation* location) {
             location->location.disklocation.filepath[i] = 0;
 
             // turn path to native style (since it's a disk path)
-            file_MakeSlashesNative(
+            file_makeSlashesNative(
             location->location.disklocation.filepath);
 
             // free temp path string
