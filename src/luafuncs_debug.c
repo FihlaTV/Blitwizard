@@ -185,6 +185,7 @@ __attribute__ ((unused)) static int luafuncs_niliterator(lua_State* l) {
     return 1;
 }
 
+#ifdef USE_GRAPHICS
 static int addindex = 1;
 static int luacfuncs_addTextureToLuaTable(
         struct graphicstexturemanaged* gtm,
@@ -218,6 +219,7 @@ static int luacfuncs_addTextureToLuaTable(
     addindex++;
     return 1;
 }
+#endif
 
 /// Return a complete list of all currently known textures.
 // This allows you to query on their detailed state with
