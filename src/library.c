@@ -328,7 +328,7 @@ strcasecmp(name, "ffmpegsumo") == 0
 #else
             // For Windows, we need to search the proper dll first:
             snprintf(pathbuf, sizeof(pathbuf), "%s%sbin/", steampath, sep);
-            file_MakeSlashesNative(pathbuf);
+            file_makeSlashesNative(pathbuf);
             char* p = finddllname(pathbuf, name);
             if (!p) {
 #ifdef FFMPEGLOCATEDEBUG
