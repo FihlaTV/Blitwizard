@@ -60,7 +60,7 @@ const char* win32_GetPathForSteam(void) {
     if (!path) {
         return NULL;
     }
-    file_MakeSlashesNative(path);
+    file_makeSlashesNative(path);
 
     // copy and remember the path:
     unsigned int copylen = strlen(path);
