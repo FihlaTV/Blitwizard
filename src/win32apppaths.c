@@ -86,7 +86,7 @@ const char* win32_GetPathForChrome(void) {
         return NULL;
     }
 
-    file_MakeSlashesNative(path); // now: C:\Program Files (x86)\Google\Chrome\Application
+    file_makeSlashesNative(path); // now: C:\Program Files (x86)\Google\Chrome\Application
     // copy and remember the path:
     unsigned int copylen = strlen(path);
     if (copylen >= sizeof(chromepath)) {

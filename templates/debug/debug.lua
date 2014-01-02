@@ -20,7 +20,7 @@ if type(blitwizard.debug) == "table" then
     -- debug functions are present. extend them:
     function blitwizard.debug.printGlobalTextureInfo()
         texlist = blitwizard.debug.getAllTextures()
-        local texturecolwidth = 20
+        local texturecolwidth = 50
         local loadedcolwidth = 10
 
         local function fitlen(texname, length)
@@ -32,7 +32,10 @@ if type(blitwizard.debug) == "table" then
                 return texname
             end
             -- skip directories from start
-            while #texname > length and (texname:find("/", 1, true) ~= nil
+            local dirskipped = false
+            local dirskipaddedlen = 0
+            while #texname + dirskipaddedlen > length
+                    and (texname:find("/", 1, true) ~= nil
                     or texname:find("\\", 1, true)) do
                 local pos = math.min(texname:find("/", 1, true) or 9999,
                     texname:find("\\", 1, true) or 9999)
@@ -40,37 +43,44 @@ if type(blitwizard.debug) == "table" then
                     break
                 end
                 texname = texname:sub(pos + 1, #texname)
+                dirskipped = true
+                dirskipaddedlen = #".../"
             end
             -- still too long? take out the middle:
-            if #texname > length then
+            if #texname + dirskipaddedlen > length then
                 local firsthalf = length/2
                 local secondhalf = length/2
                 local dots = "..."
                 if length < 5 then
                     dots = ""
                 end
-                while firsthalf + #dots + secondhalf > length do
+                while firsthalf + #dots + secondhalf + dirskipaddedlen
+                        > length do
                     firsthalf = firsthalf - 1
+                    secondhalf = secondhalf - 1
                 end
-                texname = texname:sub(1, firsthalf) .. dots ..
-                    texname:sub(secondhalf + 1, #texname)
+                texname = texname:sub(1, firsthalf - 1) .. dots ..
+                    texname:sub(-secondhalf)
             end
-            while #texname < length do
+            while #texname + dirskipaddedlen < length do
                 texname = texname .. " "
+            end
+            if dirskipped then
+                texname = ".../" .. texname
             end
             return texname
         end
 
         local t = "Texture"
-        if texturecolwidth < #"Texture" then
-            texturecolwidth = "Texture"
+        if texturecolwidth < 20 then
+            texturecolwidth = 20
         end
         while #t < texturecolwidth do
             t = t .. " "
         end
         t = t .. " Size"
         if loadedcolwidth < #"Size" then
-            loadedcolwidth = "Size"
+            loadedcolwidth = #"Size"
         end
         while #t < loadedcolwidth + 1 + texturecolwidth do
             t = t .. " "
