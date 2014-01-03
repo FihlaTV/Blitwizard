@@ -38,6 +38,7 @@
 
 #include "luaheader.h"
 
+#include "luafuncs.h"
 #include "luastate.h"
 #include "luaerror.h"
 #include "luafuncs_rundelayed.h"
@@ -149,7 +150,16 @@ void luacfuncs_runDelayed_Do() {
                 // run callback:
                 insideRunDelayedCallback = 1;
                 int r = lua_pcall(l, 0, 0, -2);
-                insideRunDelayedCallback = 0; 
+                insideRunDelayedCallback = 0;
+
+                // print out errors:
+                if (r == LUA_ERRRUN) {
+                    char* error = strdup(lua_tostring(l, -1));
+                    luacfuncs_onError("blitwizard.runDelayed", error);
+                    if (error) {
+                        free(error);
+                    }
+                } 
 
                 // this might have prepended new scheduled runDelays.
                 // detect if this was done:

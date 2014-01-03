@@ -323,12 +323,39 @@ static void luastate_ApplyWhitelist(lua_State* l) {
     }
 }
 
-static lua_State* luastate_New(void) {
+static void luastate_InstructionCallback(lua_State* l, lua_Debug* i) {
+    int (*terminationCallback)(void* stateptr) = 0;
+
+    // obtain the callback:
+    lua_pushstring(l, "terminationCallback");
+    lua_gettable(l, LUA_REGISTRYINDEX);
+    terminationCallback = (int (*)(void*))(lua_touserdata(l, -1));
+    lua_pop(l, 1); // remove from stack again
+
+    // call it:
+    if (!terminationCallback((void*)l)) {
+        // we shall instruct lua to terminate!
+        lua_pushstring(l, "execution time exceeded");
+        lua_error(l);
+    }
+}
+
+static lua_State* luastate_New(int (*terminationCallback)(void* stateptr)) {
     lua_State* l = luaL_newstate();
 
     lua_gc(l, LUA_GCSTOP, 0);
     //lua_gc(l, LUA_GCSETPAUSE, 110);
     //lua_gc(l, LUA_GCSETSTEPMUL, 300);
+
+    if (terminationCallback) {
+        // allow possible script kill when script runs too long:
+        lua_sethook(l, &luastate_InstructionCallback, LUA_MASKCOUNT, 5000);
+
+        // push the pointer to the lua registry:
+        lua_pushstring(l, "terminationCallback");
+        lua_pushlightuserdata(l, (void*)terminationCallback);
+        lua_settable(l, LUA_REGISTRYINDEX);
+    }
 
     // standard libs
     luaL_openlibs(l);
@@ -562,9 +589,12 @@ static int luastate_DoFile(lua_State* l, int argcount, const char* file, char** 
     return returnvalue;
 }
 
+// declared in main.c:
+int terminateCurrentScript(void* userdata);
+
 int luastate_DoInitialFile(const char* file, int argcount, char** error) {
     if (!scriptstate) {
-        scriptstate = luastate_New();
+        scriptstate = luastate_New(terminateCurrentScript);
         if (!scriptstate) {
             *error = strdup("Failed to initialize state");
             return 0;
@@ -575,7 +605,7 @@ int luastate_DoInitialFile(const char* file, int argcount, char** error) {
 
 static void preparepush(void) {
     if (!scriptstate) {
-        scriptstate = luastate_New();
+        scriptstate = luastate_New(terminateCurrentScript);
         if (!scriptstate) {
             return;
         }

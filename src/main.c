@@ -526,6 +526,15 @@ static void determineBinaryPath(const char* argv0) {
 }
 #endif
 
+// this will be polled by lua (implementation in luastate.c)
+// to check on whether a script is hanging for too long
+// (=suspected hang)
+uint64_t scriptTerminateTime = 0;
+int scriptMaxRuntime = 5000;
+int terminateCurrentScript(void* userdata) {
+    return (time_GetMilliseconds() < scriptTerminateTime);
+}
+
 
 int luafuncs_ProcessNetEvents(void);
 
@@ -542,6 +551,8 @@ int main(int argc, char** argv) {
 #endif
 #endif
     thread_MarkAsMainThread();
+
+    scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard %s starting", VERSION);
@@ -1068,6 +1079,10 @@ int main(int argc, char** argv) {
     uint64_t lastdrawingtime = 0;
     uint64_t physicstimestamp = time_GetMilliseconds();
     while (!wantquit) {
+        // tell scripts running this frame how long they can run:
+        scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
+
+        // do console logging:
         doConsoleLog(); 
         uint64_t timeNow = time_GetMilliseconds();
 
