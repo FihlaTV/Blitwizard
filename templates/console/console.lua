@@ -70,18 +70,27 @@ do
     local blinkCursorText = nil
 
     local function trimConsole()
-        while #lines >
-        blitwizard.console.consoleLinesShown do
-            -- remove first line:
-            if lines[1].text then
-                lines[1].text:destroy()
-            end
+        if #lines >
+        blitwizard.console.consoleLinesShown then
+            local trimLines = (#lines - blitwizard.console.consoleLinesShown)
+            -- remove first lines:
             local i = 1
-            while i < #lines do
-                lines[i] = lines[i+1]
+            while i <= trimLines do
+                if lines[i].text then
+                    lines[i].text:destroy()
+                end
                 i = i + 1
             end
-            table.remove(lines, #lines)
+            local i = 1
+            while i <= #lines - trimLines do
+                lines[i] = lines[i + trimLines]
+                i = i + 1
+            end
+            local i = 1
+            while i <= trimLines do
+                table.remove(lines, #lines)
+                i = i + 1
+            end
         end
     end
     local function calculateConsoleLinesShown()
@@ -388,10 +397,11 @@ do
                 -- get glyph size of input line font:
                 local gw,gh = 0.2, 0.2
                 if consoleTextObj then
-                    local gw,gh = consoleTextObj:getGlyphDimensions()
+                    gw,gh = consoleTextObj:getGlyphDimensions()
                 end
-                blinkCursorText:setPosition((textEndPos or consoleBg:getDimensions()) - blinkCursorOffset * gw
-                - gw * math.min(0.4, blinkCursorOffset),
+                blinkCursorText:setPosition((textEndPos
+                    or consoleBg:getDimensions()) - blinkCursorOffset * gw
+                    - gw * math.min(0.4, blinkCursorOffset),
                 y + consoleHeight - consoleLineHeight - 0.1)
             else
                 blinkCursorText:setVisible(false)

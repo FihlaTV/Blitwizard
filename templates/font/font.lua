@@ -331,7 +331,8 @@ end
   @treturn number y dimensions of glyph (in game units!)
 ]]
 function blitwizard.font.text:getGlyphDimensions()
-    return self._glyphDimensionX, self._glyphDimensionY
+    return self._glyphDimensionX * self._scale, self._glyphDimensionY
+        * self._scale
 end
 
 --[[--
