@@ -666,6 +666,9 @@ int luafuncs_netset(lua_State* l) {
     } else {
         netstream->c->canautoclose = 0;
     }
+    if (lowdelay >= 0 && lowdelay != netstream->c->lowdelay) {
+        connections_changeLowDelay(netstream->c, lowdelay);
+    }
     return 0;
 }
 

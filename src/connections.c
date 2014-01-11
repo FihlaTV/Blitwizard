@@ -74,6 +74,20 @@ static int connections_SetSocket(struct connection* c, int iptype) {
     return 1;
 }
 
+void connections_changeLowDelay(struct connection* c, int lowdelay) {
+    if (c->socket < 0) {
+        return;
+    }
+    c->lowdelay = lowdelay;
+    if (lowdelay) {
+        int flag = 1;
+        setsockopt(c->socket, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+    } else {
+        int flag = 0;
+        setsockopt(c->socket, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+    }
+}
+
 // Attempt connect:
 static int connections_TryConnect(struct connection* c, const char* target) {
     // first, in case of ipv4, ensure we have an ipv4 socket:

@@ -84,6 +84,9 @@ void connections_SleepWait(int timeoutms);
 // Initialise the given connection struct and open the connection
 void connections_Init(struct connection* c, const char* target, int port, int linebuffered, int lowdelay, int havereadcallback, void (*autoclosecallback)(struct connection* c), void* userdata);
 
+// Change low delay status of an existing connection:
+void connections_changeLowDelay(struct connection* c, int lowdelay);
+
 // Send on a connection. Do not use if ->connected is not 1 yet!
 void connections_Send(struct connection* c, const char* data, int datalength);
 
