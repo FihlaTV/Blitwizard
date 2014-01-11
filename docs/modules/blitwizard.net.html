@@ -64,8 +64,8 @@
  If you want to create a multiplayer game, you may want to have a look at it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
         <li><strong>Copyright</strong>: 2011-2013</li>
     </ul>
 
@@ -100,8 +100,8 @@
 	<td class="summary">Send data on the connection.</td>
 	</tr>
 	<tr>
-	<td class="name" ><a href="#connection:set">connection:set (open_callback, read_callback, close_callback)</a></td>
-	<td class="summary">Change the callbacks on a given connection.</td>
+	<td class="name" ><a href="#connection:set">connection:set (settings, open_callback, read_callback, close_callback)</a></td>
+	<td class="summary">Change the callbacks and settings on a given connection.</td>
 	</tr>
 </table>
 
@@ -311,14 +311,19 @@
 </dd>
     <dt>
     <a name = "connection:set"></a>
-    <strong>connection:set (open_callback, read_callback, close_callback)</strong>
+    <strong>connection:set (settings, open_callback, read_callback, close_callback)</strong>
     </dt>
     <dd>
-    Change the callbacks on a given connection.
+    Change the callbacks and settings on a given connection.
 
 
     <h3>Parameters:</h3>
     <ul>
+        <li><span class="parameter">settings</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a></span>
+         a settings table, see <a href="../modules/blitwizard.net.html#connection.settings">connection.settings</a> for
+ how this table needs to look like
+        </li>
         <li><span class="parameter">open_callback</span>
             <span class="types"><span class="type">function</span></span>
          see <a href="../modules/blitwizard.net.html#connection:new">connection:new</a> for details

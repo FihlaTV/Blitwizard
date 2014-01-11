@@ -347,6 +347,7 @@ static struct luaidref* createnetstreamobj(lua_State* l,
 }
 
 static void luafuncs_checkcallbackparameters(lua_State* l, int startindex,
+        int argindex,
         const char* functionname, int* haveconnect, int* haveread,
         int* haveerror) {
     *haveconnect = 0;
@@ -355,7 +356,7 @@ static void luafuncs_checkcallbackparameters(lua_State* l, int startindex,
     // check for a proper 'connected' callback:
     if (lua_gettop(l) >= startindex && lua_type(l, startindex) != LUA_TNIL) {
         if (lua_type(l, startindex) != LUA_TFUNCTION) {
-            haveluaerror(l, badargument1, startindex, functionname,
+            haveluaerror(l, badargument1, argindex, functionname,
                 "function", lua_strtype(l, startindex));
         }
         *haveconnect = 1;
@@ -365,7 +366,7 @@ static void luafuncs_checkcallbackparameters(lua_State* l, int startindex,
     if (lua_gettop(l) >= startindex+1
             && lua_type(l, startindex+1) != LUA_TNIL) {
         if (lua_type(l, startindex+1) != LUA_TFUNCTION) {
-            haveluaerror(l, badargument1, startindex+1, functionname,
+            haveluaerror(l, badargument1, argindex+1, functionname,
                 "function", lua_strtype(l, startindex+1));
         }
         *haveread = 1;
@@ -375,7 +376,7 @@ static void luafuncs_checkcallbackparameters(lua_State* l, int startindex,
     if (lua_gettop(l) >= startindex+2 &&
             lua_type(l, startindex+2) != LUA_TNIL) {
         if (lua_type(l, startindex+2) != LUA_TFUNCTION) {
-            haveluaerror(l, badargument1, startindex+2, functionname,
+            haveluaerror(l, badargument1, argindex+2, functionname,
                 "function", lua_strtype(l, startindex+2));
         }
         *haveerror = 1;
@@ -548,7 +549,7 @@ int luafuncs_netnew(lua_State* l) {
     int haveerror = 0;
 
     // check for the callback parameters (will throw lua error if faulty):
-    luafuncs_checkcallbackparameters(l, 3, "blitwizard.net.connection:new",
+    luafuncs_checkcallbackparameters(l, 3, 2, "blitwizard.net.connection:new",
         &haveconnect, &haveread, &haveerror);
 
     int port;
@@ -626,8 +627,10 @@ int luafuncs_netclose(lua_State* l) {
     return 0;
 }
 
-/// Change the callbacks on a given connection.
+/// Change the callbacks and settings on a given connection.
 // @function set
+// @tparam table settings a settings table, see @{connection.settings} for
+// how this table needs to look like
 // @tparam function open_callback see @{connection:new} for details 
 // @tparam function read_callback see @{connection:new}
 // @tparam function close_callback see @{connection:new}
@@ -641,13 +644,13 @@ int luafuncs_netset(lua_State* l) {
 
     // check/retrieve callbacks:
     int haveconnect,haveread,haveerror;
-    luafuncs_checkcallbackparameters(l, 3, "blitwizard.net.connection:set",
+    luafuncs_checkcallbackparameters(l, 3, 2, "blitwizard.net.connection:set",
         &haveconnect, &haveread, &haveerror);
 
     // obtain settings:
     int linebuffered = -1;
     int lowdelay = -1;
-    luafuncs_parsestreamsettings(l, 1, 1, "blitwizard.net.connection:set",
+    luafuncs_parsestreamsettings(l, 2, 1, "blitwizard.net.connection:set",
         0, NULL, NULL, &linebuffered, &lowdelay);
 
     // set callbacks:
