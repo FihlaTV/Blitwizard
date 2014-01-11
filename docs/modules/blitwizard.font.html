@@ -67,9 +67,9 @@
  the templates with your game.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2013</li>
         <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Copyright</strong>: 2013</li>
     </ul>
 
 
@@ -77,7 +77,7 @@
 <table class="function_list">
 	<tr>
 	<td class="name" ><a href="#text:destroy">text:destroy ()</a></td>
-	<td class="summary">Destroy a <a href="../modules/blitwizard.font.html#Class_text">text</a> object again.</td>
+	<td class="summary">Destroy a <a href="../modules/blitwizard.font.html#text">text</a> object again.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#text:enableMouseEvents">text:enableMouseEvents ()</a></td>
@@ -110,7 +110,7 @@
 	</tr>
 	<tr>
 	<td class="name" ><a href="#text:setZIndex">text:setZIndex (zindex)</a></td>
-	<td class="summary">Set the Z index of the text block (see ???).</td>
+	<td class="summary">Set the Z index of the text block (see <a href="../modules/blitwizard.html#object:setZIndex">setZIndex</a>).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#text:width">text:width ()</a></td>
@@ -124,8 +124,8 @@
 
     <h2><a name="Class_text"></a>Class text </h2>
           Create one using
-  ???. You can destroy it again
-  by using ???.
+  <a href="../modules/blitwizard.font.html#text:new">new</a>. You can destroy it again
+  by using <a href="../modules/blitwizard.font.html#text:destroy">destroy</a>.
 
             <h3>Usage:</h3>
             <pre class="example">
@@ -142,7 +142,7 @@
     <strong>text:destroy ()</strong>
     </dt>
     <dd>
-    Destroy a <a href="../modules/blitwizard.font.html#Class_text">text</a> object again.
+    Destroy a <a href="../modules/blitwizard.font.html#text">text</a> object again.
   (If you don't do this, it will stay on the screen forever!)
 
 
@@ -160,7 +160,7 @@
     Enable click events on the given font.
   Please note this can slow down click event processing
   considerably if you enable this on lengthy texts.
-<p>  Set an ???
+<p>  Set an <a href="../modules/blitwizard.html#object:onMouseClick">onMouseClick</a>
   function on your text object to receive the click events.
 
 
@@ -282,7 +282,7 @@
     <ol>
 
            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a></span>
-        returns <a href="../modules/blitwizard.font.html#Class_text">text object</a>
+        returns <a href="../modules/blitwizard.font.html#text">text object</a>
     </ol>
 
 
@@ -321,7 +321,7 @@
     </dt>
     <dd>
     Set the visibility of a text block.  This allows you to temporarily hide
-  a text object (see ???).
+  a text object (see <a href="../modules/blitwizard.html#object:setVisible">setVisible</a>).
 
 
     <h3>Parameters:</h3>
@@ -342,7 +342,7 @@
     <strong>text:setZIndex (zindex)</strong>
     </dt>
     <dd>
-    Set the Z index of the text block (see ???).
+    Set the Z index of the text block (see <a href="../modules/blitwizard.html#object:setZIndex">setZIndex</a>).
 
 
     <h3>Parameters:</h3>

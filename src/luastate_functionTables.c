@@ -323,6 +323,8 @@ void luastate_CreateDebugTable(lua_State* l) {
     "getTextureUsageInfo");
     luastate_registerfunc(l, &luafuncs_debug_getTextureGpuSizeInfo,
     "getTextureGpuSizeInfo");
+    luastate_registerfunc(l, &luafuncs_debug_getTextureRamSizeInfo,
+    "getTextureRamSizeInfo");
     luastate_registerfunc(l, &luafuncs_debug_getGpuMemoryUse,
     "getGpuMemoryUse");
     luastate_registerfunc(l, &luafuncs_debug_getLogicStats,
@@ -335,6 +337,12 @@ void luastate_CreateDebugTable(lua_State* l) {
     "getAudioChannelCount");
     luastate_registerfunc(l, &luafuncs_debug_getAllTextures,
         "getAllTextures");
+    luastate_registerfunc(l, &luafuncs_debug_getWaitingTextureRequests,
+        "getWaitingTextureRequests");
+    luastate_registerfunc(l, &luafuncs_debug_getServedTextureRequests,
+        "getServedTextureRequests");
+    luastate_registerfunc(l, &luafuncs_debug_isInitialTextureLoadDone,
+        "isInitialTextureLoadDone");
 }
 
 void luastate_CreateSimpleSoundTable(lua_State* l) {

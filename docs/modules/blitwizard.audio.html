@@ -64,10 +64,10 @@
 <p>The blitwizard audio namespace allows you to create
  sound objects to play sounds and music.</p>
 <p>
- Use <a href="../modules/blitwizard.audio.html#Class_simpleSound">simpleSound</a> objects for
- background music, <a href="../modules/blitwizard.audio.html#Class_pannedSound">pannedSound</a>
+ Use <a href="../modules/blitwizard.audio.html#simpleSound">simpleSound</a> objects for
+ background music, <a href="../modules/blitwizard.audio.html#pannedSound">pannedSound</a>
  for a sound with left/right panning and
- <a href="../modules/blitwizard.audio.html#Class_positionedSound">positionedSound</a> for a sound with
+ <a href="../modules/blitwizard.audio.html#positionedSound">positionedSound</a> for a sound with
  positioning in 2d or 3d space inside the game world.
 <p> Please note blitwizard will NEVER preload any sounds into memory,
  so it is perfectly fine to create many sound objects from the same
@@ -78,9 +78,9 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2012-2013</li>
         <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@gmail.com)</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Copyright</strong>: 2012-2013</li>
     </ul>
 
 
@@ -133,7 +133,7 @@
 	<tr>
 	<td class="name" ><a href="#pannedSound:setPriority">pannedSound:setPriority (priority)</a></td>
 	<td class="summary">Set the sound priority of the panned sound,
- see explanation of ???.</td>
+ see explanation of <a href="../modules/blitwizard.audio.html#simpleSound:setPriority">setPriority</a>.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#pannedSound:stop">pannedSound:stop (fadeout)</a></td>
@@ -164,11 +164,11 @@
     </dt>
     <dd>
     Stop all currently playing sounds.
- (<a href="../modules/blitwizard.audio.html#Class_simpleSound">simpleSound</a>,
- <a href="../modules/blitwizard.audio.html#Class_pannedSound">pannedSound</a> and
+ (<a href="../modules/blitwizard.audio.html#simpleSound">simpleSound</a>,
+ <a href="../modules/blitwizard.audio.html#pannedSound">pannedSound</a> and
  ??? objects)
 <p> After using this, all the affected sounds which have been
- ??? will stop.
+ <a href="../modules/blitwizard.audio.html#simpleSound:play">played</a> will stop.
  You may play them again if you wish to do so.
 
 
@@ -193,7 +193,7 @@
  or stereo panning which results in slightly better and
  unaltered sound.
 
- The default ???
+ The default <a href="../modules/blitwizard.audio.html#simpleSound:setPriority">sound priority</a>
  for simple sound objects is 5.
 
             <h3>Usage:</h3>
@@ -291,7 +291,7 @@
     <dd>
     Set the sound priority of the simple sound object.
 <p> In blitwizard, only a fixed maximum number of sounds can play
- at a time. If you attempt to ???
+ at a time. If you attempt to <a href="../modules/blitwizard.audio.html#simpleSound:play">play</a>
  a sound object when the maximum number of sounds simultaneously
  is reached, it will kill off playing sounds with
  lower priority. If no lower or same priority sound is available
@@ -354,7 +354,7 @@
 
  If you want to make a sound emit from a specific location,
  you should probably use a
- <a href="../modules/blitwizard.audio.html#Class_positionedSound">positionedSound</a> instead
+ <a href="../modules/blitwizard.audio.html#positionedSound">positionedSound</a> instead
     <dl class="function">
     <dt>
     <a name = "pannedSound:adjust"></a>
@@ -448,7 +448,7 @@
     </dt>
     <dd>
     Set the sound priority of the panned sound,
- see explanation of ???.
+ see explanation of <a href="../modules/blitwizard.audio.html#simpleSound:setPriority">setPriority</a>.
 <p> Panned sounds default to a priority of 2.
 
 
@@ -509,7 +509,7 @@
         </li>
         <li><span class="parameter">object</span>
             <span class="types"><span class="type">userdata</span></span>
-         (optional) Specify a <a href="../modules/blitwizard.html#Class_object">blitwizard object</a> to which the sound should stick. If you don't specify an object to stick to, the sound can be freely placed with ???
+         (optional) Specify a <a href="../modules/blitwizard.html#object">blitwizard object</a> to which the sound should stick. If you don't specify an object to stick to, the sound can be freely placed with ???
         </li>
     </ul>
 

@@ -125,7 +125,7 @@
     <dd>
     Roleplay a specific action in a room, e.g.  "looks outside of window"
    as an action will show up as "<Yourname> looks outside the window".
-<p>   Similar to ???,
+<p>   Similar to <a href="../modules/blitwizard.net.irc.html#connection:talkToRoom">connection.talkToRoom</a>,
    this is not
    possible before entering a room and getting the "enter" event.
 
@@ -206,8 +206,8 @@
             <span class="types"><span class="type">function</span></span>
          the event callback. It will be called with first parameter being this IRC instance, the second one the event name and all additional parameters depending on the event.
 <p>  The following events are known:
-<p>  "connect": the connection was successfully established. Use ??? to enter a chat room now!
-<p>  "enter": parameters: room, user name. The user with the given name entered the specified chat room. <b>If the user name is yours (???), this means you are inside the chat room now</b> and you may participate in conversations using ??? or ???.
+<p>  "connect": the connection was successfully established. Use <a href="../modules/blitwizard.net.irc.html#connection:enterRoom">connection:enterRoom</a> to enter a chat room now!
+<p>  "enter": parameters: room, user name. The user with the given name entered the specified chat room. <b>If the user name is yours (<a href="../modules/blitwizard.net.irc.html#connection:getUsername">connection:getUsername</a>), this means you are inside the chat room now</b> and you may participate in conversations using <a href="../modules/blitwizard.net.irc.html#connection:talkToRoom">connection:talkToRoom</a> or <a href="../modules/blitwizard.net.irc.html#connection:doRoomAction">connection:doRoomAction</a>.
 
         </li>
         <li><span class="parameter">username</span>

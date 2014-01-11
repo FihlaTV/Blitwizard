@@ -106,11 +106,12 @@ int luafuncs_debug_getTextureUsageInfo(lua_State* l) {
 // please report a bug: https://github.com/JonasT/blitwizard/issues
 // @function getTextureGpuSizeInfo
 // @tparam string name the file name which was used when loading the texture, e.g. "myImage.png"
+// @treturn number the size info as explained above
 int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l) {
 #ifdef USE_GRAPHICS
     if (lua_type(l, 1) != LUA_TSTRING) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.debug.getTextureUsageInfo", "string",
+        "blitwizard.debug.getTextureGpuSizeInfo", "string",
         lua_strtype(l, 1));
     }
     char* p = file_getCanonicalPath(lua_tostring(l, -1));
@@ -120,6 +121,35 @@ int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l) {
     file_makeSlashesCrossplatform(p);
     lua_pushnumber(l,
         texturemanager_getTextureGpuSizeInfo(p));
+    free(p);
+#else
+    lua_pushnumber(l, 0);
+#endif
+    return 1;
+}
+
+/// Get information of whether a texture is currently
+// loaded into system memory (RAM), and at which size.
+//
+// The returned number is similar to the return values
+// of @{getTextureGpuSizeInfo}.
+// @function getTextureRamSizeInfo
+// @tparam string name the file name which was used when loading the texture, e.g. "myImage.png"
+// @treturn number the size info
+int luafuncs_debug_getTextureRamSizeInfo(lua_State* l) {
+#ifdef USE_GRAPHICS
+    if (lua_type(l, 1) != LUA_TSTRING) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.debug.getTextureRamSizeInfo", "string",
+        lua_strtype(l, 1));
+    }
+    char* p = file_getCanonicalPath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_makeSlashesCrossplatform(p);
+    lua_pushnumber(l,
+        texturemanager_getTextureRamSizeInfo(p));
     free(p);
 #else
     lua_pushnumber(l, 0);
@@ -245,6 +275,83 @@ int luafuncs_debug_getAllTextures(lua_State* l) {
 #endif
 }
 
+/// Return the amount of texture requests which currently waits
+// to get a copy of this texture in any size (and currently has none).
+// @function getWaitingTextureRequests
+// @treturn number the amount of texture requests
+int luafuncs_debug_getWaitingTextureRequests(lua_State* l) {
+#ifdef USE_GRAPHICS
+    if (lua_type(l, 1) != LUA_TSTRING) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.debug.getWaitingTextureRequests", "string",
+        lua_strtype(l, 1));
+    }
+    char* p = file_getCanonicalPath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_makeSlashesCrossplatform(p);
+    lua_pushnumber(l,
+        texturemanager_getWaitingTextureRequests(p));
+    free(p);
+#else
+    lua_pushnumber(l, 0);
+#endif
+    return 1;
+}
+
+/// Return the amount of texture requests which currently have
+// a usable copy of this texture in any size at their hands.
+// @function getServedTextureRequests
+// @treturn number the amount of texture requests
+int luafuncs_debug_getServedTextureRequests(lua_State* l) {
+#ifdef USE_GRAPHICS
+    if (lua_type(l, 1) != LUA_TSTRING) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.debug.getServedTextureRequests", "string",
+        lua_strtype(l, 1));
+    }
+    char* p = file_getCanonicalPath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_makeSlashesCrossplatform(p);
+    lua_pushnumber(l,
+        texturemanager_getServedTextureRequests(p));
+    free(p);
+#else
+    lua_pushnumber(l, 0);
+#endif
+    return 1;
+}
+
+/// Check if the initial loading of a given texture was done.
+// This means the texture manager has probed its initial size
+// and it may or may not have a faster cached version available.
+//
+// It does NOT mean the texture is necessarily available right now.
+// @function isInitialTextureLoadDone
+// @treturn boolean true if initial loading has been completed
+int luafuncs_debug_isInitialTextureLoadDone(lua_State* l) {
+#ifdef USE_GRAPHICS
+    if (lua_type(l, 1) != LUA_TSTRING) {
+        return haveluaerror(l, badargument1, 1,
+        "blitwizard.debug.isInitialTextureLoadDone", "string",
+        lua_strtype(l, 1));
+    }
+    char* p = file_getCanonicalPath(lua_tostring(l, -1));
+    if (!p) {
+        return haveluaerror(l, "path allocation failed");
+    }
+    file_makeSlashesCrossplatform(p);
+    lua_pushboolean(l, texturemanager_isInitialTextureLoadDone(p));
+    free(p);
+#else
+    lua_pushboolean(l, 0);
+#endif
+    return 1;
+}
+
 
 /// This prints out a listing of all known textures and their current state.
 // Please note in any other scenario than smaller test games, this list
@@ -252,5 +359,21 @@ int luafuncs_debug_getAllTextures(lua_State* l) {
 //
 // This function is implemented in the templates and not available without
 // the "templates" folder.
+//
+//
+// Additional output explanation:
+//
+// * GPU = the gpu size. -1 for not loaded, 0 original size,
+//   1 .. 4 for tiny .. huge
+//
+// * RAM = the size loaded into system memory. Values similar to GPU
+//
+// * Use = the highest attempted use size reported (does not mean that the texture is actually available in that size!)
+// 
+// * IL = initial load done
+// 
+// * Wait = texture requests waiting for this texture
+// 
+// * Serv = texture requests served with this texture (= they do have any size of it in actual use)
 // @function printGlobalTextureInfo
 

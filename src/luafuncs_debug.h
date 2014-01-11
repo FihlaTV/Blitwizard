@@ -29,11 +29,15 @@
 int luafuncs_debug_getGpuMemoryUse(lua_State* l);
 int luafuncs_debug_getTextureUsageInfo(lua_State* l);
 int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l);
+int luafuncs_debug_getTextureRamSizeInfo(lua_State* l);
 int luafuncs_debug_getLogicStats(lua_State* l);
 int luafuncs_debug_getTextureRequestCount(lua_State* l);
 int luafuncs_debug_get2dSpriteCount(lua_State* l);
 int luafuncs_debug_getAudioChannelCount(lua_State* l);
 int luafuncs_debug_getAllTextures(lua_State* l);
+int luafuncs_debug_getServedTextureRequests(lua_State* l);
+int luafuncs_debug_getWaitingTextureRequests(lua_State* l);
+int luafuncs_debug_isInitialTextureLoadDone(lua_State* l);
 
 #endif  // BLITWIZARD_LUAFUNCS_DEBUG_H_
 

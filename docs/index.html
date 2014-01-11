@@ -31,19 +31,19 @@
 
 <h2>Modules</h2>
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
-  <li><a href="modules/blitwizard.net.html">blitwizard.net</a></li>
-  <li><a href="modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
   <li><a href="modules/blitwizard.html">blitwizard</a></li>
-  <li><a href="modules/vector.html">vector</a></li>
-  <li><a href="modules/os.html">os</a></li>
   <li><a href="modules/blitwizard.audio.html">blitwizard.audio</a></li>
-  <li><a href="modules/string.html">string</a></li>
-  <li><a href="modules/blitwizard.debug.html">blitwizard.debug</a></li>
-  <li><a href="modules/blitwizard.physics.html">blitwizard.physics</a></li>
-  <li><a href="modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
-  <li><a href="modules/blitwizard.font.html">blitwizard.font</a></li>
-  <li><a href="modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
   <li><a href="modules/blitwizard.console.html">blitwizard.console</a></li>
+  <li><a href="modules/blitwizard.debug.html">blitwizard.debug</a></li>
+  <li><a href="modules/blitwizard.font.html">blitwizard.font</a></li>
+  <li><a href="modules/blitwizard.graphics.html">blitwizard.graphics</a></li>
+  <li><a href="modules/blitwizard.net.html">blitwizard.net</a></li>
+  <li><a href="modules/blitwizard.net.http.html">blitwizard.net.http</a></li>
+  <li><a href="modules/blitwizard.net.irc.html">blitwizard.net.irc</a></li>
+  <li><a href="modules/blitwizard.physics.html">blitwizard.physics</a></li>
+  <li><a href="modules/os.html">os</a></li>
+  <li><a href="modules/string.html">string</a></li>
+  <li><a href="modules/vector.html">vector</a></li>
 </ul>
 
 </div>
@@ -57,29 +57,11 @@
 <h2>Modules</h2>
 <table class="module_list">
 	<tr>
-		<td class="name"  ><a href="modules/blitwizard.net.html">blitwizard.net</a></td>
-		<td class="summary">The blitwizard net namespace contains networking functionality.</td>
-	</tr>
-	<tr>
-		<td class="name"  ><a href="modules/blitwizard.graphics.html">blitwizard.graphics</a></td>
-		<td class="summary">The blitwizard graphics namespace allows to set up the graphics device
- for graphical 2d/3d output.</td>
-	</tr>
-	<tr>
 		<td class="name"  ><a href="modules/blitwizard.html">blitwizard</a></td>
 		<td class="summary">Blitwizard namespace containing the generic
- <a href="modules/blitwizard.html#Class_object">blitwizard game entity object</a> and various sub
+ <a href="modules/blitwizard.html#object">blitwizard game entity object</a> and various sub
  namespaces for <a href="modules/blitwizard.physics.html#">physics</a>,
  <a href="modules/blitwizard.graphics.html#">graphics</a> and more.</td>
-	</tr>
-	<tr>
-		<td class="name"  ><a href="modules/vector.html">vector</a></td>
-		<td class="summary">The vector name space provided by blitwizard offers some
- maths functions for vector calculation.</td>
-	</tr>
-	<tr>
-		<td class="name"  ><a href="modules/os.html">os</a></td>
-		<td class="summary">This is the Lua "os" standard module, as extended by blitwizard.</td>
 	</tr>
 	<tr>
 		<td class="name"  ><a href="modules/blitwizard.audio.html">blitwizard.audio</a></td>
@@ -87,8 +69,8 @@
  sound objects to play sounds and music.</td>
 	</tr>
 	<tr>
-		<td class="name"  ><a href="modules/string.html">string</a></td>
-		<td class="summary">This is the Lua "string" standard module, as extended by blitwizard.</td>
+		<td class="name"  ><a href="modules/blitwizard.console.html">blitwizard.console</a></td>
+		<td class="summary">This is an ingame developer console.</td>
 	</tr>
 	<tr>
 		<td class="name"  ><a href="modules/blitwizard.debug.html">blitwizard.debug</a></td>
@@ -96,17 +78,21 @@
  about the many complex subsystems working in blitwizard.</td>
 	</tr>
 	<tr>
-		<td class="name"  ><a href="modules/blitwizard.physics.html">blitwizard.physics</a></td>
-		<td class="summary">The blitwizard physics namespace contains various physics functions
- for collision tests and the like.</td>
+		<td class="name"  ><a href="modules/blitwizard.font.html">blitwizard.font</a></td>
+		<td class="summary">The font namespace allows to draw bitmap fonts.</td>
+	</tr>
+	<tr>
+		<td class="name"  ><a href="modules/blitwizard.graphics.html">blitwizard.graphics</a></td>
+		<td class="summary">The blitwizard graphics namespace allows to set up the graphics device
+ for graphical 2d/3d output.</td>
+	</tr>
+	<tr>
+		<td class="name"  ><a href="modules/blitwizard.net.html">blitwizard.net</a></td>
+		<td class="summary">The blitwizard net namespace contains networking functionality.</td>
 	</tr>
 	<tr>
 		<td class="name"  ><a href="modules/blitwizard.net.http.html">blitwizard.net.http</a></td>
 		<td class="summary">This is the HTTP module which allows you to fetch web documents.</td>
-	</tr>
-	<tr>
-		<td class="name"  ><a href="modules/blitwizard.font.html">blitwizard.font</a></td>
-		<td class="summary">The font namespace allows to draw bitmap fonts.</td>
 	</tr>
 	<tr>
 		<td class="name"  ><a href="modules/blitwizard.net.irc.html">blitwizard.net.irc</a></td>
@@ -114,8 +100,22 @@
  <a href="http://en.wikipedia.org/wiki/IRC">Internet Relay Chat</a>.</td>
 	</tr>
 	<tr>
-		<td class="name"  ><a href="modules/blitwizard.console.html">blitwizard.console</a></td>
-		<td class="summary">This is an ingame developer console.</td>
+		<td class="name"  ><a href="modules/blitwizard.physics.html">blitwizard.physics</a></td>
+		<td class="summary">The blitwizard physics namespace contains various physics functions
+ for collision tests and the like.</td>
+	</tr>
+	<tr>
+		<td class="name"  ><a href="modules/os.html">os</a></td>
+		<td class="summary">This is the Lua "os" standard module, as extended by blitwizard.</td>
+	</tr>
+	<tr>
+		<td class="name"  ><a href="modules/string.html">string</a></td>
+		<td class="summary">This is the Lua "string" standard module, as extended by blitwizard.</td>
+	</tr>
+	<tr>
+		<td class="name"  ><a href="modules/vector.html">vector</a></td>
+		<td class="summary">The vector name space provided by blitwizard offers some
+ maths functions for vector calculation.</td>
 	</tr>
 </table>
 

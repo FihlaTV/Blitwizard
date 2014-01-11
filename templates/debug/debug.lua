@@ -20,8 +20,13 @@ if type(blitwizard.debug) == "table" then
     -- debug functions are present. extend them:
     function blitwizard.debug.printGlobalTextureInfo()
         texlist = blitwizard.debug.getAllTextures()
-        local texturecolwidth = 50
-        local loadedcolwidth = 10
+        local texturecolwidth = 40
+        local loadedcolwidth = 2
+        local loaded2colwidth = 2
+        local usagecolwidth = 2
+        local waitingcolwidth = 3
+        local servedcolwidth = 3
+        local initialloadcolwidth = 1
 
         local function fitlen(texname, length)
             if #texname <= length then
@@ -78,24 +83,91 @@ if type(blitwizard.debug) == "table" then
         while #t < texturecolwidth do
             t = t .. " "
         end
-        t = t .. " Size"
-        if loadedcolwidth < #"Size" then
-            loadedcolwidth = #"Size"
+        t = t .. " GPU"
+        if loadedcolwidth < #"GPU" then
+            loadedcolwidth = #"GPU"
         end
         while #t < loadedcolwidth + 1 + texturecolwidth do
             t = t .. " "
         end
+        t = t .. " RAM"
+        if loaded2colwidth < #"RAM" then
+            loaded2colwidth = #"RAM"
+        end
+        while #t < loadedcolwidth + 1 + loaded2colwidth + 1
+                + texturecolwidth do
+            t = t .. " "
+        end
+        t = t .. " Use"
+        if usagecolwidth < #"Use" then
+            usagecolwidth = #"Use"
+        end
+        while #t < loadedcolwidth + 1 + loaded2colwidth + 1 +
+                texturecolwidth + 1 +
+                usagecolwidth do
+            t = t .. " "
+        end
+        t = t .. " Wait"
+        if waitingcolwidth < #"Wait" then
+            waitingcolwidth = #"Wait"
+        end
+        while #t < loadedcolwidth + 1 + loaded2colwidth + 1 +
+                texturecolwidth + 1 +
+                usagecolwidth + 1 + waitingcolwidth do
+            t = t .. " "
+        end
+        t = t .. " Serv"
+        if servedcolwidth < #"Serv" then
+            servedcolwidth = #"Serv"
+        end
+        while #t < loadedcolwidth + 1 + loaded2colwidth + 1 +
+                texturecolwidth + 1 +
+                usagecolwidth + 1 + waitingcolwidth + 1 + servedcolwidth do
+            t = t .. " "
+        end
+        t = t .. " IL"
+        if initialloadcolwidth < #"IL" then
+            initialloadcolwidth = #"IL"
+        end
+        while #t < loadedcolwidth + 1 + loaded2colwidth + 1 +
+                texturecolwidth + 1 +
+                usagecolwidth + 1 + waitingcolwidth + 1 + servedcolwidth
+                + 1 + initialloadcolwidth do
+            t = t .. " "
+        end
         print(t)
         t = ""
-        while #t < loadedcolwidth + 1 + texturecolwidth do
+        while #t < loadedcolwidth + 1 + texturecolwidth + 1 +
+                loaded2colwidth + 1 +
+                usagecolwidth + 1 + waitingcolwidth + 1 + servedcolwidth +
+                1 + initialloadcolwidth do
             t = t .. "-"
         end
         print(t)
         for _,texture in ipairs(texlist) do
-            local t = fitlen(texture, texturecolwidth) .. " "
-                .. fitlen(tostring(
+            local t = fitlen(texture, texturecolwidth) .. " " ..
+                fitlen(tostring(
                     blitwizard.debug.getTextureGpuSizeInfo(
-                    texture)), loadedcolwidth)
+                    texture)), loadedcolwidth) .. " " ..
+                fitlen(tostring(
+                    blitwizard.debug.getTextureRamSizeInfo(
+                    texture)), loaded2colwidth) .. " " ..
+                fitlen(tostring(
+                    blitwizard.debug.getTextureUsageInfo(texture)),
+                    usagecolwidth) .. " " ..
+                fitlen(tostring(
+                    blitwizard.debug.getWaitingTextureRequests(texture)),
+                    waitingcolwidth) .. " " ..
+                fitlen(tostring(
+                    blitwizard.debug.getServedTextureRequests(texture)),
+                    servedcolwidth) .. " " ..
+                fitlen((function()
+                    if blitwizard.debug.isInitialTextureLoadDone(texture)
+                            then
+                        return "Y"
+                    end
+                    return "N"
+                end)(), initialloadcolwidth)
             print(t)
         end
     end

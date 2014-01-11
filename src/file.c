@@ -530,10 +530,12 @@ int file_DeleteFile(const char* name) {
 void file_removeDoubleSlashes(char* path) {
     unsigned int i = 0;
     int previousslash = 0;
-    while (i < strlen(path)) {
+    unsigned int len = strlen(path);
+    while (i < len) {
         if (file_IsDirectorySeparator(path[i])) {
             if (previousslash) {
-                memmove(path+i, path+i+1, strlen(path)-i);
+                memmove(path+i, path+i+1, len-i);
+                len--;
                 continue;
             }
             previousslash = 1;

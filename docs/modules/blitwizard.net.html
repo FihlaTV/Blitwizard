@@ -64,9 +64,9 @@
  If you want to create a multiplayer game, you may want to have a look at it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>Author</strong>: Jonas Thiem  (jonas.thiem@googlemail.com)</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Copyright</strong>: 2011-2013</li>
     </ul>
 
 
@@ -154,7 +154,7 @@
             <span class="types"><span class="type">function</span></span>
          this function will be called every time you
  get a new connection. The first parameter is the listener port number,
- the second parameter the new <a href="../modules/blitwizard.net.html#Class_connection">connection</a>. You may want to use
+ the second parameter the new <a href="../modules/blitwizard.net.html#connection">connection</a>. You may want to use
  <a href="../modules/blitwizard.net.html#connection:set">connection:set</a> on each new connection to set a read callback so you can
  receive data from it.
         </li>
@@ -258,7 +258,7 @@
     <ol>
 
            <span class="types"><span class="type">userdata</span></span>
-        the new <a href="../modules/blitwizard.net.html#Class_connection">connection</a>
+        the new <a href="../modules/blitwizard.net.html#connection">connection</a>
     </ol>
 
 
@@ -293,7 +293,7 @@
     <strong>connection:send (data)</strong>
     </dt>
     <dd>
-    Send data on the connection.  Please note this isn't possible before the open callback (see ???) has been triggered.
+    Send data on the connection.  Please note this isn't possible before the open callback (see <a href="../modules/blitwizard.net.html#connection:new">connection:new</a>) has been triggered.
 
 
     <h3>Parameters:</h3>

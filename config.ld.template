@@ -1,9 +1,11 @@
 -- LDoc configuration file
+sort_modules=true 
 wrap = true
-sort = function(a, b)
+sort = true
+--[[function(a, b)
     print("comparing: " .. a .. "," .. b)
     return b > a
-end
+end]]
 merge = true
 file = { INSERT_FILES_HERE }
 title = "Blitwizard API reference"

@@ -93,6 +93,7 @@ struct blitwizardobject {
             double x,y,z;
         } scale3d;
     };
+    int scalechanged;
 #ifdef USE_GRAPHICS
     struct objectgraphicsdata* graphics;
 #endif

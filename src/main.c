@@ -1117,9 +1117,9 @@ int main(int argc, char** argv) {
             (int)delta);
             // forget about keeping up with time, this was a huge hang:
             delta = 0;
-            /*lastdrawingtime = time_GetMilliseconds();
+            lastdrawingtime = time_GetMilliseconds();
             physicstimestamp = time_GetMilliseconds();
-            logictimestamp = time_GetMilliseconds();*/
+            logictimestamp = time_GetMilliseconds();
         }
 
         // sleep/limit FPS as much as we can

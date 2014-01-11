@@ -66,9 +66,9 @@
  to collect information on a blitwizard bug.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2013</li>
         <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Copyright</strong>: 2013</li>
     </ul>
 
 
@@ -94,9 +94,19 @@
  of blitwizard (see return values).</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#getServedTextureRequests">getServedTextureRequests ()</a></td>
+	<td class="summary">Return the amount of texture requests which currently have
+ a usable copy of this texture in any size at their hands.</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#getTextureGpuSizeInfo">getTextureGpuSizeInfo (name)</a></td>
 	<td class="summary">Get information of whether a texture is currently
  loaded into GPU memory, and at which size.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getTextureRamSizeInfo">getTextureRamSizeInfo (name)</a></td>
+	<td class="summary">Get information of whether a texture is currently
+ loaded into system memory (RAM), and at which size.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#getTextureRequestCount">getTextureRequestCount ()</a></td>
@@ -108,8 +118,17 @@
 	<td class="summary">Get usage information on a given texture.</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#getWaitingTextureRequests">getWaitingTextureRequests ()</a></td>
+	<td class="summary">Return the amount of texture requests which currently waits
+ to get a copy of this texture in any size (and currently has none).</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#gpuMemoryUse">gpuMemoryUse ()</a></td>
 	<td class="summary">Get GPU memory used for all textures loaded by blitwizard in bytes.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#isInitialTextureLoadDone">isInitialTextureLoadDone ()</a></td>
+	<td class="summary">Check if the initial loading of a given texture was done.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#printGlobalTextureInfo">printGlobalTextureInfo ()</a></td>
@@ -223,6 +242,27 @@
 
 </dd>
     <dt>
+    <a name = "getServedTextureRequests"></a>
+    <strong>getServedTextureRequests ()</strong>
+    </dt>
+    <dd>
+    Return the amount of texture requests which currently have
+ a usable copy of this texture in any size at their hands.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        the amount of texture requests
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "getTextureGpuSizeInfo"></a>
     <strong>getTextureGpuSizeInfo (name)</strong>
     </dt>
@@ -247,6 +287,42 @@
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        the size info as explained above
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getTextureRamSizeInfo"></a>
+    <strong>getTextureRamSizeInfo (name)</strong>
+    </dt>
+    <dd>
+    Get information of whether a texture is currently
+ loaded into system memory (RAM), and at which size.
+<p> The returned number is similar to the return values
+ of <a href="../modules/blitwizard.debug.html#getTextureGpuSizeInfo">getTextureGpuSizeInfo</a>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.4">string</a></span>
+         the file name which was used when loading the texture, e.g. "myImage.png"
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        the size info
+    </ol>
 
 
 
@@ -302,6 +378,27 @@
 
 </dd>
     <dt>
+    <a name = "getWaitingTextureRequests"></a>
+    <strong>getWaitingTextureRequests ()</strong>
+    </dt>
+    <dd>
+    Return the amount of texture requests which currently waits
+ to get a copy of this texture in any size (and currently has none).
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        the amount of texture requests
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "gpuMemoryUse"></a>
     <strong>gpuMemoryUse ()</strong>
     </dt>
@@ -322,6 +419,29 @@
 
 </dd>
     <dt>
+    <a name = "isInitialTextureLoadDone"></a>
+    <strong>isInitialTextureLoadDone ()</strong>
+    </dt>
+    <dd>
+    Check if the initial loading of a given texture was done.
+ This means the texture manager has probed its initial size
+ and it may or may not have a faster cached version available.
+<p> It does NOT mean the texture is necessarily available right now.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        true if initial loading has been completed
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "printGlobalTextureInfo"></a>
     <strong>printGlobalTextureInfo ()</strong>
     </dt>
@@ -331,6 +451,18 @@
  is possibly HUGE.
 <p> This function is implemented in the templates and not available without
  the "templates" folder.
+<p>
+ Additional output explanation:
+<p> * GPU = the gpu size. -1 for not loaded, 0 original size,
+   1 .. 4 for tiny .. huge
+<p> * RAM = the size loaded into system memory. Values similar to GPU
+<p> * Use = the highest attempted use size reported (does not mean that the texture is actually available in that size!)
+
+ * IL = initial load done
+
+ * Wait = texture requests waiting for this texture
+
+ * Serv = texture requests served with this texture (= they do have any size of it in actual use)
 
 
 

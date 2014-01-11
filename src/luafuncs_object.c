@@ -650,6 +650,7 @@ int luafuncs_object_new(lua_State* l) {
     memset(o, 0, sizeof(*o));
     o->is3d = is3d;
     o->visible = 1;
+    o->scalechanged = 1;
     if (!is3d) {
         // for 2d objects, set parallax to default of 1:
         o->parallax = 1;
@@ -1263,6 +1264,7 @@ int luafuncs_object_setScale(lua_State* l) {
         obj->scale2d.x = x;
         obj->scale2d.y = y;
     }
+    obj->scalechanged = 1;
 #if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
     luacfuncs_object_handleScalingForPhysics(obj);
 #endif
@@ -1449,6 +1451,10 @@ int luafuncs_object_scaleToDimensions(lua_State* l) {
         obj->scale2d.x = xfactor;
         obj->scale2d.y = yfactor;
     }
+    obj->scalechanged = 1;
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
+    luacfuncs_object_handleScalingForPhysics(obj);
+#endif
     return 0;
 #endif
 }
@@ -1996,7 +2002,7 @@ int luafuncs_object_setVisible(lua_State* l) {
 // will still be triggered as usual but the object's graphics
 // may or may not be loaded. You have no guarantee it
 // shows up instantly if you set it to visible again.
-// @function onGeometryLoaded
+// @function onLoaded
 // @usage
 //   -- create some sprite from "mysprite.png"
 //   local object = blitwizard.object:new(blitwizard.object.o2d,

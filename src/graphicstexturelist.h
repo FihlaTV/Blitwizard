@@ -70,6 +70,7 @@ struct graphicstexturemanaged {
     struct graphicstexturescaled* scalelist;  // one dimensional array
     int scalelistcount;  // count of scalelist array items
     int origscale;  // array index of scalelist of item scaled in original size
+    int initialLoadDone;
     int beingInitiallyLoaded;  // the texture is just being initiially loaded
         // from disk (= wait until loading is complete)
     int failedToLoad;  // the texture failed to load (e.g. file not found)

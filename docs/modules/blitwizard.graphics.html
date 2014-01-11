@@ -64,9 +64,9 @@
 <p></p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2011-2013</li>
         <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com) et al</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Copyright</strong>: 2011-2013</li>
     </ul>
 
 
@@ -87,7 +87,7 @@
 	<tr>
 	<td class="name" ><a href="#gameUnitToPixels">gameUnitToPixels ()</a></td>
 	<td class="summary">Get the extent (in pixels) of a 2d object that make up
- one ??? at a default
+ one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
  object scale of 1.</td>
 	</tr>
 	<tr>
@@ -140,7 +140,8 @@
 	<td class="name" ><a href="#camera:screenPosTo2dWorldPos">camera:screenPosTo2dWorldPos (pos_x, pos_y, parallax)</a></td>
 	<td class="summary">Specify a 2d position in the range from 0,0 to
  w,h with w,h being the camera visible area size
- as from ??? with consider_zoom set to <b>false</b>.</td>
+ as from <a href="../modules/blitwizard.graphics.html#camera:getDimensions">
+ getDimensions</a> with consider_zoom set to <b>false</b>.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#camera:set2dCenter">camera:set2dCenter (x_position, y_position)</a></td>
@@ -183,7 +184,7 @@
  executed lua file (or provided lua code) will be those
  in the ??? module (and some basic lua functions).
 <p> After the callback has been called, the texture
- can be used e.g. for ???.
+ can be used e.g. for <a href="../modules/blitwizard.html#object:new">new</a>.
 <p> Please note the dynamic image creation is <b>not optimised for speed</b>
  and it might take a while (a few seconds) for the callback to fire
  or even longer, depending on what your image creation function does.
@@ -232,8 +233,9 @@
  indicator before you're calling it to avoid user confusion
  in such cases!
 <p> <b>Note about callbacks:</b>
- Please note the ??? might fire again
- on 2d <a href="../modules/blitwizard.html#Class_object">objects</a> using the texture.
+ Please note the <a href="../modules/blitwizard.html#object:onGeometryLoaded">
+ geometry callback</a> might fire again
+ on 2d <a href="../modules/blitwizard.html#object">objects</a> using the texture.
 
 
 
@@ -256,7 +258,7 @@
     </dt>
     <dd>
     Get the extent (in pixels) of a 2d object that make up
- one ??? at a default
+ one <a href="../modules/blitwizard.html#object:setPosition">game unit</a> at a default
  object scale of 1.
 <p> This value allows you to calculate how large an object
  would end up in game units if you're aware of the size
@@ -301,7 +303,7 @@
     <ol>
 
            <span class="types"><a class="type" href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a></span>
-        a table list array containing <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> items
+        a table list array containing <a href="../modules/blitwizard.graphics.html#camera">camera</a> items
     </ol>
 
 
@@ -456,7 +458,7 @@
 <p> <b>Important:</b> If you want to show a different part of the game world,
  this is where you want to be! Grab the first camera from
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> and let's go:
-<p> Use ???
+<p> Use <a href="../modules/blitwizard.graphics.html#camera:set2dCenter">camera:set2dCenter</a>
  to modify the 2d world
  position shown, and
  ???
@@ -478,7 +480,7 @@
     <ul>
         <li><span class="parameter">camera</span>
             <span class="types"><span class="type">userdata</span></span>
-         the <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a> to be destroyed
+         the <a href="../modules/blitwizard.graphics.html#camera">camera</a> to be destroyed
         </li>
     </ul>
 
@@ -493,7 +495,7 @@
     </dt>
     <dd>
     Get the 2d zoom factor (defaults to 1).  See also
- ???.
+ <a href="../modules/blitwizard.graphics.html#camera:set2dZoomFactor">set2dZoomFactor</a>.
 
 
 
@@ -516,19 +518,21 @@
     Get the size of the camera in game units (so the size of the
  visible world area it shows).
 <p> consider_zoom = false gives you the area of
- ??? which the camera
+ <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a> which the camera
  shows, which is not influenced by zoom. (this is the default if
  consider_zoom is no specified at all)
 <p> consider_zoom = true is a special case useful for 2d,
  which gives you the camera's dimensions according to the current
  zoom factor.
 <p> The result of this function depends on the camera's
- ???, the camera's
- ??? (for consider_zoom set to true) and the camera's
+ <a href="../modules/blitwizard.graphics.html#camera:getPixelDimensionsOnScreen">
+ actual size in pixels on the screen</a>, the camera's
+ <a href="../modules/blitwizard.graphics.html#camera:get2dZoomFactor">
+ 2d zoom factor</a> (for consider_zoom set to true) and the camera's
  ???.
-<p> <i>Note on ??? 2d objects:</i>
+<p> <i>Note on <a href="../modules/blitwizard.html#object:pinToCamera">pinned</a> 2d objects:</i>
  If you want to know the area visible in game units for
- ??? which are unaffected
+ <a href="../modules/blitwizard.html#object:pinToCamera">pinned objects</a> which are unaffected
  by camera zoom when drawn, specify <i>false</i> as first parameter
  for not taking the zoom into account.
 
@@ -566,7 +570,8 @@
  screen.  It usually fills the whole window (= the full size of the
  resolution you specified in <a href="../modules/blitwizard.graphics.html#setMode">blitwizard.graphics.setMode</a>),
  but that may be changed with
- ???.
+ <a href="../modules/blitwizard.graphics.html#camera:setPixelDimensionsOnScreen">
+ camera:setPixelDimensionsOnScreen</a>.
 
 
 
@@ -590,11 +595,11 @@
     </dt>
     <dd>
     Add a new camera.
- Returns the new <a href="../modules/blitwizard.graphics.html#Class_camera">camera</a>, and
+ Returns the new <a href="../modules/blitwizard.graphics.html#camera">camera</a>, and
  it will be automatically part of the list of all followup
  <a href="../modules/blitwizard.graphics.html#getCameras">blitwizard.graphics.getCameras</a> calls aswell.
 <p> If you want to get rid of it again, check out
- ???.
+ <a href="../modules/blitwizard.graphics.html#camera:destroy">destroy</a>.
 
 
 
@@ -610,9 +615,10 @@
     <dd>
     Specify a 2d position in the range from 0,0 to
  w,h with w,h being the camera visible area size
- as from ??? with consider_zoom set to <b>false</b>.
+ as from <a href="../modules/blitwizard.graphics.html#camera:getDimensions">
+ getDimensions</a> with consider_zoom set to <b>false</b>.
 <p> (So the position you specify is the coordinates a
- ??? would have on screen
+ <a href="../modules/blitwizard.html#object:pinToCamera">pinned object</a> would have on screen
  or the coordinates you get from <a href="../modules/blitwizard.html#onMouseMove">blitwizard.onMouseMove</a>)
 <p> The position can also be smaller than 0,0 or larger than the
  actual camera dimensions, in which case you'll get an out-of-screen
@@ -631,7 +637,7 @@
         </li>
         <li><span class="parameter">parallax</span>
             <span class="types"><span class="type">number</span></span>
-         (optional) if you want, specify the ??? effect strength to get the world position displaced accordingly for an object with that parallax effect strength
+         (optional) if you want, specify the <a href="../modules/blitwizard.html#object:setParallax">parallax</a> effect strength to get the world position displaced accordingly for an object with that parallax effect strength
         </li>
     </ul>
 
@@ -658,11 +664,11 @@
  centered by the camera.  This allows you to move the camera's shown
  part of the 2d world around, focussing on other places.
 <p> The position is specified in <b>game units</b> (the same units used
- for specifying the ???).
+ for specifying the <a href="../modules/blitwizard.html#object:setPosition">position of objects</a>).
  The camera initially looks at position 0, 0.
 <p> If you want the camera to follow a 2d object, simply use this function
  to set the 2d center to the coordinates of the object (you can do this
- in the object's ??? function).
+ in the object's <a href="../modules/blitwizard.html#object:doAlways">doAlways</a> function).
 
 
     <h3>Parameters:</h3>

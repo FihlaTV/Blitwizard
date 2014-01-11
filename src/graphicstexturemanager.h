@@ -243,7 +243,7 @@ void texturemanager_wipeTexture(const char* tex);
 // It is less likely to hang than texturemanager_deviceLost(),
 // but don't be surprised if it does!
 
-// INFO FUNCTIONS //
+// INFO FUNCTIONS (mainly useful for debugging) //
 
 // Query the current GPU memory use by the texture manager in bytes:
 uint64_t texturemanager_getGpuMemoryUse(void);
@@ -254,9 +254,28 @@ int texturemanager_getTextureUsageInfo(const char* texture);
 
 // Query the highest texture size loaded onto the GPU for the
 // given texture.
-// Returns 4 (high) to 1 (tiny), or 0 for original size.
+// Returns 4 (high) to 1 (tiny), or 0 for full original size.
 // -1 means the texture isn't currently on the GPU.
 int texturemanager_getTextureGpuSizeInfo(const char* texture); 
+
+// Query the highest texture size info loaded in system memory
+// for the given texture.
+// Returns 4 (high) to 1 (tiny) or 0 for full original size.
+// -1 means the texture isn't currently held in system memory.
+int texturemanager_getTextureRamSizeInfo(const char* texture);
+
+// Query the amount of texture requests waiting to be served this
+// particular texture (no matter if it's currently loaded or not).
+int texturemanager_getWaitingTextureRequests(const char* texture);
+
+// Query the amount of texture requests which are served any size
+// of this particular texture right now.
+int texturemanager_getServedTextureRequests(const char* texture);
+
+// Check if the initial loading of the given texture has been
+// completed. (This doesn't mean it is currently available,
+// it may already have been unloaded again)
+int texturemanager_isInitialTextureLoadDone(const char* texture);
 
 // Get the total amount of texture requests.
 size_t texturemanager_getRequestCount(void);
