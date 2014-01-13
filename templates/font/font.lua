@@ -278,6 +278,32 @@ function blitwizard.font.text:destroy()
 end
 
 --[[--
+  Set transparency on the text.
+  @function setTransparency
+  @tparam number transparency from 0 (opaque) to 1 (fully invisible)
+]]
+function blitwizard.font.text:setTransparency(transparency)
+    local fontobj = self
+    for i, v in ipairs(self.glyphs) do
+        v:setTransparency(transparency)
+    end
+end
+
+--[[--
+  Get current transparency of the text (default is 0/no transparency).
+  @function setTransparency
+  @treturn number transparency from 0 (opaque) to 1 (fully invisible)
+]]
+function blitwizard.font.text:getTransparency()
+    local fontobj = self
+    for i, v in ipairs(self.glyphs) do
+        return v:getTransparency()
+    end
+    return 0
+end
+
+
+--[[--
   Enable click events on the given font.
   Please note this can slow down click event processing
   considerably if you enable this on lengthy texts.

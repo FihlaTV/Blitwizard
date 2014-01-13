@@ -1,6 +1,7 @@
 #ifndef SKIPLIST_CONFIG_H
 #define SKIPLIST_CONFIG_H
 
+
 /* Special compile-time configuration for the skiplist library. */
 
 /* If defined, this file will alse be included. For example,

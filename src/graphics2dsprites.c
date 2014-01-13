@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,6 +24,7 @@
 #include "config.h"
 #include "os.h"
 
+#include <math.h>
 #include <limits.h>
 #include <assert.h>
 #include <stdio.h>
@@ -37,6 +38,9 @@
 #include "threading.h"
 #include "graphicstexturemanager.h"
 #include "poolAllocator.h"
+#include "graphics2dspritestruct.h"
+#include "graphics2dspriteslist.h"
+#include "graphics2dspritestree.h"
 
 static mutex* m = NULL;
 
@@ -45,88 +49,14 @@ static mutex* m = NULL;
 const float smoothmaxdist = 1.0f;
 #endif
 
-// data structure for a sprite:
-struct graphics2dsprite {
-    // this is set if the sprite was deleted:
-    int deleted;
-    // (it will be kept around until things with
-    // the texture manager callbacks are sorted out)
-
-    // texture filtering (1: enabled, 0: disabled)
-    int textureFiltering;
-
-    // texture path:
-    char* path;
-
-    // set to 1 if there was an error loading things:
-    int loadingError;
-
-    // texture dimensions (initially 0, 0 if not known):
-    size_t texWidth, texHeight;
-
-    // pinned to camera with given id (or -1 if not):
-    int pinnedToCamera;
-
-    // texture info:
-    struct graphicstexture* tex;
-    struct texturerequesthandle* request;
-    int textureHandlingDone;
-
-    // position, size info:
-    double x, y, width, height, angle;
-#ifdef SMOOTH_SPRITES
-    double prevx, prevy;
-#endif
-    // width, height = 0 means height should match texture geometry
-
-    // texture clipping window:
-    int clippingEnabled;
-    size_t clippingX, clippingY;
-    size_t clippingWidth, clippingHeight;
-
-    // alpha, color and visibility:
-    double alpha;
-    double r, g, b, a;
-    int visible;
-
-    // parallax effect strength:
-    double parallax;
-
-    // z index:
-    int zindex;
-
-    // enabled for sprite events:
-    int enabledForEvent[SPRITE_EVENT_TYPE_COUNT];
-
-    // untouchable/transparent for sprite event:
-    int invisibleForEvent[SPRITE_EVENT_TYPE_COUNT];
-
-    // pointers for global linear sprite list:
-    struct graphics2dsprite* next,* prev;
-
-    // custom userdata:
-    void* userdata;
-};
-// global linear sprite list:
+// global sprite counter:
 static int spritesInListCount = 0;
-static struct graphics2dsprite* spritelist = NULL;
-static struct graphics2dsprite* spritelistEnd = NULL;
 
 // sprite allocator:
 struct poolAllocator* spriteAllocator = NULL;
 
-// shortcut sprite list for jumping to a given zindex depth:
-struct spriteShortcut {
-    struct graphics2dsprite* entrance;
-    int zindex;
-    int nextzindex;
-    int pinnedToCamera; // 1 if pinned, 0 if not
-    int nextPinnedToCamera;
-};
-#define SPRITESHORTCUTCOUNT 20
-struct spriteShortcut shortcut[SPRITESHORTCUTCOUNT];
-int shortcutsFilled = 0;
-int shortcutsNeedRecalculation = 0;
+// counting the amount of times the zindex has changed on a sprite:
+uint64_t currentzindexsetid = 0;
 
 // the "lowest" sprites enabled for each event:
 static struct graphics2dsprite* lastEventSprite[SPRITE_EVENT_TYPE_COUNT];
@@ -152,44 +82,13 @@ __attribute__((constructor)) static void graphics2dsprites_init(void) {
     sizeof(struct graphics2dsprite), 1);
 }
 
-// recalculate sprite shortcuts:
-static void graphics2dsprites_recalculateSpriteShortcuts(void) {
-    shortcutsFilled = 0;
-    int sinceLastShortcut = 0;
-    int lastZIndex = 0;
-    int lastPinnedState = 1;
-    int spritesBetweenShortcuts = (spritesInListCount
-        / ((double)SPRITESHORTCUTCOUNT * 1.5));
-    struct graphics2dsprite* spr = spritelistEnd;
-    while (spr) {
-        if ((sinceLastShortcut >= spritesBetweenShortcuts &&
-        (spr->zindex < lastZIndex ||
-        (spr->pinnedToCamera < 0 && lastPinnedState)
-        || sinceLastShortcut >= spritesBetweenShortcuts * 2))
-        || shortcutsFilled == 0) {
-            memset(&shortcut[shortcutsFilled], 0, sizeof(*shortcut));
-            shortcut[shortcutsFilled].entrance = spr;
-            shortcut[shortcutsFilled].zindex = spr->zindex;
-            shortcut[shortcutsFilled].nextzindex = INT_MIN;
-            shortcut[shortcutsFilled].pinnedToCamera =
-            (spr->pinnedToCamera >= 0);
-            shortcut[shortcutsFilled].nextPinnedToCamera = 0;
-            if (shortcutsFilled > 0) {
-                shortcut[shortcutsFilled-1].nextzindex = spr->zindex;
-                shortcut[shortcutsFilled-1].nextPinnedToCamera =
-                shortcut[shortcutsFilled].pinnedToCamera;
-            }
-            lastZIndex = spr->zindex;
-            lastPinnedState = (spr->pinnedToCamera >= 0);
-            sinceLastShortcut = 0;
-            shortcutsFilled++;
-            if (shortcutsFilled >= SPRITESHORTCUTCOUNT) {
-                break;
-            }
-        }
-        sinceLastShortcut++;
-        spr = spr->prev;
+static int graphics2dsprites_findLastEventSpritesCallback(
+        struct graphics2dsprite* sprite, void* userdata) {
+    int eventId = ((int)(int64_t)userdata);
+    if (sprite->enabledForEvent[eventId] && sprite->visible) {
+        lastEventSprite[eventId] = sprite;
     }
+    return 1;
 }
 
 // This function searches the sprites with the lowest zindex
@@ -203,14 +102,10 @@ static void graphics2dsprites_findLastEventSprites(void) {
             recalculateLastEventSprite[i] = 1;
             if (eventSpriteCount[i] > 0) {
                 // search for first sprite that is enabled for this event:
-                struct graphics2dsprite* s = spritelist;
-                while (s) {
-                    if (s->enabledForEvent[i] && s->visible) {
-                        lastEventSprite[i] = s;
-                        return;
-                    }
-                    s = s->next;
-                }
+                // (from zindex top to bottom)
+                graphics2dspriteslist_doForAllSpritesTopToBottom(
+                    &graphics2dsprites_findLastEventSpritesCallback,
+                    ((void*)(int64_t)i));
             }
         }
         i++;
@@ -386,47 +281,126 @@ void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite) {
     mutex_Release(m);
 }
 
-void graphics2dsprites_doForAllSprites(
-void (*spriteInformation) (
-const struct graphics2dsprite* sprite,
+struct doforallspritesonscreendata {
+    int (*spriteInformation) (
+    struct graphics2dsprite* sprite,
+    const char* path, struct graphicstexture* tex,
+    double r, double g, double b, double alpha,
+    int visible, int cameraId, int textureFiltering);
+    int cameraId;
+};
+
+static int grapics2dsprites_doForAllSpritesCallback(
+        struct graphics2dsprite* s, void* userdata) {
+    // get info from userdata:
+    struct doforallspritesonscreendata* data = userdata;
+    // get callback from userdata:
+    int (*spriteInformation) (
+    struct graphics2dsprite* sprite,
+    const char* path, struct graphicstexture* tex,
+    double r, double g, double b, double alpha,
+    int visible, int cameraId, int textureFiltering) = data->
+        spriteInformation;
+    if (s->pinnedToCamera != data->cameraId &&
+            s->pinnedToCamera >= 0) {
+        // sprite is pinned to other camera, skip.
+        return 1;
+    }
+    // call sprite information callback:
+    if ((s->clippingWidth > 0 && s->clippingHeight > 0) ||
+    !s->clippingEnabled) {
+        return spriteInformation(
+        s,
+        s->path, s->tex, s->r, s->g, s->b, s->alpha,
+        s->visible, s->pinnedToCamera, s->textureFiltering);
+    } else {
+        // report sprite as invisible:
+        return spriteInformation(
+        s,
+        s->path, s->tex, s->r, s->g, s->b, s->alpha,
+        0, s->pinnedToCamera, s->textureFiltering);
+    }
+}
+
+#define DOFORALL_SORT_NONE 0
+#define DOFORALL_SORT_TOPTOBOTTOM 1
+#define DOFORALL_SORT_BOTTOMTOTOP 2
+void graphics2dsprites_doForAllSpritesOnScreen(
+int cameraId,
+int (*spriteInformation) (
+struct graphics2dsprite* sprite,
 const char* path, struct graphicstexture* tex,
 double r, double g, double b, double alpha,
-int visible, int cameraId, int textureFiltering)) {
+int visible, int cameraId, int textureFiltering),
+int sort) {
     if (!spriteInformation) {
         return;
     }
-
-    mutex_Lock(m);
-
-    // it might be a good idea to restore the jump list here
-    // (although drawing doesn't need it)
-    if (shortcutsNeedRecalculation > 0) {
-        shortcutsNeedRecalculation = 0;
-        graphics2dsprites_recalculateSpriteShortcuts();
+    if (!unittopixelsset) {
+        // graphics aren't up yet, nothing to do.
+        return;
     }
 
-    // walk through linear sprite list:
-    struct graphics2dsprite* s = spritelist;
-    while (s) {
-        // call sprite information callback:
-        if ((s->clippingWidth > 0 && s->clippingHeight > 0) ||
-        !s->clippingEnabled) {
-            spriteInformation(
-            s,
-            s->path, s->tex, s->r, s->g, s->b, s->alpha,
-            s->visible, s->pinnedToCamera, s->textureFiltering);
-        } else {
-            // report sprite as invisible:
-            spriteInformation(
-            s,
-            s->path, s->tex, s->r, s->g, s->b, s->alpha,
-            0, s->pinnedToCamera, s->textureFiltering);
-        }
+    int c = graphics_GetCameraCount();
+    if (cameraId < 0 || cameraId >= c) {
+        return;
+    }
+    texturemanager_lockForTextureAccess();
+    mutex_Lock(m);
 
-        s = s->next;
+    // get position of camera in game world:
+    double zoom = graphics_GetCamera2DZoom(cameraId);
+    double ratio = graphics_GetCamera2DAspectRatio(cameraId);
+    double centerx = graphics_GetCamera2DCenterX(cameraId);
+    double centery = graphics_GetCamera2DCenterY(cameraId);
+    unsigned int winw,winh;
+    winw = graphics_GetCameraWidth(cameraId);
+    winh = graphics_GetCameraHeight(cameraId);
+    // FIXME: take care of aspect ratio here at some point
+    // top-left position:
+    double posx = centerx - (((double)winw)/UNIT_TO_PIXELS)*0.5*zoom;
+    double posy = centery - (((double)winh)/UNIT_TO_PIXELS)*0.5*zoom;
+    // dimensions:
+    double width = (((double)winw)/UNIT_TO_PIXELS)*zoom;
+    double height = (((double)winh)/UNIT_TO_PIXELS)*zoom;
+
+    // allocate data pointer:
+    struct doforallspritesonscreendata* data = malloc(sizeof(*data));
+    if (!data) {
+        mutex_Release(m);
+        texturemanager_releaseFromTextureAccess();
+        return;
+    }
+    memset(data, 0, sizeof(*data));
+    data->spriteInformation = spriteInformation;
+    data->cameraId = cameraId;
+
+    // first, for all the potentially visible sprites in the game world:
+    if (sort == DOFORALL_SORT_TOPTOBOTTOM) {
+        graphics2dspritestree_doForAllSpritesSortedTopToBottom(
+            posx, posy, width, height,
+            &grapics2dsprites_doForAllSpritesCallback, data);
+    } else if (sort == DOFORALL_SORT_BOTTOMTOTOP) {
+        graphics2dspritestree_doForAllSpritesSortedBottomToTop(
+            posx, posy, width, height,
+            &grapics2dsprites_doForAllSpritesCallback, data);
+    } else {
+        graphics2dspritestree_doForAllSprites(
+            posx, posy, width, height,
+            &grapics2dsprites_doForAllSpritesCallback, data);
+    }
+
+    // now do this for all on-screen (pinned) sprites:
+    if (sort != DOFORALL_SORT_TOPTOBOTTOM) {
+        graphics2dspriteslist_doForAllSpritesBottomToTop(
+            &grapics2dsprites_doForAllSpritesCallback, data);
+    } else {
+        graphics2dspriteslist_doForAllSpritesTopToBottom(
+            &grapics2dsprites_doForAllSpritesCallback, data);
     }
 
     mutex_Release(m);
+    texturemanager_releaseFromTextureAccess();
 }
 
 void graphics2dsprites_setTextureFiltering(struct graphics2dsprite* sprite,
@@ -446,63 +420,33 @@ double width, double height) {
 }
 
 static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
-    if (!sprite->prev && !sprite->next &&
-    spritelistEnd != sprite && spritelist != sprite) {
-        // we're not actually in the list.
-        return;
-    }
-
-    // if the jump list points at us, fix it:
-    int i = 0;
-    while (i < shortcutsFilled) {
-        if ((shortcut[i].zindex < sprite->zindex &&
-        shortcut[i].pinnedToCamera == sprite->pinnedToCamera) ||
-        (!shortcut[i].pinnedToCamera && sprite->pinnedToCamera >= 0)) {
-            // we are already past the possibly relevant entries
-            break;
-        }
-        if (shortcut[i].entrance == sprite) {
-            // make it point at the next (less on top, previous in list)
-            // sprite since that is now the relevant entry point.
-            shortcut[i].entrance = sprite->prev;
-            if (sprite->prev) {
-                shortcut[i].zindex = sprite->prev->zindex;
-                shortcut[i].pinnedToCamera =
-                (sprite->prev->pinnedToCamera >= 0);
-            }
-        }
-        i++;
-    }
-
-    // remember we might need to recalculate the whole jump list soon:
-    shortcutsNeedRecalculation++;
+    // Warning: this is NOT SAFE to call when not on the list!
 
     spritesInListCount--;
 
-    // if this is enabled for an event, remember to recalculate
-    // last event sprite if necessary:
-    i = 0;
-    while (i < SPRITE_EVENT_TYPE_COUNT) {
-        if (sprite->enabledForEvent[i]
-        && lastEventSprite[i] == sprite) {
-            recalculateLastEventSprite[i] = 1;
+    // for pinned sprites only:
+    if (sprite->pinnedToCamera >= 0) {
+        // if this is enabled for an event, remember to recalculate
+        // last event sprite if necessary:
+        int i = 0;
+        while (i < SPRITE_EVENT_TYPE_COUNT) {
+            if (sprite->enabledForEvent[i]) {
+                if (lastEventSprite[i] == sprite) {
+                    recalculateLastEventSprite[i] = 1;
+                    lastEventSprite[i] = NULL;
+                }
+                eventSpriteCount[i]--;
+            }
+            i++;
         }
-        i++;
     }
 
-    // remove sprite from list:
-    if (sprite->prev) {
-        sprite->prev->next = sprite->next;
+    // remove sprite from pinned sprite list or tree:
+    if (sprite->pinnedToCamera >= 0) {
+        graphics2dspriteslist_removeFromList(sprite);
     } else {
-        spritelist = sprite->next;
+        graphics2dspritestree_removeFromTree(sprite);
     }
-    if (sprite->next) {
-        sprite->next->prev = sprite->prev;
-    } else {
-        spritelistEnd = sprite->prev;
-    }
-    sprite->prev = NULL;
-    sprite->next = NULL;
 }
 
 void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
@@ -514,19 +458,6 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     // remove sprite from list:
     graphics2dsprites_removeFromList(sprite);
 
-    // check if we're enabled for any event:
-    int i = 0;
-    if (sprite->visible) {
-        while (i < SPRITE_EVENT_TYPE_COUNT) {
-            if (sprite->enabledForEvent[i]) {
-                eventSpriteCount[i]--;
-                // last event sprite needs to be recalculated:
-                lastEventSprite[i] = NULL;
-            }
-            i++;
-        }
-    }
-
     // destroy texture manager request
     sprite->deleted = 1;
     if (sprite->request) {
@@ -537,9 +468,6 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     }
     // ... this will handle the texture aswell:
     sprite->tex = NULL;
-
-    // remove sprite from list:
-    graphics2dsprites_removeFromList(sprite);
 
     // free resource path:
     if (sprite->path) {
@@ -560,91 +488,60 @@ double x, double y, double angle) {
     sprite->prevx = x;
     sprite->prevy = y;
 #endif
-    sprite->x = x;
-    sprite->y = y;
+    if (sprite->pinnedToCamera >= 0) {
+        sprite->x = x;
+        sprite->y = y;
+    } else {
+        graphics2dsprites_moveInTree(sprite, x, y);
+    }
     sprite->angle = angle;
     mutex_Release(m);
 }
 
 static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
+    // Warning: this is NOT SAFE to call when already on the list!
+
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
     mutex_Release(m);
-    assert(graphics2dsprites_Count()
+    assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());
     mutex_Lock(m);
 #endif
 
-    // seek the earliest sprite (from the back)
-    // which has a lower or equal zindex, and add us behind
-    struct graphics2dsprite* s2 = spritelistEnd;
-
-    // if the jump list is very outdated, redo it:
-    if (shortcutsNeedRecalculation > 30) {
-        shortcutsNeedRecalculation = 0;
-        graphics2dsprites_recalculateSpriteShortcuts();
+    if (s->pinnedToCamera >= 0) {
+        // add to screen-pinned z index sorted list
+        graphics2dspriteslist_addToList(s);
+    } else {
+        // add to game world tree
+        graphics2dspritestree_addToTree(s);
     }
 
-    // check the jump list first:
-    int i = 0;
-    while (i < shortcutsFilled-1) {
-        if (shortcut[i].nextzindex <= s->zindex ||
-        (s->pinnedToCamera >= 0 && !shortcut[i].nextPinnedToCamera)) {
-            // the next jump shortcut is past the interesting sprites,
-            // so use this one:
-            if (shortcut[i].entrance) {
-                s2 = shortcut[i].entrance;
+    // only important if pinned:
+    if (s->pinnedToCamera >= 0) {
+        // if enabled for event and lower in sorting than lowest sprite,
+        // then we'll need to recalculate the lowest event sprite:
+        int i = 0;
+        while (i < SPRITE_EVENT_TYPE_COUNT) {
+            if (s->enabledForEvent[i]
+            && lastEventSprite[i]->zindex >= s->zindex) {
+                recalculateLastEventSprite[i] = 1;
+                lastEventSprite[i] = NULL;
             }
-            break;
+            i++;
         }
-        i++;
     }
-
-    // search to the actual exact position (SLOW!)
-    while (s2 && (s2->zindex > s->zindex ||
-    (s2->pinnedToCamera >= 0 && s->pinnedToCamera < 0))) {
-        s2 = s2->prev;
-    }
-
-    // remember we need to recalculate the jump list at some point:
-    shortcutsNeedRecalculation++;
-
     spritesInListCount++;
-
-    // add us into the list:
-    if (s2) {
-        s->next = s2->next;
-        s->prev = s2;
-    } else {
-        s->next = spritelist;
-        s->prev = NULL;
-    }
-    if (s->next) {
-        s->next->prev = s;
-    } else {
-        spritelistEnd = s;
-    }
-    if (s->prev) {
-        s->prev->next = s;
-    } else {
-        spritelist = s;
-    }
 
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
     mutex_Release(m);
-    assert(graphics2dsprites_Count()
+    assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());
     mutex_Lock(m);
 #endif
 }
 
-static size_t graphics2dsprites_Count_internal(void) {
-    size_t count = 0;
-    struct graphics2dsprite* sprite = spritelist;
-    while (sprite) {
-        count++;
-        sprite = sprite->next;
-    }
-    return count;
+static size_t graphics2dsprites_count_internal(void) {
+    return 0;
 }
 
 struct graphics2dsprite* graphics2dsprites_create(
@@ -689,7 +586,7 @@ const char* texturePath, double x, double y, double width, double height) {
     mutex_Release(m);
     // get a texture request:
 #ifdef EXTRADEBUG
-    assert(graphics2dsprites_Count()
+    assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());
 #endif
     s->request = texturemanager_requestTexture(
@@ -698,7 +595,7 @@ const char* texturePath, double x, double y, double width, double height) {
     graphics2dsprites_textureHandlingDoneCallback,
     s);
 #ifdef EXTRADEBUG
-    assert(graphics2dsprites_Count()
+    assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());
 #endif
     mutex_Lock(m);
@@ -727,14 +624,17 @@ int zindex) {
         return;
     }
 
-    // remove us from the list:
-    graphics2dsprites_removeFromList(sprite);
-
     // update zindex:
     sprite->zindex = zindex;
+    sprite->zindexsetid = currentzindexsetid;
+    currentzindexsetid++;
 
-    // add us back to the list:
-    graphics2dsprites_addToList(sprite);
+    // if pinned to screen, we need a new list position:
+    if (sprite->pinnedToCamera >= 0) {
+        // remove and re-add to the list:
+        graphics2dsprites_removeFromList(sprite);
+        graphics2dsprites_addToList(sprite);
+    }
 
     mutex_Release(m);
 }
@@ -745,16 +645,22 @@ int cameraId) {
         return;
     }
     mutex_Lock(m);
+    // abort if nothing has changed:
     if (sprite->pinnedToCamera == cameraId) {
         mutex_Release(m);
         return;
     }
 
+    // remove from tree/list before proceeding:
+    graphics2dsprites_removeFromList(sprite);
+    // (we only wouldn't want to do that if the sprite
+    // was unpinned and still is unpinned -> always in the tree,
+    // but that case is already caught with the check above)
+
     // set new pinned state:
     sprite->pinnedToCamera = cameraId;
 
-    // readd to list:
-    graphics2dsprites_removeFromList(sprite);
+    // readd to tree/list:
     graphics2dsprites_addToList(sprite);
 
     // done.
@@ -772,27 +678,36 @@ void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
 int visible) {
     mutex_Lock(m);
     sprite->visible = (visible != 0);
-    if (!sprite->visible) {
-        // check if we were enabled for any event:
-        int i = 0;
-        while (i < SPRITE_EVENT_TYPE_COUNT) {
-            if (sprite->enabledForEvent[i]) {
-                eventSpriteCount[i]--;
-                // last event sprite needs to be recalculated:
-                lastEventSprite[i] = NULL;
+    // only relevant if pinned:
+    if (sprite->pinnedToCamera >= 0) {
+        if (!sprite->visible) {
+            // check if we were enabled for any event:
+            int i = 0;
+            while (i < SPRITE_EVENT_TYPE_COUNT) {
+                if (sprite->enabledForEvent[i]) {
+                    eventSpriteCount[i]--;
+                    // last event sprite needs to be recalculated
+                    // if it was us:
+                    if (lastEventSprite[i] == sprite) {
+                        lastEventSprite[i] = NULL;
+                    }
+                }
+                i++;
             }
-            i++;
-        }
-    } else {
-        // check if we're enabled for any event:
-        int i = 0;
-        while (i < SPRITE_EVENT_TYPE_COUNT) {
-            if (sprite->enabledForEvent[i]) {
-                eventSpriteCount[i]++;
-                // last event sprite needs to be recalculated:
-                lastEventSprite[i] = NULL;
+        } else {
+            // check if we're enabled for any event:
+            int i = 0;
+            while (i < SPRITE_EVENT_TYPE_COUNT) {
+                if (sprite->enabledForEvent[i]) {
+                    eventSpriteCount[i]++;
+                    // last event sprite needs to be recalculated
+                    // if it has a higher zindex:
+                    if (lastEventSprite[i]->zindex >= sprite->zindex) {
+                        lastEventSprite[i] = NULL;
+                    }
+                }
+                i++;
             }
-            i++;
         }
     }
     mutex_Release(m);
@@ -918,7 +833,8 @@ double* source_angle, int* phoriflip, int compensaterotation) {
 
         // screen center offset (if not pinned):
         unsigned int winw,winh;
-        graphics_GetWindowDimensions(&winw, &winh);
+        winw = graphics_GetCameraWidth(cameraId);
+        winh = graphics_GetCameraHeight(cameraId);
         x += (winw/2.0);
         y += (winh/2.0);
 
@@ -931,6 +847,15 @@ double* source_angle, int* phoriflip, int compensaterotation) {
         // only adjust width/height to proper units when pinned
         width *= UNIT_TO_PIXELS;
         height *= UNIT_TO_PIXELS;
+    }
+
+    // if rotated and we should make a rough guess for rotation,
+    // do it here (really rough guess!):
+    // FIXME: eventually, do something more accurate here.
+    if (compensaterotation) {
+        double maxedgelength = fmax(width, height);
+        width = maxedgelength * 1.5;
+        height = maxedgelength * 1.5;
     }
 
     // set resulting info:
@@ -958,60 +883,61 @@ double* source_angle, int* phoriflip, int compensaterotation) {
     }
 }
 
-void graphics2dsprites_reportVisibility(void) {
-    int c = graphics_GetCameraCount();
-    texturemanager_lockForTextureAccess();
-    mutex_Lock(m);
-    struct graphics2dsprite* sprite = spritelist;
-    while (sprite) {
-        if (!sprite->texWidth || !sprite->texHeight
-        || sprite->loadingError || !sprite->tex) {
-            sprite = sprite->next;
-            continue;
-        }
-        // cycle through all cameras:
-        int i = 0;
-        while (i < c) {
-            if (i != sprite->pinnedToCamera
-            && sprite->pinnedToCamera >= 0) {
-                // not visible on this camera.
-                i++;
-                continue;
-            }
-
-            if (!sprite->visible || sprite->alpha <= 0) {
-                // sprite is set to invisible;
-                i++;
-                continue;
-            }
-
-            // get camera settings:
-            int sw = graphics_GetCameraWidth(i);
-            int sh = graphics_GetCameraHeight(i);
-
-            // get sprite pos on screen:
-            double x, y, w, h;
-            graphics2dsprite_calculateSizeOnScreen(sprite,
-            i, &x, &y, &w, &h, NULL, NULL, NULL, NULL, NULL, NULL, 1);
-
-            // now check if rectangle is on screen:
-            if ((((x >= 0 && x < sw) || (x + w >= 0 && x + w < sw) ||
-            (x < 0 && x + w >= sw))
-            &&
-            ((y >= 0 && y < sh) || (y + h >= 0 && y + h < sh) ||
-            (y < 0 && y + h >= sh)))) {
-                // it is.
-                texturemanager_usingRequest(sprite->request,
-                USING_AT_VISIBILITY_DETAIL);
-            }
-
-            i++;
-        }
-
-        sprite = sprite->next;
+static int graphics2dsprites_reportVisibilityCallback(
+        struct graphics2dsprite* sprite,
+        __attribute__((unused)) const char* path,
+        __attribute__((unused)) struct graphicstexture* tex,
+        __attribute__((unused)) double r,
+        __attribute__((unused)) double g,
+        __attribute__((unused)) double b,
+        __attribute__((unused)) double alpha,
+        __attribute__((unused)) int visible,
+        int cameraId,
+        __attribute__((unused)) int textureFiltering) {
+    if (!sprite->texWidth || !sprite->texHeight
+    || sprite->loadingError || !sprite->tex) {
+        return 1;
     }
-    mutex_Release(m); 
-    texturemanager_releaseFromTextureAccess();
+    if (!sprite->visible || sprite->alpha <= 0) {
+        // sprite is set to invisible;
+        return 1;
+    }
+
+    // get camera settings:
+    int sw = graphics_GetCameraWidth(cameraId);
+    int sh = graphics_GetCameraHeight(cameraId);
+
+    // get sprite pos on screen:
+    double x, y, w, h;
+    graphics2dsprite_calculateSizeOnScreen(sprite,
+    cameraId, &x, &y, &w, &h, NULL, NULL, NULL, NULL, NULL, NULL, 1);
+
+    // now check if rectangle is on screen:
+    if ((((x >= 0 && x < sw) || (x + w >= 0 && x + w < sw) ||
+    (x < 0 && x + w >= sw))
+    &&
+    ((y >= 0 && y < sh) || (y + h >= 0 && y + h < sh) ||
+    (y < 0 && y + h >= sh)))) {
+        // it is.
+        texturemanager_usingRequest(sprite->request,
+        USING_AT_VISIBILITY_DETAIL);
+    }
+    return 1;
+}
+
+void graphics2dsprites_reportVisibility(void) {
+    if (!unittopixelsset) { 
+        // graphics aren't up yet, nothing to do.
+        return;
+    }
+    int i = 0;
+    while (i < graphics_GetCameraCount()) {
+        graphics2dsprites_doForAllSpritesOnScreen(
+            i,
+            &graphics2dsprites_reportVisibilityCallback,
+            DOFORALL_SORT_NONE);
+        i++;
+    }
 }
 
 void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
@@ -1052,6 +978,54 @@ struct graphics2dsprite* sprite, int event, int enabled) {
     mutex_Release(m);
 }
 
+struct getSpriteAtScreenPosData {
+    int cameraId;
+    int x,y;
+    int event;
+    struct graphics2dsprite* result;
+};
+struct getSpriteAtScreenPosData getspriteatscreenposdata;
+static int graphics2dsprites_getSpriteAtScreenPosCallback(
+        struct graphics2dsprite* sprite,
+        __attribute__((unused)) const char* path,
+        __attribute__((unused)) struct graphicstexture* tex,
+        __attribute__((unused)) double r,
+        __attribute__((unused)) double g,
+        __attribute__((unused)) double b,
+        __attribute__((unused)) double alpha,
+        __attribute__((unused)) int visible,
+        int cameraId,
+        __attribute__((unused)) int textureFiltering) {
+    struct getSpriteAtScreenPosData* data =
+        &getspriteatscreenposdata;
+    // skip sprite if disabled for event:
+    if ((!sprite->enabledForEvent[data->event] &&
+    sprite->invisibleForEvent[data->event]) || !sprite->visible) {
+        return 1;
+    }
+
+    // get sprite pos on screen:
+    double x, y, w, h;
+    graphics2dsprite_calculateSizeOnScreen(sprite,
+    cameraId, &x, &y, &w, &h, NULL, NULL, NULL, NULL, NULL, NULL, 0);
+
+    // FIXME: consider rotation here!
+    // check if sprite pos is under mouse pos:
+    if (data->x >= x && data->x < x + w &&
+    data->y >= y && data->y < y + h) {
+        // mouse on this sprite
+        data->result = sprite;
+        return 0;
+    }
+
+    if (sprite == lastEventSprite[data->event]) {
+        // this was the last one we needed to check!
+        data->result = NULL;
+        return 0;
+    }
+    return 1;
+}
+
 struct graphics2dsprite*
 graphics2dsprites_getSpriteAtScreenPos(
 int cameraId, int mx, int my, int event) {
@@ -1060,40 +1034,22 @@ int cameraId, int mx, int my, int event) {
     // first, update lastEventSprite entries if necessary:
     graphics2dsprites_findLastEventSprites();
 
-    // go through sprite list from end
-    // (on top) to beginning (below)
-    struct graphics2dsprite* sprite = spritelistEnd;
-    while (sprite) {
-        // skip sprite if disabled for event:
-        if ((!sprite->enabledForEvent[event] && 
-        sprite->invisibleForEvent[event]) || !sprite->visible) {
-            sprite = sprite->prev;
-            continue;
-        }
+    // set data:
+    // FIXME: doing this global isn't really nice, but works for now
+    getspriteatscreenposdata.cameraId = cameraId;
+    getspriteatscreenposdata.x = mx;
+    getspriteatscreenposdata.y = my;
+    getspriteatscreenposdata.event = event;
 
-        // get sprite pos on screen:
-        double x, y, w, h;
-        graphics2dsprite_calculateSizeOnScreen(sprite,
-        cameraId, &x, &y, &w, &h, NULL, NULL, NULL, NULL, NULL, NULL, 0);
+    // go through all sprites from top to bottom:
+    graphics2dsprites_doForAllSpritesOnScreen(
+        cameraId,
+        &graphics2dsprites_getSpriteAtScreenPosCallback,
+        DOFORALL_SORT_TOPTOBOTTOM);
 
-        // FIXME: consider rotation here!
-        // check if sprite pos is under mouse pos:
-        if (mx >= x && mx < x + w &&
-        my >= y && my < y + h) {
-            // mouse on this sprite
-            mutex_Release(m);
-            return sprite;
-        }
-
-        if (sprite == lastEventSprite[event]) {
-            // this was the last one we needed to check!
-            mutex_Release(m);
-            return NULL;
-        }
-        sprite = sprite->prev;
-    }
+    struct graphics2dsprite* result = getspriteatscreenposdata.result;
     mutex_Release(m);
-    return NULL;
+    return result;
 }
 
 void graphics2dsprites_setUserdata(struct graphics2dsprite* sprite,
@@ -1110,9 +1066,9 @@ void* graphics2dsprites_getUserdata(struct graphics2dsprite* sprite) {
     return udata;
 }
 
-size_t graphics2dsprites_Count(void) {
+size_t graphics2dsprites_count(void) {
     mutex_Lock(m);
-    size_t c = graphics2dsprites_Count_internal();
+    size_t c = graphics2dsprites_count_internal();
     mutex_Release(m);
     return c;
 }

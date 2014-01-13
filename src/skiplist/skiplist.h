@@ -71,7 +71,7 @@ void skiplist_set_seed(unsigned seed);
  * SKIPLIST_GEN_HEIGHT can be replaced at compile-time, but
  * defaults to a probability of 0.5 per each additional level.
  */
-unsigned int SKIPLIST_GEN_HEIGHT();
+unsigned int SKIPLIST_GEN_HEIGHT(void);
 
 /* Add a key/value pair to the skiplist. Equal keys will be kept
  * (bag functionality). KEY and/or VALUE are allowed to be NULL,
