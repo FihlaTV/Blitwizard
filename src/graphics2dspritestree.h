@@ -26,34 +26,33 @@
 
 struct graphics2dsprite;
 
-void graphics2dspritestree_addToTree(struct graphics2dsprite*
-    sprite);
+void graphics2dspritestree_addToTree(struct graphics2dsprite
+    *sprite);
 
 // retrieves all items in the given rectangle in arbitrary order:
 void graphics2dspritestree_doForAllSprites(
     double windowX, double windowY, double windowW, double windowH,
-    int (*callback)(struct graphics2dsprite* sprite, void* userdata),
-    void* userdata);
+    int (*callback)(struct graphics2dsprite *sprite, void *userdata),
+    void *userdata);
 
 // retrieves all items, and then applies quicksort (avg O(log(n)*n))
 // based on z-index/z-index set id
 void graphics2dspritestree_doForAllSpritesSortedBottomToTop(
     double windowX, double windowY, double windowW, double windowH,
-    int (*callback)(struct graphics2dsprite* sprite, void* userdata),
-    void* userdata);
+    int (*callback)(struct graphics2dsprite *sprite, void *userdata),
+    void *userdata);
 
 // retrieves all items, and then applies quicksort (avg O(log(n)*n))
 // based on z-index/z-index set id
 void graphics2dspritestree_doForAllSpritesSortedTopToBottom(
     double windowX, double windowY, double windowW, double windowH,
-    int (*callback)(struct graphics2dsprite* sprite, void* userdata),
-    void* userdata);
+    int (*callback)(struct graphics2dsprite *sprite, void *userdata),
+    void *userdata);
 
 void graphics2dspritestree_removeFromTree(struct graphics2dsprite*
     sprite);
 
-void graphics2dsprites_moveInTree(struct graphics2dsprite* sprite,
-    int newX, int newY);
+void graphics2dspritestree_update(struct graphics2dsprite *sprite);
 
 #endif  // BLITWIZARD_GRPAHICS2DSPRITESTREE_H_
 

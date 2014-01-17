@@ -196,7 +196,7 @@ void graphicssdlrender_CompleteFrame(void) {
 
 static void graphicssdlrender_spriteCallback(
 const struct graphics2dsprite* sprite,
-const char* path, struct graphicstexture* tex,
+const char *path, struct graphicstexture *tex,
 double r, double g, double b, double alpha,
 int visible, int cameraId, int textureFiltering) {
     if (!tex) {

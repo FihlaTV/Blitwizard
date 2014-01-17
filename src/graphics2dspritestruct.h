@@ -78,6 +78,9 @@ struct graphics2dsprite {
     int zindex;
     uint64_t zindexsetid;
 
+    // used by graphis2dspriteslist.c:
+    void* avlptr;
+
     // enabled for sprite events:
     int enabledForEvent[SPRITE_EVENT_TYPE_COUNT];
 

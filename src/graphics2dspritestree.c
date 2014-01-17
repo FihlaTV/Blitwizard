@@ -22,4 +22,54 @@
 */
 
 #include "graphics2dspritestree.h"
+#include "graphics.h"
+static int getspritedimensions(struct graphics2dsprite* sprite,
+        double* w, double* h) {
+#ifdef USE_GRAPHICS
+    if (!unittopixelsset) {
+        return 0;
+    }
+    double w = sprite->width;
+    double h = sprite->height;
+    if (sprite->width == 0) {
+        w = sprite->texWidth;
+    }
+    if (sprite->height == 0) {
+        h = sprite->texHeight
+    }
+    w /= UNIT_TO_PIXELS;
+    h /= UNIT_TO_PIXELS;
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+static int getspritetopleft(struct graphics2dsprite* sprite,
+        double* x, double* y) {
+    double w,h;
+    if (!getspritedimensions(sprite, &w, &h)) {
+        w = 0;
+        h = 0;
+    }
+    *x = (sprite->x) - (w / 2);
+    *y = (sprite->y) - (h / 2);
+    return 1;
+}
+
+#define CHEAPOFAKETREE
+
+#ifdef CHEAPOFAKETREE
+
+struct faketreeentry {
+    struct graphics2dsprite* sprite;
+    double addedx, addedy, addedw, addedh;
+    struct faketreeentry* next;
+};
+
+
+
+#else
+
+#endif
 

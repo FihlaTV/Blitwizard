@@ -150,6 +150,7 @@ size_t width, size_t height, void* userdata) {
 
     s->texWidth = width;
     s->texHeight = height;
+    graphics2dspritestree_update(s);
     if (s->texWidth == 0 && s->texHeight == 0) {
         // texture failed to load.
         s->loadingError = 1;
@@ -417,6 +418,9 @@ void graphics2dsprites_resize(struct graphics2dsprite* sprite,
 double width, double height) {
     sprite->width = width;
     sprite->height = height;
+    if (sprite->pinnedToCamera < 0) {
+        graphics2dspritestree_update(sprite);
+    }
 }
 
 static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
@@ -492,7 +496,7 @@ double x, double y, double angle) {
         sprite->x = x;
         sprite->y = y;
     } else {
-        graphics2dsprites_moveInTree(sprite, x, y);
+        graphics2dspritestree_update(sprite);
     }
     sprite->angle = angle;
     mutex_Release(m);
