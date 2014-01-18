@@ -313,13 +313,13 @@ static int grapics2dsprites_doForAllSpritesCallback(
         return spriteInformation(
         s,
         s->path, s->tex, s->r, s->g, s->b, s->alpha,
-        s->visible, s->pinnedToCamera, s->textureFiltering);
+        s->visible, data->cameraId, s->textureFiltering);
     } else {
         // report sprite as invisible:
         return spriteInformation(
         s,
         s->path, s->tex, s->r, s->g, s->b, s->alpha,
-        0, s->pinnedToCamera, s->textureFiltering);
+        0, data->cameraId, s->textureFiltering);
     }
 }
 
@@ -498,10 +498,9 @@ double x, double y, double angle) {
     sprite->prevx = x;
     sprite->prevy = y;
 #endif
-    if (sprite->pinnedToCamera >= 0) {
-        sprite->x = x;
-        sprite->y = y;
-    } else {
+    sprite->x = x;
+    sprite->y = y;
+    if (sprite->pinnedToCamera < 0) {
         graphics2dspritestree_update(sprite);
     }
     sprite->angle = angle;
@@ -908,6 +907,7 @@ static int graphics2dsprites_reportVisibilityCallback(
         __attribute__((unused)) int visible,
         int cameraId,
         __attribute__((unused)) int textureFiltering) {
+    assert(cameraId >= 0);
     if (!sprite->texWidth || !sprite->texHeight
     || sprite->loadingError || !sprite->tex) {
         return 1;

@@ -21,6 +21,7 @@
 
 */
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -102,7 +103,7 @@ void graphics2dspritestree_doForAllSprites(
         int onscreen = 0;
         if (t->addedx + t->addedw > windowX &&
                 t->addedx < windowX + windowW &&
-                t->addedy + t->addedh > windowH &&
+                t->addedy + t->addedh > windowY &&
                 t->addedy < windowY + windowH) {
             onscreen = 1;
         }
@@ -167,7 +168,7 @@ static int graphics2dspritestree_spriteSortCallback(
         int newsize = sortlistfill + 200;
         struct spritesortentry* newsortlist = realloc(sortlist,
             sizeof(struct spritesortentry) * newsize);
-        if (!sortlist) {
+        if (!newsortlist) {
             return 0;
         }
         sortlist = newsortlist;
