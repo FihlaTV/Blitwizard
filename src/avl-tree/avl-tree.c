@@ -1,6 +1,7 @@
 /*
 
 Copyright (c) 2005-2008, Simon Howard
+Additions by Jonas Thiem
 
 Permission to use, copy, modify, and/or distribute this software 
 for any purpose with or without fee is hereby granted, provided 
@@ -18,7 +19,13 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
+#include <assert.h>
+#include <string.h>
 #include <stdlib.h>
+
+#ifndef NDEBUG
+#define NODEVERIFY
+#endif
 
 #include "avl-tree.h"
 
@@ -31,7 +38,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* AVL Tree (balanced binary search tree) */
 
 struct _AVLTreeNode {
-	AVLTreeNode *children[2];
+#ifdef NODEVERIFY
+#define NODEMAGIC "r9zjhusnrfopnoiu"
+    char nodemagic[16];
+#endif 
+    AVLTreeNode *children[2];
 	AVLTreeNode *parent;
 	AVLTreeKey key;
 	AVLTreeValue value;
@@ -43,6 +54,12 @@ struct _AVLTree {
 	AVLTreeCompareFunc compare_func;
 	unsigned int num_nodes;
 };
+
+#ifdef NODEVERIFY
+void assertverifynode(AVLTreeNode *n) {
+    assert(memcmp(n->nodemagic, NODEMAGIC, strlen(NODEMAGIC)) == 0);
+}
+#endif
 
 AVLTree *avl_tree_new(AVLTreeCompareFunc compare_func)
 {
@@ -330,7 +347,12 @@ AVLTreeNode *avl_tree_insert(AVLTree *tree, AVLTreeKey key, AVLTreeValue value)
 	if (new_node == NULL) {
 		return NULL;
 	}
-	
+
+    memset(new_node, 0, sizeof(*new_node));
+#ifdef NODEVERIFY
+    memcpy(new_node->nodemagic, NODEMAGIC, 16);
+#endif
+
 	new_node->children[AVL_TREE_NODE_LEFT] = NULL;
 	new_node->children[AVL_TREE_NODE_RIGHT] = NULL;
 	new_node->parent = previous_node;

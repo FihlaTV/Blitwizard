@@ -134,9 +134,11 @@ static AVLTreeNode *findoutermostnode(AVLTreeNode *node, int forwards) {
 }
 
 static AVLTreeNode *findnext(AVLTreeNode *node, int forwards) {
+    assertverifynode(node);
     // see if we have a parent:
     AVLTreeNode *dontreturnto = NULL;
     while (1) {
+        assertverifynode(node);
         // get next child in order if present:
         AVLTreeNode* child;
         if (forwards) {
@@ -147,12 +149,14 @@ static AVLTreeNode *findnext(AVLTreeNode *node, int forwards) {
                 node, AVL_TREE_NODE_LEFT);
         }
         if (child && child != dontreturnto) {
+            assertverifynode(child);
             // we want to go here! but the outermost child of this
             return findoutermostnode(child, forwards);
         }
         // get next sibling (through parent) if possible:
-        AVLTreeNode* parent = avl_tree_node_parent(parent);
+        AVLTreeNode* parent = avl_tree_node_parent(node);
         if (parent) {
+            assertverifynode(parent);
             // the parent may atually be our next node:
             if (forwards) {
                 if (node == avl_tree_node_child(parent,

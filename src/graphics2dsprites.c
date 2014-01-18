@@ -706,8 +706,10 @@ int visible) {
                     eventSpriteCount[i]++;
                     // last event sprite needs to be recalculated
                     // if it has a higher zindex:
-                    if (lastEventSprite[i]->zindex >= sprite->zindex) {
-                        lastEventSprite[i] = NULL;
+                    if (lastEventSprite[i]) {
+                        if (lastEventSprite[i]->zindex >= sprite->zindex) {
+                            lastEventSprite[i] = NULL;
+                        }
                     }
                 }
                 i++;

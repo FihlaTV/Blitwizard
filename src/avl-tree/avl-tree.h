@@ -278,6 +278,10 @@ AVLTreeValue *avl_tree_to_array(AVLTree *tree);
 
 unsigned int avl_tree_num_entries(AVLTree *tree);
 
+/** Added by Jonas Thiem to verify integrity of a node: */
+
+void assertverifynode(AVLTreeNode *n);
+
 #ifdef __cplusplus
 }
 #endif

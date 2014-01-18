@@ -530,7 +530,7 @@ static void determineBinaryPath(const char* argv0) {
 // to check on whether a script is hanging for too long
 // (=suspected hang)
 uint64_t scriptTerminateTime = 0;
-int scriptMaxRuntime = 10000;
+int scriptMaxRuntime = 5000;
 int terminateCurrentScript(void* userdata) {
     return (time_GetMilliseconds() < scriptTerminateTime);
 }
@@ -644,6 +644,8 @@ int main(int argc, char** argv) {
                     printf("   -failsafe-audio        Use 16bit signed int audio and avoid\n"
                            "                          audio backends known as troublesome\n");
                     printf("   -help                  Show this help text and quit\n");
+                    printf("   -long-execution        Default to lengthier script execution\n"
+                           "                          time\n");
                     printf("   -templatepath [path]   Check another place for "
                            "templates\n"
                            "                          (not the default "
@@ -654,6 +656,12 @@ int main(int argc, char** argv) {
                 }
                 if (strcasecmp(argv[i], "-failsafe-audio") == 0) {
                     failsafeaudio = 1;
+                    i++;
+                    continue;
+                }
+                if (strcasecmp(argv[i], "-long-execution") == 0) {
+                    scriptMaxRuntime = 20000;
+                    scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
                     i++;
                     continue;
                 }
