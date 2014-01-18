@@ -197,15 +197,15 @@ void graphicssdlrender_CompleteFrame(void) {
     SDL_RenderPresent(mainrenderer);
 }
 
-static void graphicssdlrender_spriteCallback(
-        const struct graphics2dsprite* sprite,
+static int graphicssdlrender_spriteCallback(
+        struct graphics2dsprite* sprite,
         void* userdata) {
     struct graphicstexture* tex = sprite->tex;
     if (!tex) {
-        return;
+        return 1;
     }
     if (!sprite->visible) {
-        return;
+        return 1;
     }
 
     double x, y, width, height;
@@ -222,16 +222,28 @@ static void graphicssdlrender_spriteCallback(
     sourceWidth/2, sourceHeight/2, angle, horiflip,
     sprite->r, sprite->g, sprite->b,
     sprite->textureFiltering);
+    return 1;
 }
 
 void graphicsrender_Draw(void) {
     graphicssdlrender_StartFrame();
 
-    // render sprites:
-    //graphics2dspritestree_doForAllSpritesSortedBottomToTop(
-    //    i);
+    graphics2dsprites_lockListOrTreeAccess();
+    // render world sprites:
+    double w = graphics_GetCameraWidth(0);
+    double h = graphics_GetCameraHeight(0);
+    double z = graphics_GetCamera2DZoom(0);
+    double cwidth = (w/UNIT_TO_PIXELS) * z;
+    double cheight = (w/UNIT_TO_PIXELS) * z;
+    double ctopleftx = graphics_GetCamera2DCenterX(0) - cwidth/2;
+    double ctoplefty = graphics_GetCamera2DCenterY(0) - cheight/2;
+    graphics2dspritestree_doForAllSpritesSortedBottomToTop(
+        ctopleftx, ctoplefty, cwidth, cheight,
+        &graphicssdlrender_spriteCallback, NULL);
+    // render camera-pinned sprites:
     graphics2dspriteslist_doForAllSpritesBottomToTop(
         &graphicssdlrender_spriteCallback, NULL);
+    graphics2dsprites_releaseListOrTreeAccess();
 
     graphicssdlrender_CompleteFrame();
 }

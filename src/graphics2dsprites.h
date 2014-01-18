@@ -232,6 +232,9 @@ double* source_angle, int* phoriflip, int compensaterotation);
 void graphics2dsprites_setTextureFiltering(struct graphics2dsprite* sprite,
 int filter);
 
+void graphics2dsprites_lockListOrTreeAccess(void);
+void graphics2dsprites_releaseListOrTreeAccess(void);
+
 #ifdef __cplusplus
 }
 #endif

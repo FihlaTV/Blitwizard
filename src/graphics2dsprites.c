@@ -333,7 +333,7 @@ struct graphics2dsprite* sprite,
 const char* path, struct graphicstexture* tex,
 double r, double g, double b, double alpha,
 int visible, int cameraId, int textureFiltering),
-int sort) {
+int sort, int lock) {
     if (!spriteInformation) {
         return;
     }
@@ -346,8 +346,10 @@ int sort) {
     if (cameraId < 0 || cameraId >= c) {
         return;
     }
-    texturemanager_lockForTextureAccess();
-    mutex_Lock(m);
+    if (lock) {
+        texturemanager_lockForTextureAccess();
+        mutex_Lock(m);
+    }
 
     // get position of camera in game world:
     double zoom = graphics_GetCamera2DZoom(cameraId);
@@ -368,8 +370,10 @@ int sort) {
     // allocate data pointer:
     struct doforallspritesonscreendata* data = malloc(sizeof(*data));
     if (!data) {
-        mutex_Release(m);
-        texturemanager_releaseFromTextureAccess();
+        if (lock) {
+            mutex_Release(m);
+            texturemanager_releaseFromTextureAccess();
+        }
         return;
     }
     memset(data, 0, sizeof(*data));
@@ -400,8 +404,10 @@ int sort) {
             &grapics2dsprites_doForAllSpritesCallback, data);
     }
 
-    mutex_Release(m);
-    texturemanager_releaseFromTextureAccess();
+    if (lock) {
+        mutex_Release(m);
+        texturemanager_releaseFromTextureAccess();
+    }
 }
 
 void graphics2dsprites_setTextureFiltering(struct graphics2dsprite* sprite,
@@ -692,8 +698,10 @@ int visible) {
                     eventSpriteCount[i]--;
                     // last event sprite needs to be recalculated
                     // if it was us:
-                    if (lastEventSprite[i] == sprite) {
-                        lastEventSprite[i] = NULL;
+                    if (lastEventSprite[i]) {
+                        if (lastEventSprite[i] == sprite) {
+                            lastEventSprite[i] = NULL;
+                        }
                     }
                 }
                 i++;
@@ -941,7 +949,7 @@ void graphics2dsprites_reportVisibility(void) {
         graphics2dsprites_doForAllSpritesOnScreen(
             i,
             &graphics2dsprites_reportVisibilityCallback,
-            DOFORALL_SORT_NONE);
+            DOFORALL_SORT_NONE, 1);
         i++;
     }
 }
@@ -971,7 +979,7 @@ struct graphics2dsprite* sprite, int event, int enabled) {
     } else {
         if (sprite->visible) {
             eventSpriteCount[event]--;
-            if (lastEventSprite[event] == sprite) {
+            if (lastEventSprite[event] && lastEventSprite[event] == sprite) {
                 // we were the last, so now it must be someone else:
                 recalculate = 1;
             }
@@ -1035,6 +1043,7 @@ static int graphics2dsprites_getSpriteAtScreenPosCallback(
 struct graphics2dsprite*
 graphics2dsprites_getSpriteAtScreenPos(
 int cameraId, int mx, int my, int event) {
+    texturemanager_lockForTextureAccess();
     mutex_Lock(m);
 
     // first, update lastEventSprite entries if necessary:
@@ -1051,10 +1060,11 @@ int cameraId, int mx, int my, int event) {
     graphics2dsprites_doForAllSpritesOnScreen(
         cameraId,
         &graphics2dsprites_getSpriteAtScreenPosCallback,
-        DOFORALL_SORT_TOPTOBOTTOM);
+        DOFORALL_SORT_TOPTOBOTTOM, 0);
 
     struct graphics2dsprite* result = getspriteatscreenposdata.result;
     mutex_Release(m);
+    texturemanager_releaseFromTextureAccess();
     return result;
 }
 
@@ -1077,6 +1087,14 @@ size_t graphics2dsprites_count(void) {
     size_t c = graphics2dsprites_count_internal();
     mutex_Release(m);
     return c;
+}
+
+void graphics2dsprites_lockListOrTreeAccess(void) {
+    mutex_Lock(m);
+}
+
+void graphics2dsprites_releaseListOrTreeAccess(void) {
+    mutex_Release(m);
 }
 
 #endif
