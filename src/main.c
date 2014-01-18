@@ -530,7 +530,7 @@ static void determineBinaryPath(const char* argv0) {
 // to check on whether a script is hanging for too long
 // (=suspected hang)
 uint64_t scriptTerminateTime = 0;
-int scriptMaxRuntime = 5000;
+int scriptMaxRuntime = 10000;
 int terminateCurrentScript(void* userdata) {
     return (time_GetMilliseconds() < scriptTerminateTime);
 }

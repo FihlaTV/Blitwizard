@@ -189,7 +189,7 @@ int luafuncs_debug_getTextureRequestCount(lua_State* l) {
 // @treturn number total number of 2d sprites
 int luafuncs_debug_get2dSpriteCount(lua_State* l) {
 #ifdef USE_GRAPHICS
-    lua_pushnumber(l, graphics2dsprites_Count());
+    lua_pushnumber(l, 0); //graphics2dsprites_Count());
 #else
     lua_pushnumber(l, 0);
 #endif
@@ -233,7 +233,7 @@ static int luacfuncs_addTextureToLuaTable(
         lua_pop(l, 1);
         return 1;
     }
-    int i = 0;
+    unsigned int i = 0;
     unsigned int len = strlen(s);
     while (i < len - 1) {
         if ((s[i] == '/' && s[i + 1] == '/') ||

@@ -56,6 +56,9 @@
 #include "graphics2dsprites.h"
 #include "graphicssdl.h"
 #include "graphicssdlrender.h"
+#include "graphics2dspritestruct.h"
+#include "graphics2dspriteslist.h"
+#include "graphics2dspritestree.h"
 
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
@@ -195,14 +198,13 @@ void graphicssdlrender_CompleteFrame(void) {
 }
 
 static void graphicssdlrender_spriteCallback(
-const struct graphics2dsprite* sprite,
-const char *path, struct graphicstexture *tex,
-double r, double g, double b, double alpha,
-int visible, int cameraId, int textureFiltering) {
+        const struct graphics2dsprite* sprite,
+        void* userdata) {
+    struct graphicstexture* tex = sprite->tex;
     if (!tex) {
         return;
     }
-    if (!visible) {
+    if (!sprite->visible) {
         return;
     }
 
@@ -215,18 +217,21 @@ int visible, int cameraId, int textureFiltering) {
     &sourceWidth, &sourceHeight, &angle, &horiflip, 0);
 
     // render:
-    graphicsrender_DrawCropped(tex, x, y, alpha,
+    graphicsrender_DrawCropped(tex, x, y, sprite->alpha,
     sourceX, sourceY, sourceWidth, sourceHeight, width, height,
     sourceWidth/2, sourceHeight/2, angle, horiflip,
-    r, g, b, textureFiltering);
+    sprite->r, sprite->g, sprite->b,
+    sprite->textureFiltering);
 }
 
 void graphicsrender_Draw(void) {
     graphicssdlrender_StartFrame();
 
     // render sprites:
-    graphics2dsprites_doForAllSprites(
-        &graphicssdlrender_spriteCallback);
+    //graphics2dspritestree_doForAllSpritesSortedBottomToTop(
+    //    i);
+    graphics2dspriteslist_doForAllSpritesBottomToTop(
+        &graphicssdlrender_spriteCallback, NULL);
 
     graphicssdlrender_CompleteFrame();
 }

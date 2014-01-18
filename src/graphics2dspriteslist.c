@@ -29,7 +29,7 @@
 #include "threading.h"
 #include "avl-tree/avl-tree.h"
 
-AVLTree* spritetree;
+AVLTree *spritetree = NULL;
 struct spriteorderinfo {
     int zindex;
     uint64_t zindexsetid;
