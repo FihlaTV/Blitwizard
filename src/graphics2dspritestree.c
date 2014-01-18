@@ -21,6 +21,7 @@
 
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -194,12 +195,123 @@ static void graphics2dspritestree_obtainUnsortedList(
 
 static void graphics2dspritestree_reportSortedList(
         int (*callback)(struct graphics2dsprite* sprite,
-        void* userdata), void* userdata) {
-    size_t i = 0;
-    while (i < sortlistfill) {
+        void* userdata), void* userdata, int bottomup) {
+    int i = 0;
+    if (!bottomup) {
+        i = sortlistfill - 1;
+    }
+    while ((bottomup && i < (int)sortlistfill) ||
+            (!bottomup && i >= 0)) {
         callback(sortlist[i].sprite, userdata);
+        if (bottomup) {
+            i++;
+        } else {
+            i--;
+        }
+    }
+}
+
+static int spriteisbefore(int a, int b) {
+    if (sortlist[a].zindex < sortlist[b].zindex) {
+        return 1;
+    } else if (sortlist[a].zindex > sortlist[b].zindex) {
+        return 1;
+    } else {
+        return (sortlist[a].zindexsetid < sortlist[b].zindexsetid);
+    }
+}
+
+static void swap(int a, int b) {
+    assert(0 <= a);
+    assert(a < sortlistfill);
+    assert(0 <= b);
+    assert(b < sortlistfill);
+    assert(a != b);
+    struct spritesortentry tempentry;
+    memcpy(&tempentry, &sortlist[a], sizeof(tempentry));
+    memcpy(&sortlist[a], &sortlist[b], sizeof(sortlist[a]));
+    memcpy(&sortlist[b], &tempentry, sizeof(tempentry));
+}
+
+static void graphics2dspritestree_doSortFunc(int from, int to) {
+    assert(from <= to);
+    if (from == to) {
+        return;
+    }
+    if (from == to - 1) {
+        if (!spriteisbefore(from, to)) {
+            swap(from, to);
+        }
+        return;
+    }
+    int pivot = from+(to-from)/2;
+    int i = from;
+    while (i < to) {
+        assert(from <= pivot);
+        assert(pivot <= to);
+        if (i < pivot) {
+            // this item needs to be smaller
+            if (!spriteisbefore(i, pivot)) {
+                assert(i >= from);
+                assert(i < pivot);
+                // it isn't. fix!
+                if (i == pivot - 1) {
+                    // swap with pivot:
+                    swap(i, pivot);
+                    pivot--;
+                } else {
+                    // swap the item before with the pivot,
+                    // then that item with us.
+                    swap(pivot - 1, pivot);
+                    swap(i, pivot);
+                    pivot--;
+                }
+                assert(pivot >= from);
+                assert(from <= pivot);
+            }
+        } else {
+            if (i == pivot) {
+                i++;
+                continue;
+            }
+            // this item needs to be bigger
+            if (spriteisbefore(i, pivot)) {
+                // it isn't. fix!
+                if (i == pivot + 1) {
+                    // swap with pivot:
+                    swap(i, pivot);
+                    pivot++;
+                } else {
+                    // swap the item after with the pivot,
+                    // then that item with us
+                    swap(pivot + 1, pivot);
+                    swap(i, pivot);
+                    pivot++;
+                }
+                assert(pivot <= to);
+                assert(from <= pivot);
+            }
+        }
         i++;
     }
+    assert(from < to);
+    assert(from <= pivot);
+    assert(pivot <= to);
+    if (pivot > from) {
+        graphics2dspritestree_doSortFunc(from, pivot - 1);
+    }
+    if (pivot < to) {
+        graphics2dspritestree_doSortFunc(pivot + 1, to);
+    }
+}
+
+static void graphics2dspritestree_doSort(void) {
+    if (sortlistfill <= 1) {
+        return;
+    }
+    int from = 0;
+    int to = sortlistfill;
+    graphics2dspritestree_doSortFunc(from, to);
 }
 
 void graphics2dspritestree_doForAllSpritesSortedBottomToTop(
@@ -210,7 +322,8 @@ void graphics2dspritestree_doForAllSpritesSortedBottomToTop(
         void *userdata) {
     graphics2dspritestree_obtainUnsortedList(windowX,
         windowY, windowW, windowH);
-    graphics2dspritestree_reportSortedList(callback, userdata);
+    graphics2dspritestree_doSort();
+    graphics2dspritestree_reportSortedList(callback, userdata, 1);
 }
 
 void graphics2dspritestree_doForAllSpritesSortedTopToBottom(
@@ -221,7 +334,8 @@ void graphics2dspritestree_doForAllSpritesSortedTopToBottom(
         void *userdata) {
     graphics2dspritestree_obtainUnsortedList(windowX, windowY,
         windowW, windowH);
-    graphics2dspritestree_reportSortedList(callback, userdata);
+    graphics2dspritestree_doSort();
+    graphics2dspritestree_reportSortedList(callback, userdata, 0);
 }
 
 

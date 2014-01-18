@@ -532,6 +532,7 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
         int i = 0;
         while (i < SPRITE_EVENT_TYPE_COUNT) {
             if (s->enabledForEvent[i]
+            && lastEventSprite[i]
             && lastEventSprite[i]->zindex >= s->zindex) {
                 recalculateLastEventSprite[i] = 1;
                 lastEventSprite[i] = NULL;
