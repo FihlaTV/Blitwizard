@@ -202,7 +202,19 @@ static void graphics2dspritestree_reportSortedList(
     }
     while ((bottomup && i < (int)sortlistfill) ||
             (!bottomup && i >= 0)) {
-        callback(sortlist[i].sprite, userdata);
+        // report current list item:
+        if (!callback(sortlist[i].sprite, userdata)) {
+            return;
+        }
+        // ensure the sorting was done correctly:
+#ifndef NDEBUG
+        if (i > 0) { 
+            assert(sortlist[i].zindex >= sortlist[i-1].zindex);
+            assert(sortlist[i].zindex != sortlist[i-1].zindex ||
+                sortlist[i].zindexsetid > sortlist[i-1].zindexsetid);
+        }
+#endif
+        // advance to next item:
         if (bottomup) {
             i++;
         } else {
