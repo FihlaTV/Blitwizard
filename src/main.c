@@ -130,11 +130,11 @@ void main_Quit(int returncode) {
     listeners_CloseAll();
     // close graphics first since that is fast:
 #ifdef USE_GRAPHICS
-    graphics_Quit();
+    //graphics_Quit();
 #endif
     // then close audio (might hang for 1-3 seconds):
 #ifdef USE_SDL_AUDIO
-    audio_Quit();
+    //audio_Quit();
     // FIXME: make sure this is ok with
     // http://bugzilla.libsdl.org/show_bug.cgi?id=1396
 #endif

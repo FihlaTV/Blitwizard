@@ -79,6 +79,14 @@ static struct faketreeentry* faketreelist = NULL;
 
 
 void graphics2dspritestree_addToTree(struct graphics2dsprite* sprite) {
+#ifndef NDEBUG
+    struct faketreeentry* titerate = faketreelist;
+    while (titerate) {
+        assert(titerate->sprite != sprite);
+        assert(titerate->sprite->zindexsetid != sprite->zindexsetid);
+        titerate = titerate->next;
+    }
+#endif
     struct faketreeentry* t = malloc(sizeof(*t));
     if (!t) {
         return;
@@ -227,8 +235,9 @@ static int spriteisbefore(int a, int b) {
     if (sortlist[a].zindex < sortlist[b].zindex) {
         return 1;
     } else if (sortlist[a].zindex > sortlist[b].zindex) {
-        return 1;
+        return 0;
     } else {
+        assert(sortlist[a].zindex == sortlist[b].zindex);
         return (sortlist[a].zindexsetid < sortlist[b].zindexsetid);
     }
 }
@@ -245,14 +254,32 @@ static void swap(int a, int b) {
     memcpy(&sortlist[b], &tempentry, sizeof(tempentry));
 }
 
+static void graphics2dspritestree_printSortedList(int currentItem, int pivot) {
+    int i = 0;
+    while (i < sortlistfill) {
+        char currentItemC = ' ';
+        char pivotC = ' ';
+        if (currentItem == i) {
+            currentItemC = 'C';
+        }
+        if (pivot == i) {
+            pivotC == 'P';
+        }
+        printf("[%d] zindex: %d, zindexsetid: %llu [%c][%c]\n", i,
+            sortlist[i].zindex, sortlist[i].zindexsetid,
+            currentItemC, pivotC);
+        i++;
+    }
+}
+
 static void graphics2dspritestree_doSortFunc(int from, int to) {
-    assert(from <= to);
-    if (from == to) {
+    assert(from < to);
+    if (from == to - 1) {
         return;
     }
-    if (from == to - 1) {
-        if (!spriteisbefore(from, to)) {
-            swap(from, to);
+    if (from == to - 2) {
+        if (!spriteisbefore(from, to - 1)) {
+            swap(from, to - 1);
         }
         return;
     }
@@ -264,12 +291,14 @@ static void graphics2dspritestree_doSortFunc(int from, int to) {
         if (i < pivot) {
             // this item needs to be smaller
             if (!spriteisbefore(i, pivot)) {
+                assert(spriteisbefore(pivot, i));
                 assert(i >= from);
                 assert(i < pivot);
                 // it isn't. fix!
                 if (i == pivot - 1) {
                     // swap with pivot:
                     swap(i, pivot);
+                    assert(spriteisbefore(i, pivot));
                     pivot--;
                 } else {
                     // swap the item before with the pivot,
@@ -277,6 +306,8 @@ static void graphics2dspritestree_doSortFunc(int from, int to) {
                     swap(pivot - 1, pivot);
                     swap(i, pivot);
                     pivot--;
+                    assert(spriteisbefore(pivot, pivot + 1));
+                    continue;  // do not advance i
                 }
                 assert(pivot >= from);
                 assert(from <= pivot);
@@ -288,17 +319,21 @@ static void graphics2dspritestree_doSortFunc(int from, int to) {
             }
             // this item needs to be bigger
             if (spriteisbefore(i, pivot)) {
+                assert(!spriteisbefore(pivot, i));
                 // it isn't. fix!
                 if (i == pivot + 1) {
                     // swap with pivot:
                     swap(i, pivot);
+                    assert(!spriteisbefore(i, pivot));
                     pivot++;
                 } else {
                     // swap the item after with the pivot,
                     // then that item with us
                     swap(pivot + 1, pivot);
                     swap(i, pivot);
+                    assert(spriteisbefore(pivot, pivot+1));
                     pivot++;
+                    continue;  // do not advance i
                 }
                 assert(pivot <= to);
                 assert(from <= pivot);
@@ -309,10 +344,30 @@ static void graphics2dspritestree_doSortFunc(int from, int to) {
     assert(from < to);
     assert(from <= pivot);
     assert(pivot <= to);
-    if (pivot > from) {
-        graphics2dspritestree_doSortFunc(from, pivot - 1);
+#ifndef NDEBUG
+    // ensure sorting is correct:
+    i = from;
+    while (i < to) {
+        if (i < pivot) {
+            if (!spriteisbefore(i, pivot)) {
+                printf("faulty element: %d\n", i);
+                fflush(stdout);
+                assert(spriteisbefore(i, pivot));
+            }
+        } else if (i > pivot) {
+            if (!spriteisbefore(pivot, i)) {
+                printf("faulty element: %d\n", i);
+                fflush(stdout);
+                assert(spriteisbefore(pivot, i));
+            }
+        }
+        i++;
     }
-    if (pivot < to) {
+#endif
+    if (pivot > from) {
+        graphics2dspritestree_doSortFunc(from, pivot);
+    }
+    if (pivot + 1 < to) {
         graphics2dspritestree_doSortFunc(pivot + 1, to);
     }
 }

@@ -585,6 +585,8 @@ const char* texturePath, double x, double y, double width, double height) {
     s->height = height;
     s->path = strdup(texturePath);
     s->zindex = 0;
+    s->zindexsetid = currentzindexsetid;
+    currentzindexsetid++;
     s->parallax = 1;
     if (!s->path) {
         poolAllocator_free(spriteAllocator, s);
