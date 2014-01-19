@@ -15,6 +15,7 @@ cd $previousdir
 
 # Find out how to run blitwizard:
 RUNBLITWIZARD="../bin/blitwizard$EXEEXT"
+BINARYPATH="../bin/blitwizard$EXEEXT"
 RUNBINARY=""
 windowscheck=`echo $HOST | grep mingw`
 if [ -n "$windowscheck" ]; then
