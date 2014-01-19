@@ -66,6 +66,8 @@ static int getspritetopleft(struct graphics2dsprite* sprite,
     return 1;
 }
 
+#ifdef USE_GRAPHICS
+
 #define CHEAPOFAKETREE
 
 #ifdef CHEAPOFAKETREE
@@ -405,4 +407,5 @@ void graphics2dspritestree_doForAllSpritesSortedTopToBottom(
     graphics2dspritestree_reportSortedList(callback, userdata, 0);
 }
 
+#endif
 

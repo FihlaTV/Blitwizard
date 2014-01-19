@@ -21,6 +21,7 @@
 
 */
 
+#include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 
@@ -28,6 +29,8 @@
 #include "graphics2dspriteslist.h"
 #include "threading.h"
 #include "avl-tree/avl-tree.h"
+
+#ifdef USE_GRAPHICS
 
 AVLTree *spritetree = NULL;
 struct spriteorderinfo {
@@ -223,4 +226,5 @@ void graphics2dspriteslist_removeFromList(struct graphics2dsprite
     avl_tree_remove_node(spritetree, sprite->avlptr);
 }
 
+#endif  // USE_GRAPHICS
 
