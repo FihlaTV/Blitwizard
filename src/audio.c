@@ -32,7 +32,7 @@
 int failsafeaudio = 0;
 
 // valid sound buffer sizes for audio:
-#define DEFAULTSOUNDBUFFERSIZE (2048)
+#define DEFAULTSOUNDBUFFERSIZE (4096)
 #define MINSOUNDBUFFERSIZE 512
 #define MAXSOUNDBUFFERSIZE (1024 * 10)
 

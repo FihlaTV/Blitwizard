@@ -192,7 +192,9 @@ static void graphics2dspriteslist_doForAllSprites_Internal(
         node = findlastnode();
     }
     while (node) {
-        callback(avl_tree_node_value(node), userdata);
+        if (!callback(avl_tree_node_value(node), userdata)) {
+            return;
+        }
         node = findnext(node, fromtop);
     }
     return;

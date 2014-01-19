@@ -413,7 +413,14 @@ struct graphicstexturemanaged* gtm, int slot) {
 #endif
                     return texturemanager_getRandomGPUTexture(gtm);
                 }
-                if (currentuploads >= maxuploads && maxuploads > 0) {
+                // check if this texture has a trivial size:
+                int trivialsize = 0;
+                if (gtm->scalelist[i].width * gtm->scalelist[i].height <=
+                        256 * 256) {
+                    trivialsize = 1;
+                }
+                if (!trivialsize &&
+                        (currentuploads >= maxuploads && maxuploads > 0)) {
 #ifdef DEBUGTEXTUREMANAGER
                     //printinfo("[TEXMAN] GPU upload of %s size %d DELAYED "
                     //"(max uploads)", gtm->path, i);

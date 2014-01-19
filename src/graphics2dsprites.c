@@ -291,7 +291,8 @@ struct doforallspritesonscreendata {
     int cameraId;
 };
 
-static int grapics2dsprites_doForAllSpritesCallback(
+static int abortedearly = 0;
+static int graphics2dsprites_doForAllSpritesCallback(
         struct graphics2dsprite* s, void* userdata) {
     // get info from userdata:
     struct doforallspritesonscreendata* data = userdata;
@@ -308,19 +309,24 @@ static int grapics2dsprites_doForAllSpritesCallback(
         return 1;
     }
     // call sprite information callback:
+    int r;
     if ((s->clippingWidth > 0 && s->clippingHeight > 0) ||
     !s->clippingEnabled) {
-        return spriteInformation(
+        r = spriteInformation(
         s,
         s->path, s->tex, s->r, s->g, s->b, s->alpha,
         s->visible, data->cameraId, s->textureFiltering);
     } else {
         // report sprite as invisible:
-        return spriteInformation(
+        r = spriteInformation(
         s,
         s->path, s->tex, s->r, s->g, s->b, s->alpha,
         0, data->cameraId, s->textureFiltering);
     }
+    if (!r) {
+        abortedearly = 1;
+    }
+    return r;
 }
 
 #define DOFORALL_SORT_NONE 0
@@ -380,28 +386,37 @@ int sort, int lock) {
     data->spriteInformation = spriteInformation;
     data->cameraId = cameraId;
 
-    // first, for all the potentially visible sprites in the game world:
+    // for top to bottom, go for on-screen/pinned first and then world
+    // objects:
     if (sort == DOFORALL_SORT_TOPTOBOTTOM) {
-        graphics2dspritestree_doForAllSpritesSortedTopToBottom(
-            posx, posy, width, height,
-            &grapics2dsprites_doForAllSpritesCallback, data);
-    } else if (sort == DOFORALL_SORT_BOTTOMTOTOP) {
-        graphics2dspritestree_doForAllSpritesSortedBottomToTop(
-            posx, posy, width, height,
-            &grapics2dsprites_doForAllSpritesCallback, data);
-    } else {
-        graphics2dspritestree_doForAllSprites(
-            posx, posy, width, height,
-            &grapics2dsprites_doForAllSpritesCallback, data);
-    }
-
-    // now do this for all on-screen (pinned) sprites:
-    if (sort != DOFORALL_SORT_TOPTOBOTTOM) {
-        graphics2dspriteslist_doForAllSpritesBottomToTop(
-            &grapics2dsprites_doForAllSpritesCallback, data);
-    } else {
+        abortedearly = 0;
+        // on-screen (pinned) sprites:
         graphics2dspriteslist_doForAllSpritesTopToBottom(
-            &grapics2dsprites_doForAllSpritesCallback, data);
+             &graphics2dsprites_doForAllSpritesCallback, data);
+        // for potentially visible sprites in the game world:
+        if (!abortedearly) {
+            graphics2dspritestree_doForAllSpritesSortedTopToBottom(
+                posx, posy, width, height,
+                &graphics2dsprites_doForAllSpritesCallback, data);
+        }
+    } else {
+        abortedearly = 0;
+        // first, for all the potentially visible sprites in the game world:
+        if (sort == DOFORALL_SORT_BOTTOMTOTOP) {
+            graphics2dspritestree_doForAllSpritesSortedBottomToTop(
+                posx, posy, width, height,
+                &graphics2dsprites_doForAllSpritesCallback, data);
+        } else {
+            graphics2dspritestree_doForAllSprites(
+                posx, posy, width, height,
+                &graphics2dsprites_doForAllSpritesCallback, data);
+        }
+
+        // now do this for all on-screen (pinned) sprites:
+        if (!abortedearly) {
+            graphics2dspriteslist_doForAllSpritesBottomToTop(
+                &graphics2dsprites_doForAllSpritesCallback, data);
+        }
     }
 
     if (lock) {
@@ -435,7 +450,7 @@ static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
     spritesInListCount--;
 
     // for pinned sprites only:
-    if (sprite->pinnedToCamera >= 0) {
+    if (sprite->pinnedToCamera >= 0 && sprite->visible) {
         // if this is enabled for an event, remember to recalculate
         // last event sprite if necessary:
         int i = 0;
@@ -526,7 +541,7 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     }
 
     // only important if pinned:
-    if (s->pinnedToCamera >= 0) {
+    if (s->pinnedToCamera >= 0 && s->visible) {
         // if enabled for event and lower in sorting than lowest sprite,
         // then we'll need to recalculate the lowest event sprite:
         int i = 0;
@@ -1013,6 +1028,7 @@ static int graphics2dsprites_getSpriteAtScreenPosCallback(
         __attribute__((unused)) int visible,
         int cameraId,
         __attribute__((unused)) int textureFiltering) {
+    assert(!abortedearly);
     struct getSpriteAtScreenPosData* data =
         &getspriteatscreenposdata;
     // skip sprite if disabled for event:
@@ -1031,15 +1047,19 @@ static int graphics2dsprites_getSpriteAtScreenPosCallback(
     if (data->x >= x && data->x < x + w &&
     data->y >= y && data->y < y + h) {
         // mouse on this sprite
-        data->result = sprite;
+        if (sprite->enabledForEvent[data->event]) {
+            data->result = sprite;
+        } else {
+            data->result = NULL;
+        }
         return 0;
     }
 
-    if (sprite == lastEventSprite[data->event]) {
+    /*if (sprite == lastEventSprite[data->event]) {
         // this was the last one we needed to check!
         data->result = NULL;
         return 0;
-    }
+    }*/
     return 1;
 }
 
@@ -1058,6 +1078,7 @@ int cameraId, int mx, int my, int event) {
     getspriteatscreenposdata.x = mx;
     getspriteatscreenposdata.y = my;
     getspriteatscreenposdata.event = event;
+    getspriteatscreenposdata.result = NULL;
 
     // go through all sprites from top to bottom:
     graphics2dsprites_doForAllSpritesOnScreen(
