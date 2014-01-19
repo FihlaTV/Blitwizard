@@ -1140,7 +1140,7 @@ int luafuncs_object_getDimensions(lua_State* l) {
     if (obj->is3d) {
         lua_pushnumber(l, z * sz);
     }
-    return 2+(obj->is3d);
+    return 2 + (obj->is3d);
 }
 
 /// Get the original, unscaled dimensions of an object.

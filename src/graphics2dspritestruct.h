@@ -27,6 +27,8 @@
 
 #include "graphics2dsprites.h"
 
+#ifdef USE_GRAPHICS
+
 // data structure for a sprite:
 struct graphics2dsprite {
     // this is set if the sprite was deleted:
@@ -94,6 +96,7 @@ struct graphics2dsprite {
     void* userdata;
 };
 
+#endif  // USE_GRAPHICS
 
 #endif  // BLITWIZARD_GRAPHICS2DSPRITESTRUCT_H_
 
