@@ -30,9 +30,10 @@
 #include "graphics2dspritestruct.h"
 #include "graphics.h"
 
+#ifdef USE_GRAPHICS
+
 static int getspritedimensions(struct graphics2dsprite* sprite,
         double* w, double* h) {
-#ifdef USE_GRAPHICS
     if (!unittopixelsset) {
         return 0;
     }
@@ -49,9 +50,6 @@ static int getspritedimensions(struct graphics2dsprite* sprite,
     *w = spritew;
     *h = spriteh;
     return 1;
-#else
-    return 0;
-#endif
 }
 
 static int getspritetopleft(struct graphics2dsprite* sprite,
@@ -65,8 +63,6 @@ static int getspritetopleft(struct graphics2dsprite* sprite,
     *y = (sprite->y) - (h / 2);
     return 1;
 }
-
-#ifdef USE_GRAPHICS
 
 #define CHEAPOFAKETREE
 
