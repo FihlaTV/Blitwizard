@@ -635,12 +635,27 @@ const char* dir) {
         free(iter);
         return NULL;
     }
+    char* path2 = path;
+    if (path[strlen(path)-1] == '/') {
+        path2 = malloc(strlen(path));
+        memcpy(path2, path, strlen(path));
+        path2[strlen(path)] = 0;
+        free(path);
+    }
     printf("previously: PHYSFS_getLastError(): %s\n", PHYSFS_getLastError());
-    printf("now calling PHYSFS_enumerateFiles(\"%s\")\n", path);
-    iter->filelist = PHYSFS_enumerateFiles(path);
+    printf("now calling PHYSFS_enumerateFiles(\"%s\")\n", path2);
+    PHYSFS_Stat s;
+    memset(&s, 0, sizeof(s));
+    if (PHYSFS_stat(path2, &s)) {
+        if (s.filetype == PHYSFS_FILETYPE_DIRECTORY) {
+            printf("PHYSFS_stat() says: PHYSFS_FILETYPE_DIRECTORY!\n");
+        }
+    }
+    iter->filelist = PHYSFS_enumerateFiles(path2);
     printf("afterwards: PHYSFS_getLastError(): %s\n", PHYSFS_getLastError());
-    printf("got file list for %s. entry filelist[0]: %s\n", path, iter->filelist[0]);
-    free(path);
+    printf("got file list for %s. entry filelist[0]: %s\n", path2,
+        iter->filelist[0]);
+    free(path2);
     return iter;
 }
 

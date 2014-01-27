@@ -30,11 +30,20 @@ struct graphicstexture;
 
 // Formats (in little endian byte order):
 #define PIXELFORMAT_32RGBA 1
+#define PIXELFORMAT_32ARGB 2
+#define PIXELFORMAT_32ABGR 3
+#define PIXELFORMAT_32BGRA 4
+#define PIXELFORMAT_UNKNOWN (-1)
+
+// Get the pixel format the renderer wants to receive the texture in:
+int graphicstexture_getDesiredFormat(void);
 
 // Create a graphics texture (for 3d accelerated renderers,
 // it must be created in GPU memory!) and return a handle:
 struct graphicstexture* graphicstexture_Create(void* data,
 size_t width, size_t height, int format);
+// Please note in the current implementation, a format not matching
+// graphicstexture_getDesiredFormat() is rejected.
 
 // Destroy graphics texure by handle:
 void graphicstexture_Destroy(struct graphicstexture* texture);

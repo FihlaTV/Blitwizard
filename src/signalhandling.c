@@ -214,11 +214,11 @@ static void threadedcrashmsgshow(void* userdata) {
 static void threadedcrashmsg(const char* msg) {
     strncpy(crashmsgbuf, msg, sizeof(crashmsgbuf)-1);
     crashmsgbuf[sizeof(crashmsgbuf)-1] = 0;
-    threadinfo* ti = thread_CreateInfo();
+    threadinfo* ti = thread_createInfo();
     if (!ti) {
         return;
     }
-    thread_Spawn(ti, threadedcrashmsgshow, NULL);
+    thread_spawn(ti, threadedcrashmsgshow, NULL);
 }
 
 static void handleerror(const char* name) {

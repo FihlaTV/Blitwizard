@@ -263,7 +263,7 @@ char* diskcache_Store(char* data, size_t datalength) {
     sti->datalength = datalength;
 
     // spawn store thread and return resource path:
-    threadinfo* ti = thread_CreateInfo();
+    threadinfo* ti = thread_createInfo();
     if (!ti) {
         free(sti);
         free(sti->resourcepath);
@@ -271,8 +271,8 @@ char* diskcache_Store(char* data, size_t datalength) {
         free(newdata);
         return NULL;
     }
-    thread_Spawn(ti, diskcache_StoreThread, sti);
-    thread_FreeInfo(ti);
+    thread_spawnWithPriority(ti, 0, diskcache_StoreThread, sti);
+    thread_freeInfo(ti);
     return resourcepath;
 }
 
@@ -376,15 +376,15 @@ size_t datalength, void* userdata), void* userdata) {
     rti->userdata = userdata;
 
     // spawn retrieving thread:
-    threadinfo* ti = thread_CreateInfo();
+    threadinfo* ti = thread_createInfo();
     if (!ti) {
         free(rti->resourcepath);
         free(rti);
         callback(NULL, 0, userdata);
         return;
     }
-    thread_Spawn(ti, diskcache_RetrieveThread, rti);
-    thread_FreeInfo(ti);
+    thread_spawnWithPriority(ti, 0, diskcache_RetrieveThread, rti);
+    thread_freeInfo(ti);
     return;
 }
 

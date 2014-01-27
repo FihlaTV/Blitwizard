@@ -49,17 +49,21 @@ void semaphore_Wait(semaphore* s);
 void semaphore_Post(semaphore* s);
 
 // create threadinfo:
-threadinfo* thread_CreateInfo(void);
+threadinfo* thread_createInfo(void);
 
 // spawn a new thread:
-void thread_Spawn(threadinfo* tinfo, void (*func)(void* userdata),
+void thread_spawn(threadinfo* tinfo, void (*func)(void* userdata),
 void* userdata);
 
+// spawn a new thread with priority (0=low, 1=normal, 2=hgh)
+void thread_spawnWithPriority(threadinfo *t, int priority,
+    void (*func)(void* userdata), void *userdata);
+
 // free threadinfo (you can safely do this when the thread is still running):
-void thread_FreeInfo(threadinfo* tinfo);
+void thread_freeInfo(threadinfo* tinfo);
 
 // mark a thread as the main thread:
-void thread_MarkAsMainThread(void);
+void thread_markAsMainThread(void);
 // (use this right at program start)
 
 // check if the current thread is the marked main thread:

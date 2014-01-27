@@ -9,8 +9,6 @@ source preparetest.sh
 mkdir -p ./lstest
 touch ./lstest/file1
 touch ./lstest/file2
-zip -r -9 ./lstest.zip ./lstest/
-rm -r ./lstest/
 echo "
 filelist = os.ls(\"lstest/\")
 if #filelist ~= 2 then
@@ -19,6 +17,8 @@ if #filelist ~= 2 then
 end
 print(\"success\")
 os.exit(0)" > ./game.lua
+zip -r -9 ./lstest.zip ./lstest/ ./game.lua
+rm -r ./lstest/
 
 # execute test:
 cat $BINARYPATH ./lstest.zip > ./binarytest$EXEEXT

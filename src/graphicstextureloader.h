@@ -34,12 +34,15 @@
 // For a texture which needs to be loaded completely from the original
 // .png files (-> it is not even in the disk cache), use this function.
 void graphicstextureloader_doInitialLoading(struct graphicstexturemanaged* gtm,
-void (*callbackDimensions)(struct graphicstexturemanaged* gtm, size_t width,
-size_t height, int success,
-void* userdata),
-void (*callbackData)(struct graphicstexturemanaged* gtm, int success,
-void* userdata),
-void* userdata);
+    void (*callbackDimensions)(struct graphicstexturemanaged* gtm, size_t width,
+        size_t height, int success,
+        void* userdata
+    ),
+    void (*callbackData)(struct graphicstexturemanaged* gtm, int success,
+        void* userdata
+    ),
+    void* userdata
+);
 
 #endif  // USE_GRAPHICS
 

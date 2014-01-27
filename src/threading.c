@@ -33,6 +33,10 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sched.h>
+#ifdef LINUX
+#include <linux/sched.h>
+#endif
 #endif // ifdef HAVE_WINDOWS
 
 // disable mutex debugging:
@@ -224,7 +228,7 @@ void mutex_Release(mutex* m) {
 #endif
 }
 
-threadinfo* thread_CreateInfo() {
+threadinfo* thread_createInfo() {
     threadinfo* tinfo = malloc(sizeof(*tinfo));
     if (!tinfo) {
         return NULL;
@@ -233,7 +237,7 @@ threadinfo* thread_CreateInfo() {
     return tinfo;
 }
 
-void thread_FreeInfo(threadinfo* tinfo) {
+void thread_freeInfo(threadinfo* tinfo) {
 #ifdef WINDOWS
     CloseHandle(tinfo->t);
 #else
@@ -262,7 +266,13 @@ static void* spawnthread(void* data) {
 #endif
 }
 
-void thread_Spawn(threadinfo* t, void (*func)(void* userdata), void* userdata) {
+void thread_spawn(threadinfo *t, void (*func)(void *userdata),
+        void *userdata) {
+    thread_spawnWithPriority(t, 1, func, userdata);
+}
+
+void thread_spawnWithPriority(threadinfo *t, int priority,
+        void (*func)(void* userdata), void *userdata) {
     struct spawninfo* sinfo = malloc(sizeof(*sinfo));
     if (!sinfo) {
         return;
@@ -282,10 +292,36 @@ void thread_Spawn(threadinfo* t, void (*func)(void* userdata), void* userdata) {
         while (pthread_create(&t->t, NULL, spawnthread, sinfo) != 0) {
             assert(errno == EAGAIN);
         }
+        if (priority == 0) {
+            struct sched_param param;
+            memset(&param, 0, sizeof(param));
+            param.sched_priority = sched_get_priority_min(SCHED_BATCH);
+            pthread_setschedparam(t->t, SCHED_BATCH, &param);
+        }
+        if (priority == 2) {
+            struct sched_param param;
+            int policy;
+            pthread_getschedparam(t->t, &policy, &param);
+            param.sched_priority = sched_get_priority_max(policy);
+            pthread_setschedparam(t->t, policy, &param);
+        }
     } else {
         pthread_t thread;
         while (pthread_create(&thread, NULL, spawnthread, sinfo) != 0) {
             assert(errno == EAGAIN);
+        }
+        if (priority == 0) {
+            struct sched_param param;
+            memset(&param, 0, sizeof(param));
+            param.sched_priority = sched_get_priority_min(SCHED_BATCH);
+            pthread_setschedparam(thread, SCHED_BATCH, &param);
+        }
+        if (priority == 2) {
+            struct sched_param param;
+            int policy;
+            pthread_getschedparam(t->t, &policy, &param);
+            param.sched_priority = sched_get_priority_max(policy);
+            pthread_setschedparam(t->t, policy, &param);
         }
         pthread_detach(thread);
     }
@@ -303,7 +339,7 @@ int mainThread;
 #error "Code path not written"
 #endif
 #endif
-void thread_MarkAsMainThread(void) {
+void thread_markAsMainThread(void) {
     // mark current thread as main thread
 #ifdef UNIX
     mainThread = pthread_self();

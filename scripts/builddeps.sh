@@ -193,7 +193,7 @@ if [ ! -e libs/libblitwizardPhysFS.a ]; then
         rm ./CMakeCache.txt
         rm -f *.o
         rm src/archiver_lzma.c
-        $CC -c src/*.c -Isrc/ || { echo "Failed to compile PhysFS"; exit 1; }
+        $CC -g -c src/*.c -Wall -Isrc/ || { echo "Failed to compile PhysFS"; exit 1; }
         $AR rcs "$dir"/libs/libblitwizardPhysFS.a *.o || { echo "Failed to compile PhysFS"; exit 1; }
         rm *.o
         cd "$dir"

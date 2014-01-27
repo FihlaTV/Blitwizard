@@ -41,9 +41,6 @@
 #include "timefuncs.h"
 #include "hash.h"
 #include "file.h"
-#ifdef NOTHREADEDSDLRW
-#include "main.h"
-#endif
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -52,6 +49,8 @@
 #include "graphics.h"
 #include "graphicssdltexturestruct.h"
 #include "threading.h"
+
+#define DEBUGUPLOADTIMING
 
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
@@ -67,6 +66,72 @@ void graphicstexture_Destroy(struct graphicstexture* gt) {
     free(gt);
 }
 
+static int graphicstexture_SDLFormatToPixelFormat(int format) {
+    switch (format) {
+    case SDL_PIXELFORMAT_ABGR8888:
+        return PIXELFORMAT_32RGBA;
+    case SDL_PIXELFORMAT_BGRA8888:
+        return PIXELFORMAT_32ARGB;
+    case SDL_PIXELFORMAT_RGBA8888:
+        return PIXELFORMAT_32ABGR;
+    case SDL_PIXELFORMAT_ARGB8888:
+        return PIXELFORMAT_32BGRA;
+    default:
+        return PIXELFORMAT_UNKNOWN;
+    }
+}
+
+static volatile int infoprinted = 0;
+int graphicstexture_getDesiredFormat(void) {
+#ifdef LALALALALLA
+    SDL_RendererInfo rinfo;
+    if (SDL_GetRendererInfo(mainrenderer, &rinfo) == 0) {
+        unsigned int i = 0;
+        while (i < rinfo.num_texture_formats) {
+            int pixelformat = graphicstexture_SDLFormatToPixelFormat(
+                rinfo.texture_formats[i]);
+            if (pixelformat != PIXELFORMAT_UNKNOWN) {
+                if (!infoprinted) {
+                    infoprinted = 1;
+                    printinfo("[sdltex] Pixel format found: %d\n",
+                        pixelformat);
+                }
+                return pixelformat;
+            }
+            i++;
+        }
+        if (!infoprinted) {
+            printinfo("[sdltex] no known pixel format in %d "
+                "supported formats of renderer", rinfo.
+                num_texture_formats);
+        } 
+    } else {
+        printwarning("[sdltex] SDL_GetRendererInfo call failed: %s",
+            SDL_GetError());
+    }
+#endif
+    if (!infoprinted) {
+        infoprinted = 1;
+        printwarning("[sdltex] cannot find optimal pixel format!");
+    }
+    return PIXELFORMAT_32RGBA;
+}
+
+static int graphicstexture_pixelFormatToSDLFormat(int format) {
+    // little endian blitwizard pixel format to SDL pixel format
+    switch (format) {
+    case PIXELFORMAT_32RGBA:
+        return SDL_PIXELFORMAT_ABGR8888;
+    case PIXELFORMAT_32ARGB:
+        return SDL_PIXELFORMAT_BGRA8888;
+    case PIXELFORMAT_32ABGR:
+        return SDL_PIXELFORMAT_RGBA8888;
+    case PIXELFORMAT_32BGRA:
+        return SDL_PIXELFORMAT_ARGB8888;
+    default:
+        return -1;
+    }
+}
 
 struct graphicstexture* graphicstexture_Create(void* data,
 size_t width, size_t height, int format) {
@@ -81,27 +146,23 @@ size_t width, size_t height, int format) {
     memset(gt, 0, sizeof(*gt));
     gt->width = width;
     gt->height = height;
-
-    // format conversion:
-    switch (format) {
-    case PIXELFORMAT_32RGBA:
-        // we can process this as usual.
-        break;
-    default:
-        // not known to us!
-        graphicstexture_Destroy(gt);
-        return NULL;
-    }
     gt->format = format;
 
     // create hw texture
+#ifdef DEBUGUPLOADTIMING
+    uint64_t ts1 = time_GetMilliseconds();
+#endif
     gt->sdltex = SDL_CreateTexture(mainrenderer,
-    SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING,
+    graphicstexture_pixelFormatToSDLFormat(format),
+    SDL_TEXTUREACCESS_STREAMING,
     gt->width, gt->height);
     if (!gt->sdltex) {
         graphicstexture_Destroy(gt);
         return NULL;
     }
+#ifdef DEBUGUPLOADTIMING
+    uint64_t ts2 = time_GetMilliseconds();
+#endif
 
     // lock texture
     void* pixels; int pitch;
@@ -109,13 +170,30 @@ size_t width, size_t height, int format) {
         graphicstexture_Destroy(gt);
         return NULL;
     }
+#ifdef DEBUGUPLOADTIMING
+    uint64_t ts3 = time_GetMilliseconds();
+#endif
 
     // copy pixels into texture
     memcpy(pixels, data, gt->width * gt->height * 4);
     // FIXME: we probably need to handle pitch here??
 
+#ifdef DEBUGUPLOADTIMING
+    uint64_t ts4 = time_GetMilliseconds();
+#endif
+
     // unlock texture
     SDL_UnlockTexture(gt->sdltex);
+
+#ifdef DEBUGUPLOADTIMING
+    uint64_t ts5 = time_GetMilliseconds();
+    if (ts5-ts1 > 100) {
+        printwarning("[sdltex] long texture upload: %dms total, "
+            "%dms creation, %dms lock, %dms copy, %dms unlock",
+            (int)(ts5-ts1), (int)(ts2-ts1), (int)(ts3-ts2),
+            (int)(ts4-ts3), (int)(ts5-ts4));
+    }
+#endif
 
     // set blend mode
     SDL_SetTextureBlendMode(gt->sdltex, SDL_BLENDMODE_BLEND);

@@ -1,5 +1,5 @@
 
-# Makefile for blit wizard's image loading code
+# Makefile for blitwizard's image loading code
 
 # Uses zlib/libpng.
 # To use different versions of zlib or libpng, simply extract their source to the "png" or "zlib" folders.
@@ -32,6 +32,7 @@ deps-zlib:
 clean-objs:
 	rm -rf ./*.o
 clean: clean-objs
+	rm -f ./libimglib.a
 	rm -rf ./*.a
 	cd png && make clean
 	cd zlib && make clean

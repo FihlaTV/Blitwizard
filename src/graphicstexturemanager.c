@@ -156,6 +156,50 @@ int texturemanager_saveSystemMemory(void) {
     return 1;
 }
 
+static int ispoweroftwo(int number) {
+    if (number < 0) {
+        number = -number;
+    }
+    if (number < 2) {
+        return 0;
+    }
+    while ((number % 2) == 0 && number >= 2) {
+        number /= 2;
+    }
+    if (number == 1) {
+        return 1;
+    }
+    return 0;
+}
+
+static int texturemanager_badTextureDimensions(struct graphicstexturemanaged
+        *gtm) {
+    // get texture dimensions if possible:
+    if (!gtm) {
+        return 0;
+    }
+    if (gtm->beingInitiallyLoaded) {
+        return 0;
+    }
+    if (gtm->origscale < 0 || gtm->origscale >= gtm->scalelistcount) {
+        return 0;
+    }
+    size_t width = gtm->scalelist[gtm->origscale].paddedWidth;
+    size_t height = gtm->scalelist[gtm->origscale].paddedHeight;
+    if (width == 0 || height == 0) {
+        return 0;
+    }
+    // avoid excessively large textures:
+    if (width > 4096 || height > 4096) {
+        return 1;
+    }
+    // avoid non power of two:
+    if (!ispoweroftwo(width) || !ispoweroftwo(height)) {
+        return 1;
+    }
+    return 0;
+}
+
 // This returns a scaled texture slot (NOT the texture)
 // which is to be used preferrably right now.
 //
@@ -170,9 +214,10 @@ int texturemanager_saveSystemMemory(void) {
 int texturemanager_decideOnPreferredSize(struct graphicstexturemanaged* gtm,
 time_t now, int savememory) {
     int wantsize = 0;  // 0 = full, 1 = tiny, 2 = low, 3 = medium, 4 = high
+    return 0;
     // downscaling based on distance:
     if (gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + SCALEDOWNSECONDS
-    < now || savememory == 2) {
+    < now || savememory == 2 || texturemanager_badTextureDimensions(gtm)) {
         // it hasn't been in detail closeup for a few seconds,
         // go down to high scaling:
         wantsize = 4;  // high
@@ -302,9 +347,15 @@ static void texturemanager_scaleTextureThread(void* userdata) {
 
         if (info->scaletarget->pixels) {
             // scale it:
-            img_Scale(4, info->obtainedscale->pixels,
+            int pitch = (info->obtainedscale->paddedWidth -
+                info->obtainedscale->width);
+            printf("scale pitch: %d, (%d, %d)\n", pitch,
+                info->obtainedscale->paddedWidth,
+                info->obtainedscale->width);
+            img_scale(4, info->obtainedscale->pixels,
             info->obtainedscale->width,
             info->obtainedscale->height,
+            pitch,
             (char**)&(info->scaletarget->pixels),
             info->scaletarget->width, info->scaletarget->height);
         } else {
@@ -485,7 +536,7 @@ struct graphicstexturemanaged* gtm, int slot) {
                             // lock textures and prepare thread:
                             scaleinfo->scaletarget->locked = 1;
                             scaleinfo->obtainedscale->writelock++;
-                            threadinfo* t = thread_CreateInfo();
+                            threadinfo* t = thread_createInfo();
                             if (!t) {
                                 // unlock stuff and cancel:
                                 scaleinfo->scaletarget->locked = 0;
@@ -497,10 +548,10 @@ struct graphicstexturemanaged* gtm, int slot) {
 #ifdef DEBUGTEXTUREMANAGERTHREADS
                             printinfo("[TEXMAN-THREADS] spawn");
 #endif
-                            thread_Spawn(t,
+                            thread_spawnWithPriority(t, 0,
                             &texturemanager_scaleTextureThread,
                             scaleinfo);
-                            thread_FreeInfo(t);
+                            thread_freeInfo(t);
                             return texturemanager_getRandomGPUTexture(gtm);
                         } else if (gtm->scalelist[gtm->origscale].
                         diskcachepath) {

@@ -491,6 +491,8 @@ int luafuncs_trandom(lua_State* l) {
     fread(&d, sizeof(d), 1, f);
     fclose(f);
 
+    // FIXME: review this code.
+
     // limit to meaningful range:
     // a double has 16 meaningful digits.
     // that should cover 10^15 safely, which is roughly more than 2^49.

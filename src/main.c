@@ -550,7 +550,7 @@ HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 int main(int argc, char** argv) {
 #endif
 #endif
-    thread_MarkAsMainThread();
+    thread_markAsMainThread();
 
     scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
 

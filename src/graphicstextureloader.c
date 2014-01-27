@@ -31,6 +31,7 @@
 
 #ifdef USE_GRAPHICS
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -53,9 +54,11 @@ struct graphicstextureloader_initialLoadingThreadInfo {
     int success, void* userdata);
     void* userdata;
     char* path;
+    int padnpot;
 
     // remember size temporarily:
     size_t width, height;
+    size_t paddedWidth, paddedHeight;
 
     // this texture pointer must be treated as black box
     // by the loader thread, because other threads might
@@ -68,17 +71,26 @@ int width, int height, void* userdata) {
     struct graphicstextureloader_initialLoadingThreadInfo* info =
     userdata;
     if (width > 0 && height > 0) {
+        // store size, padded size:
+        if (info->padnpot) {
+            info->paddedWidth = imgloader_getPaddedSize(width);
+            info->paddedHeight = imgloader_getPaddedSize(height);
+        } else {
+            info->paddedWidth = width;
+            info->paddedHeight = height;
+        }
+        info->width = width;
+        info->height = height;
+
         // set the size to the gtm texture struct:
         texturemanager_lockForTextureAccess();
-        info->gtm->width = info->width;
-        info->gtm->height = info->height;
+        info->gtm->width = width;
+        info->gtm->height = height;
         texturemanager_releaseFromTextureAccess();
 
         // report back the size:
         info->callbackDimensions(info->gtm, width, height,
         1, info->userdata);
-        info->width = width;
-        info->height = height;
     } else {
         info->callbackDimensions(info->gtm, 0, 0, 0, info->userdata);
     }
@@ -157,6 +169,13 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                     info->gtm->scalelist[i].pixels = imgdata;
                     info->gtm->scalelist[i].width = info->width;
                     info->gtm->scalelist[i].height = info->height;
+                    info->gtm->scalelist[i].paddedWidth = info->paddedWidth;
+                    info->gtm->scalelist[i].paddedHeight = info->paddedHeight;
+                    assert(info->paddedWidth >= info->width);
+                    assert(info->paddedWidth ==
+                        imgloader_getPaddedSize(info->width));
+                    assert(info->paddedHeight ==
+                        imgloader_getPaddedSize(info->height)); 
                     info->gtm->origscale = i;
 #ifdef DEBUGTEXTURELOADER
                     printinfo("[TEXLOAD] texture has now been loaded: %s "
@@ -194,6 +213,8 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                     // set size info:
                     info->gtm->scalelist[i].width = sidelength_x;
                     info->gtm->scalelist[i].height = sidelength_y;
+                    info->gtm->scalelist[i].paddedWidth = sidelength_x;
+                    info->gtm->scalelist[i].paddedHeight = sidelength_y;
                 }
                 i++;
             }
@@ -224,7 +245,7 @@ struct loaderfuncinfo {
     struct zipfile* archive;
 };
 
-static int graphicstextureloader_ImageReadFunc(void* buffer,
+static int graphicstextureloader_imageReadFunc(void* buffer,
 size_t bytes, void* userdata) {
     struct loaderfuncinfo* lfi = userdata;
     
@@ -245,7 +266,22 @@ size_t bytes, void* userdata) {
 }
 #endif
 
-void graphicstextureloader_InitialLoaderThread(void* userdata) {
+static const char* pixelformattoname(int format) {
+    switch (format) {
+    case PIXELFORMAT_32RGBA:
+        return "rgba";
+    case PIXELFORMAT_32ARGB:
+        return "argb";
+    case PIXELFORMAT_32ABGR:
+        return "abgr";
+    case PIXELFORMAT_32BGRA:
+        return "bgra";
+    default:
+        return "unknown";
+    }
+}
+
+void graphicstextureloader_initialLoaderThread(void* userdata) {
     struct graphicstextureloader_initialLoadingThreadInfo* info =
     userdata;
 #ifdef DEBUGTEXTURELOADER
@@ -265,9 +301,11 @@ void graphicstextureloader_InitialLoaderThread(void* userdata) {
 
     if (loc.type == LOCATION_TYPE_DISK) {
         // use standard disk file image loader:
-        void* handle = img_LoadImageThreadedFromFile(info->path,
-        4096, 4096, "rgba", graphicstextureloader_callbackSize,
-        graphicstextureloader_callbackData, info);
+        void* handle = img_loadImageThreadedFromFile(info->path,
+            4096, 4096, info->padnpot,
+            pixelformattoname(graphicstexture_getDesiredFormat()),
+            graphicstextureloader_callbackSize,
+            graphicstextureloader_callbackData, info);
 #ifdef USE_PHYSFS
     } else if (loc.type == LOCATION_TYPE_ZIP) {
         // prepare image reader info struct:
@@ -279,14 +317,15 @@ void graphicstextureloader_InitialLoaderThread(void* userdata) {
             return;
         }
         memset(lfi, 0, sizeof(*lfi));
-        lfi->info = info;
         lfi->archive = loc.location.ziplocation.archive;
 
         // prompt image loader with our own image reader:
-        void* handle = img_LoadImageThreadedFromFunction(
-        graphicstextureloader_ImageReadFunc, lfi,
-        4096, 4096, "rgba", graphicstextureloader_callbackSize,
-        graphicstextureloader_callbackData, info);
+        void* handle = img_loadImageThreadedFromFunction(
+            graphicstextureloader_imageReadFunc, lfi,
+            4096, 4096, info->padnpot,
+            pixelformattoname(graphicstexture_getDesiredFormat()),
+            graphicstextureloader_callbackSize,
+            graphicstextureloader_callbackData, info);
 #endif
     } else {
         printwarning("[TEXLOAD] unsupported resource location");
@@ -325,20 +364,22 @@ void* userdata) {
     info->callbackDimensions = callbackDimensions;
     info->callbackData = callbackData;
     info->userdata = userdata;
+    info->padnpot = 1;
 
     // give texture initial normal usage to start with:
     info->gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] = time(NULL);
 
     // spawn our loader thread:
-    threadinfo* ti = thread_CreateInfo();
+    threadinfo* ti = thread_createInfo();
     if (!ti) {
         free(info->path);
         free(info);
         callbackDimensions(gtm, 0, 0, 0, userdata);
         return;
     }
-    thread_Spawn(ti, graphicstextureloader_InitialLoaderThread, info);
-    thread_FreeInfo(ti);
+    thread_spawnWithPriority(ti, 0,
+        graphicstextureloader_initialLoaderThread, info);
+    thread_freeInfo(ti);
 }
 
 #endif  // USE_GRAPHICS

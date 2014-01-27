@@ -39,7 +39,7 @@ struct loadpnginfo {
     void* imgdat;
 };
 
-static int pngloader_CheckIfPng(const void* data, unsigned int datasize) {
+static int pngloader_checkIfPng(const void* data, unsigned int datasize) {
     int ret;
     if (datasize < 8) {
         return 0;
@@ -57,7 +57,7 @@ void readdata(png_structp png_ptr, png_bytep data, png_size_t length)  {
     linfo->readoffset += length;
 }
 
-void pngloader_FreeLoadInfo(struct loadpnginfo* linfo) {
+void pngloader_freeLoadInfo(struct loadpnginfo* linfo) {
     if (linfo->png_ptr) {
         png_destroy_read_struct(&linfo->png_ptr, &linfo->info_ptr, (png_infopp)0);
         linfo->png_ptr = NULL;
@@ -76,7 +76,7 @@ void pngloader_FreeLoadInfo(struct loadpnginfo* linfo) {
     free(linfo);
 }
 
-int pngloader_AllocateMembers(struct loadpnginfo* linfo) {
+int pngloader_allocateMembers(struct loadpnginfo* linfo) {
     if (!linfo->png_ptr) {
         linfo->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
         NULL, NULL, NULL);
@@ -89,16 +89,16 @@ int pngloader_AllocateMembers(struct loadpnginfo* linfo) {
     return 1;
 }
 
-int pngloader_LoadRGBA(const char* pngdata, unsigned int pngdatasize,
+int pngloader_loadRGBA(const char* pngdata, unsigned int pngdatasize,
 char** imagedata, unsigned int* imagedatasize,
-void (*callbackSize)(size_t imagewidth, size_t imageheight, void* userdata),
+int (*callbackSize)(size_t imagewidth, size_t imageheight, void* userdata),
 void* userdata,
 int maxwidth, int maxheight) {
     png_uint_32 width, height, channels;
     int bit_depth, color_type;
       
     // first check
-    if (!pngloader_CheckIfPng(pngdata, pngdatasize)) {
+    if (!pngloader_checkIfPng(pngdata, pngdatasize)) {
         return 0;
     }
     
@@ -108,15 +108,15 @@ int maxwidth, int maxheight) {
         return 0;
     }
     memset(linfo, 0, sizeof(*linfo));
-    if (!pngloader_AllocateMembers(linfo)) {
-        pngloader_FreeLoadInfo(linfo);
+    if (!pngloader_allocateMembers(linfo)) {
+        pngloader_freeLoadInfo(linfo);
         return 0;
     }
     linfo->source = pngdata; linfo->sourcesize = pngdatasize;
     
     // set up the very weird error handling
     if (setjmp(png_jmpbuf(linfo->png_ptr))) {
-        pngloader_FreeLoadInfo(linfo);
+        pngloader_freeLoadInfo(linfo);
         return 0;
     }
     
@@ -130,17 +130,23 @@ int maxwidth, int maxheight) {
     png_read_info(linfo->png_ptr, linfo->info_ptr);
     if (!png_get_IHDR(linfo->png_ptr, linfo->info_ptr,
     &width, &height, &bit_depth, &color_type, NULL, NULL, NULL)) {
-        pngloader_FreeLoadInfo(linfo);return 0;
+        pngloader_freeLoadInfo(linfo);
+        return 0;
     }
 
     // do size callback:
     if (callbackSize) {
-        callbackSize(width, height, userdata);
+        if (!callbackSize(width, height, userdata)) {
+            // cancel loading. image is apparently too large
+            // (or otherwise unfitting)
+            pngloader_freeLoadInfo(linfo);
+            return 0;
+        }
     }
 
     // check whether there is a size limit
-    if (maxwidth && width > maxwidth) {pngloader_FreeLoadInfo(linfo);return 0;}
-    if (maxheight && height > maxheight) {pngloader_FreeLoadInfo(linfo);return 0;}
+    if (maxwidth && width > maxwidth) {pngloader_freeLoadInfo(linfo);return 0;}
+    if (maxheight && height > maxheight) {pngloader_freeLoadInfo(linfo);return 0;}
     
     // some conversion stuff
     channels = png_get_channels(linfo->png_ptr, linfo->info_ptr);
@@ -172,11 +178,11 @@ int maxwidth, int maxheight) {
         bit_depth = 8;
     }
     if (bit_depth != 8) {
-        pngloader_FreeLoadInfo(linfo);
+        pngloader_freeLoadInfo(linfo);
         return 0; // we don't support this :( sorry
     }
     if (channels != 3 && channels != 4) {
-        pngloader_FreeLoadInfo(linfo);
+        pngloader_freeLoadInfo(linfo);
         return 0; // we don't support this :( sorry
     }
     png_read_update_info(linfo->png_ptr, linfo->info_ptr);
@@ -186,12 +192,12 @@ int maxwidth, int maxheight) {
     // row pointers libpng wants for some odd reason
 
     if (!linfo->row_pointers) {
-        pngloader_FreeLoadInfo(linfo);
+        pngloader_freeLoadInfo(linfo);
         return 0;
     }
     linfo->imgdat = malloc(channels * width * height); // img data
     if (!linfo->imgdat) {
-        pngloader_FreeLoadInfo(linfo);
+        pngloader_freeLoadInfo(linfo);
         return 0;
     }
     int r = 0;
@@ -209,7 +215,7 @@ int maxwidth, int maxheight) {
     if (channels == 3) {
         void* newimgdat = malloc(4 * width * height);
         if (!newimgdat) {
-            pngloader_FreeLoadInfo(linfo);
+            pngloader_freeLoadInfo(linfo);
             fprintf(stderr, "cannot allocate new info\n");
             return 0;
         }
@@ -240,7 +246,7 @@ int maxwidth, int maxheight) {
     *imagedata = linfo->imgdat;
     linfo->imgdat = NULL; //of course we want to keep that
     
-    pngloader_FreeLoadInfo(linfo);
+    pngloader_freeLoadInfo(linfo);
     return 1;
 }
 

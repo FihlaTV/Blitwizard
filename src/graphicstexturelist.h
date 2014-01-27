@@ -59,6 +59,7 @@ struct graphicstexturescaled {
     void* pixels; // not NULL if texture is in regular memory
     char* diskcachepath;  // path to raw disk cache file or NULL
     size_t width, height;  // width/height of this particular scaled entry
+    size_t paddedWidth, paddedHeight;  // width/height of this entry, padded
     struct graphicstexturemanaged* parent;
     int refcount;  // requests using this particular size
     size_t lastGpuUpload;

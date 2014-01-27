@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,21 +40,22 @@
 #endif
 
 struct loaderthreadinfo {
-    char* path;
-    int (*readfunc)(void* buffer, size_t bytes, void* userdata);
-    void* readfuncptr;
-    void* memdata;
+    int padnpot;
+    char *path;
+    int (*readfunc)(void *buffer, size_t bytes, void *userdata);
+    void *readfuncptr;
+    void *memdata;
     unsigned int memdatasize;
-    char* data;
-    char* format;
+    char *data;
+    char *format;
     unsigned int datasize;
     int imagewidth,imageheight;
     int maxsizex,maxsizey;
-    void (*callbackSize)(void* handle, int imgwidth, int imgheight,
-    void* userdata);
-    void (*callbackData)(void* handle, char* imgdata,
-    unsigned int imgdatasize, void* userdata);
-    void* userdata;
+    void (*callbackSize)(void *handle, int imgwidth, int imgheight,
+    void *userdata);
+    void (*callbackData)(void *handle, char *imgdata,
+    unsigned int imgdatasize, void *userdata);
+    void *userdata;
 #ifdef WIN
     //windows threads stuff
     HANDLE threadhandle;
@@ -66,21 +67,41 @@ struct loaderthreadinfo {
 #endif
 };
 
-static void loaderthreadsizecallback(size_t imagewidth,
-size_t imageheight, void* data) {
+size_t imgloader_getPaddedSize(size_t size) {
+    size_t potsize = 2;
+    while (potsize < size) {
+        potsize *= 2;
+    }
+    return potsize;
+}
+
+static int loaderthreadsizecallback(size_t imagewidth,
+size_t imageheight, void *data) {
     struct loaderthreadinfo* i = data;
 
     i->imagewidth = imagewidth;
     i->imageheight = imageheight;
+    size_t finalwidth = i->imagewidth;
+    size_t finalheight = i->imageheight;
+    if (i->padnpot) {
+        finalwidth = imgloader_getPaddedSize(finalwidth);
+        finalheight = imgloader_getPaddedSize(finalheight);
+    }
+    // abort early if final size is too lage:
+    if ((finalwidth > i->maxsizex && i->maxsizex > 0)
+            || (finalheight > i->maxsizey && i->maxsizey > 0)) {
+        return 0;
+    }
     if (i->callbackSize) {
         i->callbackSize(i, imagewidth, imageheight, i->userdata);
     }
+    return 1;
 }
 
 #ifdef WIN
-unsigned __stdcall loaderthreadfunction(void* data) {
+unsigned __stdcall loaderthreadfunction(void *data) {
 #else
-void* loaderthreadfunction(void* data) {
+void *loaderthreadfunction(void *data) {
 #endif
     struct loaderthreadinfo* i = data;
     // first, we probably need to load the image from a file first
@@ -90,7 +111,7 @@ void* loaderthreadfunction(void* data) {
             char buf[512];
             int k = fread(buf, 1, sizeof(buf), r);
             while (k > 0) {
-                void* newp = realloc(i->memdata, i->memdatasize + k);
+                void *newp = realloc(i->memdata, i->memdatasize + k);
                 if (!newp) {
                     if (i->memdata) {free(i->memdata);}
                     i->memdata = NULL;
@@ -109,7 +130,7 @@ void* loaderthreadfunction(void* data) {
 
     // load from a byte reading function
     if (i->readfunc) {
-        void* p = NULL;
+        void *p = NULL;
         size_t currentsize = 0;
         char buf[1024];
 
@@ -117,7 +138,7 @@ void* loaderthreadfunction(void* data) {
         int k = i->readfunc(buf, sizeof(buf), i->readfuncptr);
         while (k > 0) {
             currentsize += k;
-            void* pnew = realloc(p, currentsize);
+            void *pnew = realloc(p, currentsize);
             if (!pnew) {
                 // allocation failed, simply finish reading
                 // and don't do anything with it:
@@ -145,7 +166,7 @@ void* loaderthreadfunction(void* data) {
     // now try to load the image!
     if (i->memdata) {
         if (i->memdatasize > 0) {
-            if (!pngloader_LoadRGBA(i->memdata, i->memdatasize,
+            if (!pngloader_loadRGBA(i->memdata, i->memdatasize,
             &i->data, &i->datasize, &loaderthreadsizecallback,
             i, i->maxsizex, i->maxsizey)) {
                 i->data = NULL;
@@ -155,9 +176,58 @@ void* loaderthreadfunction(void* data) {
         free(i->memdata);
         i->memdata = NULL;
         
-        //convert it if needed
-        if (strcasecmp(i->format, "bgra") == 0) {
-            img_ConvertRGBAtoBGRA(i->data, i->datasize);
+        if (i->data) {
+            // convert if needed
+            if (strcasecmp(i->format, "bgra") == 0) {
+                img_convertRGBAtoBGRA(i->data, i->datasize);
+            }
+            if (strcasecmp(i->format, "abgr") == 0) {
+                img_convertRGBAtoABGR(i->data, i->datasize);
+            }
+            if (strcasecmp(i->format, "argb") == 0) {
+                img_convertRGBAtoARGB(i->data, i->datasize);
+            }
+            // pad up if needed:
+            if (i->padnpot) {
+                size_t finalwidth = imgloader_getPaddedSize(i->imagewidth);
+                size_t finalheight = imgloader_getPaddedSize(i->imageheight);
+                if (finalwidth != i->imagewidth || finalheight !=
+                        i->imageheight) {
+                    // we need to pad up:
+                    char *newdata = malloc(finalwidth * finalheight * 4);
+                    if (!newdata) {
+                        free(i->data);
+                        i->data = NULL;
+                        i->datasize = 0;
+                    } else {
+                        // copy each line:
+                        size_t k = 0;
+                        char *p = newdata;
+                        char *p2 = i->data;
+                        while (k < finalheight) {
+                            // copy partial old row:
+                            if (k < i->imageheight) {
+                                memcpy(p, p2, i->imagewidth * 4);
+                                // null remaining line:
+                                if (finalwidth > i->imagewidth) {
+                                    /*memset(p + (i->imagewidth * 4),
+                                        0, (finalwidth - i->imagewidth) * 4
+                                    );*/
+                                }
+                            } else {
+                                // simply null the line:
+                                //memset(p, 0, finalwidth * 4);
+                            }
+                            p += (finalwidth * 4);
+                            p2 += (i->imagewidth * 4);
+                            k++;
+                        }
+                        free(i->data);
+                        i->data = newdata;
+                        i->datasize = finalwidth * finalheight * 4;
+                    }
+                }
+            }
         }
     }
 
@@ -190,13 +260,13 @@ void startthread(struct loaderthreadinfo* i) {
 #endif
 }
 
-void* img_LoadImageThreadedFromFile(const char* path, int maxwidth,
-int maxheight, const char* format,
-void (*callbackSize)(void* handle, int imgwidth, int imgheight,
-void* userdata),
-void (*callbackData)(void* handle, char* imgdata,
-unsigned int imgdatasize, void* userdata),
-void* userdata) {
+void *img_loadImageThreadedFromFile(const char *path, int maxwidth,
+int maxheight, int padnpot, const char *format,
+void (*callbackSize)(void *handle, int imgwidth, int imgheight,
+void *userdata),
+void (*callbackData)(void *handle, char *imgdata,
+unsigned int imgdatasize, void *userdata),
+void *userdata) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
     memset(t, 0, sizeof(*t));
@@ -217,19 +287,21 @@ void* userdata) {
     t->callbackSize = callbackSize;
     t->callbackData = callbackData;
     t->userdata = userdata;
+    t->padnpot = padnpot;
     startthread(t);
     return t;
 }
 
-void* img_LoadImageThreadedFromFunction(
-    int (*readfunc)(void* buffer, size_t bytes, void* userdata),
-    void* readfuncuserdata, int maxwidth, int maxheight,
-    const char* format,
-    void (*callbackSize)(void* handle, int imgwidth, int imgheight,
-    void* userdata),
-    void (*callbackData)(void* handle, char* imgdata,
-    unsigned int imgdatasize, void* userdata),
-    void* callbackuserdata
+void *img_loadImageThreadedFromFunction(
+    int (*readfunc)(void *buffer, size_t bytes, void *userdata),
+    void *readfuncuserdata, int maxwidth, int maxheight,
+    int padnpot,
+    const char *format,
+    void (*callbackSize)(void *handle, int imgwidth, int imgheight,
+    void *userdata),
+    void (*callbackData)(void *handle, char *imgdata,
+    unsigned int imgdatasize, void *userdata),
+    void *callbackuserdata
 ) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
@@ -247,17 +319,19 @@ void* img_LoadImageThreadedFromFunction(
     t->maxsizey = maxheight;
     t->callbackSize = callbackSize;
     t->callbackData = callbackData;
+    t->padnpot = padnpot;
     startthread(t);
     return t;
 }
 
-void* img_LoadImageThreadedFromMemory(const void* memdata,
-unsigned int memdatasize, int maxwidth, int maxheight, const char* format,
-void (*callbackSize)(void* handle, int imgwidth, int imgheight,
-void* userdata),
-void (*callbackData)(void* handle, char* imgdata,
-unsigned int imgdatasize, void* userdata),
-void* userdata) {
+void *img_loadImageThreadedFromMemory(const void *memdata,
+unsigned int memdatasize, int maxwidth, int maxheight, int padnpot,
+const char *format,
+void (*callbackSize)(void *handle, int imgwidth, int imgheight,
+void *userdata),
+void (*callbackData)(void *handle, char *imgdata,
+unsigned int imgdatasize, void *userdata),
+void *userdata) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
     memset(t, 0, sizeof(*t));
@@ -279,11 +353,12 @@ void* userdata) {
     t->maxsizey = maxheight;
     t->callbackData = callbackData;
     t->callbackSize = callbackSize;
+    t->padnpot = padnpot;
     startthread(t);
     return t;
 }
 
-int img_CheckSuccess(void* handle) {
+int img_CheckSuccess(void *handle) {
     if (!handle) {return 1;}
     struct loaderthreadinfo* i = handle;
 #ifdef WIN
@@ -296,13 +371,13 @@ int img_CheckSuccess(void* handle) {
 #endif
         //request is no longer running
         return 1;
-    }else{
+    } else {
         return 0;
     }
 }
 
-void img_GetData(void* handle, char** path, int* imgwidth, int* imgheight,
-char** imgdata) {
+void img_GetData(void *handle, char **path, int *imgwidth, int *imgheight,
+char **imgdata) {
     if (!handle) {
         *imgwidth = 0;
         *imgheight = 0;
@@ -325,7 +400,7 @@ char** imgdata) {
     //*imgdatasize = i->datasize; // can be calculated from width*height*4
 }
 
-void img_FreeHandle(void* handle) {
+void img_FreeHandle(void *handle) {
     if (!handle) {return;}
     struct loaderthreadinfo* i = handle;
     if (i->memdata) {free(i->memdata);}
@@ -340,7 +415,7 @@ void img_FreeHandle(void* handle) {
     free(handle);
 }
 
-static void img_Convert(char* data, int datasize,
+static void img_convert(char *data, int datasize,
 unsigned char firstchannelto, unsigned char secondchannelto,
 unsigned char thirdchannelto, unsigned char fourthchannelto) {
     if (!data) {
@@ -358,16 +433,25 @@ unsigned char thirdchannelto, unsigned char fourthchannelto) {
     }
 }
 
-void img_ConvertRGBAtoBGRA(char* imgdata, int datasize) {
-    img_Convert(imgdata, datasize, 2, 1, 0, 3);
+void img_convertRGBAtoBGRA(char *imgdata, int datasize) {
+    img_convert(imgdata, datasize, 2, 1, 0, 3);
+}
+
+void img_convertRGBAtoABGR(char *imgdata, int datasize) {
+    img_convert(imgdata, datasize, 3, 2, 1, 0);
+}
+
+void img_convertRGBAtoARGB(char *imgdata, int datasize) {
+    img_convert(imgdata, datasize, 1, 2, 3, 0);
 }
 
 // Simple linear scaler:
-void img_Scale(int bytesize, char* imgdata, int originalwidth,
-int originalheight, char** newdata, int targetwidth, int targetheight) {
+void img_scale(int bytesize, char *imgdata, int originalwidth,
+        int originalheight, int pitch, char **newdata,
+        int targetwidth, int targetheight) {
     // without proper new data we cannot scale:
     if (*newdata == NULL) {
-        *newdata = malloc(targetwidth*targetheight*bytesize);
+        *newdata = malloc(targetwidth * targetheight * bytesize);
     }
     if (!(*newdata)) {
         return;
@@ -381,15 +465,24 @@ int originalheight, char** newdata, int targetwidth, int targetheight) {
     while (r < targetwidth) {
         k = 0;
         while (k < targetheight) {
+            // copy over each 'bytesize' pixel:
+
+            // get X source coordinate:
             int fromx = (float)r * scalex;
             if (fromx < 0) {fromx = 0;}
             if (fromx >= originalwidth) {fromx = originalwidth-1;}
+
+            // get Y source coordinate:
             int fromy = (float)k * scaley;
             if (fromy < 0) {fromy = 0;}
             if (fromy >= originalheight) {fromy = originalheight-1;}
-            
-            memcpy((*newdata) + (r + (k * targetwidth)) * bytesize,
-            imgdata + (fromx + (fromy * originalwidth)) * 4, 4);
+
+            // do pixel copy:
+            memcpy(
+                (*newdata) + (r + (k * targetwidth)) * bytesize,
+                imgdata + (fromx + (fromy * (originalwidth + pitch))) * 4,
+                4
+            );
             
             k++;
         }
@@ -397,8 +490,8 @@ int originalheight, char** newdata, int targetwidth, int targetheight) {
     }
 }
 
-void img_4to3channel(char* imgdata, int width, int height,
-char** newdata, int channeltodrop) {
+void img_4to3channel(char *imgdata, int width, int height,
+char **newdata, int channeltodrop) {
     *newdata = NULL;
     //FIXME
 }
