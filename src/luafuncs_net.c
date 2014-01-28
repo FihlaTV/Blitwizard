@@ -234,18 +234,19 @@ static int garbagecollect_netstream(lua_State* l) {
 
             // close all the stored callback functions
             char regname[500];
+            // coverity[pass_freed_arg] - pointer is just printed, not accessed
             snprintf(regname, sizeof(regname), "opencallback%p", stream->c);
             regname[sizeof(regname)-1] = 0;
             lua_pushstring(l, regname);
             lua_pushnil(l);
             lua_settable(l, LUA_REGISTRYINDEX);
-
+            // coverity[pass_freed_arg] (see above)
             snprintf(regname, sizeof(regname), "readcallback%p", stream->c);
             regname[sizeof(regname)-1] = 0;
             lua_pushstring(l, regname);
             lua_pushnil(l);
             lua_settable(l, LUA_REGISTRYINDEX);
-
+            // coverity[pass_freed_arg] (see above)
             snprintf(regname, sizeof(regname), "errorcallback%p", stream->c);
             regname[sizeof(regname)-1] = 0;
             lua_pushstring(l, regname);

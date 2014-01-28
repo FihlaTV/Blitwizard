@@ -140,7 +140,7 @@ void semaphore_Destroy(semaphore* s) {
     free(s);
 }
 
-mutex* mutex_Create() {
+mutex* mutex_create() {
     mutex* m = malloc(sizeof(*m));
     if (!m) {
         return NULL;
@@ -171,7 +171,7 @@ mutex* mutex_Create() {
     return m;
 }
 
-void mutex_Destroy(mutex* m) {
+void mutex_destroy(mutex* m) {
     if (!m) {
         return;
     }
@@ -187,7 +187,7 @@ void mutex_Destroy(mutex* m) {
     free(m);
 }
 
-void mutex_Lock(mutex* m) {
+void mutex_lock(mutex* m) {
 #ifdef WINDOWS
     WaitForSingleObject(m->m, INFINITE);
 #else
@@ -213,7 +213,7 @@ int mutex_TryLock(mutex* m) {
 #endif
 }
 
-void mutex_Release(mutex* m) {
+void mutex_release(mutex* m) {
 #ifdef WINDOWS
     ReleaseMutex(m->m);
 #else
@@ -352,7 +352,7 @@ void thread_markAsMainThread(void) {
 #endif
 }
 
-int thread_IsMainThread(void) {
+int thread_isMainThread(void) {
 #ifdef UNIX
     return (pthread_self() == mainThread);
 #else

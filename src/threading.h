@@ -29,12 +29,12 @@ typedef struct threadinfo threadinfo;
 typedef struct semaphore semaphore;
 
 // create, destroy a mutex:
-mutex* mutex_Create(void);
-void mutex_Destroy(mutex* m);
+mutex* mutex_create(void);
+void mutex_destroy(mutex* m);
 
 // lock and release a mutex:
-void mutex_Lock(mutex* m);
-void mutex_Release(mutex* m);
+void mutex_lock(mutex* m);
+void mutex_release(mutex* m);
 
 // attempt to lock a mutex, but abort immediately
 // if mutex is currently not available:
@@ -67,7 +67,7 @@ void thread_markAsMainThread(void);
 // (use this right at program start)
 
 // check if the current thread is the marked main thread:
-int thread_IsMainThread(void);
+int thread_isMainThread(void);
 
 // return the thread id of the current thread:
 int thread_OwnThreadId(void);

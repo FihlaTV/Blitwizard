@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -534,7 +534,7 @@ int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {
 int luafuncs_camera_get2dZoomFactor(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
     l, 1, 0, "blitwizard.graphics.camera:get2dZoomFactor");
-    lua_pushnumber(l, graphics_GetCamera2DZoom(0));
+    lua_pushnumber(l, graphics_GetCamera2DZoom(e->cameraslot));
     return 1;
 }
 

@@ -66,7 +66,7 @@ int eventSpriteCount[SPRITE_EVENT_TYPE_COUNT];
 
 // initialise threading mutex and sprite event info:
 __attribute__((constructor)) static void graphics2dsprites_init(void) {
-    m = mutex_Create();
+    m = mutex_create();
 
     // reset event info:
     int i = 0;
@@ -140,11 +140,11 @@ graphics2dsprite* sprite) {
 static void graphics2dsprites_dimensionInfoCallback(
 __attribute__ ((unused)) struct texturerequesthandle* request,
 size_t width, size_t height, void* userdata) {
-    mutex_Lock(m);
+    mutex_lock(m);
     struct graphics2dsprite* s = userdata;
 
     if (s->deleted) {
-        mutex_Release(m);
+        mutex_release(m);
         return;
     }
 
@@ -157,7 +157,7 @@ size_t width, size_t height, void* userdata) {
     } else {
         graphics2dsprites_fixClippingWindow(s);
     }
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 double graphics2dsprites_getAlpha(
@@ -182,15 +182,15 @@ __attribute__ ((unused)) struct texturerequesthandle* request,
 void* userdata) {
     struct graphics2dsprite* s = userdata;
 
-    mutex_Lock(m);
+    mutex_lock(m);
 
     if (s->deleted) {
-        mutex_Release(m);
+        mutex_release(m);
         return;
     }
 
     s->textureHandlingDone = 1;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 // this callback will be called by the texture manager:
@@ -199,15 +199,15 @@ __attribute__ ((unused)) struct texturerequesthandle* request,
 struct graphicstexture* texture, void* userdata) {
     struct graphics2dsprite* s = userdata;
 
-    mutex_Lock(m);
+    mutex_lock(m);
 
     if (s->deleted) {
-        mutex_Release(m);
+        mutex_release(m);
         return;
     }
 
     s->tex = texture;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 // Get texture dimensions if known:
@@ -216,10 +216,10 @@ size_t* width, size_t* height) {
     if (!sprite) {
         return 0;
     }
-    mutex_Lock(m);
+    mutex_lock(m);
     if (sprite->loadingError) {
         // sprite failed to load
-        mutex_Release(m);
+        mutex_release(m);
         return 1;
     }
     // if a clipping window is set and final texture size is known,
@@ -228,17 +228,17 @@ size_t* width, size_t* height) {
         if (sprite->clippingWidth && sprite->clippingHeight) {
             *width = sprite->clippingWidth;
             *height = sprite->clippingHeight;
-            mutex_Release(m);
+            mutex_release(m);
             return 1;
         }
         // otherwise, report texture size if known:
         *width = sprite->texWidth;
         *height = sprite->texHeight;
-        mutex_Release(m);
+        mutex_release(m);
         return 1;
     }
     // no texture size known:
-    mutex_Release(m);
+    mutex_release(m);
     return 0;
 }
 
@@ -248,13 +248,13 @@ int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite) {
         return 0;
     }
 
-    mutex_Lock(m);
+    mutex_lock(m);
     if (sprite->tex || sprite->textureHandlingDone) {
         // texture is there, or texture manager won't load it now.
-        mutex_Release(m);
+        mutex_release(m);
         return 1;
     }
-    mutex_Release(m);
+    mutex_release(m);
     return 0;
 }
 
@@ -263,23 +263,23 @@ size_t x, size_t y, size_t w, size_t h) {
     if (!sprite) {
         return;
     }
-    mutex_Lock(m);
+    mutex_lock(m);
     sprite->clippingX = x;
     sprite->clippingY = y;
     sprite->clippingWidth = w;
     sprite->clippingHeight = h;
     sprite->clippingEnabled = 1;
     graphics2dsprites_fixClippingWindow(sprite);
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite) {
     if (!sprite) {
         return;
     }
-    mutex_Lock(m);
+    mutex_lock(m);
     sprite->clippingEnabled = 0;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 struct doforallspritesonscreendata {
@@ -354,7 +354,7 @@ int sort, int lock) {
     }
     if (lock) {
         texturemanager_lockForTextureAccess();
-        mutex_Lock(m);
+        mutex_lock(m);
     }
 
     // get position of camera in game world:
@@ -377,7 +377,7 @@ int sort, int lock) {
     struct doforallspritesonscreendata* data = malloc(sizeof(*data));
     if (!data) {
         if (lock) {
-            mutex_Release(m);
+            mutex_release(m);
             texturemanager_releaseFromTextureAccess();
         }
         return;
@@ -420,7 +420,7 @@ int sort, int lock) {
     }
 
     if (lock) {
-        mutex_Release(m);
+        mutex_release(m);
         texturemanager_releaseFromTextureAccess();
     }
 }
@@ -430,9 +430,9 @@ int filter) {
     if (!sprite) {
         return;
     }
-    mutex_Lock(m);
+    mutex_lock(m);
     sprite->textureFiltering = filter;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void graphics2dsprites_resize(struct graphics2dsprite* sprite,
@@ -478,7 +478,7 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     if (!sprite) {
         return;
     }
-    mutex_Lock(m);
+    mutex_lock(m);
 
     // remove sprite from list:
     graphics2dsprites_removeFromList(sprite);
@@ -486,9 +486,9 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     // destroy texture manager request
     sprite->deleted = 1;
     if (sprite->request) {
-        mutex_Release(m);
+        mutex_release(m);
         texturemanager_destroyRequest(sprite->request);
-        mutex_Lock(m);
+        mutex_lock(m);
         sprite->request = NULL;
     }
     // ... this will handle the texture aswell:
@@ -503,12 +503,12 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     poolAllocator_free(spriteAllocator, sprite);
 
     // done!
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void graphics2dsprites_move(struct graphics2dsprite* sprite,
 double x, double y, double angle) {
-    mutex_Lock(m);
+    mutex_lock(m);
 #ifdef SMOOTH_SPRITES
     sprite->prevx = x;
     sprite->prevy = y;
@@ -519,17 +519,17 @@ double x, double y, double angle) {
         graphics2dspritestree_update(sprite);
     }
     sprite->angle = angle;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     // Warning: this is NOT SAFE to call when already on the list!
 
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
-    mutex_Release(m);
+    mutex_release(m);
     assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());
-    mutex_Lock(m);
+    mutex_lock(m);
 #endif
 
     if (s->pinnedToCamera >= 0) {
@@ -558,10 +558,10 @@ static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
     spritesInListCount++;
 
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
-    mutex_Release(m);
+    mutex_release(m);
     assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());
-    mutex_Lock(m);
+    mutex_lock(m);
 #endif
 }
 
@@ -575,12 +575,12 @@ const char* texturePath, double x, double y, double width, double height) {
         return NULL;
     }
 
-    mutex_Lock(m);
+    mutex_lock(m);
 
     // create new sprite struct:
     struct graphics2dsprite* s = poolAllocator_alloc(spriteAllocator);
     if (!s) {
-        mutex_Release(m);
+        mutex_release(m);
         texturemanager_releaseFromTextureAccess();
         return NULL;
     }
@@ -605,12 +605,12 @@ const char* texturePath, double x, double y, double width, double height) {
     s->parallax = 1;
     if (!s->path) {
         poolAllocator_free(spriteAllocator, s);
-        mutex_Release(m);
+        mutex_release(m);
         texturemanager_releaseFromTextureAccess();
         return NULL;
     }
 
-    mutex_Release(m);
+    mutex_release(m);
     // get a texture request:
 #ifdef EXTRADEBUG
     assert(graphics2dsprites_count()
@@ -625,29 +625,29 @@ const char* texturePath, double x, double y, double width, double height) {
     assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());
 #endif
-    mutex_Lock(m);
+    mutex_lock(m);
 
     // add us to the list:
     graphics2dsprites_addToList(s);
 
-    mutex_Release(m);
+    mutex_release(m);
 
     return s;
 }
 
 int graphics2dsprites_getZIndex(struct graphics2dsprite* sprite) {
-    mutex_Lock(m);
+    mutex_lock(m);
     int z = sprite->zindex;
-    mutex_Release(m);
+    mutex_release(m);
     return z;
 }
 
 void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
 int zindex) {
-    mutex_Lock(m);
+    mutex_lock(m);
     if (!sprite || sprite->zindex == zindex) {
         // nothing to do.
-        mutex_Release(m);
+        mutex_release(m);
         return;
     }
 
@@ -663,7 +663,7 @@ int zindex) {
         graphics2dsprites_addToList(sprite);
     }
 
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void graphics2dsprites_setPinnedToCamera(struct graphics2dsprite* sprite,
@@ -671,10 +671,10 @@ int cameraId) {
     if (!sprite) {
         return;
     }
-    mutex_Lock(m);
+    mutex_lock(m);
     // abort if nothing has changed:
     if (sprite->pinnedToCamera == cameraId) {
-        mutex_Release(m);
+        mutex_release(m);
         return;
     }
 
@@ -691,19 +691,19 @@ int cameraId) {
     graphics2dsprites_addToList(sprite);
 
     // done.
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 int graphics2dsprites_getVisible(struct graphics2dsprite* sprite) {
-    mutex_Lock(m);
+    mutex_lock(m);
     int r = sprite->visible;
-    mutex_Release(m);
+    mutex_release(m);
     return r;
 }
 
 void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
 int visible) {
-    mutex_Lock(m);
+    mutex_lock(m);
     sprite->visible = (visible != 0);
     // only relevant if pinned:
     if (sprite->pinnedToCamera >= 0) {
@@ -741,7 +741,7 @@ int visible) {
             }
         }
     }
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void graphics2dsprites_setParallaxEffect(struct graphics2dsprite* sprite,
@@ -749,9 +749,9 @@ double value) {
     if (value <= 0) {
         value = 1;
     }
-    mutex_Lock(m);
+    mutex_lock(m);
     sprite->parallax = value;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void graphics2dsprite_calculateSizeOnScreen(
@@ -974,17 +974,17 @@ void graphics2dsprites_reportVisibility(void) {
 
 void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
 int event, int invisible) {
-    mutex_Lock(m);
+    mutex_lock(m);
     sprite->invisibleForEvent[event] = invisible;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void graphics2dsprites_enableForEvent(
 struct graphics2dsprite* sprite, int event, int enabled) {
-    mutex_Lock(m);
+    mutex_lock(m);
     if (enabled == sprite->enabledForEvent[event]) {
         // nothing changes.
-        mutex_Release(m);
+        mutex_release(m);
         return;
     }
     sprite->enabledForEvent[event] = enabled;
@@ -1007,7 +1007,7 @@ struct graphics2dsprite* sprite, int event, int enabled) {
         // force recalculation of last event sprite:
         recalculateLastEventSprite[event] = 1;
     }
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 struct getSpriteAtScreenPosData {
@@ -1067,7 +1067,7 @@ struct graphics2dsprite*
 graphics2dsprites_getSpriteAtScreenPos(
 int cameraId, int mx, int my, int event) {
     texturemanager_lockForTextureAccess();
-    mutex_Lock(m);
+    mutex_lock(m);
 
     // first, update lastEventSprite entries if necessary:
     graphics2dsprites_findLastEventSprites();
@@ -1087,38 +1087,38 @@ int cameraId, int mx, int my, int event) {
         DOFORALL_SORT_TOPTOBOTTOM, 0);
 
     struct graphics2dsprite* result = getspriteatscreenposdata.result;
-    mutex_Release(m);
+    mutex_release(m);
     texturemanager_releaseFromTextureAccess();
     return result;
 }
 
 void graphics2dsprites_setUserdata(struct graphics2dsprite* sprite,
 void* data) {
-    mutex_Lock(m);
+    mutex_lock(m);
     sprite->userdata = data;
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 void* graphics2dsprites_getUserdata(struct graphics2dsprite* sprite) {
-    mutex_Lock(m);
+    mutex_lock(m);
     void* udata = sprite->userdata;
-    mutex_Release(m);
+    mutex_release(m);
     return udata;
 }
 
 size_t graphics2dsprites_count(void) {
-    mutex_Lock(m);
+    mutex_lock(m);
     size_t c = graphics2dsprites_count_internal();
-    mutex_Release(m);
+    mutex_release(m);
     return c;
 }
 
 void graphics2dsprites_lockListOrTreeAccess(void) {
-    mutex_Lock(m);
+    mutex_lock(m);
 }
 
 void graphics2dsprites_releaseListOrTreeAccess(void) {
-    mutex_Release(m);
+    mutex_release(m);
 }
 
 #endif

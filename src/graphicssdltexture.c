@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -57,7 +57,7 @@ extern SDL_Renderer* mainrenderer;
 
 
 void graphicstexture_Destroy(struct graphicstexture* gt) {
-    if (!thread_IsMainThread()) {
+    if (!thread_isMainThread()) {
         return;
     }
     if (gt->sdltex) {
@@ -133,9 +133,9 @@ static int graphicstexture_pixelFormatToSDLFormat(int format) {
     }
 }
 
-struct graphicstexture* graphicstexture_Create(void* data,
+struct graphicstexture* graphicstexture_create(void* data,
 size_t width, size_t height, int format) {
-    if (!thread_IsMainThread()) {
+    if (!thread_isMainThread()) {
         return NULL;
     }
     // create basic texture struct:
@@ -213,7 +213,7 @@ int graphics_GetTextureFormat(struct graphicstexture* gt) {
 
 int graphicstexture_PixelsFromTexture(
 struct graphicstexture* gt, void* pixels) {
-    if (!thread_IsMainThread()) {
+    if (!thread_isMainThread()) {
         return 0;
     }
     // Lock SDL Texture

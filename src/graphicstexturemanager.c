@@ -114,7 +114,7 @@ struct texturerequesthandle* unhandledRequestList = NULL;
 struct poolAllocator* textureReqBlockAlloc = NULL;
 
 void texturemanager_lockForTextureAccess() {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
 }
 
 static size_t texturemanager_getRequestCount_internal(void) {
@@ -133,7 +133,7 @@ static size_t texturemanager_getRequestCount_internal(void) {
 }
 
 void texturemanager_releaseFromTextureAccess() {
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 }
 
 int texturemanager_saveGPUMemory(void) {
@@ -303,7 +303,7 @@ time_t now, int savememory) {
 
 // this runs on application start:
 __attribute__((constructor)) static void texturemanager_init(void) {
-    textureReqListMutex = mutex_Create();
+    textureReqListMutex = mutex_create();
     textureReqBlockAlloc = poolAllocator_create(
     sizeof(struct texturerequesthandle), 1);
 }
@@ -485,13 +485,13 @@ struct graphicstexturemanaged* gtm, int slot) {
 #endif
                 // we need to upload this to the gpu.
                 // let's do it right now:
-                if (!thread_IsMainThread()) {
+                if (!thread_isMainThread()) {
                     // impossible from this thread.
                     return texturemanager_getRandomGPUTexture(gtm);
                 }
-                gtm->scalelist[i].gt = graphicstexture_Create(
-                gtm->scalelist[i].pixels, gtm->scalelist[i].width,
-                gtm->scalelist[i].height, PIXELFORMAT_32RGBA);
+                gtm->scalelist[i].gt = graphicstexture_create(
+                gtm->scalelist[i].pixels, gtm->scalelist[i].paddedWidth,
+                gtm->scalelist[i].paddedHeight, PIXELFORMAT_32RGBA);
                 gpuMemUse += 4 * gtm->scalelist[i].width * gtm->scalelist[i].height;
                 if (!gtm->scalelist[i].gt) {
                     // creaton failed, return random other size:
@@ -611,7 +611,7 @@ static void texturemanager_initialLoadingDataCallback
 static void texturemanager_processRequest(struct texturerequesthandle*
 request, int listLocked) {
     if (!listLocked) {
-        mutex_Lock(textureReqListMutex);
+        mutex_lock(textureReqListMutex);
     }
 
     // handle a request which has been waiting for a texture.
@@ -623,7 +623,7 @@ request, int listLocked) {
     if (!gtm) {
         // request has no texture.
         if (!listLocked) {
-            mutex_Release(textureReqListMutex);
+            mutex_release(textureReqListMutex);
         }
         return;
     }
@@ -654,7 +654,7 @@ request, int listLocked) {
             request->textureHandlingDoneIssued = 1;
         }
         if (!listLocked) {
-            mutex_Release(textureReqListMutex);
+            mutex_release(textureReqListMutex);
         }
         return;
     }
@@ -752,7 +752,7 @@ request, int listLocked) {
         request->unhandledPrev = NULL;
     }
     if (!listLocked) {
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
     }
 }
 
@@ -761,7 +761,7 @@ static void texturemanager_initialLoadingDimensionsCallback
 (struct graphicstexturemanaged* gtm, size_t width, size_t height,
 int success, void* userdata) {
     struct texturerequesthandle* request = userdata;
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
 #ifdef DEBUGTEXTUREMANAGER
     printinfo("[TEXMAN] dimensions reported for %s", gtm->path);
 #endif
@@ -772,16 +772,19 @@ int success, void* userdata) {
         height = 0;
         gtm->beingInitiallyLoaded = 0;
         gtm->initialLoadDone = 1;
+        request->textureDimensionInfoCallback(request,
+        0, 0, request->userdata);
+    } else {
+        request->textureDimensionInfoCallback(request,
+            width, height, request->userdata);
     }
-    request->textureDimensionInfoCallback(request,
-    width, height, request->userdata);
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 }
 
 // callback when texture was loaded fully:
 static void texturemanager_initialLoadingDataCallback
 (struct graphicstexturemanaged* gtm, int success, void* userdata) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     struct texturerequesthandle* request = userdata;
     gtm->beingInitiallyLoaded = 0;
     gtm->initialLoadDone = 1;
@@ -793,14 +796,14 @@ static void texturemanager_initialLoadingDataCallback
         gtm->failedToLoadTime = time(NULL);
         request->textureDimensionInfoCallback(request,
         0, 0, request->userdata);
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return;
     } else {
 #ifdef DEBUGTEXTUREMANAGER
         printinfo("[TEXMAN] successful loading for: %s", gtm->path);
 #endif
     }
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 }
 
 struct texturerequesthandle* texturemanager_requestTexture(
@@ -854,7 +857,7 @@ void* userdata) {
         gtm->failedToLoad = 0;
     }
 
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
 
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
     size_t c = texturemanager_getRequestCount_internal();
@@ -871,7 +874,7 @@ void* userdata) {
     assert(texturemanager_getRequestCount_internal() == c + 1);
 #endif
 
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 
     free(canonicalPath);
     return request;
@@ -883,7 +886,7 @@ struct texturerequesthandle* request) {
         return;
     }
 
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
 
     // remove request from regular list
     if (request->prev || request->next || request == textureRequestList) {
@@ -913,7 +916,7 @@ struct texturerequesthandle* request) {
     // free request:
     poolAllocator_free(textureReqBlockAlloc, request);
 
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 }
 
 static void texturemanager_processUnhandledRequests(void) {
@@ -1104,7 +1107,8 @@ struct graphicstexturemanaged* gtm, int neededversion) {
     }
 }
 
-static int texturemanager_textureSafeToDelete(struct graphicstexturemanaged* gtm) {
+static int texturemanager_textureSafeToDelete(
+        struct graphicstexturemanaged* gtm) {
     int i = 0;
     while (i < gtm->scalelistcount) {
         if (gtm->scalelist[i].locked || gtm->scalelist[i].writelock) {
@@ -1145,7 +1149,7 @@ void texturemanager_tick(void) {
     uint64_t start = time_GetMilliseconds();
 
     // lock global mutex:
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
 
     // reset the texture uploads to 0 every 100ms:
     if (lastUploadReset + 100 < start) {
@@ -1162,7 +1166,7 @@ void texturemanager_tick(void) {
     texturemanager_adaptTextures();
 
     // release global mutex:
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 
     // measure end and emit warning if this took too long:
     uint64_t end = time_GetMilliseconds();
@@ -1175,9 +1179,9 @@ void texturemanager_tick(void) {
 }
 
 uint64_t texturemanager_getGpuMemoryUse() {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     uint64_t v = gpuMemUse;
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return v;
 }
 
@@ -1196,7 +1200,7 @@ void texturemanager_deviceLost(void) {
 #ifdef DEBUGTEXTUREMANAGER
     printinfo("[TEXMAN] [DEVICE] Graphics device was closed.");
 #endif
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
 
     // if any sort of scaling process or caching process is underway,
     // sadly we will need to wait for it to finish:
@@ -1208,9 +1212,9 @@ void texturemanager_deviceLost(void) {
         if (!needtowait) {
             break;
         }
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         time_Sleep(500);
-        mutex_Lock(textureReqListMutex);
+        mutex_lock(textureReqListMutex);
         needtowait = 1;
     }
 
@@ -1249,11 +1253,11 @@ void texturemanager_deviceLost(void) {
         texturemanager_moveRequestToUnhandled(textureRequestList);
     }
 
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 }
 
 void texturemanager_wipeTexture(const char* tex) {
-    mutex_Lock(textureReqListMutex); 
+    mutex_lock(textureReqListMutex); 
     
     // find relevant texture entry:
     struct graphicstexturemanaged* gtm =
@@ -1261,15 +1265,15 @@ void texturemanager_wipeTexture(const char* tex) {
 
     if (!gtm) {
         // nothing to be reloaded here.
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return;
     }
 
     while (!texturemanager_textureSafeToDelete(gtm)) {
         // we need to wait. (this sucks, yes.)
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         time_Sleep(500);
-        mutex_Lock(textureReqListMutex);
+        mutex_lock(textureReqListMutex);
     }
 
     // find all affected requests and remove the texture from them:
@@ -1322,27 +1326,27 @@ void texturemanager_wipeTexture(const char* tex) {
         i++;
     }
 
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 }
 
 void texturemanager_deviceRestored(void) {
 #ifdef DEBUGTEXTUREMANAGER
     printinfo("[TEXMAN] [DEVICE] Graphics device was opened.");
 #endif
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
 
     // re-enable GPU uploads:
     noTextureUploads = 0;
 
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
 }
 
 int texturemanager_getTextureUsageInfo(const char* texture) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
     graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return -1;
     }
     int usage = -1;
@@ -1355,16 +1359,16 @@ int texturemanager_getTextureUsageInfo(const char* texture) {
         }
         i--;
     }
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return usage;
 }
 
 int texturemanager_getTextureGpuSizeInfo(const char* texture) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
     graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return -1;
     }
     int loaded = -1;
@@ -1380,16 +1384,16 @@ int texturemanager_getTextureGpuSizeInfo(const char* texture) {
         }
         i--;
     }
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return loaded;
 }
 
 int texturemanager_getTextureRamSizeInfo(const char* texture) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
     graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return -1;
     }
     int loaded = -1;
@@ -1405,24 +1409,24 @@ int texturemanager_getTextureRamSizeInfo(const char* texture) {
         }
         i--;
     }
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return loaded;
 }
 
 
 size_t texturemanager_getRequestCount(void) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     size_t c = texturemanager_getRequestCount_internal();
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return c;
 }
 
 int texturemanager_getWaitingTextureRequests(const char* texture) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
     graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return 0;
     }
     int requests = 0;
@@ -1444,32 +1448,32 @@ int texturemanager_getWaitingTextureRequests(const char* texture) {
         }
         req = req->next;
     }
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return requests;
 }
 
 int texturemanager_isInitialTextureLoadDone(const char* texture) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
     graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return 0;
     }
     int returnvalue = 0;
     if (gtm->initialLoadDone) {
         returnvalue = 1;
     }
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return returnvalue;
 }
 
 int texturemanager_getServedTextureRequests(const char* texture) {
-    mutex_Lock(textureReqListMutex);
+    mutex_lock(textureReqListMutex);
     struct graphicstexturemanaged* gtm =
     graphicstexturelist_getTextureByName(texture);
     if (!gtm) {
-        mutex_Release(textureReqListMutex);
+        mutex_release(textureReqListMutex);
         return 0;
     }
     int requests = 0;
@@ -1491,7 +1495,7 @@ int texturemanager_getServedTextureRequests(const char* texture) {
         }
         req = req->next;
     }
-    mutex_Release(textureReqListMutex);
+    mutex_release(textureReqListMutex);
     return requests;
 }
 

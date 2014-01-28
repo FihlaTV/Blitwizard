@@ -65,7 +65,7 @@ int graphicstexture_getDesiredFormat(void) {
     return PIXELFORMAT_32RGBA;
 }
 
-struct graphicstexture* graphicstexture_Create(void* data,
+struct graphicstexture* graphicstexture_create(void* data,
 size_t width, size_t height, int format) {
     if (!thread_IsMainThread()) {
         return NULL;

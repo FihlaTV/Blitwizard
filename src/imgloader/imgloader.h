@@ -99,7 +99,11 @@ void img_getData(void *handle, char **path, int *imgwidth,
 // will get you a freshly allocated copy)
 
 void img_freeHandle(void *handle);
-// free the job
+// Free the job.
+// 
+// Calling this on a non-terminated job is safe and will not hang -
+// it will spawn a thread that waits for it to terminate, then frees it.
+//
 // IMPORTANT: this will NOT(!) free the image data!!
 //  You REALLY should fetch it through img_GetData _first_, and then
 //  free that data manually when you no longer need it.

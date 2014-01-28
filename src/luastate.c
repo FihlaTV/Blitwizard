@@ -818,11 +818,11 @@ int wassuspended = 0;
 int suspendcount = 0;
 mutex* suspendLock = NULL;
 __attribute__((constructor)) void luastate_lockForSuspendGC(void) {
-    suspendLock = mutex_Create();
+    suspendLock = mutex_create();
 }
 
 void luastate_suspendGC() {
-    mutex_Lock(suspendLock);
+    mutex_lock(suspendLock);
     if (suspendcount <= 0) {
         // check current gc state:
         wassuspended = 1;
@@ -837,11 +837,11 @@ void luastate_suspendGC() {
     }
     // increase count:
     suspendcount++;
-    mutex_Release(suspendLock);
+    mutex_release(suspendLock);
 }
 
 void luastate_resumeGC() {
-    mutex_Lock(suspendLock);
+    mutex_lock(suspendLock);
     suspendcount--;
     if (suspendcount <= 0) {
         suspendcount = 0;
@@ -849,6 +849,6 @@ void luastate_resumeGC() {
             lua_gc(scriptstate, LUA_GCRESTART, 0);
         }
     }
-    mutex_Release(suspendLock);
+    mutex_release(suspendLock);
 }
 

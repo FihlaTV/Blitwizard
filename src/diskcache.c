@@ -87,8 +87,8 @@ __attribute__((constructor)) static void diskcache_Init(void) {
 #endif
 
     // create mutex and lock it instantly:
-    cachemutex = mutex_Create();
-    mutex_Lock(cachemutex);
+    cachemutex = mutex_create();
+    mutex_lock(cachemutex);
 
     // get folder path & create folder:
     cachefolder = diskcache_GenerateCacheFolderPath();
@@ -104,7 +104,7 @@ __attribute__((constructor)) static void diskcache_Init(void) {
     }
 
     // release mutex again:
-    mutex_Release(cachemutex);
+    mutex_release(cachemutex);
 }
 
 struct diskcache_StoreThreadInfo {
@@ -265,8 +265,8 @@ char* diskcache_Store(char* data, size_t datalength) {
     // spawn store thread and return resource path:
     threadinfo* ti = thread_createInfo();
     if (!ti) {
-        free(sti);
         free(sti->resourcepath);
+        free(sti);
         free(resourcepath);
         free(newdata);
         return NULL;

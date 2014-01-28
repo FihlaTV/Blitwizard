@@ -66,7 +66,7 @@ struct poolAllocator* poolAllocator_create(size_t size, int threadsafe) {
     if (threadsafe) {
         // for a thread-safe pool allocator,
         // use a mutex:
-        p->m = mutex_Create();
+        p->m = mutex_create();
         if (!p->m) {
             free(p);
             return NULL;
@@ -86,7 +86,7 @@ void* poolAllocator_alloc(struct poolAllocator* p) {
 #else
 
     if (p->m) {
-        mutex_Lock(p->m);
+        mutex_lock(p->m);
     }
 
     // first, see if there is an existing pool with free space:
@@ -123,7 +123,7 @@ void* poolAllocator_alloc(struct poolAllocator* p) {
         void* newpools = realloc(p->pools, sizeof(*p->pools) * newcount);
         if (!newpools) {
             if (p->m) {
-                mutex_Release(p->m);
+                mutex_release(p->m);
             }
             return NULL;
         }
@@ -155,7 +155,7 @@ void* poolAllocator_alloc(struct poolAllocator* p) {
         if (!newmem) {
             // whoops, out of memory?
             if (p->m) {
-                mutex_Release(p->m);
+                mutex_release(p->m);
             }
             return NULL;
         }
@@ -166,7 +166,7 @@ void* poolAllocator_alloc(struct poolAllocator* p) {
             // out of memory apparently!
             free(newmem);
             if (p->m) {
-                mutex_Release(p->m);
+                mutex_release(p->m);
             }
             return NULL;
         }
@@ -236,7 +236,7 @@ void* poolAllocator_alloc(struct poolAllocator* p) {
     } 
 
     if (p->m) {
-        mutex_Release(p->m);
+        mutex_release(p->m);
     }
     // printf("Handing out #%d %d/%u\n", usepool, slot,
     // (unsigned int)pool->size);
@@ -250,7 +250,7 @@ void poolAllocator_free(struct poolAllocator* p, void* memp) {
 #else
     if (!memp) {return;}
     if (p->m) {
-        mutex_Lock(p->m);
+        mutex_lock(p->m);
     }
 
     // find the pool this is in, seeking backwards:
@@ -283,14 +283,14 @@ void poolAllocator_free(struct poolAllocator* p, void* memp) {
                 }
             }
             if (p->m) {
-                mutex_Release(p->m);
+                mutex_release(p->m);
             }
             return;
         }
         i--;
     }
     if (p->m) {
-        mutex_Release(p->m);
+        mutex_release(p->m);
     }
     fprintf(stderr, "*******\n");
     fprintf(stderr, "Invalid poolallocator_free on allocator %p, "

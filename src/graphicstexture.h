@@ -40,7 +40,7 @@ int graphicstexture_getDesiredFormat(void);
 
 // Create a graphics texture (for 3d accelerated renderers,
 // it must be created in GPU memory!) and return a handle:
-struct graphicstexture* graphicstexture_Create(void* data,
+struct graphicstexture* graphicstexture_create(void* data,
 size_t width, size_t height, int format);
 // Please note in the current implementation, a format not matching
 // graphicstexture_getDesiredFormat() is rejected.

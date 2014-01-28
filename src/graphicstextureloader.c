@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -55,6 +55,7 @@ struct graphicstextureloader_initialLoadingThreadInfo {
     void* userdata;
     char* path;
     int padnpot;
+    int failed;
 
     // remember size temporarily:
     size_t width, height;
@@ -92,7 +93,9 @@ int width, int height, void* userdata) {
         info->callbackDimensions(info->gtm, width, height,
         1, info->userdata);
     } else {
+        // report failure:
         info->callbackDimensions(info->gtm, 0, 0, 0, info->userdata);
+        info->failed = 1;
     }
 }
 
@@ -100,6 +103,15 @@ void graphicstextureloader_callbackData(void* handle,
 char* imgdata, unsigned int imgdatasize, void* userdata) {
     struct graphicstextureloader_initialLoadingThreadInfo* info =
     userdata;
+
+    if (info->failed) {
+        // we don't care to process any of this.
+        if (imgdata) {
+            free(imgdata);
+        }
+        free(info);
+        return;
+    }
 
     if (imgdata) {
         texturemanager_lockForTextureAccess();
@@ -152,7 +164,8 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                 // allocation failed.
                 free(imgdata);
                 texturemanager_releaseFromTextureAccess();
-                info->callbackData(info->gtm, (imgdata != NULL), info->userdata);
+                info->callbackData(info->gtm, 0, info->userdata);
+                free(info);
                 return;
             }
             // initialise list:
@@ -172,10 +185,14 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                     info->gtm->scalelist[i].paddedWidth = info->paddedWidth;
                     info->gtm->scalelist[i].paddedHeight = info->paddedHeight;
                     assert(info->paddedWidth >= info->width);
-                    assert(info->paddedWidth ==
-                        imgloader_getPaddedSize(info->width));
-                    assert(info->paddedHeight ==
-                        imgloader_getPaddedSize(info->height)); 
+#ifndef NDEBUG
+                    if (info->padnpot) {
+                        assert(info->paddedWidth ==
+                            imgloader_getPaddedSize(info->width));
+                        assert(info->paddedHeight ==
+                            imgloader_getPaddedSize(info->height)); 
+                    }
+#endif
                     info->gtm->origscale = i;
 #ifdef DEBUGTEXTURELOADER
                     printinfo("[TEXLOAD] texture has now been loaded: %s "
@@ -236,13 +253,14 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
     }
 
     info->callbackData(info->gtm, (imgdata != NULL), info->userdata);
+    free(info);
 }
 
 #ifdef USE_PHYSFS
 struct loaderfuncinfo {
-    struct graphicstextureloader_initialLoadingThreadInfo* info;
-    struct zipfilereader* file;
-    struct zipfile* archive;
+    struct graphicstextureloader_initialLoadingThreadInfo *info;
+    struct zipfilereader *file;
+    struct zipfile *archive;
 };
 
 static int graphicstextureloader_imageReadFunc(void* buffer,
@@ -306,6 +324,14 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
             pixelformattoname(graphicstexture_getDesiredFormat()),
             graphicstextureloader_callbackSize,
             graphicstextureloader_callbackData, info);
+        if (!handle) {
+            info->callbackDimensions(info->gtm, 0, 0, 0,
+                info->userdata);
+            free(info->path);
+            free(info);
+            return;
+        }
+        img_freeHandle(handle);        
 #ifdef USE_PHYSFS
     } else if (loc.type == LOCATION_TYPE_ZIP) {
         // prepare image reader info struct:
@@ -326,6 +352,14 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
             pixelformattoname(graphicstexture_getDesiredFormat()),
             graphicstextureloader_callbackSize,
             graphicstextureloader_callbackData, info);
+        if (!handle) {
+            info->callbackDimensions(info->gtm, 0, 0, 0,
+                info->userdata);
+            free(info->path);
+            free(info);
+            return;           
+        }
+        img_freeHandle(handle);
 #endif
     } else {
         printwarning("[TEXLOAD] unsupported resource location");
@@ -364,7 +398,7 @@ void* userdata) {
     info->callbackDimensions = callbackDimensions;
     info->callbackData = callbackData;
     info->userdata = userdata;
-    info->padnpot = 1;
+    info->padnpot = 0;
 
     // give texture initial normal usage to start with:
     info->gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] = time(NULL);

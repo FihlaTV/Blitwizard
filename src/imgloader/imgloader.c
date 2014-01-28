@@ -210,13 +210,13 @@ void *loaderthreadfunction(void *data) {
                                 memcpy(p, p2, i->imagewidth * 4);
                                 // null remaining line:
                                 if (finalwidth > i->imagewidth) {
-                                    /*memset(p + (i->imagewidth * 4),
+                                    memset(p + (i->imagewidth * 4),
                                         0, (finalwidth - i->imagewidth) * 4
-                                    );*/
+                                    );
                                 }
                             } else {
                                 // simply null the line:
-                                //memset(p, 0, finalwidth * 4);
+                                memset(p, 0, finalwidth * 4);
                             }
                             p += (finalwidth * 4);
                             p2 += (i->imagewidth * 4);
@@ -232,6 +232,9 @@ void *loaderthreadfunction(void *data) {
     }
 
     // enter callback if we got one
+    pthread_mutex_t cachedthreadeventmutex;
+    memcpy(&cachedthreadeventmutex, &i->threadeventmutex,
+        sizeof(cachedthreadeventmutex));
     if (i->callbackData) {
         i->callbackData(data, i->data, i->datasize, i->userdata);
     }
@@ -239,9 +242,9 @@ void *loaderthreadfunction(void *data) {
 #ifdef WIN
     return 0;
 #else
-    pthread_mutex_lock(&i->threadeventmutex);
+    pthread_mutex_lock(&cachedthreadeventmutex);
     i->threadeventobject = 1;
-    pthread_mutex_unlock(&i->threadeventmutex);
+    pthread_mutex_unlock(&cachedthreadeventmutex);
     pthread_exit(NULL);
     return NULL;
 #endif
@@ -358,7 +361,7 @@ void *userdata) {
     return t;
 }
 
-int img_CheckSuccess(void *handle) {
+int img_checkSuccess(void *handle) {
     if (!handle) {return 1;}
     struct loaderthreadinfo* i = handle;
 #ifdef WIN
@@ -400,9 +403,16 @@ char **imgdata) {
     //*imgdatasize = i->datasize; // can be calculated from width*height*4
 }
 
-void img_FreeHandle(void *handle) {
+static void img_freeHandleThread(void *handle) {
     if (!handle) {return;}
     struct loaderthreadinfo* i = handle;
+    while (!img_checkSuccess(handle)) {
+#ifdef WIN
+        Sleep(100);
+#else
+        usleep(100 * 1000);
+#endif
+    }
     if (i->memdata) {free(i->memdata);}
     if (i->format) {free(i->format);}
     if (i->path) {free(i->path);}
@@ -414,6 +424,12 @@ void img_FreeHandle(void *handle) {
 #endif
     free(handle);
 }
+
+void img_freeHandle(void *handle) {
+    thread_spawnWithPriority(NULL, 0,
+        &img_freeHandleThread, handle);
+}
+
 
 static void img_convert(char *data, int datasize,
 unsigned char firstchannelto, unsigned char secondchannelto,

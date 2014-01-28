@@ -55,25 +55,25 @@ volatile int crashed = 0;
 mutex* consoleLogMutex = NULL;
 
 __attribute__ ((constructor)) static void prepareMutexes(void) {
-    consoleLogMutex = mutex_Create();
-    memLogMutex = mutex_Create();
+    consoleLogMutex = mutex_create();
+    memLogMutex = mutex_create();
 }
 
 void consolelog(const char* type, const char* str) {
-    mutex_Lock(consoleLogMutex);
+    mutex_lock(consoleLogMutex);
     consoleloglinecount++;
     if (consoleloglinecount > CONSOLELOGMAXBUFFEREDLINES) {
         consoleloglinecount--;
-        mutex_Release(consoleLogMutex);
+        mutex_release(consoleLogMutex);
         return;
     }
     consoleloglines[consoleloglinecount-1] = strdup(str);
     consoleloglinetypes[consoleloglinecount-1] = strdup(type);
-    mutex_Release(consoleLogMutex);
+    mutex_release(consoleLogMutex);
 }
 
 void doConsoleLog() {
-    mutex_Lock(consoleLogMutex);
+    mutex_lock(consoleLogMutex);
     // enable console log
     mayConsoleLog = 1;
 
@@ -84,9 +84,9 @@ void doConsoleLog() {
         if (consoleloglines[i] && consoleloglinetypes[i]) {
             char* tp = strdup((char*)consoleloglinetypes[i]);
             char* tl = strdup((char*)consoleloglines[i]);
-            mutex_Release(consoleLogMutex);
+            mutex_release(consoleLogMutex);
             luacfuncs_onLog(tp, "%s", tl);
-            mutex_Lock(consoleLogMutex);
+            mutex_lock(consoleLogMutex);
             free(tp);
             free(tl);
         }
@@ -108,11 +108,11 @@ void doConsoleLog() {
             i++;
         }
     }
-    mutex_Release(consoleLogMutex);
+    mutex_release(consoleLogMutex);
 }
 
 void memorylog(const char* str) {
-    mutex_Lock(memLogMutex);
+    mutex_lock(memLogMutex);
     int newlen = strlen(str);
     int currlen = 0;
     if (memorylogbuf) {
@@ -129,7 +129,7 @@ void memorylog(const char* str) {
         char* p = realloc(memorylogbuf, newsize);
         // out of memory.. nothing we could sensefully do
         if (!p) {
-            mutex_Release(memLogMutex);
+            mutex_release(memLogMutex);
             return;
         }
         // resizing complete:
@@ -139,7 +139,7 @@ void memorylog(const char* str) {
     // append new log data:
     memcpy(memorylogbuf + currlen, str, newlen);
     memorylogbuf[currlen+newlen] = 0;
-    mutex_Release(memLogMutex);
+    mutex_release(memLogMutex);
 }
 
 void printerror(const char* fmt, ...) {
