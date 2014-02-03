@@ -50,7 +50,13 @@
 #include "graphicssdltexturestruct.h"
 #include "threading.h"
 
+// uncomment for no texture upload timing measurements:
 #define DEBUGUPLOADTIMING
+
+
+#ifdef NDEBUG
+#undef DEBUGPLOADTIMING
+#endif
 
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
@@ -83,7 +89,7 @@ static int graphicstexture_SDLFormatToPixelFormat(int format) {
 
 static volatile int infoprinted = 0;
 int graphicstexture_getDesiredFormat(void) {
-#ifdef LALALALALLA
+/*
     SDL_RendererInfo rinfo;
     if (SDL_GetRendererInfo(mainrenderer, &rinfo) == 0) {
         unsigned int i = 0;
@@ -108,8 +114,7 @@ int graphicstexture_getDesiredFormat(void) {
     } else {
         printwarning("[sdltex] SDL_GetRendererInfo call failed: %s",
             SDL_GetError());
-    }
-#endif
+    }*/
     if (!infoprinted) {
         infoprinted = 1;
         printwarning("[sdltex] cannot find optimal pixel format!");
@@ -188,7 +193,7 @@ size_t width, size_t height, int format) {
 #ifdef DEBUGUPLOADTIMING
     uint64_t ts5 = time_GetMilliseconds();
     if (ts5-ts1 > 100) {
-        printwarning("[sdltex] long texture upload: %dms total, "
+        printwarning("[sdltex] texture upload duration: %dms total, "
             "%dms creation, %dms lock, %dms copy, %dms unlock",
             (int)(ts5-ts1), (int)(ts2-ts1), (int)(ts3-ts2),
             (int)(ts4-ts3), (int)(ts5-ts4));

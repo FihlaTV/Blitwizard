@@ -67,9 +67,9 @@
  the templates with your game.</p>
     <h3>Info:</h3>
     <ul>
+        <li><strong>Copyright</strong>: 2013</li>
         <li><strong>License</strong>: zlib</li>
         <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
-        <li><strong>Copyright</strong>: 2013</li>
     </ul>
 
 
@@ -103,6 +103,14 @@
 	<td class="name" ><a href="#text:setPosition">text:setPosition (x, y)</a></td>
 	<td class="summary">Move the text object to the given screen position in game units
   (0,0 is top left).</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:setTransparency">text:setTransparency (transparency)</a></td>
+	<td class="summary">Set transparency on the text.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#text:setTransparency">text:setTransparency ()</a></td>
+	<td class="summary">Get current transparency of the text (default is 0/no transparency).</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#text:setVisible">text:setVisible (visibility)</a></td>
@@ -310,6 +318,47 @@
         </li>
     </ul>
 
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:setTransparency"></a>
+    <strong>text:setTransparency (transparency)</strong>
+    </dt>
+    <dd>
+    Set transparency on the text.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">transparency</span>
+            <span class="types"><span class="type">number</span></span>
+         from 0 (opaque) to 1 (fully invisible)
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "text:setTransparency"></a>
+    <strong>text:setTransparency ()</strong>
+    </dt>
+    <dd>
+    Get current transparency of the text (default is 0/no transparency).
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        transparency from 0 (opaque) to 1 (fully invisible)
+    </ol>
 
 
 

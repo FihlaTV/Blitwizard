@@ -1155,7 +1155,7 @@ AC_SUBST(STRIP)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
-                 tests/Makefile])
+                 src/tests/Makefile])
 AC_OUTPUT
 
 # Prepare final deps info output:

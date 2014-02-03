@@ -1,40 +1,64 @@
 
 # blitwizard Makefile.am
 
+SUBDIRS = tests
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = blitwizard
+# -------------
+# listing of non-os dependant blitwizard object files:
+# -------------
+source_code_files = audio.c audiomixer.c audiosourcefadepanvol.c audiosourceffmpeg.c audiosourceflac.c audiosourcefile.c audiosourceformatconvert.c audiosourceloop.c audiosourceogg.c audiosourceprereadcache.c audiosourceresample.c audiosourceresourcefile.c audiosourcewave.c avl-tree/avl-tree.c connections.c file.c filelist.c diskcache.c graphics.c graphics2dsprites.c graphics2dspriteslist.c graphics2dspritestree.c graphicscamera.c graphicsnull.c graphicsnullrender.c graphicsnulltexture.c graphicsogre.cpp graphicsogrerender.cpp graphicssdl.c graphicssdlrender.c graphicssdltexture.c graphicstexturelist.c graphicstextureloader.c graphicstexturemanager.c hash.c hashtable.c hostresolver.c ipcheck.c library.c listeners.c logging.c luaerror.c luafuncs.c luafuncs_debug.c luafuncs_graphics.c luafuncs_graphics_camera.c luafuncs_media_object.c luafuncs_net.c luafuncs_object.c luafuncs_objectgraphics.c luafuncs_objectphysics.c luafuncs_os.c luafuncs_physics.c luafuncs_rundelayed.c luafuncs_string.c luafuncs_vector.c luastate.c luastate_functionTables.c main.c mathhelpers.c orderedExecution.c osinfo.c physics.cpp physicsinternal.cpp poolAllocator.c signalhandling.c threading.c timefuncs.c win32console.c resources.c sockets.c zipdecryptionnone.c zipfile.c
 
-blitwizard_SOURCES = audio.c audiomixer.c audiosourcefadepanvol.c audiosourceffmpeg.c audiosourceflac.c audiosourcefile.c audiosourceformatconvert.c audiosourceloop.c audiosourceogg.c audiosourceprereadcache.c audiosourceresample.c audiosourceresourcefile.c audiosourcewave.c avl-tree/avl-tree.c connections.c file.c filelist.c diskcache.c graphics.c graphics2dsprites.c graphics2dspriteslist.c graphics2dspritestree.c graphicscamera.c graphicsnull.c graphicsnullrender.c graphicsnulltexture.c graphicsogre.cpp graphicsogrerender.cpp graphicssdl.c graphicssdlrender.c graphicssdltexture.c graphicstexturelist.c graphicstextureloader.c graphicstexturemanager.c hash.c hashtable.c hostresolver.c ipcheck.c library.c listeners.c logging.c luaerror.c luafuncs.c luafuncs_debug.c luafuncs_graphics.c luafuncs_graphics_camera.c luafuncs_media_object.c luafuncs_net.c luafuncs_object.c luafuncs_objectgraphics.c luafuncs_objectphysics.c luafuncs_os.c luafuncs_physics.c luafuncs_rundelayed.c luafuncs_string.c luafuncs_vector.c luastate.c luastate_functionTables.c main.c mathhelpers.c orderedExecution.c osinfo.c physics.cpp physicsinternal.cpp poolAllocator.c signalhandling.c threading.c timefuncs.c win32console.c resources.c sockets.c zipdecryptionnone.c zipfile.c
-blitwizard_LDADD = 
-blitwizard_LDFLAGS = $(FINAL_LD_FLAGS)
-
+# -------------
+# OS dependant object files:
+# -------------
 if MAC_APP_PATHS
-blitwizard_SOURCES += macapppaths.m
+source_code_files += macapppaths.m
 endif
 if WIN_APP_PATHS
-blitwizard_SOURCES += win32apppaths.c
+source_code_files += win32apppaths.c
 endif
+
+# -------------
+# blitwizard program target:
+# -------------
+bin_PROGRAMS = blitwizard
+blitwizard_SOURCES = $(source_code_files)
+blitwizard_LDADD = 
+blitwizard_LDFLAGS = $(FINAL_LD_FLAGS)
 if ENABLE_DEBUG
 blitwizard_STRIP=
 else
 blitwizard_STRIP=strip blitwizard$(EXEEXT)
 endif
 
+# -------------
+# CFLAGS/CXXFLAGS/OBJCFLAGS:
+# -------------
+# Note: -fno-PIC has been added purely for some additional speed.
 AM_CFLAGS = $(FINAL_INCLUDE_FLAGS) -fno-PIC -finline-functions -fno-strict-aliasing -Werror-implicit-function-declaration -Wstrict-prototypes -Wall -Wextra -fno-omit-frame-pointer -L../libs/ -std=gnu99
 AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -finline-functions -fno-strict-aliasing -Wall -Wextra -fexceptions -fno-omit-frame-pointer -L../libs/
 AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 
-# -fno-PIC is only added for some extra speed, same as -O3.
+# -------------
+# C tests
+# -------------
+testd = tests/ctests/
+check_PROGRAMS = imgloader-test
+imgloader_test_SOURCES = $(testd)imgloader.c
+TESTS = imgloader-test
 
+# -------------
+# Makefile targets:
+# -------------
 all-local: mytarget
 mytarget: blitwizard$(EXEEXT)
 	$(blitwizard_STRIP)
 	sh ../scripts/copybin.sh
 install:
 	mkdir -p ${datadir}/blitwizard
-#	rm -rf ${datadir}/blitwizard/templates/
 	mkdir -p ${datadir}/blitwizard/templates/
+	rm -rf ${datadir}/blitwizard/templates/*
 	cp -R ../templates/* ${datadir}/blitwizard/templates/
 	chmod -R 775 ${datadir}/blitwizard
 	cp ../bin/blitwizard${EXEEXT} ${bindir}

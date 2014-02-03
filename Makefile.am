@@ -1,6 +1,6 @@
 
 .PHONY: docs
-SUBDIRS = scripts src tests
+SUBDIRS = scripts src
 
 docs:
 	./listsources.lua

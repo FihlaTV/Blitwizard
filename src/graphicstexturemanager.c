@@ -213,8 +213,7 @@ static int texturemanager_badTextureDimensions(struct graphicstexturemanaged
 // If you anxiously want more memory, specify savememory = 2.
 int texturemanager_decideOnPreferredSize(struct graphicstexturemanaged* gtm,
 time_t now, int savememory) {
-    int wantsize = 0;  // 0 = full, 1 = tiny, 2 = low, 3 = medium, 4 = high
-    return 0;
+    int wantsize = 0;
     // downscaling based on distance:
     if (gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + SCALEDOWNSECONDS
     < now || savememory == 2 || texturemanager_badTextureDimensions(gtm)) {
