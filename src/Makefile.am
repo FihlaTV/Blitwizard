@@ -45,7 +45,8 @@ AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 # -------------
 testd = tests/ctests/
 check_PROGRAMS = imgloader-test
-imgloader_test_SOURCES = $(testd)imgloader.c
+imgloader_test_SOURCES =
+#$(testd)imgloader.c
 TESTS = imgloader-test
 
 # -------------

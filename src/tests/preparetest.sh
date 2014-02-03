@@ -5,7 +5,7 @@
 
 # Gather important variables about our build environment:
 previousdir=`pwd`
-cd ../
+cd ../../
 CC=`cat scripts/.buildinfo | grep CC | sed -e 's/^.*\=//'`
 CXX=`cat scripts/.buildinfo | grep CXX | sed -e 's/^.*\=//'`
 HOST=`cat scripts/.buildinfo | grep HOST | sed -e 's/^.*\=//'`
@@ -14,13 +14,13 @@ EXEEXT=`cat scripts/.buildinfo | grep EXEEXT | sed -e 's/^.*\=//'`
 cd $previousdir
 
 # Find out how to run blitwizard:
-RUNBLITWIZARD="../bin/blitwizard$EXEEXT"
-BINARYPATH="../bin/blitwizard$EXEEXT"
+RUNBLITWIZARD="../../bin/blitwizard$EXEEXT"
+BINARYPATH="../../bin/blitwizard$EXEEXT"
 RUNBINARY=""
 windowscheck=`echo $HOST | grep mingw`
 if [ -n "$windowscheck" ]; then
     RUNBINARY="wine "
-    RUNBLITWIZARD="wine ../bin/blitwizard$EXEEXT"
+    RUNBLITWIZARD="wine ../../bin/blitwizard$EXEEXT"
 fi
 
 # Emit a warning if in a cross compilation environment

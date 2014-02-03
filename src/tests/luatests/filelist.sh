@@ -8,7 +8,7 @@ source ./preparetest.sh
 
 # Get output from blitwizard
 echo "local outputline = \"\"
-os.chdir(\"../templates/\")
+os.chdir(\"../../templates/\")
 filelist = {}
 
 -- get all files (unsorted)
@@ -31,7 +31,7 @@ rm ./test.lua
 
 # Get comparison output through bash
 olddir=`pwd`
-cd ../templates/
+cd ../../templates/
 bashresult=""
 for f in *
 do
