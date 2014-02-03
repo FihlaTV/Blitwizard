@@ -1,7 +1,7 @@
 
 # blitwizard Makefile.am
 
-SUBDIRS = tests
+SUBDIRS = luatests
 ACLOCAL_AMFLAGS = -I m4
 
 # -------------
@@ -43,7 +43,7 @@ AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 # -------------
 # C tests
 # -------------
-testd = tests/ctests/
+testd = ctests/
 check_PROGRAMS = imgloader-test
 imgloader_test_SOURCES = $(testd)/test-imgloader.c
 TESTS = imgloader-test
@@ -64,5 +64,6 @@ install:
 	cp ../bin/blitwizard${EXEEXT} ${bindir}
 	chmod 755 ${bindir}/blitwizard${EXEEXT}
 	chmod +x ${bindir}/blitwizard${EXEEXT}
+check: check-TESTS
 count:
 	cloc *.c *.h *.cpp imgloader/*.c imgloader/*.h *.cpp ../templates/console/console.lua ../templates/font/font.lua ../templates/http/http.lua ../templates/irc/irc.lua
