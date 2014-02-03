@@ -24,6 +24,7 @@ scripts/ssetest.c
 scripts/box2dforwindows.cmake
 src/blitwizard
 src/include
+src/*-test
 .deps
 ltmain.sh
 scripts/.buildinfo
