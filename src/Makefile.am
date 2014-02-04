@@ -49,7 +49,7 @@ testd = ctests
 # -------------
 # C tests
 # -------------
-noinst_PROGRAMS = $(testd)/imgloader-test
+check_PROGRAMS = $(testd)/imgloader-test
 __testd__imgloader_test_SOURCES = $(testd)/test-imgloader.c
 __testd__imgloader_test_LDFLAGS = $(FINAL_LD_FLAGS)
 TESTS += $(testd)/imgloader-test
