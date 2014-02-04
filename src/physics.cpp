@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -607,7 +607,7 @@ void physics_apply2dImpulse(struct physicsobject* obj, double forcex,
     if (physics_objectIsCached(obj)) {
         c_object->impulsecount++;
         c_object->impulses = (struct cachedimpulse*)realloc(c_object->impulses,
-         sizeof(struct cachedimpulse*) * (c_object->impulsecount));
+         sizeof(struct cachedimpulse) * (c_object->impulsecount));
         struct cachedimpulse* imp = &(c_object->impulses[
          c_object->impulsecount-1]);
         imp->forcex = forcex;
@@ -674,7 +674,7 @@ void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse) {
     if (physics_objectIsCached(obj)) {
         c_object->angularimpulsecount++;
         c_object->angularimpulses = (struct cachedangularimpulse*)realloc(
-         c_object->angularimpulses, sizeof(struct cachedangularimpulse*) * \
+         c_object->angularimpulses, sizeof(struct cachedangularimpulse) * \
          (c_object->angularimpulsecount));
         struct cachedangularimpulse* imp = &(c_object->angularimpulses[
          c_object->angularimpulsecount-1]);
