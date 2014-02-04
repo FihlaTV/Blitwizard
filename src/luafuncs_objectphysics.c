@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -853,7 +853,9 @@ struct blitwizardobject* obj) {
     // remember we did this scaling:
     obj->physics->phullx = newscfx;
     obj->physics->phully = newscfy;
-    obj->physics->phullz = newscfz;
+    if (obj->is3d) {
+        obj->physics->phullz = newscfz;
+    }
 }
 
 /// This is how you should submit shape info to
@@ -1360,15 +1362,24 @@ int luafuncs_object_getMass(lua_State* l) {
         return lua_error(l);
     }
     lua_pushnumber(l, physics_getMass(obj->physics->object));
-    double centerx,centery,centerz;
+    double centerx, centery, centerz;
     if (obj->is3d) {
 #ifdef USE_PHYSICS3D
         physics_get3dMassCenterOffset(obj->physics->object,
         &centerx, &centery, &centerz);
+#else
+        centerx = 0;
+        centery = 0;
+        centerz = 0;
 #endif
     } else {
+#ifdef USE_PHYSICS2D
         physics_get2dMassCenterOffset(obj->physics->object,
         &centerx, &centery);
+#else
+        centerx = 0;
+        centery = 0;
+#endif
         centerz = 0;
     }
     lua_pushnumber(l, centerx);

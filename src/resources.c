@@ -247,6 +247,10 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
         fclose(r);
         return 0;
     }
+    // for malicious numbers, make sure this doesn't take forever:
+    if (entrynumber > 4096) {
+        entrynumber = 4096;
+    }
 
     // no section header entries is invalid:
     if (entrynumber == 0) {

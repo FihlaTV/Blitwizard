@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -227,6 +227,10 @@ int filelist_GetNextFile(struct filelistcontext* ctx, char* namebuf, size_t name
     // check if we actually have an empty dir
     if (ctx->findhandle == INVALID_HANDLE_VALUE) {
         if (ctx->reporterror) {
+            if (isdirectory) {
+                // revert value on error so it is unaltered
+                *isdirectory = originalisdirectoryvalue;
+            }
             return -1; // report error we encountered last time
         }
         return 0; // report no file

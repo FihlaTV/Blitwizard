@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -117,14 +117,20 @@ int luafuncs_ray(lua_State* l, int use3d) {
         &hitpointx, &hitpointy, &hitpointz,
         &obj,
         &normalx, &normaly, &normalz);
+#else
+        returnvalue = 0;
 #endif
     } else {
+#ifdef USE_PHYSICS2D
         returnvalue = physics_ray2d(main_DefaultPhysics2dPtr(),
         startx, starty,
         targetx, targety,
         &hitpointx, &hitpointy,
         &obj,
         &normalx, &normaly);
+#else
+        returnvalue = 0;
+#endif
     }
 
     if (returnvalue) {

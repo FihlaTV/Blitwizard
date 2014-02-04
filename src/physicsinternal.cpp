@@ -1496,16 +1496,12 @@ reverse order they were added in."
                 chain = _physics_copyb2ChainShape(
                  (b2ChainShape*)(f->GetShape()),
                  &(object->orig_shape_info[orig_shape_info_index]));
-                object->orig_shapes[fixture_index] = (b2Shape*)malloc(
-                 sizeof(b2ChainShape*));
                 object->orig_shapes[fixture_index] = (b2Shape*)chain;
                 --orig_shape_info_index;
             break;
             case b2Shape::e_circle:
                 circle = _physics_copyb2CircleShape(
                  (b2CircleShape*)(f->GetShape()), NULL);
-                object->orig_shapes[fixture_index] = (b2Shape*)malloc(
-                 sizeof(b2CircleShape*));
                 object->orig_shapes[fixture_index] = (b2Shape*)circle;
             break;
             case b2Shape::e_edge:
@@ -1516,8 +1512,8 @@ reverse order they were added in."
             case b2Shape::e_polygon:
                 poly = _physics_copyb2PolygonShape(
                  (b2PolygonShape*)(f->GetShape()), NULL);
-                object->orig_shapes[fixture_index] = (b2Shape*)malloc(
-                 sizeof(b2PolygonShape*));
+                //object->orig_shapes[fixture_index] = (b2Shape*)malloc(
+                // sizeof(b2PolygonShape*));
                 object->orig_shapes[fixture_index] = (b2Shape*)poly;
             break;
             default:

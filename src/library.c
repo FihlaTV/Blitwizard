@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -154,7 +154,7 @@ static void library_SearchDir(const char* dir, const char* name, void** ptr) {
     }
 
     char namebuf[600];
-    int isdir;
+    int isdir = 0;
     while (filelist_GetNextFile(fctx, namebuf, sizeof(namebuf), &isdir) == 1) {
         if (!isdir) {
             // it is a file. does it start with our name + .so?
@@ -186,7 +186,7 @@ static char* finddllname(const char* path, const char* name) {
     if (!fctx) {
         return NULL;
     }
-    int isdir;
+    int isdir = 0;
     while (filelist_GetNextFile(fctx, fstr, sizeof(fstr), &isdir) == 1) {
         if (!isdir && strlen(fstr) >= strlen(name) + strlen(".dll")) {
             if (memcmp(fstr, name, strlen(name)) == 0 &&
