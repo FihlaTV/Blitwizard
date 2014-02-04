@@ -5,7 +5,7 @@
 
 AC_PREREQ([2.60])
 
-AC_INIT([blitwizard], [0.4], [jonasthiem@googlemail.com])
+AC_INIT([blitwizard], [0.4.0], [jonasthiem@googlemail.com])
 m4_pattern_allow([AC_DEFINE_DIR])
 m4_include([m4/ac_define_dir.m4])
 
