@@ -1,8 +1,7 @@
 
 # blitwizard Makefile.am
 
-SUBDIRS = . luatests
-TESTS = imgloader-test
+SUBDIRS = .
 ACLOCAL_AMFLAGS = -I m4
 
 # -------------
@@ -42,12 +41,31 @@ AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -finline-functions
 AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 
 # -------------
+# Unit test section
+# -------------
+TESTS=
+testd = ctests
+
+# -------------
 # C tests
 # -------------
-testd = ctests/
-noinst_PROGRAMS = imgloader-test
-imgloader_test_SOURCES = $(testd)/test-imgloader.c
-imgloader_test_LDFLAGS = $(FINAL_LD_FLAGS)
+noinst_PROGRAMS = $(testd)/imgloader-test
+__testd__imgloader_test_SOURCES = $(testd)/test-imgloader.c
+__testd__imgloader_test_LDFLAGS = $(FINAL_LD_FLAGS)
+TESTS += $(testd)/imgloader-test
+
+# -------------
+# Lua tests
+# -------------
+TESTS += luatests/createobject.sh \
+         luatests/filelist.sh \
+         luatests/getvisiblegetzindex.sh \
+         luatests/movecamera.sh \
+         luatests/physicsgc.sh \
+         luatests/setgetmass.sh \
+         luatests/setmode.sh \
+         luatests/textureusagereport.sh \
+         luatests/zipls.sh
 
 # -------------
 # Makefile targets:

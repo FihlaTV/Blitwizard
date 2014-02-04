@@ -3,6 +3,9 @@
 
 # This gathers some variables and decides on how to run things
 
+# First, enter luatests/
+cd luatests/
+
 # Gather important variables about our build environment:
 previousdir=`pwd`
 cd ../../

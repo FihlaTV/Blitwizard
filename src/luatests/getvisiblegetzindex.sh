@@ -2,7 +2,7 @@
 
 # This test checks whether obj:isVisible() and obj:getZIndex() work.
 
-source preparetest.sh
+source luatests/preparetest.sh
 
 # Get output from blitwizard
 echo "

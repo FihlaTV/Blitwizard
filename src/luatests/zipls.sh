@@ -3,7 +3,7 @@
 # This test checks if blitwizard.debug.getTextureUsageInfo
 # returns the correct value in a few basic cases.
 
-source preparetest.sh
+source luatests/preparetest.sh
 
 # prepare test game:
 mkdir -p ./lstest

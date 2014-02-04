@@ -3,7 +3,7 @@
 # This test confirms blitwizard.object:getMass returns
 # the value previously set through blitwizard.object:setMass
 
-source preparetest.sh
+source luatests/preparetest.sh
 
 # Run blitwizard test:
 echo "-- don't spill out log output:

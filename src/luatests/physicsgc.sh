@@ -3,7 +3,7 @@
 # This test checks if the physics objects get garbage collected.
 # Mainly, it just verifies blitwizard doesn't crash or outright error.
 
-source preparetest.sh
+source luatests/preparetest.sh
 
 # Lua test code:
 echo "

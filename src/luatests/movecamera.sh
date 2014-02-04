@@ -3,7 +3,7 @@
 # This test confirms blitiwzard.object:new works.
 # It will also test the init event function.
 
-source preparetest.sh
+source luatests/preparetest.sh
 
 # Run blitwizard test:
 echo "blitwizard.onLog = nil

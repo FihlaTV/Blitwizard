@@ -1154,8 +1154,7 @@ AC_SUBST(STRIP)
 
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 src/luatests/Makefile])
+                 src/Makefile])
 AC_OUTPUT
 
 # Prepare final deps info output:

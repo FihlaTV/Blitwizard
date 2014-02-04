@@ -4,7 +4,7 @@
 # It lists the files in the templates/ directory using blitwizard/os.ls,
 # then does the same in bash and compares the results.
 
-source ./preparetest.sh
+source ./luatests/preparetest.sh
 
 # Get output from blitwizard
 echo "local outputline = \"\"

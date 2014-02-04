@@ -3,7 +3,7 @@
 # This test confirms blitwizard.object:new works.
 # It will also test the init event function.
 
-source preparetest.sh
+source luatests/preparetest.sh
 
 # Run blitwizard test:
 echo "blitwizard.graphics.setMode(320, 240, \"TEST\", false)
