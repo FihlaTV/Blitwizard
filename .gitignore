@@ -42,6 +42,7 @@ autom4te.cache/
 src/.deps/
 src/Makefile
 src/tests/Makefile
+src/luatests/Makefile
 config.status
 config.log
 config.guess

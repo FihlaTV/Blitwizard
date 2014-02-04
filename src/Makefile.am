@@ -1,7 +1,8 @@
 
 # blitwizard Makefile.am
 
-SUBDIRS = luatests
+SUBDIRS = . luatests
+TESTS = imgloader-test
 ACLOCAL_AMFLAGS = -I m4
 
 # -------------
@@ -44,9 +45,9 @@ AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 # C tests
 # -------------
 testd = ctests/
-check_PROGRAMS = imgloader-test
+noinst_PROGRAMS = imgloader-test
 imgloader_test_SOURCES = $(testd)/test-imgloader.c
-TESTS = imgloader-test
+imgloader_test_LDFLAGS = $(FINAL_LD_FLAGS)
 
 # -------------
 # Makefile targets:
