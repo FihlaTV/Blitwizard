@@ -41,7 +41,8 @@ void *img_loadImageThreadedFromFile(
 //                           cancelled right away before you run out of memory)
 //   - padnpot: whether to pad up non power of two textures to a power of two
 //   - format: "rgba", "bgra" are valid parameters for now
-//   - callback: if you want to be called (in a separate thread!) when stuff is done, specify a function here. otherwise NULL
+//   - callback: if you want to be called (in a separate thread!) when stuff
+//               is done, specify a function here. otherwise NULL
 //         size callback parameters:
 //            - handle: the same thing this function also returns.
 //            - imgwidth, imgheight: dimensions of the loaded image

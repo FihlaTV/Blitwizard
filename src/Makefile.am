@@ -45,14 +45,19 @@ AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 # -------------
 TESTS=
 testd = ctests
+TEST_CFLAGS= $(AM_CFLAGS) -DUNITTEST
 
 # -------------
 # C tests
 # -------------
-check_PROGRAMS = $(testd)/imgloader-test
-__testd__imgloader_test_SOURCES = $(testd)/test-imgloader.c
-__testd__imgloader_test_LDFLAGS = $(FINAL_LD_FLAGS)
-TESTS += $(testd)/imgloader-test
+check_PROGRAMS = $(testd)/test-imgloader $(testd)/test-texman-1
+__testd__test_imgloader_SOURCES = $(testd)/test-imgloader.c $(source_code_files)
+__testd__test_imgloader_LDFLAGS = $(FINAL_LD_FLAGS)
+__testd__test_imgloader_CFLAGS = $(TEST_CFLAGS)
+__testd__test_texman_1_SOURCES = $(testd)/test-texman-1.c $(source_code_files)
+__testd__test_texman_1_LDFLAGS = $(FINAL_LD_FLAGS)
+__testd__test_texman_1_CFLAGS = $(TEST_CFLAGS)
+TESTS += $(testd)/test-imgloader $(testd)/test-texman-1
 
 # -------------
 # Lua tests

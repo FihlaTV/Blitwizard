@@ -540,6 +540,10 @@ int luafuncs_ProcessNetEvents(void);
 
 #define MAXSCRIPTARGS 1024
 
+// NO MAIN IF UNIT TEST:
+#ifndef UNITTEST
+// ---
+
 #if (defined(__ANDROID__) || defined(ANDROID))
 int SDL_main(int argc, char** argv) {
 #else
@@ -1317,4 +1321,8 @@ int main(int argc, char** argv) {
     main_Quit(0);
     return 0;
 }
+
+// NO MAIN IF UNIT TEST:
+#endif  // UNITTEST
+// ---
 

@@ -43,6 +43,9 @@ src/.deps/
 src/Makefile
 src/tests/Makefile
 src/luatests/Makefile
+src/ctests/test-*
+!src/ctests/test-*.c
+src/ctests/.dirstamp
 config.status
 config.log
 config.guess
