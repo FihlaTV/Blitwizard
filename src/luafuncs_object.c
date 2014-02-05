@@ -553,11 +553,13 @@ struct blitwizardobject* toblitwizardobject(lua_State* l, int index, int arg, co
     || idref->type != IDREF_BLITWIZARDOBJECT) {
         haveluaerror(l, badargument2, arg, func,
         "not a valid blitwizard object");
+        return NULL;
     }
     struct blitwizardobject* o = idref->ref.bobj;
     if (o->deleted) {
         haveluaerror(l, badargument2, arg, func,
         "this blitwizard object was deleted");
+        return NULL;
     }
     return o;
 }

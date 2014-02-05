@@ -615,13 +615,16 @@ const char* texturePath, double x, double y, double width, double height) {
     // get a texture request:
 #ifdef EXTRADEBUG
     assert(graphics2dsprites_count()
-    <= texturemanager_getRequestCount());
+        <= texturemanager_getRequestCount());
 #endif
+    // coverity[missing_lock] -
+    // this is fine, the texture isn't in the list yet,
+    // hence noone else will fiddle with it -> no lock required.
     s->request = texturemanager_requestTexture(
-    s->path, graphics2dsprites_dimensionInfoCallback,
-    graphics2dsprites_textureSwitchCallback,
-    graphics2dsprites_textureHandlingDoneCallback,
-    s);
+        s->path, graphics2dsprites_dimensionInfoCallback,
+        graphics2dsprites_textureSwitchCallback,
+        graphics2dsprites_textureHandlingDoneCallback,
+        s);
 #ifdef EXTRADEBUG
     assert(graphics2dsprites_count()
     <= texturemanager_getRequestCount());

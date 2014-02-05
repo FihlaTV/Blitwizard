@@ -486,19 +486,23 @@ static void determineBinaryPath(const char* argv0) {
 
     // abort if argument is possibly dangerous:
     const char* name = argv0;
-    if (strstr(name, " ") || strstr(name, "\n") ||
-    strstr(name, "\"") || strstr(name, "\r") || strstr(name, "'")
-    || strstr(name, "\t") || strstr(name, ":") || strstr(name, "/")
-    || strstr(name, "\\") || strstr(name, "?") || strstr(name, "$")
-    || strstr(name, "`") || strstr(name, "(") || strstr(name, ")")) {
-        return;
+    size_t i = 0;
+    while (i < strlen(name)) {
+        if ((name[i] < 'a' || name[i] > 'z') &&
+                (name[i] < 'A' || name[i] > 'Z') &&
+                (name[i] < '0' || name[i] > '9') &&
+                name[i] != '_' && name[i] != '-') {
+            // some weird char in there.
+            return;
+        }
+        i++;
     }
 
     // ok it looks like we were globally run
     // (system-wide install) with no proper path.
     // this means we will need to search ourselves:
     char cmd[512];
-    snprintf(cmd, sizeof(cmd), "type %s", argv0);
+    snprintf(cmd, sizeof(cmd), "type %s", name);
     FILE* f = popen(cmd, "r");
     if (!f) {
         return;
@@ -507,13 +511,13 @@ static void determineBinaryPath(const char* argv0) {
     char* s = fgets(resultbuf, sizeof(resultbuf), f);
     fclose(f);
     // see if this starts with: argv0 is /some/path..
-    if (!s || strlen(s) < strlen(argv0)+strlen(" is ")) {
+    if (!s || strlen(s) < strlen(argv0) + strlen(" is ")) {
         return;
     }
     if (memcmp(s, argv0, strlen(argv0)) != 0) {
         return;
     }
-    if (memcmp(s+strlen(argv0), " is ", strlen(" is ")) != 0) {
+    if (memcmp(s + strlen(argv0), " is ", strlen(" is ")) != 0) {
         return;
     }
     if (s[strlen(argv0) + strlen(" is ")] == '/') {

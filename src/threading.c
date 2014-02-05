@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2012-2013 Jonas Thiem
+  Copyright (C) 2012-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -319,9 +319,9 @@ void thread_spawnWithPriority(threadinfo *t, int priority,
         if (priority == 2) {
             struct sched_param param;
             int policy;
-            pthread_getschedparam(t->t, &policy, &param);
+            pthread_getschedparam(thread, &policy, &param);
             param.sched_priority = sched_get_priority_max(policy);
-            pthread_setschedparam(t->t, policy, &param);
+            pthread_setschedparam(thread, policy, &param);
         }
         pthread_detach(thread);
     }

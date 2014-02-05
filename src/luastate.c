@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -543,8 +543,11 @@ static lua_State* luastate_New(int (*terminationCallback)(void* stateptr)) {
     // now set a default blitwizard.onLog handler:
     lua_getglobal(l, "dostring");
     lua_pushstring(l, "function blitwizard.onLog(type, msg)\n"
-    "    print(\"[LOG:\" .. type .. \"] \" .. msg)\n"
-    "end\n");
+        "    print(\"[LOG:\" .. type .. \"] \" .. msg)\n"
+        "end\n");
+    // coverity[unchecked_value] - we don't want to cause error message
+    // logs from logging itself since that could cause an infinite loop.
+    // therefore, we don't handle possible lua errors here.
     lua_pcall(l, 1, 0, 0);
 
     return l;

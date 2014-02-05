@@ -86,8 +86,8 @@ static const char* luastringchunkreader(lua_State *l, void *data, size_t *size) 
 
 #endif
 
-void _luacfuncs_onError_internal(const char* funcname, const char* error,
-int triggerOnLog) {
+void _luacfuncs_onError_internal(const char* funcname,
+        const char* error, int triggerOnLog) {
     char errorstr[1024];
     snprintf(errorstr, sizeof(errorstr), "Error when calling %s: %s",
     funcname, error);
@@ -102,6 +102,9 @@ int triggerOnLog) {
         // call print with suspended garbage collector:
         lua_getglobal(l, "print");
         lua_pushstring(l, errorstr);
+        // coverity[unchecked_value] - we don't want to cause error message
+        // logs from logging itself since that could cause an infinite loop.
+        // therefore, we don't handle possible lua errors here.
         lua_pcall(l, 1, 0, 0);
 
         luastate_resumeGC();
@@ -488,7 +491,12 @@ int luafuncs_trandom(lua_State* l) {
         lua_pushnumber(l, drand48());
         return 1;
     }
-    fread(&d, sizeof(d), 1, f);
+    if (fread(&d, sizeof(d), 1, f) != 1) {
+        fclose(f);
+        // fallback to someting simple
+        lua_pushnumber(l, drand48());
+        return 1;
+    }
     fclose(f);
 
     // FIXME: review this code.

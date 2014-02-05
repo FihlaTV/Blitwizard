@@ -204,6 +204,9 @@ void so_SetSocketNonblocking(int socket) {
     int save_fd;
     save_fd = fcntl(socket, F_GETFL);
     save_fd |= O_NONBLOCK;
+    // Note: return value is unchecked here.
+    // That isn't best practise, but there isn't really anything we
+    // can do to recover when this doesn't work.
     fcntl(socket, F_SETFL, save_fd);
 #endif
 #ifdef WINDOWS
@@ -512,6 +515,7 @@ int so_MakeSocketListen(int socket, int port, int iptype, const char* bindip) {
     // allow reusing the address on unix systems
 #ifndef WINDOWS
     long lclyes = 1;
+    // coverity[unchecked_value] - we do not really care if this fails
     setsockopt(socket, SOL_SOCKET,SO_REUSEADDR, &lclyes, sizeof(int));
 #endif
     // ( 4 ) --- the actual binding process & listening

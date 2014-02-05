@@ -160,15 +160,18 @@ int index, int arg, const char* func) {
     }
     if (lua_rawlen(l, index) != sizeof(struct luaidref)) {
         haveluaerror(l, badargument2, arg, func, "not a valid camera");
+        return NULL;
     }
     struct luaidref* idref = lua_touserdata(l, index);
     if (!idref || idref->magic != IDREF_MAGIC
     || idref->type != IDREF_CAMERA) {
         haveluaerror(l, badargument2, arg, func, "not a valid camera");
+        return NULL;
     }
     struct luacameralistentry* c = idref->ref.camera;
     if (c->cameraslot < 0) {
         haveluaerror(l, badargument2, arg, func, "this camera was deleted");
+        return NULL;
     }
     return c;
 }
