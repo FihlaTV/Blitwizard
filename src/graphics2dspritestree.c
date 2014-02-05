@@ -242,9 +242,9 @@ static int spriteisbefore(int a, int b) {
 
 static void swap(int a, int b) {
     assert(0 <= a);
-    assert(a < sortlistfill);
+    assert(a < (int)sortlistfill);
     assert(0 <= b);
-    assert(b < sortlistfill);
+    assert(b < (int)sortlistfill);
     assert(a != b);
     struct spritesortentry tempentry;
     memcpy(&tempentry, &sortlist[a], sizeof(tempentry));
@@ -252,16 +252,17 @@ static void swap(int a, int b) {
     memcpy(&sortlist[b], &tempentry, sizeof(tempentry));
 }
 
-static void graphics2dspritestree_printSortedList(int currentItem, int pivot) {
+static void graphics2dspritestree_printSortedList(
+        int currentItem, int pivot) {
     int i = 0;
-    while (i < sortlistfill) {
+    while (i < (int)sortlistfill) {
         char currentItemC = ' ';
         char pivotC = ' ';
         if (currentItem == i) {
             currentItemC = 'C';
         }
         if (pivot == i) {
-            pivotC == 'P';
+            pivotC = 'P';
         }
         printf("[%d] zindex: %d, zindexsetid: %llu [%c][%c]\n", i,
             sortlist[i].zindex, sortlist[i].zindexsetid,

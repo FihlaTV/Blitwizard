@@ -254,7 +254,15 @@ void* userdata, struct zipdecryptionfileaccess* zdf) {
         return 0;
     }
     // seek to position in old handle:
-    if (fseek(zf2->f, ftell(zf->f), SEEK_SET) != 0) {
+    int64_t oldpos = ftell(zf->f);
+    if (oldpos >= 0) {
+        if (fseek(zf2->f, oldpos, SEEK_SET) != 0) {
+            fclose(zf2->f);
+            free(zf2->fname);
+            free(zf2);
+            return 0;
+        }
+    } else {
         fclose(zf2->f);
         free(zf2->fname);
         free(zf2);

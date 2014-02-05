@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -35,7 +35,7 @@
 
 struct audiosourceogg_internaldata {
     // our source of to-be-decoded data:
-    struct audiosource* filesource;
+    struct audiosource *filesource;
     int filesourceeof;
 
     // buffer for fetching from the file source:
@@ -58,7 +58,7 @@ struct audiosourceogg_internaldata {
     int vorbiseof;
 };
 
-static void audiosourceogg_Rewind(struct audiosource* source) {
+static void audiosourceogg_Rewind(struct audiosource *source) {
     struct audiosourceogg_internaldata* idata = source->internaldata;
     if (!idata->eof || !idata->returnerroroneof) {
         // close vorbis decoder:
@@ -91,21 +91,27 @@ static void audiosourceogg_ReadUndecoded(struct audiosourceogg_internaldata* ida
 
     // move buffer back if required
     if (idata->fetchedbufreadoffset > sizeof(idata->fetchedbuf)/4) {
-        memmove(idata->fetchedbuf, idata->fetchedbuf + idata->fetchedbufreadoffset, idata->fetchedbytes);
+        memmove(idata->fetchedbuf, idata->fetchedbuf
+            + idata->fetchedbufreadoffset, idata->fetchedbytes);
         idata->fetchedbufreadoffset = 0;
     }
 
     // fetch new bytes
-    if (idata->fetchedbytes < sizeof(idata->fetchedbuf)) {
+    if (idata->fetchedbufreadoffset + idata->fetchedbytes <
+            sizeof(idata->fetchedbuf)) {
         if (!idata->filesourceeof) {
             int i;
-            i = idata->filesource->read(idata->filesource, idata->fetchedbuf + idata->fetchedbytes + idata->fetchedbufreadoffset, sizeof(idata->fetchedbuf) - (idata->fetchedbytes + idata->fetchedbufreadoffset));
+            i = idata->filesource->read(idata->filesource,
+                idata->fetchedbuf + idata->fetchedbytes +
+                idata->fetchedbufreadoffset,
+                sizeof(idata->fetchedbuf) - (idata->fetchedbytes
+                + idata->fetchedbufreadoffset));
             if (i <= 0) {
                 idata->filesourceeof = 1;
                 if (i < 0) {
                     idata->returnerroroneof = 1;
                 }
-            }else{
+            } else {
                 idata->fetchedbytes += i;
             }
         }
@@ -150,7 +156,7 @@ static size_t vorbismemoryreader(void *ptr, size_t size, size_t nmemb, void *dat
     return writtenchunks;
 }
 
-static int audiosourceogg_InitOgg(struct audiosource* source) {
+static int audiosourceogg_InitOgg(struct audiosource *source) {
     struct audiosourceogg_internaldata* idata = source->internaldata;
     if (idata->vorbisopened) {
         return 1;
@@ -168,7 +174,7 @@ static int audiosourceogg_InitOgg(struct audiosource* source) {
     return 1;
 }
 
-static int audiosourceogg_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
+static int audiosourceogg_Read(struct audiosource *source, char* buffer, unsigned int bytes) {
     struct audiosourceogg_internaldata* idata =
     source->internaldata;
     if (idata->eof) {
@@ -240,7 +246,8 @@ static int audiosourceogg_Read(struct audiosource* source, char* buffer, unsigne
         while (!idata->vorbiseof && decodesamples > 0) {
             float **pcm;
 
-            long ret = ov_read_float(&idata->vorbisfile, &pcm, decodesamples, &idata->vbitstream);
+            long ret = ov_read_float(&idata->vorbisfile, &pcm,
+                decodesamples, &idata->vbitstream);
             if (ret < 0) {
                 if (ret == OV_HOLE) {
                     // a "jump" or temporary decoding problem - ignore this
@@ -307,7 +314,7 @@ static int audiosourceogg_Read(struct audiosource* source, char* buffer, unsigne
     return byteswritten;
 }
 
-static void audiosourceogg_Close(struct audiosource* source) {
+static void audiosourceogg_Close(struct audiosource *source) {
     struct audiosourceogg_internaldata* idata = source->internaldata;
     if (idata) {
         // close ogg file if we have it open
@@ -326,12 +333,12 @@ static void audiosourceogg_Close(struct audiosource* source) {
     free(source);
 }
 
-struct audiosource* audiosourceogg_Create(struct audiosource* filesource) {
+struct audiosource *audiosourceogg_Create(struct audiosource *filesource) {
     if (!filesource) {
         return NULL;
     }
     // main data structure
-    struct audiosource* a = malloc(sizeof(*a));
+    struct audiosource *a = malloc(sizeof(*a));
     if (!a) {
         filesource->close(filesource);
         return NULL;

@@ -324,6 +324,7 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
         }
         k++;
     }
+    fclose(r);
     return resources_LoadZipFromFilePart(path, filesize, 0, encrypted);
 #endif  // WINDOWS
 #else  // USE_PHYSFS
@@ -493,7 +494,7 @@ char** resource_FileList(const char* path) {
         // add if not a duplicate:
         if (!duplicate) {
             filecount2++;
-            char** p3 = malloc(sizeof(char*) * (filecount2+1));
+            char **p3 = malloc(sizeof(char*) * (filecount2+1));
             if (!p3) {
                 i = 0;
                 while (i < filecount) {
@@ -504,6 +505,7 @@ char** resource_FileList(const char* path) {
                 free(p2);
                 return NULL;
             }
+            free(p2);
             p2 = p3;
             p2[filecount2-1] = p[i];
             p2[filecount] = NULL;

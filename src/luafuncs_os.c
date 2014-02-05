@@ -306,6 +306,9 @@ int luafuncs_ls(lua_State *l) {
     }
 
     // return file list
+    free(pnative);
+    free(pcross);
+    free(pcrossrelative);
     return 1;
 }
 

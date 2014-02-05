@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -195,12 +195,12 @@ static char backtracebuf[10 * 4096];
 static const char* GetCrashInfo(const char* reason) {
     generatebacktrace(backtracebuf, sizeof(backtracebuf));
     snprintf(crashinfo, sizeof(crashinfo),
-    "Operating system: %s (%s)\n"
-    "Blitwizard version: %s\n"
-    "Error reason: %s\n"
-    "Backtrace:\n%s",
-    osinfo_GetSystemName(), osinfo_GetSystemVersion(), VERSION,
-    reason, backtracebuf);
+        "Operating system: %s (%s)\n"
+        "Blitwizard version: %s\n"
+        "Error reason: %s\n"
+        "Backtrace:\n%s",
+        osinfo_GetSystemName(), osinfo_GetSystemVersion(), VERSION,
+        reason, backtracebuf);
     return crashinfo;
 }
 
@@ -245,7 +245,7 @@ static void generatebacktrace(char* buffer, size_t buffersize) {
         return;
     }
     if (buffersize == 1) {
-        buffer[buffersize] = 0;
+        buffer[buffersize-1] = 0;
         return;
     }
 
@@ -274,7 +274,7 @@ static void generatebacktrace(char* buffer, size_t buffersize) {
         char appendstr[512];
         snprintf(appendstr, sizeof(appendstr), "%s+%I64u [%p]\n",
         syminfo->Name, displacement, backtraceptrs[i]);
-        strncat(buffer, appendstr, buffersize-(strlen(buffer)+1));
+        strncat(buffer, appendstr, buffersize - 1 - (strlen(buffer) + 1));
         i++;
     }
 }

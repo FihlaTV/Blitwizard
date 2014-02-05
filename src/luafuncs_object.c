@@ -632,7 +632,7 @@ int luafuncs_object_new(lua_State* l) {
     char* resource = NULL;
     if (resourcerelative) {
         resource = file_getCanonicalPath(
-        resourcerelative);
+            resourcerelative);
         if (!resource) {
             return haveluaerror(l, "failed to allocate or determine "
             "absolute path");

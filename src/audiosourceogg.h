@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,7 +21,7 @@
 
 */
 
-struct audiosource* audiosourceogg_Create(struct audiosource* filesource);
+struct audiosource *audiosourceogg_Create(struct audiosource *filesource);
 // Take an audio source that returns encoded binary data (usually
 // audiosourcefile) and attempt to decode the data as ogg.
 // If the file isn't valid ogg, the creation function will simply return NULL.

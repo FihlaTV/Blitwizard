@@ -258,8 +258,9 @@ int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite) {
     return 0;
 }
 
-void graphics2dsprites_setClippingWindow(struct graphics2dsprite* sprite,
-size_t x, size_t y, size_t w, size_t h) {
+void graphics2dsprites_setClippingWindow(
+        struct graphics2dsprite* sprite,
+        size_t x, size_t y, size_t w, size_t h) {
     if (!sprite) {
         return;
     }

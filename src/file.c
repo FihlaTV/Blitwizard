@@ -410,6 +410,7 @@ char *file_getAbsoluteDirectoryPathFromFilePath(const char *path) {
     }
 
     char *p2 = file_getAbsolutePathFromRelativePath(p);
+    free(p);
     if (!p2) {
         return NULL;
     }
@@ -431,23 +432,31 @@ char *file_GetFileNameFromFilePath(const char *path) {
     }
 }
 
-int file_ContentToBuffer(const char *path, char** buf, size_t* buflen) {
+int file_ContentToBuffer(const char *path, char **buf, size_t *buflen) {
     FILE* r = fopen(path, "rb");
     if (!r) {
         return 0;
     }
     // obtain file size
     fseek(r, 0L, SEEK_END);
-    size_t size = ftell(r);
+    long long pos = ftell(r);
+    if (pos < 0) {
+        fclose(r);
+        return 0;
+    }
+    uint64_t size = pos;
     fseek(r, 0L, SEEK_SET);
     // allocate buf
-    char *fbuf = malloc(size+1);
+    char *fbuf = malloc(size + 1);
     if (!fbuf) {
         fclose(r);
         return 0;
     }
     // read data
-    int i = fread(fbuf, 1, size, r);
+    int i = 0;
+    if (size > 0) {
+        fread(fbuf, 1, size, r);
+    }
     fclose(r);
     // check data
     if (i != (int)size) {
@@ -455,6 +464,7 @@ int file_ContentToBuffer(const char *path, char** buf, size_t* buflen) {
         return 0;
     }
     *buflen = size;
+    fbuf[size] = 0;
     *buf = fbuf;
     return 1;
 }
