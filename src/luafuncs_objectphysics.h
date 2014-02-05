@@ -86,6 +86,9 @@ double z, double qx, double qy, double qz, double qrot, int anglespecified);
 
 void luacfuncs_object_initialisePhysicsCallbacks(void);
 
+// replace all usages of a given physics object ref with another:
+void luacfuncs_objectphysics_replaceObjectRef(
+    struct physicsobject* old, struct physicsobject* new);
 
 #endif  // BLITWIZARD_LUAFUNCS_OBJECTPHYSICS_H_
 

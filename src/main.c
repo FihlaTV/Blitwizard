@@ -56,6 +56,11 @@ void luacfuncs_object_updateGraphics(void);
 // informing lua graphics code of new frame:
 void luacfuncs_objectgraphics_newFrame(void);
 
+// update object physics references:
+struct physicsobject;
+void luacfuncs_objectphysics_replaceObjectRef(
+    struct physicsobject* old, struct physicsobject* new);
+
 // media cleanup callback:
 void checkAllMediaObjectsForCleanup(void);
 
@@ -1196,7 +1201,8 @@ int main(int argc, char** argv) {
             || logiciterations >= MAXLOGICITERATIONS)) {
                 int psteps = psteps2d_max;
                 while (psteps > 0) {
-                    physics_step(physics2ddefaultworld);
+                    physics_step(physics2ddefaultworld,
+                        &luacfuncs_objectphysics_replaceObjectRef);
                     physicstimestamp += physics_getStepSize(
                         physics2ddefaultworld);
                     psteps--;

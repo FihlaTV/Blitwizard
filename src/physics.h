@@ -41,7 +41,17 @@ struct physicsjoint;
 // Create and destroy worlds:
 struct physicsworld* physics_createWorld(int use3dphysics);
 void physics_destroyWorld(struct physicsworld* world);
-void physics_step(struct physicsworld* world);
+
+// Step a world.
+// IMPORTANT: A step can cause physics objects to be "replaced"  by different
+// ones:
+// When that happens, the exchangeObjectCallback is issued, and you need to
+// replace all your references to the given old object with the new object.
+// All object settings (e.g. userdata) are automatically present on the new
+// object as well, you don't need to do anything except exchange your pointers.
+void physics_step(struct physicsworld* world,
+    void (*exchangeObjectCallback)(struct physicsobject* oldobject,
+    struct physicsobject* newobject));
 int physics_getStepSize(struct physicsworld* world);
 
 // Set a collision callback:
@@ -68,7 +78,7 @@ void* userdata);
 // If the callback returns 0, the collision will be ignored.
 // If it returns 1, the collision will be processed.
 //
-// The callback will be called during physics_Step.
+// The callback will be called during physics_step.
 // All operations in the callback are supported including deleting the object
 // for which the callback was called.
 

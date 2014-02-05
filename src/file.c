@@ -455,7 +455,7 @@ int file_ContentToBuffer(const char *path, char **buf, size_t *buflen) {
     // read data
     int i = 0;
     if (size > 0) {
-        fread(fbuf, 1, size, r);
+        i = fread(fbuf, 1, size, r);
     }
     fclose(r);
     // check data

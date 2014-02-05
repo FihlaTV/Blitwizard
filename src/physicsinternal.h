@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -47,9 +47,9 @@ int (*callback)(void* userdata, struct physicsobject* a,
 void* userdata);
 #endif
 #ifdef USE_PHYSICS3D
-void physics_set3dCollisionCallback
-struct physicsworld* world,
-int (*callback)(void* userdata, struct physicsobject* a,
+void physics_set3dCollisionCallback_internal(
+    struct physicsworld* world,
+    int (*callback)(void* userdata, struct physicsobject* a,
     struct physicsobject* b, double x, double y, double z,
     double normalx, double normaly, double normalz, double force),
 void* userdata);
@@ -178,6 +178,22 @@ int physics_ray2d(struct physicsworld* world, double startx, double starty, doub
 #ifdef USE_PHYSICS3D
 int physics_ray3d(struct physicsworld* world, double startx, double starty, double startz, double targetx, double targety, double targetz, double* hitpointx, double* hitpointy, double* hitpointz, struct physicsobject** objecthit, double* hitnormalx, double* hitnormaly, double* hitnormalz); // returns 1 when something is hit, otherwise 0  -- XXX: not thread-safe!
 #endif
+
+// Set the callback that shall be called when an object ptr is exhanged:
+void physics_setWorldExchangeObjectCallback_internal(
+    struct physicsworld* world,
+    void (*exchangeObjectCallback)(struct physicsobject* oold,
+    struct physicsobject* onew));
+
+// Get the callback that was previously set (or NULL):
+typedef void (*WorldObjectExchangeCallback)(struct physicsobject* oold,
+    struct physicsobject* onew);
+WorldObjectExchangeCallback physics_getWorldExchangeObjectCallback_internal
+    (struct physicsworld* world);
+
+
+// Step:
+void physics_step_internal(struct physicsworld* world);
 
 #ifdef __cplusplus
 }

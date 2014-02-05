@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "physics.h"
 #include "physicsinternal.h"
@@ -56,7 +57,7 @@ struct cachedphysicsobject {
     
     struct physicsworld* world;
     
-    void* userdata;
+    void *userdata;
     
     int movable;
     
@@ -113,51 +114,59 @@ struct cachedphysicsobject {
     int angularimpulsecount;
     struct cachedangularimpulse* angularimpulses;
     
-    struct cachedphysicsobject* next;
+    struct cachedphysicsobject *next;
 };
 
 struct deletedphysicsobject {
-    struct physicsobject* object;
-    struct deletedphysicsobject* next;
+    struct physicsobject *object;
+    struct deletedphysicsobject *next;
 };
 
 // Internal function declarations
-static struct cachedphysicsobject* physics_createCachedObjects(int count);
-static int physics_destroyCachedObject(struct cachedphysicsobject* c_object);
-static inline int physics_objectIsCached(void* object);
-static struct physicsobject* physics_createObjectFromCache(struct
- cachedphysicsobject* c_object);
+static struct cachedphysicsobject *physics_createCachedObjects(int count);
+static int physics_destroyCachedObject(struct cachedphysicsobject *c_object);
+static inline int physics_objectIsCached(void *object);
+static struct physicsobject *physics_createObjectFromCache(struct
+ cachedphysicsobject *c_object);
 
 
 
 // Globals
-struct cachedphysicsobject* cachedObjects = NULL;
+struct cachedphysicsobject *cachedObjects = NULL;
 
-struct deletedphysicsobject* deletedObjects = NULL;
+struct deletedphysicsobject *deletedObjects = NULL;
 
 int isInCallback = 0;
 
 struct userdata_wrapper {
-    int (*callback2d)(void* userdata, struct physicsobject* a,
-     struct physicsobject* b, double x, double y, double normalx,
+    int (*callback2d)(void *userdata, struct physicsobject *a,
+     struct physicsobject *b, double x, double y, double normalx,
      double normaly, double force);
     // TODO: 3D
-    void* userdata;
+    void *userdata;
 } userdata_wrapper;
 
 // Functions necessary for activating the caching stuff
 #ifdef USE_PHYSICS2D
-static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force) {
+static int physics_callback2dWrapper(void *userdata,
+        struct physicsobject *a, struct physicsobject *b,
+        double x, double y, double normalx, double normaly,
+        double force) {
     isInCallback = 1;
     
     int r = ((struct userdata_wrapper*)userdata)->callback2d(
-     ((struct userdata_wrapper*)userdata)->userdata, a, b, x, y,
-     normalx, normaly, force);
+        ((struct userdata_wrapper*)userdata)->userdata, a, b, x, y,
+        normalx, normaly, force);
     
     // Callback has finished, so transform all cached objects into actual ones
-    struct cachedphysicsobject* c = cachedObjects;
+    struct cachedphysicsobject *c = cachedObjects;
     while (c != NULL) {
-        physics_createObjectFromCache(c);
+        void (*exchangeObjectCallback)(struct physicsobject *oold,
+            struct physicsobject *onew) =
+            physics_getWorldExchangeObjectCallback_internal(
+                            c->world);
+        struct physicsobject *po = physics_createObjectFromCache(c);
+        exchangeObjectCallback((struct physicsobject *)c, po);
         c = c->next;
     }
     // ... and delete the former.
@@ -169,7 +178,7 @@ static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, st
     isInCallback = 0;
     
     // Also delete the objects that were mock-deleted during the callback
-    struct deletedphysicsobject* d = deletedObjects;
+    struct deletedphysicsobject *d = deletedObjects;
     while (deletedObjects != NULL) {
         physics_destroyObject(deletedObjects->object); // TODO maybe _internal?
         d = deletedObjects->next;
@@ -185,22 +194,32 @@ static int physics_callback2dWrapper(void* userdata, struct physicsobject* a, st
 #endif
 
 void physics_set2dCollisionCallback(
-struct physicsworld* world,
-int (*callback)(void* userdata, struct physicsobject* a,
-    struct physicsobject* b, double x, double y, double normalx,
-    double normaly, double force),
-void* userdata) {
+        struct physicsworld* world,
+        int (*callback)(void *userdata, struct physicsobject *a,
+            struct physicsobject *b, double x, double y, double normalx,
+            double normaly, double force),
+        void *userdata) {
     userdata_wrapper.callback2d = callback;
     userdata_wrapper.userdata = userdata;
     physics_set2dCollisionCallback_internal(world, physics_callback2dWrapper,
-     &userdata_wrapper);
+        &userdata_wrapper);
+}
+
+void physics_step(struct physicsworld *world,
+        void (*exchangeObjectCallback)(struct physicsobject* oold,
+        struct physicsobject* onew)) {
+    physics_setWorldExchangeObjectCallback_internal(world,
+        exchangeObjectCallback);
+    physics_step_internal(world);
 }
 
 
-static struct cachedphysicsobject* physics_createCachedObjects(int count) {
-    struct cachedphysicsobject* c_object;
+static struct cachedphysicsobject *physics_createCachedObjects(int count) {
+    assert(count > 0);
+    struct cachedphysicsobject *c_object;
     for (int i = 0; i < count; ++i) {
-        c_object = (struct cachedphysicsobject*)malloc(sizeof(*c_object));
+        c_object = (struct cachedphysicsobject*)
+            malloc(sizeof(*c_object));
         memset (c_object, 0, sizeof(*c_object));
         c_object->next = cachedObjects;
         cachedObjects = c_object;
@@ -208,7 +227,7 @@ static struct cachedphysicsobject* physics_createCachedObjects(int count) {
     return c_object; // Return last element added, i.e. first element in list
 }
 
-static int physics_destroyCachedObject(struct cachedphysicsobject* c_object) {
+static int physics_destroyCachedObject(struct cachedphysicsobject *c_object) {
     if (not c_object) {
         return -1;
     }
@@ -233,8 +252,8 @@ static int physics_destroyCachedObject(struct cachedphysicsobject* c_object) {
     return 1;
 }
 
-static inline int physics_objectIsCached(void* object) {
-    struct cachedphysicsobject* c = cachedObjects;
+static inline int physics_objectIsCached(void *object) {
+    struct cachedphysicsobject *c = cachedObjects;
     while (c != NULL) {
         if ((void*)c == object) {
             return 1;
@@ -244,14 +263,14 @@ static inline int physics_objectIsCached(void* object) {
     return 0;
 }
 
-static struct physicsobject* physics_createObjectFromCache(struct
- cachedphysicsobject* c_object) {
-    struct physicsobject* object;
+static struct physicsobject *physics_createObjectFromCache(
+        struct cachedphysicsobject *c_object) {
+    struct physicsobject *object;
     object = physics_createObject_internal(c_object->world, c_object->userdata,
-     c_object->movable, c_object->shapes, c_object->shapecount);
+        c_object->movable, c_object->shapes, c_object->shapecount);
     
     // Apply all params to the newly created object
-    struct cachedphysicsobject* c = c_object; // Shorter alias
+    struct cachedphysicsobject *c = c_object; // Shorter alias
     if (c->mass_set) {
         physics_setMass_internal(object, c->mass);
     }
@@ -380,11 +399,11 @@ static struct physicsobject* physics_createObjectFromCache(struct
  Implementation of physics.h starts here
  */
 
-struct physicsobject* physics_createObject(struct physicsworld* world,
- void* userdata, int movable, struct physicsobjectshape* shapelist,
- int shapecount) {
+struct physicsobject *physics_createObject(struct physicsworld* world,
+        void *userdata, int movable, struct physicsobjectshape* shapelist,
+        int shapecount) {
     if (isInCallback) {
-        struct cachedphysicsobject* c_object = physics_createCachedObjects(1);
+        struct cachedphysicsobject *c_object = physics_createCachedObjects(1);
         c_object->world = world;
         c_object->is3d = physics_worldIs3d_internal(world);
         c_object->userdata = userdata;
@@ -398,15 +417,15 @@ struct physicsobject* physics_createObject(struct physicsworld* world,
     }
 }
 
-void physics_destroyObject(struct physicsobject* object) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)object;
+void physics_destroyObject(struct physicsobject *object) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)object;
     // Relies on physics_destroyCachedObject() returning 1 for non-cached objs
     /* TODO: We can make this faster by checking for isInCallback instead if
      [cached objects exist] <=> [isInCallBack] holds.
      */
     if (isInCallback) {
         // Just add it to the list of objects that are to be deleted later
-        struct deletedphysicsobject* d = (struct deletedphysicsobject*)malloc(
+        struct deletedphysicsobject *d = (struct deletedphysicsobject*)malloc(
          sizeof(*d));
         d->object = object;
         d->next = deletedObjects;
@@ -418,7 +437,7 @@ void physics_destroyObject(struct physicsobject* object) {
     }
 }
 
-void* physics_getObjectUserdata(struct physicsobject* object) {
+void *physics_getObjectUserdata(struct physicsobject *object) {
     if (physics_objectIsCached(object)) {
         return ((struct cachedphysicsobject*)object)->userdata;
     } else {
@@ -427,9 +446,9 @@ void* physics_getObjectUserdata(struct physicsobject* object) {
 }
 
 #ifdef USE_PHYSICS2D
-void physics_set2dScale(struct physicsobject* object, double scalex,
+void physics_set2dScale(struct physicsobject *object, double scalex,
  double scaley) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)object;
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)object;
     if (physics_objectIsCached(object)) {
         c_object->scalex = scalex;
         c_object->scaley = scaley;
@@ -440,8 +459,8 @@ void physics_set2dScale(struct physicsobject* object, double scalex,
 }
 #endif
 
-void physics_setMass(struct physicsobject* obj, double mass) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_setMass(struct physicsobject *obj, double mass) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->mass = mass;
         c_object->mass_set = 1;
@@ -450,7 +469,7 @@ void physics_setMass(struct physicsobject* obj, double mass) {
     }
 }
 
-double physics_getMass(struct physicsobject* obj) {
+double physics_getMass(struct physicsobject *obj) {
     if (physics_objectIsCached(obj)) {
         return ((struct cachedphysicsobject*)obj)->mass;
     } else {
@@ -459,9 +478,9 @@ double physics_getMass(struct physicsobject* obj) {
 }
 
 #ifdef USE_PHYSICS2D
-void physics_set2dMassCenterOffset(struct physicsobject* obj,
+void physics_set2dMassCenterOffset(struct physicsobject *obj,
  double offsetx, double offsety) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->masscenterx = offsetx;
         c_object->masscentery = offsety;
@@ -473,9 +492,9 @@ void physics_set2dMassCenterOffset(struct physicsobject* obj,
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_get2dMassCenterOffset(struct physicsobject* obj,
+void physics_get2dMassCenterOffset(struct physicsobject *obj,
  double* offsetx, double* offsety) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         *offsetx = c_object->masscenterx;
         *offsety = c_object->masscentery;
@@ -486,8 +505,8 @@ void physics_get2dMassCenterOffset(struct physicsobject* obj,
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_set2dGravity(struct physicsobject* obj, double x, double y) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_set2dGravity(struct physicsobject *obj, double x, double y) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->gravityx = x;
         c_object->gravityy = y;
@@ -498,8 +517,8 @@ void physics_set2dGravity(struct physicsobject* obj, double x, double y) {
 }
 #endif
 
-void physics_unsetGravity(struct physicsobject* obj) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_unsetGravity(struct physicsobject *obj) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->gravityx = 0;
         c_object->gravityy = 0;
@@ -510,9 +529,9 @@ void physics_unsetGravity(struct physicsobject* obj) {
 }
 
 #ifdef USE_PHYSICS2D
-void physics_set2dRotationRestriction(struct physicsobject* obj,
+void physics_set2dRotationRestriction(struct physicsobject *obj,
  int restricted) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->rotationrestriction2d = restricted;
     } else {
@@ -521,8 +540,8 @@ void physics_set2dRotationRestriction(struct physicsobject* obj,
 }
 #endif
 
-void physics_setFriction(struct physicsobject* obj, double friction) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_setFriction(struct physicsobject *obj, double friction) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->friction = friction;
         c_object->friction_set = 1;
@@ -531,8 +550,8 @@ void physics_setFriction(struct physicsobject* obj, double friction) {
     }
 }
 
-void physics_setAngularDamping(struct physicsobject* obj, double damping) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_setAngularDamping(struct physicsobject *obj, double damping) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->angulardamping = damping;
         c_object->angulardamping_set = 1;
@@ -541,8 +560,8 @@ void physics_setAngularDamping(struct physicsobject* obj, double damping) {
     }
 }
 
-void physics_setLinearDamping(struct physicsobject* obj, double damping) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_setLinearDamping(struct physicsobject *obj, double damping) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->lineardamping = damping;
         c_object->lineardamping_set = 1;
@@ -551,8 +570,8 @@ void physics_setLinearDamping(struct physicsobject* obj, double damping) {
     }
 }
 
-void physics_setRestitution(struct physicsobject* obj, double restitution) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_setRestitution(struct physicsobject *obj, double restitution) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->restitution = restitution;
         c_object->restitution_set = 1;
@@ -562,8 +581,8 @@ void physics_setRestitution(struct physicsobject* obj, double restitution) {
 }
 
 #ifdef USE_PHYSICS2D
-void physics_get2dPosition(struct physicsobject* obj, double* x, double* y) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_get2dPosition(struct physicsobject *obj, double* x, double* y) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         *x = c_object->positionx;
         *y = c_object->positiony;
@@ -574,8 +593,8 @@ void physics_get2dPosition(struct physicsobject* obj, double* x, double* y) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_get2dRotation(struct physicsobject* obj, double* angle) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_get2dRotation(struct physicsobject *obj, double* angle) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         *angle = c_object->rotation2d;
     } else {
@@ -585,9 +604,9 @@ void physics_get2dRotation(struct physicsobject* obj, double* angle) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_warp2d(struct physicsobject* obj, double x, double y,
+void physics_warp2d(struct physicsobject *obj, double x, double y,
  double angle) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->positionx = x;
         c_object->positiony = y;
@@ -601,9 +620,9 @@ void physics_warp2d(struct physicsobject* obj, double x, double y,
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_apply2dImpulse(struct physicsobject* obj, double forcex,
+void physics_apply2dImpulse(struct physicsobject *obj, double forcex,
  double forcey, double sourcex, double sourcey) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->impulsecount++;
         c_object->impulses = (struct cachedimpulse*)realloc(c_object->impulses,
@@ -621,8 +640,8 @@ void physics_apply2dImpulse(struct physicsobject* obj, double forcex,
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_get2dVelocity(struct physicsobject *obj, double *vx, double* vy) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         *vx = c_object->velocityx;
         *vy = c_object->velocityy;
@@ -633,8 +652,8 @@ void physics_get2dVelocity(struct physicsobject* obj, double *vx, double* vy) {
 #endif
 
 #ifdef USE_PHYSICS2D
-double physics_get2dAngularVelocity(struct physicsobject* obj) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+double physics_get2dAngularVelocity(struct physicsobject *obj) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         return c_object->angularvelocity2d;
     } else {
@@ -644,8 +663,8 @@ double physics_get2dAngularVelocity(struct physicsobject* obj) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_set2dVelocity(struct physicsobject *obj, double vx, double vy) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->velocityx = vx;
         c_object->velocityy = vy;
@@ -657,8 +676,8 @@ void physics_set2dVelocity(struct physicsobject* obj, double vx, double vy) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_set2dAngularVelocity(struct physicsobject* obj, double omega) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_set2dAngularVelocity(struct physicsobject *obj, double omega) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->angularvelocity2d = omega;
         c_object->angularvelocity2d_set = 1;
@@ -669,8 +688,8 @@ void physics_set2dAngularVelocity(struct physicsobject* obj, double omega) {
 #endif
 
 #ifdef USE_PHYSICS2D
-void physics_apply2dAngularImpulse(struct physicsobject* obj, double impulse) {
-    struct cachedphysicsobject* c_object = (struct cachedphysicsobject*)obj;
+void physics_apply2dAngularImpulse(struct physicsobject *obj, double impulse) {
+    struct cachedphysicsobject *c_object = (struct cachedphysicsobject*)obj;
     if (physics_objectIsCached(obj)) {
         c_object->angularimpulsecount++;
         c_object->angularimpulses = (struct cachedangularimpulse*)realloc(

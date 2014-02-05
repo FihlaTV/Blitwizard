@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2012-2013 Shahriar Heidrich, Jonas Thiem
+  Copyright (C) 2012-2014 Shahriar Heidrich, Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -245,7 +245,13 @@ struct physicsworld {
     float stepsize;
     int is3d;
     void* callbackuserdata;
-    int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force);
+    // collision callback:
+    int (*callback)(void* userdata,
+        struct physicsobject* a, struct physicsobject* b,
+        double x, double y, double normalx, double normaly, double force);
+    // exchange object callback:
+    void (*exchangeObjectCallback)(struct physicsobject* oold,
+        struct physicsobject* onew);
 };
 
 struct physicsjoint {
@@ -601,7 +607,7 @@ int physics_worldIs3d_internal(struct physicsworld* world) {
     return _physics_worldIs3D(world);
 }
 
-void physics_step(struct physicsworld* world) {
+void physics_step_internal(struct physicsworld* world) {
     if (!world->is3d) {
 #ifdef USE_PHYSICS2D
         struct physicsworld2d* world2d = &(world->world2d);
@@ -665,9 +671,27 @@ int physics_getStepSize(struct physicsworld* world) {
 #endif
 }
 
+void physics_setWorldExchangeObjectCallback_internal(
+        struct physicsworld* world,
+        void (*exchangeObjectCallback)(struct physicsobject* oold,
+        struct physicsobject* onew)) {
+    world->exchangeObjectCallback = exchangeObjectCallback;
+}
+
+void (*physics_getWorldExchangeObjectCallback_internal
+        (struct physicsworld* world))
+        (struct physicsobject* oold, struct physicsobject* onew) {
+    return world->exchangeObjectCallback;
+}
+
 
 #ifdef USE_PHYSICS2D
-void physics_set2dCollisionCallback_internal(struct physicsworld* world, int (*callback)(void* userdata, struct physicsobject* a, struct physicsobject* b, double x, double y, double normalx, double normaly, double force), void* userdata) {
+void physics_set2dCollisionCallback_internal(
+        struct physicsworld* world,
+        int (*callback)(void* userdata, struct physicsobject* a,
+            struct physicsobject* b, double x, double y,
+            double normalx, double normaly, double force),
+        void* userdata) {
     world->callback = callback;
     world->callbackuserdata = userdata;
 }
@@ -1270,8 +1294,8 @@ void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints,
 #endif
 
 struct physicsobject* physics_createObject_internal(struct physicsworld* world,
- void* userdata, int movable, struct physicsobjectshape* shapelist,
- int shapecount) {
+        void* userdata, int movable, struct physicsobjectshape* shapelist,
+        int shapecount) {
     struct physicsobject* obj = (struct physicsobject*)malloc(sizeof(*obj));
     memset(obj, 0, sizeof(*obj));
     if (!(world->is3d)) {

@@ -1642,76 +1642,9 @@ double* qx, double* qy, double* qz, double* qrot) {
 #endif
 }
 
-/*int luafuncs_setShapeEdges(lua_State* l) {
-    struct blitwizardobject* obj = toblitwizardobject(l, 1, 0,
-    "blitwizard.object:setShapeEdges");
-    if (lua_gettop(l) < 2 || lua_type(l, 2) != LUA_TTABLE) {
-        lua_pushstring(l, "Second parameter is not a valid edge list table");
-        return lua_error(l);
-    }
-    if (obj->physics->movable) {
-        lua_pushstring(l, "This shape is not allowed for movable objects");
-        return lua_error(l);
-    }
-
-    struct physicsobject2dedgecontext* context = physics2d_CreateObjectEdges_Begin(main_DefaultPhysics2dPtr(), obj, 0, obj->friction);
-
-    int haveedge = 0;
-    double d = 1;
-    while (1) {
-        lua_pushnumber(l, d);
-        lua_gettable(l, 2);
-        if (lua_type(l, -1) != LUA_TTABLE) {
-            if (lua_type(l, -1) == LUA_TNIL && haveedge) {
-                break;
-            }
-            lua_pushstring(l, "Edge list contains non-table value or is empty");
-            physics2d_DestroyObject(physics2d_CreateObjectEdges_End(context));
-            return lua_error(l);
-        }
-        haveedge = 1;
-
-        double x1,y1,x2,y2;
-        lua_pushnumber(l, 1);
-        lua_gettable(l, -2);
-        x1 = lua_tonumber(l, -1);
-        lua_pop(l, 1);
-
-        lua_pushnumber(l, 2);
-        lua_gettable(l, -2);
-        y1 = lua_tonumber(l, -1);
-        lua_pop(l, 1);
-
-        lua_pushnumber(l, 3);
-        lua_gettable(l, -2);
-        x2 = lua_tonumber(l, -1);
-        lua_pop(l, 1);
-
-        lua_pushnumber(l, 4);
-        lua_gettable(l, -2);
-        y2 = lua_tonumber(l, -1);
-        lua_pop(l, 1);
-
-        physics2d_CreateObjectEdges_Do(context, x1, y1, x2, y2);
-        lua_pop(l, 1);
-        d++;
-    }
-
-    struct physicsobject2d* oldobject = obj->object;
-
-    obj->object = physics2d_CreateObjectEdges_End(context);
-    if (!obj->object) {
-        lua_pushstring(l, "Creation of the edges shape failed");
-        return lua_error(l);
-    }
-
-    if (oldobject) {
-        transferbodysettings(oldobject, obj->object);
-        physics2d_DestroyObject(oldobject);
-    }
-    applyobjectsettings(obj);
-    return 0;
-}*/
-
-
+void luacfuncs_objectphysics_replaceObjectRef(
+        struct physicsobject* old, struct physicsobject* new) {
+    struct blitwizardobject* obj = physics_getObjectUserdata(old);
+    obj->physics->object = new;    
+}
 

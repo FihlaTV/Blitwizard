@@ -219,6 +219,10 @@ static void threadedcrashmsg(const char* msg) {
         return;
     }
     thread_spawn(ti, threadedcrashmsgshow, NULL);
+    // we want to do as few things as possible here,
+    // so we don't care to free anything afterwards.
+    // we're about to quit due to a crash anyway.
+    // coverity[leaked_storage]
 }
 
 static void handleerror(const char* name) {

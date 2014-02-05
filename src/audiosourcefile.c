@@ -133,7 +133,7 @@ static size_t audiosourcefile_Length(struct audiosource *source) {
     // seek to end of file to get length:
     fseek(idata->file, 0L, SEEK_END);
     int64_t seekresult = ftell(idata->file);
-    size_t size;
+    size_t size = 0;
     if (seekresult > 0) {
         size = seekresult;
     }
