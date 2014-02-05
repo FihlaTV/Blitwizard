@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,7 +24,7 @@
 #ifndef BLITWIZARD_AUDIOSOURCEFILE_H_
 #define BLITWIZARD_AUDIOSOURCEFILE_H_
 
-struct audiosource* audiosourcefile_Create(const char* path);
+struct audiosource *audiosourcefile_Create(const char *path);
 // Create an audio source from a file.
 // Please note this doesn't do any decoding or processing!
 // It just returns the binary data in that file as it is.

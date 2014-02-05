@@ -349,8 +349,8 @@ static void texturemanager_scaleTextureThread(void* userdata) {
             int pitch = (info->obtainedscale->paddedWidth -
                 info->obtainedscale->width);
             printf("scale pitch: %d, (%d, %d)\n", pitch,
-                info->obtainedscale->paddedWidth,
-                info->obtainedscale->width);
+                (int)info->obtainedscale->paddedWidth,
+                (int)info->obtainedscale->width);
             img_scale(4, info->obtainedscale->pixels,
             info->obtainedscale->width,
             info->obtainedscale->height,
@@ -1190,6 +1190,9 @@ struct graphicstexturemanaged* gtm,
 struct graphicstexturemanaged* gtm2,
 void* userdata) {
     if (!texturemanager_textureSafeToDelete(gtm)) {
+        // coverity[missing_lock] - explanation:
+        // this is called indirectly from texturemanager_deviceLost(),
+        // and the call is surrounded by mutex locks over there.
         needtowait = 1;
     }
     return 1;

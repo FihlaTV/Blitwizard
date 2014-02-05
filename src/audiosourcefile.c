@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -41,13 +41,13 @@ struct audiosourcefile_internaldata {
 #ifdef SDLRW
     SDL_RWops* file;
 #else
-    FILE* file;
+    FILE *file;
 #endif
     int eof;
-    char* path;
+    char *path;
 };
 
-static void audiosourcefile_Rewind(struct audiosource* source) {
+static void audiosourcefile_Rewind(struct audiosource *source) {
     struct audiosourcefile_internaldata* idata = source->internaldata;
     idata->eof = 0;
     if (idata->file) {
@@ -62,7 +62,7 @@ static void audiosourcefile_Rewind(struct audiosource* source) {
 }
 
 
-static int audiosourcefile_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
+static int audiosourcefile_Read(struct audiosource *source, char *buffer, unsigned int bytes) {
     struct audiosourcefile_internaldata* idata = source->internaldata;
 
     if (idata->file == NULL) {
@@ -103,7 +103,7 @@ static int audiosourcefile_Read(struct audiosource* source, char* buffer, unsign
 }
 
 
-static int audiosourcefile_Seek(struct audiosource* source, size_t pos) {
+static int audiosourcefile_Seek(struct audiosource *source, size_t pos) {
     struct audiosourcefile_internaldata* idata = source->internaldata;
 
     // don't allow seeking beyond end of file:
@@ -124,7 +124,7 @@ static int audiosourcefile_Seek(struct audiosource* source, size_t pos) {
     return 1;
 }
 
-static size_t audiosourcefile_Length(struct audiosource* source) {
+static size_t audiosourcefile_Length(struct audiosource *source) {
     struct audiosourcefile_internaldata* idata = source->internaldata;
 
     // remember current pos:
@@ -132,14 +132,18 @@ static size_t audiosourcefile_Length(struct audiosource* source) {
 
     // seek to end of file to get length:
     fseek(idata->file, 0L, SEEK_END);
-    size_t size = ftell(idata->file);
+    int64_t seekresult = ftell(idata->file);
+    size_t size;
+    if (seekresult > 0) {
+        size = seekresult;
+    }
 
     // seek back to current pos:
     fseek(idata->file, pos, SEEK_SET);
     return size;
 }
 
-static size_t audiosourcefile_Position(struct audiosource* source) {
+static size_t audiosourcefile_Position(struct audiosource *source) {
     struct audiosourcefile_internaldata* idata = source->internaldata;
     if (idata->eof) {
         return source->length(source);
@@ -148,7 +152,7 @@ static size_t audiosourcefile_Position(struct audiosource* source) {
     return pos;
 }
 
-static void audiosourcefile_Close(struct audiosource* source) {
+static void audiosourcefile_Close(struct audiosource *source) {
     struct audiosourcefile_internaldata* idata = source->internaldata;
     if (idata) {
         // close file we might have opened
@@ -157,7 +161,7 @@ static void audiosourcefile_Close(struct audiosource* source) {
             idata->file->close(idata->file);
         }
 #else
-        FILE* r = idata->file;
+        FILE *r = idata->file;
         if (r) {
             fclose(r);
         }
@@ -171,7 +175,7 @@ static void audiosourcefile_Close(struct audiosource* source) {
     free(source);
 }
 
-struct audiosource* audiosourcefile_Create(const char* path) {
+struct audiosource *audiosourcefile_Create(const char *path) {
     // without path, no audio source:
     if (!path) {
         return NULL;
@@ -207,7 +211,7 @@ struct audiosource* audiosourcefile_Create(const char* path) {
     path = l.location.disklocation.filepath;
 
     // allocate struct:
-    struct audiosource* a = malloc(sizeof(*a));
+    struct audiosource *a = malloc(sizeof(*a));
     if (!a) {
         return NULL;
     }

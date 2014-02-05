@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2012-2013 Jonas Thiem
+  Copyright (C) 2012-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -384,7 +384,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
             }
         }
         // if the connection is attempting to connect, check if it succeeded:
-        if (c->error < 0 && !c->closewhensent && !c->connected && c->socket) {
+        if (c->error < 0 && !c->closewhensent && !c->connected &&
+                c->socket >= 0) {
             if (so_SelectSaysWrite(c->socket, &c->sslptr)) {
                 if (c->outbufbytes <= 0) {
                     so_SelectWantWrite(c->socket, 0);
@@ -405,7 +406,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                     // we aren't connected!
                     if (c->retryv4ip) { // we tried ipv6, now try ipv4
 #ifdef CONNECTIONSDEBUG
-                        printinfo("[connections] retrying v4 after v6 fail...");
+                        printinfo("[connections] retrying v4 after v6 "
+                            "fail...");
 #endif
                         // attempt to connect:
                         int result = connections_TryConnect(c, c->retryv4ip);
@@ -419,7 +421,8 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                         continue;
                     }
 #ifdef CONNECTIONSDEBUG
-                    printinfo("[connections] connection couldn't be established");
+                    printinfo("[connections] connection couldn't be "
+                        "established");
 #endif
                     connections_E(c, errorcallback,
                     CONNECTIONERROR_CONNECTIONFAILED);
@@ -429,35 +432,63 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
             }
         }
         // read things if we can:
-        if (c->error < 0 && !c->closewhensent && c->connected && so_SelectSaysRead(c->socket, &c->sslptr)) {
-            if (c->inbufbytes >= c->inbufsize && c->linebuffered == 1) {
-                // we will break this mega line into two:
-                // first, send without line processing:
-                c->linebuffered = 0;
-                int closed = 0;
-                if (!connections_ProcessReceivedData(c, readcallback, &closed)) {
-                    // an error occured in te read callback.
-                    // we will simply continue.
-                }
-                if (closed) { // connection was closed by callback
-                    c = cnext;
-                    continue;
-                }
-                if (c->error >= 0) { // lua closed this connection
-                    c = cnext;
-                    continue;
-                }
-                // then, turn it back on:
-                c->linebuffered = 1;
-            }
-            // read new bytes into the buffer:
-            int r = so_ReceiveSSLData(c->socket, c->inbuf + c->inbufbytes, c->inbufsize - c->inbufbytes, &c->sslptr);
-            if (r == 0)  {
-                // connection closed. send out all data we still have:
-                if (c->inbufbytes > 0) {
+        if (c->error < 0 && c->socket >= 0 && !c->closewhensent &&
+                c->connected) {
+            if (so_SelectSaysRead(c->socket, &c->sslptr)) {
+                if (c->inbufbytes >= c->inbufsize && c->linebuffered == 1) {
+                    // we will break this mega line into two:
+                    // first, send without line processing:
+                    c->linebuffered = 0;
                     int closed = 0;
-                    if (!connections_ProcessReceivedData(
-                    c, readcallback, &closed)) {
+                    if (!connections_ProcessReceivedData(c, readcallback,
+                            &closed)) {
+                        // an error occured in te read callback.
+                        // we will simply continue.
+                    }
+                    if (closed) { // connection was closed by callback
+                        c = cnext;
+                        continue;
+                    }
+                    if (c->error >= 0) { // lua closed this connection
+                        c = cnext;
+                        continue;
+                    }
+                    // then, turn it back on:
+                    c->linebuffered = 1;
+                }
+                // read new bytes into the buffer:
+                int r = so_ReceiveSSLData(c->socket, c->inbuf + c->inbufbytes,
+                    c->inbufsize - c->inbufbytes, &c->sslptr);
+                if (r == 0)  {
+                    // connection closed. send out all data we still have:
+                    if (c->inbufbytes > 0) {
+                        int closed = 0;
+                        if (!connections_ProcessReceivedData(
+                        c, readcallback, &closed)) {
+                            // an error occured in the read callback.
+                            // we will simply continue.
+                        }
+                        if (closed) { // connection was closed by callback
+                            c = cnext;
+                            continue;
+                        }
+                    }
+                    // then error:
+                    connections_E(c, errorcallback,
+                    CONNECTIONERROR_CONNECTIONCLOSED);
+#ifdef CONNECTIONSDEBUG
+                    printinfo("[connections] receive on %d returned "
+                        "end of stream", c->socket);
+#endif
+                    c = cnext;
+                    continue;
+                }
+                if (r > 0) { // we successfully received new bytes
+                    c->inbufbytes += r;
+                    c->lastreadtime = time_GetMilliseconds();
+                    int closed = 0;
+                    if (!connections_ProcessReceivedData(c, readcallback,
+                            &closed)) {
                         // an error occured in the read callback.
                         // we will simply continue.
                     }
@@ -466,33 +497,13 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                         continue;
                     }
                 }
-                // then error:
-                connections_E(c, errorcallback,
-                CONNECTIONERROR_CONNECTIONCLOSED);
-#ifdef CONNECTIONSDEBUG
-                printinfo("[connections] receive on %d returned end of stream", c->socket);
-#endif
-                c = cnext;
-                continue;
-            }
-            if (r > 0) { // we successfully received new bytes
-                c->inbufbytes += r;
-                c->lastreadtime = time_GetMilliseconds();
-                int closed = 0;
-                if (!connections_ProcessReceivedData(c, readcallback, &closed)) {
-                    // an error occured in the read callback.
-                    // we will simply continue.
-                }
-                if (closed) { // connection was closed by callback
-                    c = cnext;
-                    continue;
-                }
             }
         }
         // write things if we can:
         if ((c->error < 0 ||
-        (c->socket >= 0 && c->closewhensent)) && c->connected
-         && c->outbufbytes > 0 && so_SelectSaysWrite(c->socket, &c->sslptr)) {
+                (c->socket >= 0 && c->closewhensent)) && c->connected
+                && c->outbufbytes > 0 &&
+                so_SelectSaysWrite(c->socket, &c->sslptr)) {
             int r = so_SendSSLData(c->socket, c->outbuf + c->outbufoffset,
             c->outbufbytes, &c->sslptr);
             if (r == 0) {

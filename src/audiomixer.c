@@ -212,7 +212,8 @@ void audiomixer_StopSoundWithFadeout(int id, float fadeoutseconds) {
     audio_UnlockAudioThread();
 }
 
-void audiomixer_AdjustSound(int id, float volume, float panning, int noamplify) {
+void audiomixer_AdjustSound(int id, float volume, float panning,
+        int noamplify) {
     audio_LockAudioThread();
     int slot = audiomixer_GetChannelSlotById(id);
     if (slot >= 0 && channels[slot].fadepanvolsource
