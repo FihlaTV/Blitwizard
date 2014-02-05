@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -196,12 +196,13 @@ void audiomixer_StopSoundWithFadeout(int id, float fadeoutseconds) {
     audio_LockAudioThread();
     
     int slot = audiomixer_GetChannelSlotById(id);
-    if (channels[slot].fadeoutandstop) {
-        // already fading out!
-        audio_UnlockAudioThread();
-        return;
-    }
     if (slot >= 0) {
+        if (channels[slot].fadeoutandstop) {
+            // already fading out!
+            audio_UnlockAudioThread();
+            return;
+        }
+
         // start fadeout:
         audiosourcefadepanvol_StartFade(channels[slot].fadepanvolsource,
             fadeoutseconds, 0, 1);

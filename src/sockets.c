@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2012-2013 Jonas Thiem
+  Copyright (C) 2012-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -100,7 +100,7 @@ static void promptsslerror(const char* str) {
     sslerror = malloc(strlen(str)+1); // allocate error buffer
     if (sslerror) {
         strcpy(sslerror,str);
-    }else{
+    } else {
         // unable to allocate error message -> static buffer
         sslerror = staticsslmemoryerror;
         sslerror_memoryerror = 1;
@@ -128,7 +128,7 @@ static int soinitfunc(const char* cert, const char* key) {
     if (sigaction(SIGPIPE, NULL, &signalst) == 0) {
         signalst.sa_handler = SIG_IGN;
         sigaction(SIGPIPE, &signalst, NULL);
-    }else{
+    } else {
         return 0;
     }
 #endif
@@ -158,7 +158,7 @@ static int soinitfunc(const char* cert, const char* key) {
             SSL_CTX_free(ctx);
             so_sysinited = 1;
             return 1;
-        }else{
+        } else {
             if (!SSL_CTX_check_private_key(ctx)) { // private key and public key don't match
                 promptsslerror("Private key and public certificate do not match");
                 SSL_CTX_free(ctx);
@@ -171,7 +171,7 @@ static int soinitfunc(const char* cert, const char* key) {
 #endif
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2|SSL_OP_CIPHER_SERVER_PREFERENCE|SSL_OP_TLS_ROLLBACK_BUG);
         SSL_CTX_set_mode(ctx, SSL_MODE_ENABLE_PARTIAL_WRITE|SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-    }else{
+    } else {
         promptsslerror("SSL supported but not activated");
     }
 #endif
@@ -265,7 +265,7 @@ int so_ReverseResolveBlocking(const char* ip, char* hostbuf, int hostbuflen) {
     #else
         return 0;
     #endif
-    }else{
+    } else {
         memset(&addressstruct4,0,sizeof(addressstruct4));
         addressstruct4.sin_family = AF_INET;
         #ifdef WINDOWS
@@ -356,7 +356,7 @@ void so_SelectWantWrite(int socket, int enabled) {
     }
     if (enabled == 1) {
         FD_SET(socket,&weircdselectset_writers);
-    }else{
+    } else {
         FD_CLR(socket,&weircdselectset_writers);
     }
 }
@@ -378,7 +378,7 @@ void so_SelectWantWriteSSL(int socket, int enabled, void** sslptr) {
             i->ssl_settosend = 0;
             i->ssl_requiresend = 1; // ssl also requires this -> remember
         }
-    }else{ // unmarking from writing is requested
+    } else { // unmarking from writing is requested
         if (i->ssl_requiresend == 1) { // if SSL wanted it originally, remember it
             i->ssl_requiresend = 0;
             i->ssl_settosend = 1; // it is only still set for ssl now -> remember
@@ -438,7 +438,7 @@ int so_MakeSocketListen(int socket, int port, int iptype, const char* bindip) {
 #else
         return  0;
 #endif
-    }else{
+    } else {
         memset(&addressstruct4, 0, sizeof(addressstruct4));
         addressstruct4.sin_family = AF_INET;
     }
@@ -453,7 +453,7 @@ int so_MakeSocketListen(int socket, int port, int iptype, const char* bindip) {
         #else
             return 0;
         #endif
-        }else{
+        } else {
             inet_pton(AF_INET, bindip, &(addressstruct4.sin_addr.s_addr));
         }
 #endif
@@ -468,7 +468,7 @@ int so_MakeSocketListen(int socket, int port, int iptype, const char* bindip) {
         #else
             return 0;
         #endif
-        }else{
+        } else {
             addressstruct4.sin_addr.s_addr = inet_addr(bindip);
         }
 #endif
@@ -483,19 +483,19 @@ int so_MakeSocketListen(int socket, int port, int iptype, const char* bindip) {
 #else
             return 0;
 #endif
-        }else{
+        } else {
             if (addressstruct4.sin_addr.s_addr == INADDR_NONE) {
                 return 0;
             }
         }
-    }else{
+    } else {
         if (iptype == IPTYPE_IPV6) {
 #ifdef IPV6
             addressstruct6.sin6_addr = in6addr_any;
 #else
             return 0;
 #endif
-        }else{
+        } else {
             addressstruct4.sin_addr.s_addr = INADDR_ANY;
         }
     }
@@ -506,7 +506,7 @@ int so_MakeSocketListen(int socket, int port, int iptype, const char* bindip) {
 #else
         return 0;
 #endif
-    }else{
+    } else {
         addressstruct4.sin_port = htons(port);
     }
     // allow reusing the address on unix systems
@@ -524,7 +524,7 @@ int so_MakeSocketListen(int socket, int port, int iptype, const char* bindip) {
 #else
         return 0;
 #endif
-    }else{
+    } else {
         if (bind(socket,(struct sockaddr *) &addressstruct4,sizeof(addressstruct4)) < 0) {
             return 0;
         }
@@ -546,7 +546,7 @@ int so_AddressToStruct(const char* addr, int iptype, void* structptr) {
         #else
         return 0;
         #endif
-    }else{
+    } else {
         memset(addressstruct4, 0, sizeof(*addressstruct4));
         addressstruct4->sin_family = AF_INET;
     }
@@ -563,7 +563,7 @@ int so_AddressToStruct(const char* addr, int iptype, void* structptr) {
         #else
             return 0;
         #endif
-        }else{
+        } else {
             if (inet_pton(AF_INET, addr, &(addressstruct4->sin_addr)) != 1) {
                 return 0;
             }
@@ -587,7 +587,7 @@ int so_AddressToStruct(const char* addr, int iptype, void* structptr) {
         #else
             return 0;
         #endif
-        }else{
+        } else {
             addressstruct4->sin_addr.s_addr = inet_addr(addr);
         }
 #endif
@@ -602,12 +602,12 @@ int so_AddressToStruct(const char* addr, int iptype, void* structptr) {
 #else
             return 0;
 #endif
-        }else{
+        } else {
             if (addressstruct4->sin_addr.s_addr == INADDR_ANY || addressstruct4->sin_addr.s_addr == INADDR_NONE) {
                 return 0;
             }
         }
-    }else{
+    } else {
         // address is "any", so bind to any:
         if (iptype == IPTYPE_IPV6) {
 #ifdef IPV6
@@ -615,7 +615,7 @@ int so_AddressToStruct(const char* addr, int iptype, void* structptr) {
 #else
             return 0;
 #endif
-        }else{
+        } else {
             addressstruct4->sin_addr.s_addr = INADDR_ANY;
         }
     }
@@ -666,7 +666,7 @@ int so_ConnectSSLSocketToIP(int socket, const char* ip, unsigned int port, void*
 #else
         return 0; // ipv6 is not supported.
 #endif
-    }else{
+    } else {
         if (!so_AddressToStruct(ip, iptype, &addressstruct4)) {
             return 0;
         }
@@ -677,7 +677,7 @@ int so_ConnectSSLSocketToIP(int socket, const char* ip, unsigned int port, void*
 #ifdef IPV6
         addressstruct6.sin6_port = htons(port);
 #endif
-    }else{
+    } else {
         addressstruct4.sin_port = htons(port);
     }
 
@@ -787,7 +787,7 @@ int so_AcceptConnection_internal(int socket, int iptype, char* writeip, int* wri
         #else
         return 0;
         #endif
-    }else{
+    } else {
         addrlen = sizeof(address4);
     }
     int new_socket;
@@ -800,7 +800,7 @@ int so_AcceptConnection_internal(int socket, int iptype, char* writeip, int* wri
         #else
         return 0;
         #endif
-    }else{
+    } else {
         new_socket = accept(socket,(struct sockaddr *) &address4,&addrlen);
 #ifdef USESSL
         if (sslptr != NULL && !sslerror) {
@@ -822,7 +822,7 @@ int so_AcceptConnection_internal(int socket, int iptype, char* writeip, int* wri
         }
 #endif
     }
-    if (new_socket > 0) {
+    if (new_socket >= 0) {
         so_ManageSocketWithSelect(new_socket);
         // write the ip address into the "writeip" buf
         if (writeip != NULL) {
@@ -848,7 +848,7 @@ int so_AcceptConnection_internal(int socket, int iptype, char* writeip, int* wri
                 #endif
                 return 0;
                 #endif
-            }else{
+            } else {
                 getnameinfo((struct sockaddr *)&address4, sizeof(struct
                 sockaddr_in), writeip, cnt, NULL, 0, NI_NUMERICHOST);
                 writeip[IPV4LEN] = 0;
@@ -872,7 +872,7 @@ int so_AcceptConnection_internal(int socket, int iptype, char* writeip, int* wri
                 #endif
                 return 0;
                 #endif
-            }else{
+            } else {
                 inet_ntop(AF_INET, &address4.sin_addr, writeip, cnt);
                 writeip[IPV4LEN] = 0;
             }
@@ -883,8 +883,9 @@ int so_AcceptConnection_internal(int socket, int iptype, char* writeip, int* wri
             *writesocket = new_socket;
         }
         return 1;
+    } else {
+        return 0;
     }
-    return 0;
 }
 int so_AcceptConnection(int socket, int iptype, char* writeip, int* writesocket) {
     return so_AcceptConnection_internal(socket, iptype, writeip, writesocket, NULL);
@@ -919,7 +920,7 @@ int so_SelectSaysWrite(int sock, void** sslptr) {
 
             if (FD_ISSET(sock, readset)) {
                 return 1;
-            }else{
+            } else {
                 return 0;
             }
             return 0;
@@ -956,7 +957,7 @@ int so_SelectSaysRead(int sock, void** sslptr) {
 
             if (FD_ISSET(sock, writeset)) {
                 return 1;
-            }else{
+            } else {
                 return 0;
             }
         }
@@ -970,7 +971,7 @@ int so_SelectSaysRead(int sock, void** sslptr) {
 int dealwitherror(int retval) {
     if (retval > 0) {
         return retval;
-    }else{
+    } else {
 #ifdef WINDOWS
         int err = WSAGetLastError();
         if ((err != WSAEWOULDBLOCK && err != WSAEINTR && err != WSAENOBUFS) || retval == 0) {
@@ -979,7 +980,7 @@ int dealwitherror(int retval) {
         if ((errno != EWOULDBLOCK && errno != EINTR && errno != ENOBUFS) || retval == 0) {
 #endif
             return 0; // EOF/fatal error which leads to stream stopping
-        }else{
+        } else {
             return -1; // just a temporary error
         }
     }
@@ -1000,7 +1001,7 @@ int dealwithsslerror(int socket, void* sslptr, int arewereading, int retval) {
     if (retval > 0) {
         ERR_clear_error();
         return retval;
-    }else{
+    } else {
         int detailederror = SSL_get_error(i->sslhandle, retval);
         ERR_clear_error();
         if (detailederror == SSL_ERROR_ZERO_RETURN || detailederror == SSL_ERROR_SSL) {
@@ -1022,7 +1023,7 @@ int dealwithsslerror(int socket, void* sslptr, int arewereading, int retval) {
                         if (FD_ISSET(socket, &weircdselectset_readers)) {
                             // it is already set. mark that we want to keep it
                             i->ssl_requiresend = 1;
-                        }else{
+                        } else {
                             // set it
                             i->ssl_settosend = 1;
                             FD_SET(socket,&weircdselectset_writers);
@@ -1032,7 +1033,7 @@ int dealwithsslerror(int socket, void* sslptr, int arewereading, int retval) {
                         FD_CLR(socket,&weircdselectset_readers);
                     }
                 }
-            }else{
+            } else {
                 if (detailederror == SSL_ERROR_WANT_READ && arewereading != 1) {
                     // for SSL_write()'s read needs, we want to make sure we are in the readset
                     if (i->managedbyselect == 1) {
@@ -1074,7 +1075,7 @@ int so_DoAcceptThings(int socket, void* sslptr) {
                             if (FD_ISSET(socket, &weircdselectset_readers)) {
                                 // it is already set. mark that we want to keep it
                                 i->ssl_requiresend = 1;
-                            }else{
+                            } else {
                                 // set it
                                 i->ssl_settosend = 1;
                                 FD_SET(socket,&weircdselectset_writers);
@@ -1100,7 +1101,7 @@ int so_SendData_internal(int socket, const char* buf, int len, int usessl, void*
         errno = 0;
         int z = send(socket,buf,len,0);
         return dealwitherror(z);
-    }else{
+    } else {
 #ifdef USESSL
         struct sslinfo* i = sslptr;
         if (i->ssl_settosend == 1 || i->ssl_requiresend == 1) {
@@ -1110,7 +1111,7 @@ int so_SendData_internal(int socket, const char* buf, int len, int usessl, void*
         if (i->managedbyselect == 0) {
             if (!FD_ISSET(socket, &weircdselectset_readers)) {
                 i->managedbyselect = -1;
-            }else{
+            } else {
                 i->managedbyselect = 1;
             }
         }
@@ -1160,7 +1161,7 @@ int so_ReceiveData_internal(int socket, char* buf, int len, int usessl, void* ss
     if (usessl == 0) {
         int z = recv(socket,buf,len,0);
         return dealwitherror(z);
-    }else{
+    } else {
 #ifdef USESSL
         struct sslinfo* i = sslptr;
         if (i->ssl_writewantstoreceive) {
@@ -1170,7 +1171,7 @@ int so_ReceiveData_internal(int socket, char* buf, int len, int usessl, void* ss
         if (i->managedbyselect == 0) {
             if (!FD_ISSET(socket, &weircdselectset_readers)) {
                 i->managedbyselect = -1;
-            }else{
+            } else {
                 i->managedbyselect = 1;
             }
         }

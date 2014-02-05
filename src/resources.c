@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -259,7 +259,7 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
     }
 
     // a section header entry must have a minimum size to be useful:
-    if (entrysize < 4+4+(4+4*is64bit)*4) {
+    if (entrysize < (uint64_t)4+4+(4+4*is64bit)*4) {
         // ^ corresponds to name, type, flags, addr, offset, size
         // entry is too small to keep those things, so it's invalid:
         fclose(r);
@@ -267,7 +267,7 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
     }
 
     // calculate size from section header offset + size:
-    uint64_t filesize = t + entrynumber * entrysize;
+    uint64_t filesize = t + (uint64_t)entrynumber * (uint64_t)entrysize;
 
     // now check all sections for extending beyond this size:
     // seek to section header:
@@ -279,7 +279,7 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
     char readblock[4+4+8+8+8+8];
     int k = 0;
     while (k < entrynumber) {
-        int readsize = 4+4+(4+4*is64bit)*4;
+        int readsize = (uint64_t)4+4+(4+4*is64bit)*4;
 
         // read section header block:
         if (fread(readblock, readsize, 1, r) != 1) {

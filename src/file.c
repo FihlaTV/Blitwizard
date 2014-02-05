@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -39,8 +39,8 @@
 
 #include "file.h"
 
-char* file_getCanonicalPath(const char* path) {
-    char* s = file_getAbsolutePathFromRelativePath(path);
+char *file_getCanonicalPath(const char *path) {
+    char *s = file_getAbsolutePathFromRelativePath(path);
     if (!s) {
         return NULL;
     }
@@ -76,7 +76,7 @@ static int file_IsDirectorySeparator(char c) {
     return 0;
 }
 
-void file_makeSlashesNative(char* path) {
+void file_makeSlashesNative(char *path) {
     unsigned int i = 0;
     char nativeslash = file_NativeSlash();
     while (i < strlen(path)) {
@@ -87,7 +87,7 @@ void file_makeSlashesNative(char* path) {
     }
 }
 
-void file_makeSlashesCrossplatform(char* path) {
+void file_makeSlashesCrossplatform(char *path) {
     unsigned int i = 0;
     while (i < strlen(path)) {
         if (file_IsDirectorySeparator(path[i])) {
@@ -97,7 +97,7 @@ void file_makeSlashesCrossplatform(char* path) {
     }
 }
 
-size_t file_GetSize(const char* name) {
+size_t file_GetSize(const char *name) {
 #ifdef UNIX
     // use stat to get file size:
     struct stat info;
@@ -140,14 +140,14 @@ size_t file_GetSize(const char* name) {
 #endif
 }
 
-int file_Cwd(const char* path) {
+int file_Cwd(const char *path) {
     while (path[0] == '.' && strlen(path) > 1 && file_IsDirectorySeparator(path[1])) {
         path += 2;
     }
     if (strcasecmp(path, "") == 0 || strcasecmp(path, ".") == 0) {
         return 1;
     }
-    char* pathcopy = strdup(path);
+    char *pathcopy = strdup(path);
     if (!pathcopy) {
         return 0;
     }
@@ -167,7 +167,7 @@ int file_Cwd(const char* path) {
     return 1;
 }
 
-char* file_GetCwd() {
+char *file_getCwd() {
     char cwdbuf[2048] = "";
 #ifdef WINDOWS
     if (GetCurrentDirectory(sizeof(cwdbuf), cwdbuf) <= 0) {
@@ -189,7 +189,7 @@ char* file_GetCwd() {
     return strdup(cwdbuf);
 }
 
-int file_IsDirectory(const char* path) {
+int file_IsDirectory(const char *path) {
 #ifdef UNIX
     struct stat info;
     int r = stat(path, &info);
@@ -212,7 +212,7 @@ int file_IsDirectory(const char* path) {
 #endif
 }
 
-int file_DoesFileExist(const char* path) {
+int file_DoesFileExist(const char *path) {
 #ifndef WINDOWS
         struct stat st;
         if (stat(path,&st) == 0) {
@@ -230,7 +230,7 @@ int file_DoesFileExist(const char* path) {
 }
 
 
-static int file_LatestSlash(const char* path) {
+static int file_LatestSlash(const char *path) {
     int i = strlen(path)-1;
     while (!file_IsDirectorySeparator(path[i]) && i > 0) {
         i--;
@@ -241,7 +241,7 @@ static int file_LatestSlash(const char* path) {
     return i;
 }
 
-static void file_CutOffOneElement(char* path) {
+static void file_CutOffOneElement(char *path) {
     while (1) {
         int i = file_LatestSlash(path);
         // check if there is nothing left to cut off for absolute paths
@@ -285,14 +285,14 @@ static void file_CutOffOneElement(char* path) {
     }
 }
 
-char* file_AddComponentToPath(const char* path, const char* component) {
+char *file_AddComponentToPath(const char *path, const char *component) {
     int addslash = 0;
     if (strlen(path) > 0) {
         if (!file_IsDirectorySeparator(path[strlen(path)-1])) {
             addslash = 1;
         }
     }
-    char* newpath = malloc(strlen(path)+addslash+1+strlen(component));
+    char *newpath = malloc(strlen(path)+addslash+1+strlen(component));
     if (!newpath) {
         return NULL;
     }
@@ -305,7 +305,7 @@ char* file_AddComponentToPath(const char* path, const char* component) {
     return newpath;
 }
 
-void file_StripComponentFromPath(char* path) {
+void file_StripComponentFromPath(char *path) {
     file_makeSlashesNative(path);
 
     int repeat = 1;
@@ -325,7 +325,7 @@ void file_StripComponentFromPath(char* path) {
     }
 }
 
-char* file_getAbsolutePathFromRelativePath(const char* path) {
+char *file_getAbsolutePathFromRelativePath(const char *path) {
     // cancel for absolute paths
     if (!file_IsPathRelative(path)) {
         return strdup(path);
@@ -337,7 +337,7 @@ char* file_getAbsolutePathFromRelativePath(const char* path) {
     }
 
     // get current working directory
-    char* currentdir = file_GetCwd();
+    char *currentdir = file_getCwd();
     if (!currentdir) {
         return NULL;
     }
@@ -349,7 +349,7 @@ char* file_getAbsolutePathFromRelativePath(const char* path) {
     }
 
     // allocate space for new path
-    char* newdir = malloc(strlen(currentdir) + 1 + strlen(path) + 1);
+    char *newdir = malloc(strlen(currentdir) + 1 + strlen(path) + 1);
     if (!newdir) {
         free(currentdir);
         return NULL;
@@ -366,11 +366,11 @@ char* file_getAbsolutePathFromRelativePath(const char* path) {
     return newdir;
 }
 
-char* file_GetDirectoryPathFromFilePath(const char* path) {
+char *file_GetDirectoryPathFromFilePath(const char *path) {
     if (file_IsDirectory(path)) {
         return strdup(path);
     } else {
-        char* pathcopy = strdup(path);
+        char *pathcopy = strdup(path);
         if (!pathcopy) {
             return NULL;
         }
@@ -385,7 +385,7 @@ char* file_GetDirectoryPathFromFilePath(const char* path) {
     }
 }
 
-int file_IsPathRelative(const char* path) {
+int file_IsPathRelative(const char *path) {
 #ifdef WINDOWS
     if (PathIsRelative(path) == TRUE) {
         return 1;
@@ -399,8 +399,8 @@ int file_IsPathRelative(const char* path) {
 #endif
 }
 
-char* file_getAbsoluteDirectoryPathFromFilePath(const char* path) {
-    char* p = file_GetDirectoryPathFromFilePath(path);
+char *file_getAbsoluteDirectoryPathFromFilePath(const char *path) {
+    char *p = file_GetDirectoryPathFromFilePath(path);
     if (!p) {
         return NULL;
     }
@@ -409,19 +409,19 @@ char* file_getAbsoluteDirectoryPathFromFilePath(const char* path) {
         return p;
     }
 
-    char* p2 = file_getAbsolutePathFromRelativePath(p);
+    char *p2 = file_getAbsolutePathFromRelativePath(p);
     if (!p2) {
         return NULL;
     }
     return p2;
 }
 
-char* file_GetFileNameFromFilePath(const char* path) {
+char *file_GetFileNameFromFilePath(const char *path) {
     int i = file_LatestSlash(path);
     if (i < 0) {
         return strdup(path);
     } else {
-        char* filename = malloc(strlen(path)-i+1);
+        char *filename = malloc(strlen(path)-i+1);
         if (!filename) {
             return NULL;
         }
@@ -431,7 +431,7 @@ char* file_GetFileNameFromFilePath(const char* path) {
     }
 }
 
-int file_ContentToBuffer(const char* path, char** buf, size_t* buflen) {
+int file_ContentToBuffer(const char *path, char** buf, size_t* buflen) {
     FILE* r = fopen(path, "rb");
     if (!r) {
         return 0;
@@ -441,7 +441,7 @@ int file_ContentToBuffer(const char* path, char** buf, size_t* buflen) {
     size_t size = ftell(r);
     fseek(r, 0L, SEEK_SET);
     // allocate buf
-    char* fbuf = malloc(size+1);
+    char *fbuf = malloc(size+1);
     if (!fbuf) {
         fclose(r);
         return 0;
@@ -459,7 +459,7 @@ int file_ContentToBuffer(const char* path, char** buf, size_t* buflen) {
     return 1;
 }
 
-char* file_GetTempPath(const char* name) {
+char *file_GetTempPath(const char *name) {
 #ifdef WINDOWS
     return NULL;
 #else
@@ -468,7 +468,7 @@ char* file_GetTempPath(const char* name) {
         namelen = strlen(name);
     }
 
-    char* tmppath = malloc(strlen("/tmp/") + 1 + namelen);
+    char *tmppath = malloc(strlen("/tmp/") + 1 + namelen);
     if (!tmppath) {
         return NULL;
     }
@@ -484,14 +484,14 @@ char* file_GetTempPath(const char* name) {
 
 #ifdef WINDOWS
 #include <shlobj.h>
-char* file_GetUserFileDir(void) {
+char *file_GetUserFileDir(void) {
     char programsdirbuf[MAX_PATH+1];
     SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, programsdirbuf);
     programsdirbuf[MAX_PATH] = 0;
     return strdup(programsdirbuf);
 }
 #else
-char* filesystem_GetUserFileDir(void) {
+char *filesystem_GetUserFileDir(void) {
     char programsdirbuf[300];
     strncpy(programsdirbuf, getenv("HOME"), 299);
     programsdirbuf[299] = 0;
@@ -499,7 +499,7 @@ char* filesystem_GetUserFileDir(void) {
 }
 #endif
 
-int file_CreateDirectory(const char* name) {
+int file_CreateDirectory(const char *name) {
     if (file_DoesFileExist(name)) {
         // file or directory already present, we cannot create it!
         return 0;
@@ -515,7 +515,7 @@ int file_CreateDirectory(const char* name) {
 #endif
 }
 
-int file_DeleteFile(const char* name) {
+int file_DeleteFile(const char *name) {
 #ifdef UNIX
     return (unlink(name) == 0);
 #else
@@ -527,7 +527,7 @@ int file_DeleteFile(const char* name) {
 #endif
 }
 
-void file_removeDoubleSlashes(char* path) {
+void file_removeDoubleSlashes(char *path) {
     unsigned int i = 0;
     int previousslash = 0;
     unsigned int len = strlen(path);
@@ -546,7 +546,7 @@ void file_removeDoubleSlashes(char* path) {
     }
 }
 
-unsigned int file_CountPathComponents(const char* path) {
+unsigned int file_CountPathComponents(const char *path) {
     unsigned int c = 0;
     unsigned int i = 0;
     int previousslash = 0;
@@ -584,15 +584,15 @@ unsigned int file_CountPathComponents(const char* path) {
     return c;
 }
 
-void file_makePathRelative(char* path, const char* base) {
+void file_makePathRelative(char *path, const char *base) {
     if (file_IsPathRelative(base)) {
         return;
     }
     if (file_IsPathRelative(path)) {
         return;
     }
-    char* path_unified = strdup(path);
-    char* base_unified = strdup(base);
+    char *path_unified = strdup(path);
+    char *base_unified = strdup(base);
     if (!path_unified || !base_unified) {
         free(path_unified);
         free(base_unified);
@@ -616,12 +616,12 @@ void file_makePathRelative(char* path, const char* base) {
         // strip the components from the beginning of the path:
         while (c > 0) {
             // check for next directory separator
-            char* slashptr1 = strstr(path, "/");
+            char *slashptr1 = strstr(path, "/");
             int slashpos1 = -1;
             if (slashptr1) {
                 slashpos1 = slashptr1 - path;
             }
-            char* slashptr2 = NULL;
+            char *slashptr2 = NULL;
 #ifdef WINDOWS
             slashptr2 = strstr(path, "\\");
 #endif

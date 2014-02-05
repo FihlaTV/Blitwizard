@@ -287,7 +287,6 @@ struct physicsobject* object, void* userdata, int movable);
 void _physics_create2dObjectEdges_End(struct edge* edges, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
 void _physics_create2dObjectPoly_End(struct polygonpoint* polygonpoints, struct physicsobject2d* object, struct physicsobjectshape2d* shape2d);
 // Scaling aux
-void _physics_setb2ShapeOval(b2Shape* shape, double width, double height);
 b2ChainShape* _physics_copyb2ChainShape(b2ChainShape* src, b2_shape_info*
  shape_info);
 b2CircleShape* _physics_copyb2CircleShape(b2CircleShape* src, b2_shape_info*
@@ -553,12 +552,13 @@ struct physicsworld* physics_createWorld(int use3dphysics) {
     if (not use3dphysics) {
 #ifdef USE_PHYSICS2D
         struct physicsworld2d* world2d = &(world->world2d);
-        if (!world2d) {
-            return NULL;
-        }
         memset(world2d, 0, sizeof(*world2d));
         b2Vec2 gravity(0.0f, 0.0f);
         world2d->w = new b2World(gravity);
+        if (!world2d->w) {
+            free(world);
+            return NULL;
+        }
         world2d->w->SetAllowSleeping(true);
         world2d->gravityx = 0;
         world2d->gravityy = 9.81;
@@ -571,13 +571,16 @@ struct physicsworld* physics_createWorld(int use3dphysics) {
         return world;
 #else
         printerror("Error: Trying to create 2D physics world, but USE_PHYSICS2D is disabled.");
+        free(world);
         return NULL;
 #endif
     } else {
 #ifdef USE_PHYSICS3D
+        free(world);
         printerror(BW_E_NO3DYET);
         return NULL;
 #else
+        free(world);
         printerror("Error: Trying to create 3D physics world, but USE_PHYSICS3D is disabled.");
         return NULL;
 #endif
@@ -1102,13 +1105,13 @@ struct physicsobject* object, void* userdata, int movable) {
     bodyDef.userData = (void*)pdata;
     obj2d->userdata = pdata;
     obj2d->body = world->w->CreateBody(&bodyDef);
-    obj2d->body->SetFixedRotation(false);
-    obj2d->world = world->w;
-    obj2d->pworld = world;
     if (!obj2d->body) {
         free(pdata);
         return 0;
     }
+    obj2d->body->SetFixedRotation(false);
+    obj2d->world = world->w;
+    obj2d->pworld = world;
     return 1;
 }
 #endif
@@ -1391,41 +1394,6 @@ void* physics_getObjectUserdata_internal(struct physicsobject* object) {
 // Scaling aux functions begin here
 
 #ifdef USE_PHYSICS2D
-// Alternate version of physics_set2dShapeOval which outputs a new b2 shape
-void _physics_setb2ShapeOval(b2Shape* shape, double width, double height) {
-    if (fabs(width - height) < EPSILON) {
-        shape = new b2CircleShape();
-        ((b2CircleShape*)shape)->m_radius = width;
-        return;
-    }
-
-    // construct oval shape - by manually calculating the vertices
-    b2Vec2* vertices = new b2Vec2[OVALVERTICES];
-    
-    // go around with the angle in one full circle:
-    int i = 0;
-    double angle = 0;
-    while (angle < 2*M_PI && i < OVALVERTICES) {
-        //calculate and set vertex point
-        double x,y;
-        ovalpoint(angle, width, height, &x, &y);
-        
-        vertices[i].x = x;
-        vertices[i].y = -y;
-        
-        //advance to next position
-        angle -= (2*M_PI)/((double)OVALVERTICES);
-        i++;
-    }
-    
-    shape = new b2PolygonShape();
-    ((b2PolygonShape*)shape)->Set(vertices, OVALVERTICES);
-    
-    delete[] vertices;
-}
-#endif
-
-#ifdef USE_PHYSICS2D
 b2ChainShape* _physics_copyb2ChainShape(b2ChainShape* src, b2_shape_info*
  shape_info) {
     b2ChainShape* dest;
@@ -1463,8 +1431,12 @@ b2PolygonShape* _physics_copyb2PolygonShape(b2PolygonShape* src, b2_shape_info*
 void _physics_fill2dOrigShapeCache(struct physicsobject2d* object) {
     b2Body* body = object->body;
     b2Fixture* f = body->GetFixtureList();
-    union { b2ChainShape* chain; b2CircleShape* circle;
-     b2EdgeShape* edge; b2PolygonShape* poly; };
+    union {
+        b2ChainShape* chain;
+        b2CircleShape* circle;
+        b2EdgeShape* edge;
+        b2PolygonShape* poly;
+    };
     /* XXX IMPORTANT: This relies on b2Body::GetFixtureList() returning
      fixtures in the reverse order they were added in.
      */
@@ -1558,8 +1530,12 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
     b2Body* body = object2d->body;
     b2Fixture* f = body->GetFixtureList();
     double mass = physics_getMass_internal(object);
-    union { b2ChainShape* chain; b2CircleShape* circle;
-     b2EdgeShape* edge; b2PolygonShape* poly; };
+    union {
+        b2ChainShape* chain;
+        b2CircleShape* circle;
+        b2EdgeShape* edge;
+        b2PolygonShape* poly;
+    };
     
     // Firstly, make sure the original shape cache thingy is initialised
     if (object2d->orig_shape_count == 0) {
@@ -1609,12 +1585,9 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
                     }
                     fixtureDef.shape = chain;
                     object2d->body->CreateFixture(&fixtureDef);
-                    delete chain;
                     ++j;
                 break;
                 case b2Shape::e_circle: // Re-use functions for ovals
-                    _physics_setb2ShapeOval(new_shape, (s->m_radius) * scalex,
-                     (s->m_radius) * scaley);
                     if (new_shape->GetType() == b2Shape::e_circle) {
                         circle = (b2CircleShape*)new_shape;
                         circle->m_p = ((b2CircleShape*)s)->m_p;
@@ -1636,7 +1609,6 @@ void physics_set2dScale_internal(struct physicsobject* object, double scalex,
                     }
                     fixtureDef.shape = new_shape;
                     object2d->body->CreateFixture(&fixtureDef);
-                    delete new_shape;
                 break;
                 case b2Shape::e_edge:
                     //never happens
@@ -1655,7 +1627,6 @@ re-allocation of memory for m_vertices."
                     poly->Set(poly->m_vertices, poly->m_vertexCount);
                     fixtureDef.shape = poly;
                     object2d->body->CreateFixture(&fixtureDef);
-                    delete poly;
                 break;
                 default:
                     printerror("fatal error: unknown physics shape");

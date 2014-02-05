@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -70,7 +70,7 @@
 // currently running on.
 // @function sysname
 // @treturn string Operating system name
-int luafuncs_sysname(lua_State* l) {
+int luafuncs_sysname(lua_State *l) {
     lua_pushstring(l, osinfo_GetSystemName());
     return 1;
 }
@@ -79,7 +79,7 @@ int luafuncs_sysname(lua_State* l) {
 // your game is currently running on.
 // @function sysversion
 // @treturn string Operating system version
-int luafuncs_sysversion(lua_State* l) {
+int luafuncs_sysversion(lua_State *l) {
     lua_pushstring(l, osinfo_GetSystemVersion());
     return 1;
 }
@@ -90,8 +90,8 @@ int luafuncs_sysversion(lua_State* l) {
 // @function exists
 // @tparam string path file or directory path
 // @treturn boolean true if target exists, false if not
-int luafuncs_exists(lua_State* l) {
-    const char* p = lua_tostring(l, 1);
+int luafuncs_exists(lua_State *l) {
+    const char *p = lua_tostring(l, 1);
     if (!p) {
         return haveluaerror(l, badargument1, 1, "os.exists", "string", lua_strtype(l, 1));
     }
@@ -115,8 +115,8 @@ int luafuncs_exists(lua_State* l) {
 // @function isdir
 // @tparam string path directory path
 // @treturn boolean true if target is directory, false if not
-int luafuncs_isdir(lua_State* l) {
-    const char* p = lua_tostring(l, 1);
+int luafuncs_isdir(lua_State *l) {
+    const char *p = lua_tostring(l, 1);
     if (!p) {
         lua_pushstring(l, "First argument is not a valid path string");
         return lua_error(l);
@@ -162,15 +162,15 @@ int luafuncs_isdir(lua_State* l) {
 //   for i,file in ipairs(os.ls("")) do
 //       print("file name: " .. file)
 //   end
-int luafuncs_ls(lua_State* l) {
-    const char* p = lua_tostring(l, 1);
+int luafuncs_ls(lua_State *l) {
+    const char *p = lua_tostring(l, 1);
     if (!p) {
         lua_pushstring(l, "First argument is not a valid path string");
         return lua_error(l);
     }
-    char* pnative = strdup(p);
-    char* pcross = strdup(p);
-    char* pcrossrelative = strdup(p);
+    char *pnative = strdup(p);
+    char *pcross = strdup(p);
+    char *pcrossrelative = strdup(p);
     if (!pnative || !pcross || !pcrossrelative) {
         free(pnative);
         free(pcross);
@@ -179,7 +179,11 @@ int luafuncs_ls(lua_State* l) {
     }
     file_makeSlashesNative(pnative);
     file_makeSlashesCrossplatform(pcross);
-    file_makePathRelative(pcrossrelative, file_GetCwd());
+    char *cwd = file_getCwd();
+    if (cwd) {
+        file_makePathRelative(pcrossrelative, cwd);
+    }
+    free(cwd);
     int list_virtual = 1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         if (lua_type(l, 2) != LUA_TNUMBER) {
@@ -193,7 +197,7 @@ int luafuncs_ls(lua_State* l) {
     }
 
     // get virtual filelist:
-    char** filelist = NULL;
+    char **filelist = NULL;
 #ifdef USE_PHYSFS
     if (list_virtual) {
         filelist = resource_FileList(pcrossrelative);
@@ -202,7 +206,7 @@ int luafuncs_ls(lua_State* l) {
 #endif
 
     // get iteration context for "real" on disk directory:
-    struct filelistcontext* ctx = filelist_Create(pnative);
+    struct filelistcontext *ctx = filelist_Create(pnative);
    // printf("ctx: %p\n", ctx);
    // printf("pnative: %s\n", pnative);
 
@@ -310,8 +314,8 @@ int luafuncs_ls(lua_State* l) {
 // - but not necessarily)
 // @function getcwd
 // @treturn string absolute directory path
-int luafuncs_getcwd(lua_State* l) {
-    char* p = file_GetCwd();
+int luafuncs_getcwd(lua_State *l) {
+    char *p = file_getCwd();
     lua_pushstring(l, p),
     free(p);
     return 1;
@@ -320,8 +324,8 @@ int luafuncs_getcwd(lua_State* l) {
 /// Change the current working directory to the specified directory
 // @function chdir
 // @tparam string directory path
-int luafuncs_chdir(lua_State* l) {
-    const char* p = lua_tostring(l,1);
+int luafuncs_chdir(lua_State *l) {
+    const char *p = lua_tostring(l,1);
     if (!p) {
         lua_pushstring(l, "First parameter is not a directory string");
         return lua_error(l);
@@ -347,7 +351,7 @@ int luafuncs_chdir(lua_State* l) {
 // this on program startup.
 // @function openConsole
 int luafuncs_openConsole(__attribute__ ((unused))
-lua_State* intentionally_unused) {
+lua_State *intentionally_unused) {
     win32console_Launch();
     return 0;
 }
@@ -355,7 +359,7 @@ lua_State* intentionally_unused) {
 // This is just a different implementation to the
 // default lua os.exit(), so no need to document
 // this.
-int luafuncs_exit(lua_State* l) {
+int luafuncs_exit(lua_State *l) {
     int exitcode = lua_tonumber(l,1);
     main_Quit(exitcode);
     return 0;
@@ -369,8 +373,8 @@ int luafuncs_exit(lua_State* l) {
 // @function templatedir
 // @treturn string absolute folder path of template directory (or nil if none).
 // Can be a relative path if loaded from a .zip archive
-extern char* templatepath;
-int luafuncs_templatedir(lua_State* l) {
+extern char *templatepath;
+int luafuncs_templatedir(lua_State *l) {
     if (!templatepath) {
         lua_pushnil(l);
     } else {
@@ -384,7 +388,7 @@ int luafuncs_templatedir(lua_State* l) {
 // them to work in some cases.
 // @function forcetemplatedir
 // @tparam string path template directory
-int luafuncs_forcetemplatedir(lua_State* l) {
+int luafuncs_forcetemplatedir(lua_State *l) {
     if (lua_type(l, 1) != LUA_TSTRING) {
         return haveluaerror(l, badargument1, 1,
         "os.forcetemplatedir", "string", lua_strtype(l, 1));
@@ -403,7 +407,7 @@ int luafuncs_forcetemplatedir(lua_State* l) {
 // @function gameluapath
 // @treturn string absolute file path to game.lua if a file on disk,
 // relative path to game.lua if loaded from a .zip archive
-int luafuncs_gameluapath(lua_State* l) {
+int luafuncs_gameluapath(lua_State *l) {
     if (!gameluapath) {
         lua_pushnil(l);
     } else {
@@ -434,7 +438,7 @@ int luafuncs_gameluapath(lua_State* l) {
 // you most likely want to use @{blitwizard.runDelayed|runDelayed} instead.
 // @function sleep
 // @tparam number milliseconds the amount of milliseconds to sleep the whole process
-int luafuncs_sleep(lua_State* l) {
+int luafuncs_sleep(lua_State *l) {
     if (lua_type(l, 1) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1, "os.sleep",
         "number", lua_strtype(l, 1));

@@ -633,11 +633,11 @@ int luafuncs_object_new(lua_State* l) {
     if (resourcerelative) {
         resource = file_getCanonicalPath(
         resourcerelative);
-        file_makeSlashesCrossplatform(resource);
         if (!resource) {
             return haveluaerror(l, "failed to allocate or determine "
             "absolute path");
         }
+        file_makeSlashesCrossplatform(resource);
     }
 
     // create new object

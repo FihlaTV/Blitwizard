@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -621,7 +621,7 @@ struct zipfileiter {
     char** filelist;
 };
 struct zipfileiter* zipfile_Iterate(struct zipfile* f,
-const char* dir) {
+        const char* dir) {
     if (!f) {
         return NULL;
     }
@@ -637,7 +637,7 @@ const char* dir) {
     }
     char* path2 = path;
     if (path[strlen(path)-1] == '/') {
-        path2 = malloc(strlen(path));
+        path2 = malloc(strlen(path) + 1);
         memcpy(path2, path, strlen(path));
         path2[strlen(path)] = 0;
         free(path);
