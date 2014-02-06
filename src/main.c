@@ -514,7 +514,7 @@ static void determineBinaryPath(const char* argv0) {
     }
     char resultbuf[256];
     char* s = fgets(resultbuf, sizeof(resultbuf), f);
-    fclose(f);
+    pclose(f);
     // see if this starts with: argv0 is /some/path..
     if (!s || strlen(s) < strlen(argv0) + strlen(" is ")) {
         return;

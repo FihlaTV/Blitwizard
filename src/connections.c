@@ -501,34 +501,35 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
         }
         // write things if we can:
         if ((c->error < 0 ||
-                (c->socket >= 0 && c->closewhensent)) && c->connected
-                && c->outbufbytes > 0 &&
-                so_SelectSaysWrite(c->socket, &c->sslptr)) {
-            int r = so_SendSSLData(c->socket, c->outbuf + c->outbufoffset,
-            c->outbufbytes, &c->sslptr);
-            if (r == 0) {
-                // connection closed:
-                connections_E(c, errorcallback,
-                CONNECTIONERROR_CONNECTIONCLOSED);
+                (c->closewhensent)) && c->connected
+                && c->outbufbytes > 0 && c->socket >= 0) {
+            if (so_SelectSaysWrite(c->socket, &c->sslptr)) {
+                int r = so_SendSSLData(c->socket, c->outbuf + c->outbufoffset,
+                c->outbufbytes, &c->sslptr);
+                if (r == 0) {
+                    // connection closed:
+                    connections_E(c, errorcallback,
+                    CONNECTIONERROR_CONNECTIONCLOSED);
 #ifdef CONNECTIONSDEBUG
-                printinfo("[connections] send returned end of stream");
+                    printinfo("[connections] send returned end of stream");
 #endif
-                c = cnext;
-                continue;
-            }
-            // remove sent bytes from buffer:
-            if (r > 0) {
-                c->outbufbytes -= r;
-                c->outbufoffset += r;
-                so_SelectWantWrite(c->socket, 1);
-                if (c->outbufbytes <= 0) {
-                    c->outbufoffset = 0;
-                    so_SelectWantWrite(c->socket, 0);
-                } else {
-                    if (c->outbufoffset > CONNECTIONOUTBUFSIZE/2) {
-                        // move buffer contents back to beginning
-                        memmove(c->outbuf, c->outbuf + c->outbufoffset, c->outbufbytes);
+                    c = cnext;
+                    continue;
+                }
+                // remove sent bytes from buffer:
+                if (r > 0) {
+                    c->outbufbytes -= r;
+                    c->outbufoffset += r;
+                    so_SelectWantWrite(c->socket, 1);
+                    if (c->outbufbytes <= 0) {
                         c->outbufoffset = 0;
+                        so_SelectWantWrite(c->socket, 0);
+                    } else {
+                        if (c->outbufoffset > CONNECTIONOUTBUFSIZE/2) {
+                            // move buffer contents back to beginning
+                            memmove(c->outbuf, c->outbuf + c->outbufoffset, c->outbufbytes);
+                            c->outbufoffset = 0;
+                        }
                     }
                 }
             }

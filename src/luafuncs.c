@@ -286,7 +286,7 @@ static int luafuncs_printline(void) {
         }
         i++;
     }
-    if (i < 0) {
+    if (i == 0) {
         return 0;
     }
     if (i >= (int)len-1 && printlinebuf[len-1] != '\n') {

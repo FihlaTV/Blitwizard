@@ -139,7 +139,9 @@ static size_t audiosourcefile_Length(struct audiosource *source) {
     }
 
     // seek back to current pos:
-    fseek(idata->file, pos, SEEK_SET);
+    if (pos >= 0) {
+        fseek(idata->file, pos, SEEK_SET);
+    }
     return size;
 }
 
