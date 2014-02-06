@@ -258,7 +258,9 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
             }
         }
         // check for auto close:
-        if (c->canautoclose && c->wantautoclose && (c->error >= 0 || c->lastreadtime + 30000 < time_GetMilliseconds()) && !c->closewhensent) {
+        if (c->canautoclose && c->wantautoclose &&
+                (c->error >= 0 || c->lastreadtime + 30000 <
+                time_GetMilliseconds()) && !c->closewhensent) {
             if (c->error >= 0) { // connection already error'd, we can get rid of it:
 #ifdef CONNECTIONSDEBUG
                 printinfo("[connections] autoclosing connection %d", c->socket);
@@ -291,13 +293,14 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
         if (c->error < 0 && !c->closewhensent && (c->hostresolveptr || c->hostresolveptrv6)) {
             int rqstate1 = RESOLVESTATUS_SUCCESS;
             if (c->hostresolveptr) {
-                hostresolv_GetRequestStatus(c->hostresolveptr);
+                rqstate1 = hostresolv_GetRequestStatus(c->hostresolveptr);
             }
             int rqstate2 = RESOLVESTATUS_SUCCESS;
             if (c->hostresolveptrv6) {
                 rqstate2 = hostresolv_GetRequestStatus(c->hostresolveptrv6);
             }
-            if (rqstate1 != RESOLVESTATUS_PENDING && rqstate2 != RESOLVESTATUS_PENDING) {
+            if (rqstate1 != RESOLVESTATUS_PENDING &&
+                    rqstate2 != RESOLVESTATUS_PENDING) {
                 // requests are done, get ips:
                 char* ipv4 = NULL;
                 char* ipv6 = NULL;

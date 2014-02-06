@@ -266,7 +266,7 @@ int osinfo_CheckForCmdProg(const char* name) {
     }
     char resultbuf[256];
     char* s = fgets(resultbuf, sizeof(resultbuf), f);
-    fclose(f);
+    pclose(f);
     if (s && strstr(s, "/")) {
         return 1;
     }
