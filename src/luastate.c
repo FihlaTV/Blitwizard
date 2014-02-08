@@ -149,6 +149,9 @@ static int luastate_AddBlitwizFuncs(lua_State* l) {
 }
 
 char* luastate_GetPreferredAudioBackend() {
+    if (!scriptstate) {
+        return NULL;
+    }
     lua_getglobal(scriptstate, "audiobackend");
     const char* p = lua_tostring(scriptstate, -1);
     char* s = NULL;
@@ -160,6 +163,9 @@ char* luastate_GetPreferredAudioBackend() {
 }
 
 int luastate_GetWantFFmpeg() {
+    if (!scriptstate) {
+        return 0;
+    }
     lua_getglobal(scriptstate, "useffmpegaudio");
     if (lua_type(scriptstate, -1) == LUA_TBOOLEAN) {
         int i = lua_toboolean(scriptstate, -1);

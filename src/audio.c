@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -32,7 +32,7 @@
 int failsafeaudio = 0;
 
 // valid sound buffer sizes for audio:
-#define DEFAULTSOUNDBUFFERSIZE (4096)
+#define DEFAULTSOUNDBUFFERSIZE (1024)
 #define MINSOUNDBUFFERSIZE 512
 #define MAXSOUNDBUFFERSIZE (1024 * 10)
 
@@ -68,22 +68,23 @@ void audio_Quit(void) {
 }
 
 #ifndef USE_SDL_GRAPHICS
-static int sdlvideoinit = 1;
+static int sdlinit = 0;
+#else
+extern int sdlinit;
 #endif
 int audio_Init(void (*samplecallback)(void*, unsigned int),
 unsigned int buffersize, const char* backend, int s16, char** error) {
-#ifndef USE_SDL_GRAPHICS
-    if (!sdlvideoinit) {
-        if (SDL_VideoInit(NULL) < 0) {
-            char errormsg[512];
-            snprintf(errormsg,sizeof(errormsg), "Failed to initialize SDL video: %s", SDL_GetError());
+    if (!sdlinit) {
+        char errormsg[512];
+        if (SDL_Init(SDL_INIT_TIMER) < 0) {
+            snprintf(errormsg, sizeof(errormsg),
+                "Failed to initialize SDL: %s", SDL_GetError());
             errormsg[sizeof(errormsg)-1] = 0;
             *error = strdup(errormsg);
             return 0;
         }
-        sdlvideoinit = 1;
+        sdlinit = 1;
     }
-#endif
     if (soundenabled) {
         // quit old sound first
         SDL_PauseAudio(1);

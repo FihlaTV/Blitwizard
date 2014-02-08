@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -153,7 +153,7 @@ int texturemanager_saveGPUMemory(void) {
 }
 
 int texturemanager_saveSystemMemory(void) {
-    return 1;
+    return 0;
 }
 
 static int ispoweroftwo(int number) {
@@ -290,7 +290,10 @@ time_t now, int savememory) {
     // small textures might not have the larger scaled versions:
     if (wantsize >= gtm->scalelistcount && wantsize > 0) {
         if (wantsize < 4) {
-            wantsize = gtm->scalelistcount-1;
+            wantsize = gtm->scalelistcount - 1;
+            if (wantsize < 1) {
+                wantsize = 1;
+            }
         } else {
             // better default to original full size here:
             wantsize = 0;
@@ -448,7 +451,8 @@ struct graphicstexturemanaged* gtm, int slot) {
         // we cannot currently use this entry.
         // check if we can find another one that is not locked:
 #ifdef DEBUGTEXTUREMANAGER
-        printinfo("[TEXMAN/GPU request] texture locked: %s", gtm->path);
+        printinfo("[TEXMAN/GPU request] texture locked (size %d): %s", i,
+            gtm->path);
 #endif
         return texturemanager_getRandomGPUTexture(gtm);
     } else {

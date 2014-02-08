@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem et al
+  Copyright (C) 2011-2014 Jonas Thiem et al
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,6 +40,8 @@
 #ifdef ANDROID
 #include <android/log.h>
 #endif
+
+#define MAXSCRIPTARGS 1024
 
 // set physics callbacks:
 void luacfuncs_object_initialisePhysicsCallbacks(void);
@@ -153,7 +155,7 @@ void fatalscripterror(void) {
 
 int simulateaudio = 0;
 int audioinitialised = 0;
-void main_InitAudio(void) {
+void main_initAudio(void) {
 #ifdef USE_AUDIO
     if (audioinitialised) {
         return;
@@ -547,22 +549,18 @@ int terminateCurrentScript(void* userdata) {
 
 int luafuncs_ProcessNetEvents(void);
 
-#define MAXSCRIPTARGS 1024
+// command line args:
+static const char* script = "game.lua";
+static int scriptargfound = 0;
+static int option_changedir = 0;
+static char* option_templatepath = NULL;
+static int nextoptionistemplatepath = 0;
+static int nextoptionisscriptarg = 0;
+static int gcframecount = 0;
+static char** scriptargs = NULL;
+static int scriptargcount = 0;
 
-// NO MAIN IF UNIT TEST:
-#ifndef UNITTEST
-// ---
-
-#if (defined(__ANDROID__) || defined(ANDROID))
-int SDL_main(int argc, char** argv) {
-#else
-#ifdef WINDOWS
-int CALLBACK WinMain(HINSTANCE hInstance,
-HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-#else
-int main(int argc, char** argv) {
-#endif
-#endif
+int main_startup_do(int argc, char** argv) {
     thread_markAsMainThread();
 
     scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
@@ -581,17 +579,7 @@ int main(int argc, char** argv) {
     }
 #endif
 
-    // test crash handling:
-    //*((int*)5) = 2;
-
     // evaluate command line arguments:
-    const char* script = "game.lua";
-    int scriptargfound = 0;
-    int option_changedir = 0;
-    char* option_templatepath = NULL;
-    int nextoptionistemplatepath = 0;
-    int nextoptionisscriptarg = 0;
-    int gcframecount = 0;
 
 #ifdef WINDOWS
     // obtain command line arguments a special way on windows:
@@ -600,12 +588,12 @@ int main(int argc, char** argv) {
 #endif
 
     // we want to store the script arguments so we can pass them to lua:
-    char** scriptargs = malloc(sizeof(char*) * MAXSCRIPTARGS);
+    scriptargs = malloc(sizeof(char*) * MAXSCRIPTARGS);
     if (!scriptargs) {
         printfatalerror("Error: failed to allocate script args space");
         return 1;
     }
-    int scriptargcount = 0;
+    scriptargcount = 0;
 
     // parse command line arguments:
     int i = 1;
@@ -811,15 +799,6 @@ int main(int argc, char** argv) {
     audiomixer_Init();
 #endif
 
-    // check the provided path:
-    char outofmem[] = "Out of memory";
-    char* error;
-    char* filenamebuf = NULL;
-
-#if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: locating lua start script...");
-#endif
-
     // if no template path was provided, default to "templates/"
     if (!option_templatepath) {
         option_templatepath = strdup("templates/");
@@ -830,6 +809,13 @@ int main(int argc, char** argv) {
         }
         file_makeSlashesNative(option_templatepath);
     }
+    return 0;
+}
+
+int main_startup_openScript(int argc, char** argv) {
+#if defined(ANDROID) || defined(__ANDROID__)
+    printinfo("Blitwizard startup: locating lua start script...");
+#endif
 
     // load internal resources appended to this binary,
     // so we can load the game.lua from it if there is any inside:
@@ -844,12 +830,21 @@ int main(int argc, char** argv) {
 #ifndef ANDROID
     // unix systems
     // encrypted first:
-    if (!resources_LoadZipFromOwnExecutable(argv[0], 1)) {
+    char* argv0 = NULL;
+    if (argc > 0) {
+        argv0 = argv[0];
+    }
+    if (!resources_LoadZipFromOwnExecutable(argv0, 1)) {
         // ... ok, then attempt unencrypted:
-        resources_LoadZipFromOwnExecutable(argv[0], 0);
+        resources_LoadZipFromOwnExecutable(argv0, 0);
     }
 #endif
 #endif
+
+    // check the provided path:
+    char outofmem[] = "Out of memory";
+    char* error;
+    char* filenamebuf = NULL;
 
     // check if provided script path is a folder:
     if (file_IsDirectory(script)) {
@@ -931,22 +926,30 @@ int main(int argc, char** argv) {
         free(p);
         script = filenamebuf;
     }
-      
-/*#if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: Preparing graphics framework...");
-#endif
+    return 0;
+}
 
-    // initialise graphics
-#ifdef USE_GRAPHICS
-    if (!graphics_Init(&error)) {
-        printfatalerror("Error: Failed to initialise graphics: %s",error);
-        free(error);
-        fatalscripterror();
-        main_Quit(1);
+// NO MAIN IF UNIT TEST:
+#ifndef UNITTEST
+// ---
+
+#if (defined(__ANDROID__) || defined(ANDROID))
+int SDL_main(int argc, char** argv) {
+#else
+#ifdef WINDOWS
+int CALLBACK WinMain(HINSTANCE hInstance,
+HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+#else
+int main(int argc, char** argv) {
+#endif
+#endif
+    if (main_startup_do(argc, argv) != 0) {
         return 1;
     }
-    sdlinitialised = 1;
-#endif*/
+
+    if (main_startup_openScript(argc, argv) != 0) {
+        return 1;
+    }
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard startup: Initialising physics...");
@@ -1021,7 +1024,7 @@ int main(int argc, char** argv) {
 #endif
 
     // push command line arguments into script state:
-    i = 0;
+    int i = 0;
     int pushfailure = 0;
     while (i < scriptargcount) {
         if (!luastate_PushFunctionArgumentToMainstate_String(scriptargs[i])) {
@@ -1046,6 +1049,8 @@ int main(int argc, char** argv) {
     free(scriptargs);
 
     // open and run provided script file and pass the command line arguments:
+    char* error;
+    char outofmem[] = "Out of memory";
     if (!luastate_DoInitialFile(script, scriptargcount, &error)) {
         if (error == NULL) {
             error = outofmem;
@@ -1085,7 +1090,7 @@ int main(int argc, char** argv) {
     doConsoleLog();
 
     // Initialise audio when it isn't
-    main_InitAudio();
+    main_initAudio();
     doConsoleLog();
 
     // If we failed to initialise audio, we want to simulate it

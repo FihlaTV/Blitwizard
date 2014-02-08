@@ -57,6 +57,7 @@
 SDL_Window* mainwindow = NULL;
 SDL_Renderer* mainrenderer = NULL;
 int sdlvideoinit = 0;
+int sdlinit = 0;
 
 extern int graphicsactive;  // whether graphics are active/opened (1) or not (0)
 int inbackground = 0;  // whether program has focus (1) or not (0)
@@ -80,6 +81,21 @@ static int graphics_InitVideoSubsystem(char** error) {
     char errormsg[512];
     // initialize SDL video if not done yet
     if (!sdlvideoinit) {
+         // set scaling settings
+        SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
+        "1", SDL_HINT_OVERRIDE);
+
+        // initialize SDL
+        if (!sdlinit) {
+            if (SDL_Init(SDL_INIT_TIMER) < 0) {
+                snprintf(errormsg, sizeof(errormsg),
+                    "Failed to initialize SDL: %s", SDL_GetError());
+                errormsg[sizeof(errormsg)-1] = 0;
+                *error = strdup(errormsg);
+                return 0;
+            }
+            sdlinit = 1;
+        }
         if (SDL_VideoInit(NULL) < 0) {
             snprintf(errormsg,sizeof(errormsg),"Failed to initialize SDL video: %s", SDL_GetError());
             errormsg[sizeof(errormsg)-1] = 0;

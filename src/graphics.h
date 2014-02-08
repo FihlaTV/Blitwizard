@@ -57,10 +57,6 @@ const char* graphics_GetCurrentRendererName(void);
 // Get the renderer currently used for the active graphics mode.
 // Returns NULL when no mode has been set.
 
-// Initialise the graphics:
-int graphics_Init(char** error, int use3dgraphics);
-// Specify if you want to use 3d graphics with the new device (1) or not (0).
-
 #ifdef WINDOWS
 HWND graphics_GetWindowHWND(void); // get win32 HWND handle for the window
 #endif

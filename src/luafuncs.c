@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -554,7 +554,7 @@ int luafuncs_getRendererName(lua_State* l) {
 
 int luafuncs_getBackendName(lua_State* l) {
 #ifdef USE_AUDIO
-    main_InitAudio();
+    main_initAudio();
     const char* p = audio_GetCurrentBackendName();
     if (p) {
         lua_pushstring(l, p);

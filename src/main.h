@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,7 +21,7 @@
 
 */
 
-void main_InitAudio(void);
+void main_initAudio(void);
 void main_Quit(int returncode);
 void* main_DefaultPhysics2dPtr(void);  // pointer to 2d physics world
 void* main_DefaultPhysics3dPtr(void);  // pointer to 3d physics world
