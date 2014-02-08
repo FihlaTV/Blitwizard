@@ -26,6 +26,8 @@
 
 #ifdef USE_GRAPHICS
 
+#include <time.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
 #include "graphicstexturemanager.h"
@@ -34,8 +36,9 @@
 #include "texmanassertions.c"
 #include "testimagepaths.h"
 #include "logging.h"
+#include "graphicstexturerequeststruct.h"
 
-struct graphics2dsprite* spr[5];
+struct graphics2dsprite *spr[5];
 void createsprites(void) {
     // create a few sprites:
     spr[0] = graphics2dsprites_create(
@@ -60,6 +63,9 @@ void destroysprites(void) {
     }
 }
 
+static struct texturerequesthandle *textureRequestList;
+static struct texturerequesthandle *unhandledRequestList;
+
 void texturemanagerassertionsjustcreated(void) {
 
 }
@@ -72,10 +78,16 @@ void texturemanagerassertions(void) {
 
 }
 
-extern int main_startup_do(int argc, char** argv);
+extern int main_startup_do(int argc, char **argv);
 extern int main_initAudio(void);
 
-int main(int argc, char** argv) {
+static double randomvalue() {
+    srand(time(NULL));
+    double d = (double)rand() / ((double)RAND_MAX + 1);
+    return d;
+}
+
+int main(int argc, char **argv) {
     // initialise blitwizard:
     assert(main_startup_do(argc, argv) == 0);
     main_initAudio();
@@ -91,7 +103,8 @@ int main(int argc, char** argv) {
     int i = 0;
     while (i < 10) {
         uint64_t start = time_GetMilliseconds();
-        while (time_GetMilliseconds() < start + 1000) { 
+        uint64_t randomwait = (1000.0 * randomvalue());
+        while (time_GetMilliseconds() < start + 1000 + randomwait) { 
             texturemanager_tick();
             texturemanagerassertions();
             doConsoleLog();
@@ -107,7 +120,7 @@ int main(int argc, char** argv) {
 
 #include <stdio.h>
 
-int main(int argc, const char** argv) {
+int main(int argc, const char **argv) {
     fprintf(stderr, "Nothing to test, no graphics available.\n");
     return 0;
 }

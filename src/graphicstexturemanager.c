@@ -51,6 +51,7 @@
 #include "imgloader/imgloader.h"
 #include "diskcache.h"
 #include "file.h"
+#include "graphicstexturerequeststruct.h"
 
 // texture system memory budget in megabyte:
 uint64_t textureSysMemoryBudgetMin = 100;
@@ -72,39 +73,6 @@ int maxuploads = 1;
 int currentuploads = 0;
 
 mutex* textureReqListMutex = NULL;
-struct texturerequesthandle {
-    // the respective texture list entry:
-    struct graphicstexturemanaged* gtm;
-
-    // callback information:
-    void (*textureDimensionInfoCallback)(
-        struct texturerequesthandle* request,
-        size_t width, size_t height, void* userdata);
-    void (*textureSwitchCallback)(
-        struct texturerequesthandle* request,
-        struct graphicstexture* texture, void* userdata);
-    void (*textureHandlingDoneCallback)(
-        struct texturerequesthandle* request,
-        void* userdata);
-    void* userdata;
-
-    // remember if we already handed a texture to this request:
-    struct graphicstexture* handedTexture;
-    struct graphicstexturescaled* handedTextureScaledEntry;
-
-    // remember whether we issued a texture handling callback:
-    int textureHandlingDoneIssued;
-
-    // if the request was cancelled, the callbacks
-    // are gone and must not be used anymore:
-    int canceled;
-
-    // prev, next for regular request list:
-    struct texturerequesthandle* prev, *next;
-
-    // prev, next for unhandled request list:
-    struct texturerequesthandle* unhandledPrev, *unhandledNext;
-};
 
 // list of unhandled and regularly handled texture requests:
 struct texturerequesthandle* textureRequestList = NULL;
