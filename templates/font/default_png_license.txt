@@ -1,7 +1,7 @@
 
 default.png is a modification of the font "Inconsolata" by Ralph Levien.
-Modifications are mainly because I was too stupid to scale it sanely.
+It was modified for more padding, and a different scale.
 
-Check the original page here for more info:
+Check the original page here for more info and the unaltered original:
 http://levien.com/type/myfonts/inconsolata.html
 

@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -22,11 +22,12 @@
 */
 
 // This function will be used by the image (imgloader.c). You are advised to use the imgloader, not this function directly.
-int pngloader_loadRGBA(const char* pngdata, unsigned int pngdatasize,
-char** imagedata, unsigned int* imagedatasize,
-int (*callbackSize)(size_t imagewidth, size_t imageheight, void* userdata),
-void* userdata,
-int maxwidth, int maxheight);
+int pngloader_loadRGBA(const char *pngdata, unsigned int pngdatasize,
+    char **imagedata, unsigned int *imagedatasize,
+    int (*callbackSize)(size_t imagewidth, size_t imageheight,
+        void *userdata),
+    void *userdata,
+    int maxwidth, int maxheight);
 // The size callback will be called rather early (from the same thread),
 // and then lateron the function will return and you will  be
 // provided with the whole data.

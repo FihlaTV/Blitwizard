@@ -2,7 +2,7 @@
 blitwizard.font
 Under the zlib license:
 
-Copyright (c) 2012-2013 Jonas Thiem
+Copyright (c) 2012-2014 Jonas Thiem
 
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 
@@ -99,8 +99,10 @@ glyphWidth, glyphHeight, glyphsPerLine)
         error("bad parameter #5 to blitwizard.font.text:create: expected " ..
         "number or nil")
     end
-    if fontPath ~= "default" or type(glyphWidth) ~= "nil"
-    or type(glyphHeight) ~= "nil" or type(glyphsPerLine) ~= "nil" then
+    if (fontPath ~= "default" and fontPath ~= "default_big")
+            or type(glyphWidth) ~= "nil"
+            or type(glyphHeight) ~= "nil"
+            or type(glyphsPerLine) ~= "nil" then
         if type(glyphWidth) ~= "number" then
             error("bad parameter #6 to blitwizard.font.text:create: " ..
             "expected number")
@@ -140,6 +142,12 @@ glyphWidth, glyphHeight, glyphsPerLine)
         glyphSpacingX = 1.2
         glyphSpacingY = 1
         glyphHeight = 14
+        glyphsPerLine = 32
+    end
+    if fontPath == "default_big" then
+        fontPath = os.templatedir() .. "/font/default_big.png"
+        glyphWidth = 8
+        glyphHeight = 18
         glyphsPerLine = 32
     end
 

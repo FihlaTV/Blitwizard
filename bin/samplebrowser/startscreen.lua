@@ -3,7 +3,7 @@
 
 blitwizard engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -45,7 +45,7 @@ function blitwizard.onInit()
     "\n\n  Visit http://www.blitwizard.de/doc-files/api-stable " ..
     "for documentation." ..
     "\n\n  Need help? Check out the forums: http://www.blitwizard.de/forum/"
-    , "default", 1)
+    , "default_big", 1)
     text:setPosition(1.5, 3.5) -- move a bit away from top/left corner
     text:setZIndex(2)
 
