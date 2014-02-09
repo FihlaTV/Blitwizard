@@ -146,8 +146,10 @@ glyphWidth, glyphHeight, glyphsPerLine)
     end
     if fontPath == "default_big" then
         fontPath = os.templatedir() .. "/font/default_big.png"
-        glyphWidth = 8
-        glyphHeight = 18
+        glyphPreSpacingY = 11.5
+        glyphPreSpacingX = 3
+        glyphWidth = 18.5
+        glyphHeight = 37
         glyphsPerLine = 32
     end
 

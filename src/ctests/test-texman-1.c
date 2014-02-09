@@ -37,7 +37,9 @@
 #include "testimagepaths.h"
 #include "logging.h"
 #include "graphicstexturerequeststruct.h"
+#include "graphics2dspritestruct.h"
 
+#define SPRITECOUNT 5
 struct graphics2dsprite *spr[5];
 void createsprites(void) {
     // create a few sprites:
@@ -57,7 +59,7 @@ void createsprites(void) {
 
 void destroysprites(void) {
     int i = 0;
-    while (i < 5) {
+    while (i < SPRITECOUNT) {
         graphics2dsprites_destroy(spr[i]);
         i++;
     }
@@ -76,6 +78,14 @@ void texturemanagerassertionscreatedonetick(void) {
 
 void texturemanagerassertions(void) {
 
+}
+
+void texturemanagerassertionsallloaded(void) {
+    int i = 0;
+    while (i < SPRITECOUNT) {
+        assert(spr[i]->tex);
+        i++;
+    }
 }
 
 extern int main_startup_do(int argc, char **argv);
@@ -100,18 +110,50 @@ int main(int argc, char **argv) {
     texturemanager_tick();
     texturemanagerassertionscreatedonetick();
     doConsoleLog();
+    // destroy them again:
+    destroysprites();
+    // now continuously create and destroy sprites in a loop:
     int i = 0;
     while (i < 10) {
+        // creation:
+        createsprites();
+        doConsoleLog();
+        texturemanagerassertionsjustcreated();
+        texturemanagerassertions();
+        // wait a bit:
         uint64_t start = time_GetMilliseconds();
         uint64_t randomwait = (1000.0 * randomvalue());
+        if (i == 5) {  // wait a bit longer in the 5th loop:
+            randomwait = randomwait + 4000;
+        }
         while (time_GetMilliseconds() < start + 1000 + randomwait) { 
             texturemanager_tick();
+            texturemanagerassertionscreatedonetick();
             texturemanagerassertions();
+            if (i == 5) {
+                // ensure textures remain loaded in the 5th loop by
+                // reporting usage:
+                int k = 0;
+                while (k < SPRITECOUNT) {
+                    texturemanager_usingRequest(spr[k]->request,
+                        USING_AT_VISIBILITY_NORMAL);
+                    k++;
+                }
+            }
             doConsoleLog();
         }
+        if (i == 5) {
+            // All textures should be available at this point in some size:
+            // we waited a bit longer, we reported usage, and the initial
+            // loading (which takes the longest) had 4 previous loops to
+            // complete.
+            // Assert this actually happened and everything is loaded up:
+            texturemanagerassertionsallloaded();
+         }
+        destroysprites();
+        doConsoleLog();
         i++;
     }
-    destroysprites();
     texturemanagerassertions();
     return 0;
 }

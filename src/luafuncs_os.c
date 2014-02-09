@@ -39,6 +39,7 @@
 #include <stdarg.h>
 #include <float.h>
 #include <math.h>
+#include <assert.h>
 
 #include "luaheader.h"
 
@@ -202,6 +203,14 @@ int luafuncs_ls(lua_State *l) {
     if (list_virtual) {
         filelist = resource_FileList(pcrossrelative);
         //printf("got filelist for %s: %p\n", pcrossrelative, filelist);
+        char **p = filelist;
+        if (p) {
+            while (*p) {
+                assert(strlen(*p) <= 512);
+                assert(*p[0] >= 32);
+                p++;
+            }
+        }
     }
 #endif
 
@@ -240,7 +249,7 @@ int luafuncs_ls(lua_State *l) {
     // loop through all files:
     if (ctx) {
         while ((returnvalue = filelist_GetNextFile(ctx,
-        filenamebuf, sizeof(filenamebuf), &isdir)) == 1) {
+                filenamebuf, sizeof(filenamebuf), &isdir)) == 1) {
             i++;
             lua_checkstack(l, 3);
 

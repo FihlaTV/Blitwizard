@@ -1,0 +1,7 @@
+
+default_big.png is a modification of the font "Inconsolata" by Ralph Levien.
+It was modified for more padding to work around font renderer limitations.
+
+Check the original page here for more info and the unaltered original:
+http://levien.com/type/myfonts/inconsolata.html
+

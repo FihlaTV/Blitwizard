@@ -413,24 +413,21 @@ char** resource_FileList(const char* path) {
         // check if path maps to a directory in this archive:
         if (zipfile_PathExists(a->z, path)) {
             if (zipfile_IsDirectory(a->z, path)) {
-                printf("Virtual dir %s found.\n", path);
                 directoryexists = 1;
 
                 // get file list:
                 struct zipfileiter* iter = zipfile_Iterate(
                 a->z, path);
                 if (!iter) {  // cannot iterate directory.
-                    printf("iteration failed.\n");
                     a = a->next;
                     continue;
                 }
                 // go through all files (if there are any):
                 const char* fname = zipfile_NextFile(iter);
                 while (fname) {
-                    printf("iterated file: %s\n", fname);
                     filecount++;
                     // add file name to list:
-                    char** p2 = realloc(p, sizeof(char*) * (filecount+1));
+                    char** p2 = realloc(p, sizeof(char*) * (filecount + 1));
                     if (!p2) {
                         // whoops.
                         zipfile_FinishIteration(iter);
@@ -443,7 +440,6 @@ char** resource_FileList(const char* path) {
 
                     fname = zipfile_NextFile(iter);
                 }
-                printf("iteration done.\n");
                 zipfile_FinishIteration(iter);
             }
         }
@@ -466,8 +462,9 @@ char** resource_FileList(const char* path) {
         // return failure:
         return NULL;
     }
+
     // construct a new list without duplicates:
-    char** p2 = malloc(sizeof(char*) * (filecount+1));
+    char **p2 = malloc(sizeof(char*) * (1));
     size_t filecount2 = 0;
     if (!p2) {
         size_t i = 0;
@@ -478,6 +475,7 @@ char** resource_FileList(const char* path) {
         free(p);
         return NULL;
     }
+    p2[0] = NULL;
     size_t i = 0;
     while (i < filecount) {
         int duplicate = 0;
@@ -494,7 +492,7 @@ char** resource_FileList(const char* path) {
         // add if not a duplicate:
         if (!duplicate) {
             filecount2++;
-            char **p3 = malloc(sizeof(char*) * (filecount2+1));
+            char **p3 = realloc(p2, sizeof(char*) * (filecount2 + 1));
             if (!p3) {
                 i = 0;
                 while (i < filecount) {
@@ -505,10 +503,9 @@ char** resource_FileList(const char* path) {
                 free(p2);
                 return NULL;
             }
-            free(p2);
             p2 = p3;
-            p2[filecount2-1] = p[i];
-            p2[filecount] = NULL;
+            p2[filecount2 - 1] = p[i];
+            p2[filecount2] = NULL;
         } else {
             // free duplicate entry, we won't use it:
             free(p[i]);

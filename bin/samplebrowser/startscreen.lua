@@ -45,7 +45,7 @@ function blitwizard.onInit()
     "\n\n  Visit http://www.blitwizard.de/doc-files/api-stable " ..
     "for documentation." ..
     "\n\n  Need help? Check out the forums: http://www.blitwizard.de/forum/"
-    , "default_big", 1)
+    , "default", 1)
     text:setPosition(1.5, 3.5) -- move a bit away from top/left corner
     text:setZIndex(2)
 

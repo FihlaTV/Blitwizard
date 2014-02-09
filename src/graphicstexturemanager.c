@@ -319,9 +319,11 @@ static void texturemanager_scaleTextureThread(void* userdata) {
             // scale it:
             int pitch = (info->obtainedscale->paddedWidth -
                 info->obtainedscale->width);
-            printf("scale pitch: %d, (%d, %d)\n", pitch,
+#ifdef DEBUGTEXTUREMANAGER
+            printinfo("[TEXMAN] scale pitch: %d, (%d, %d)\n", pitch,
                 (int)info->obtainedscale->paddedWidth,
                 (int)info->obtainedscale->width);
+#endif
             img_scale(4, info->obtainedscale->pixels,
             info->obtainedscale->width,
             info->obtainedscale->height,
@@ -765,6 +767,7 @@ static void texturemanager_initialLoadingDataCallback
 #endif
         gtm->failedToLoad = 1;
         gtm->failedToLoadTime = time(NULL);
+        assert(request->textureDimensionInfoCallback);
         request->textureDimensionInfoCallback(request,
         0, 0, request->userdata);
         mutex_release(textureReqListMutex);

@@ -43,6 +43,7 @@ src/.deps/
 src/Makefile
 src/tests/Makefile
 src/luatests/Makefile
+src/luatests/ziplsbinary
 src/ctests/test-*
 !src/ctests/test-*.c
 src/ctests/.dirstamp

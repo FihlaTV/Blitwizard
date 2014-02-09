@@ -422,6 +422,7 @@ size_t sizeinfile, int encrypted) {
     }
 
     // mount the file to a random mount point:
+    PHYSFS_permitSymbolicLinks(1);
     zipfile_RandomMountPoint(zf->mountpoint);
     if (!PHYSFS_mountIo(zf->physio, NULL, zf->mountpoint, 1)) {
         zf->physio->destroy(zf->physio);
@@ -506,7 +507,6 @@ int zipfile_IsDirectory(struct zipfile* zf, const char* path) {
         }
     }    
 
-    printf("isdirectory: %d: %s\n", isdirectory, p);
     // free sanitized path:
     free(p);
 
@@ -650,19 +650,16 @@ struct zipfileiter* zipfile_Iterate(struct zipfile* f,
         path2[strlen(path)] = 0;
         free(path);
     }
-    printf("previously: PHYSFS_getLastError(): %s\n", PHYSFS_getLastError());
-    printf("now calling PHYSFS_enumerateFiles(\"%s\")\n", path2);
     PHYSFS_Stat s;
     memset(&s, 0, sizeof(s));
     if (PHYSFS_stat(path2, &s)) {
-        if (s.filetype == PHYSFS_FILETYPE_DIRECTORY) {
-            printf("PHYSFS_stat() says: PHYSFS_FILETYPE_DIRECTORY!\n");
+        if (s.filetype != PHYSFS_FILETYPE_DIRECTORY) {
+            free(iter);
+            free(path);
+            return 0;
         }
     }
     iter->filelist = PHYSFS_enumerateFiles(path2);
-    printf("afterwards: PHYSFS_getLastError(): %s\n", PHYSFS_getLastError());
-    printf("got file list for %s. entry filelist[0]: %s\n", path2,
-        iter->filelist[0]);
     free(path2);
     return iter;
 }

@@ -21,15 +21,14 @@ zip -r -9 ./lstest.zip ./lstest/ ./game.lua
 rm -r ./lstest/
 
 # execute test:
-cat $BINARYPATH ./lstest.zip > ./binarytest$EXEEXT
-chmod +x ./binarytest$EXEEXT
-./binarytest$EXEEXT
+cat $BINARYPATH ./lstest.zip > ./ziplsbinary$EXEEXT
+chmod +x ./ziplsbinary$EXEEXT
+./ziplsbinary$EXEEXT
 RETURNVALUE="$?"
 
 # removing temporary files
 rm ./game.lua
 rm -r ./lstest.zip
-rm ./binarytest$EXEEXT
 
 # return value:
 if [ "x$RETURNVALUE" = "x0" ]; then
