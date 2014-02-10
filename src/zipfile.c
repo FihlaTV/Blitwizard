@@ -30,6 +30,7 @@
 
 #ifdef USE_PHYSFS
 
+#include "main.h"
 #include "file.h"
 #include "physfs.h"
 #include "zipfile.h"
@@ -436,27 +437,45 @@ void zipfile_ClosePhysFS(struct zipfile* zf) {
     PHYSFS_unmount(zf->mountpoint);
 }
 
+// get the proper internal path with prepended mountpoint:
 static char* getfilepath(struct zipfile* f, const char* path) {
-    // create path with prepended mount point:
-    char* p = malloc(strlen(f->mountpoint)+strlen(path)+1);
-    if (!p) {
+    // get prepended mount point:
+    char* pathWithMountpoint = malloc(strlen(f->mountpoint) +
+        strlen(path) + 1);
+    if (!pathWithMountpoint) {
         return NULL;
     }
-    memcpy(p, f->mountpoint, strlen(f->mountpoint));
-    memcpy(p+strlen(f->mountpoint), path, strlen(path));
-    p[strlen(f->mountpoint)+strlen(path)] = 0;
-    file_makeSlashesCrossplatform(p);
-    file_removeDoubleSlashes(p);
-    if (strlen(p) > 0) {
-        if (p[strlen(p)-1] == '/' 
-#ifdef WINDOWS
-           || p[strlen(p)-1] == '\\'
-#endif
-        ) {
-            p[strlen(p)-1] = 0;
+
+    // ensure given original file path is relative:
+    char* pathRelative = strdup(path);
+    if (!pathRelative) {
+        free(pathWithMountpoint);
+        return NULL;
+    }
+    file_removeDoubleSlashes(pathRelative);
+    file_makeSlashesCrossplatform(pathRelative);
+    if (!file_IsPathRelative(pathRelative)) {
+        file_makePathRelative(pathRelative, main_getRunDir());
+        if (!file_IsPathRelative(pathRelative)) {
+            free(pathRelative);
+            free(pathWithMountpoint);
+            return NULL;
         }
     }
-    return p;
+
+    // combine mountpoint + path given to us:
+    memcpy(pathWithMountpoint, f->mountpoint, strlen(f->mountpoint));
+    memcpy(pathWithMountpoint + strlen(f->mountpoint),
+        pathRelative, strlen(pathRelative));
+    pathWithMountpoint[strlen(f->mountpoint) + strlen(pathRelative)] = 0;
+    file_removeDoubleSlashes(pathWithMountpoint);
+    if (strlen(pathWithMountpoint) > 0) {
+        if (pathWithMountpoint[strlen(pathWithMountpoint) - 1] == '/') {
+            pathWithMountpoint[strlen(pathWithMountpoint) - 1] = 0;
+        }
+    }
+    free(pathRelative);
+    return pathWithMountpoint;
 }
 
 int zipfile_PathExists(struct zipfile* zf, const char* path) {

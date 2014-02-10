@@ -47,6 +47,7 @@
 #include "logging.h"
 #include "imgloader/imgloader.h"
 
+struct loaderfuncinfo;
 struct graphicstextureloader_initialLoadingThreadInfo {
     void (*callbackDimensions)(struct graphicstexturemanaged* gtm,
     size_t width, size_t height, int success, void* userdata);
@@ -57,6 +58,9 @@ struct graphicstextureloader_initialLoadingThreadInfo {
     int padnpot;
     int failed;
 
+    // present if loading from memory:
+    struct loaderfuncinfo* linfo;
+
     // remember size temporarily:
     size_t width, height;
     size_t paddedWidth, paddedHeight;
@@ -66,6 +70,28 @@ struct graphicstextureloader_initialLoadingThreadInfo {
     // be messing around with it:
     struct graphicstexturemanaged* gtm;
 };
+
+struct loaderfuncinfo {
+#ifdef USE_PHYSFS
+    struct graphicstextureloader_initialLoadingThreadInfo *info;
+    struct zipfilereader *file;
+    struct zipfile *archive;
+#endif
+};
+
+static void freeinitialloadinginfo(
+        struct graphicstextureloader_initialLoadingThreadInfo* info) {
+    if (info->linfo) {
+#ifdef USE_PHYSFS
+        if (info->linfo->file) {
+            zipfile_FileClose(info->linfo->file);
+            info->linfo->file = NULL;
+        }
+#endif
+        free(info->linfo);
+    }
+    free(info);
+}
 
 void graphicstextureloader_callbackSize(void* handle,
 int width, int height, void* userdata) {
@@ -109,7 +135,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
         if (imgdata) {
             free(imgdata);
         }
-        free(info);
+        freeinitialloadinginfo(info);
         return;
     }
 
@@ -165,7 +191,7 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                 free(imgdata);
                 texturemanager_releaseFromTextureAccess();
                 info->callbackData(info->gtm, 0, info->userdata);
-                free(info);
+                freeinitialloadinginfo(info);
                 return;
             }
             // initialise list:
@@ -253,31 +279,27 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
     }
 
     info->callbackData(info->gtm, (imgdata != NULL), info->userdata);
-    free(info);
+    freeinitialloadinginfo(info);
 }
 
 #ifdef USE_PHYSFS
-struct loaderfuncinfo {
-    struct graphicstextureloader_initialLoadingThreadInfo *info;
-    struct zipfilereader *file;
-    struct zipfile *archive;
-};
-
 static int graphicstextureloader_imageReadFunc(void* buffer,
 size_t bytes, void* userdata) {
     struct loaderfuncinfo* lfi = userdata;
-    
+    if (bytes == 0) {
+       return 0;
+    }
+
     if (!lfi->file) {
         lfi->file = zipfile_FileOpen(lfi->archive, lfi->info->path);
         if (!lfi->file) {
-            free(lfi);
             return -1;  // error: cannot open file
         }
     }
     int i = zipfile_FileRead(lfi->file, buffer, bytes);
     if (i <= 0) {
         zipfile_FileClose(lfi->file);
-        free(lfi);
+        lfi->file = NULL;
         return 0;
     }
     return i;
@@ -343,6 +365,7 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
             return;
         }
         memset(lfi, 0, sizeof(*lfi));
+        info->linfo = lfi;
         lfi->info = info;
         lfi->archive = loc.location.ziplocation.archive;
 
