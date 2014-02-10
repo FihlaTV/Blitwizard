@@ -21,6 +21,7 @@
 
 */
 
+const char* main_getRunDir(void);  // get directory where we run/game.lua is
 void main_initAudio(void);
 void main_Quit(int returncode);
 void* main_DefaultPhysics2dPtr(void);  // pointer to 2d physics world

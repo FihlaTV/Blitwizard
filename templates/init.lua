@@ -7,13 +7,14 @@ blitwizard.templatesinitialised = true
 
 -- Load all the templates
 if os.sysname() ~= "Android" then
-    -- Crawl the templates/ folder for templates
+    -- if no templates were autoloaded and they seem to be present, force:
     local templates = os.templatedir()
-    if templates == nil then
+    if templates == nil and os.isdir("templates/") then
         os.forcetemplatedir("templates/")
         templates = "templates/"
     end
-	for index,file in ipairs(os.ls(templates)) do
+    -- Crawl the templates/ folder for templates
+	for index, file in ipairs(os.ls(templates)) do
 		if os.isdir(templates .. "/" .. file) then
 			local filepath = templates .. "/" .. file .. "/" .. file .. ".lua"
 			if os.exists(filepath) then

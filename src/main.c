@@ -537,6 +537,16 @@ static void determineBinaryPath(const char* argv0) {
 }
 #endif
 
+// this part remembers the directory we were told to run in
+// (= where we ran from originally or -changedir'd to)
+static char mainrundir[512] = "";
+const char* main_getRunDir() {
+    if (strlen(mainrundir) > 0) {
+        return mainrundir;
+    }
+    return file_getCwd();
+}
+
 // this will be polled by lua (implementation in luastate.c)
 // to check on whether a script is hanging for too long
 // (=suspected hang)
@@ -925,6 +935,14 @@ int main_startup_openScript(int argc, char** argv) {
         }
         free(p);
         script = filenamebuf;
+    }
+
+    // now that changedir was evaluated, set the mainrundir:
+    char *cwd = file_getCwd();
+    if (cwd) {
+        strncpy(mainrundir, cwd, sizeof(mainrundir)-1);
+        mainrundir[sizeof(mainrundir)-1] = 0;
+        free(cwd);
     }
     return 0;
 }

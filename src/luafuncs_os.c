@@ -100,10 +100,22 @@ int luafuncs_exists(lua_State *l) {
         lua_pushboolean(l, 1);
     } else {
 #ifdef USE_PHYSFS
-        if (resources_locateResource(p, NULL)) {
-            lua_pushboolean(l, 1);
-            return 1;
+        char *path = file_getAbsolutePathFromRelativePath(p);
+        if (!path) {
+            return haveluaerror(l, "allocation failed");
         }
+        file_makeSlashesCrossplatform(path);
+        file_removeDoubleSlashes(path);
+        file_makePathRelative(path, main_getRunDir()); 
+
+        if (file_IsPathRelative(path)) {
+            if (resources_locateResource(path, NULL)) {
+                free(path);
+                lua_pushboolean(l, 1);
+                return 1;
+            }
+        }
+        free(path);
 #endif
         lua_pushboolean(l, 0);
     }
@@ -199,28 +211,30 @@ int luafuncs_ls(lua_State *l) {
         lua_pushstring(l, "First argument is not a valid path string");
         return lua_error(l);
     }
-    char *pnative = strdup(p);
-    char *pcross = strdup(p);
-    char *pcrossrelative = strdup(p);
-    if (!pnative || !pcross || !pcrossrelative) {
+    char *pnative = file_getAbsolutePathFromRelativePath(p);
+    char *pcross = strdup(pnative);
+    char *pcrossResourceDir = strdup(pnative);
+    if (!pnative || !pcross || !pcrossResourceDir) {
         free(pnative);
         free(pcross);
-        free(pcrossrelative);
+        free(pcrossResourceDir);
         return haveluaerror(l, "failed to allocate file paths");
     }
     file_makeSlashesNative(pnative);
     file_makeSlashesCrossplatform(pcross);
-    char *cwd = file_getCwd();
-    if (cwd) {
-        file_makePathRelative(pcrossrelative, cwd);
+    file_makePathRelative(pcrossResourceDir, main_getRunDir());
+    if (!file_IsPathRelative(pcrossResourceDir)) {
+        free(pcrossResourceDir);
+        pcrossResourceDir = NULL;
     }
-    free(cwd);
+    
+    // check parameter if we want to list internal zip stuff or not:
     int list_virtual = 1;
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         if (lua_type(l, 2) != LUA_TNUMBER) {
             free(pnative);
             free(pcross);
-            free(pcrossrelative);
+            free(pcrossResourceDir);
             return haveluaerror(l, badargument1, 2, "os.ls", "boolean or nil",
             lua_strtype(l, 2));
         }
@@ -230,8 +244,8 @@ int luafuncs_ls(lua_State *l) {
     // get virtual filelist:
     char **filelist = NULL;
 #ifdef USE_PHYSFS
-    if (list_virtual) {
-        filelist = resource_getFileList(pcrossrelative);
+    if (list_virtual && pcrossResourceDir) {
+        filelist = resource_getFileList(pcrossResourceDir);
         //printf("got filelist for %s: %p\n", pcrossrelative, filelist);
         char **p = filelist;
         if (p) {
@@ -246,8 +260,6 @@ int luafuncs_ls(lua_State *l) {
 
     // get iteration context for "real" on disk directory:
     struct filelistcontext *ctx = filelist_Create(pnative);
-   // printf("ctx: %p\n", ctx);
-   // printf("pnative: %s\n", pnative);
 
     if (!ctx && (!list_virtual || !filelist)) {
         char errmsg[500];
@@ -256,7 +268,7 @@ int luafuncs_ls(lua_State *l) {
         lua_pushstring(l, errmsg);
         free(pnative);
         free(pcross);
-        free(pcrossrelative);
+        free(pcrossResourceDir);
         if (filelist) {
             size_t i = 0;
             while (filelist[i]) {
@@ -340,14 +352,14 @@ int luafuncs_ls(lua_State *l) {
         lua_pushstring(l, errmsg);
         free(pnative);
         free(pcross);
-        free(pcrossrelative);
+        free(pcrossResourceDir);
         return lua_error(l);
     }
 
     // return file list
     free(pnative);
     free(pcross);
-    free(pcrossrelative);
+    free(pcrossResourceDir);
     return 1;
 }
 

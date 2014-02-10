@@ -32,6 +32,7 @@
 #include "resources.h"
 #include "file.h"
 #include "zipfile.h"
+#include "main.h"
 
 #ifdef USE_PHYSFS
 struct resourcearchive {
@@ -522,14 +523,14 @@ char** resource_getFileList(const char* path) {
 int resources_locateResource(const char* path,
 struct resourcelocation* location) {
 #ifdef USE_PHYSFS
-    if (file_IsPathRelative(path)) {
-        char* archivepath = strdup(path);
-        if (!archivepath) {
-            return 0;
-        }
-        file_makeSlashesCrossplatform(archivepath);
-        file_removeDoubleSlashes(archivepath);
-
+    char* archivepath = strdup(path);
+    if (!archivepath) {
+        return 0;
+    }
+    file_makeSlashesCrossplatform(archivepath);
+    file_removeDoubleSlashes(archivepath);
+    file_makePathRelative(archivepath, main_getRunDir());
+    if (file_IsPathRelative(archivepath)) {
         // check resource archives:
         struct resourcearchive* a = resourcearchives;
         while (a) {

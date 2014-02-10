@@ -184,7 +184,8 @@ int luafuncs_loadfile(lua_State* l) {
     // obtain load file argument:
     const char* p = lua_tostring(l,1);
     if (!p) {
-        return haveluaerror(l, badargument1, 1, "loadfile", "string", lua_strtype(l, 1));
+        return haveluaerror(l, badargument1, 1,
+            "loadfile", "string", lua_strtype(l, 1));
     }
 
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -200,7 +201,7 @@ int luafuncs_loadfile(lua_State* l) {
     if (!info->rwops) {
         free(info);
         snprintf(errormsg, sizeof(errormsg), "Cannot open file \"%s\"", p);
-        errormsg[sizeof(errormsg)-1] = 0;
+        errormsg[sizeof(errormsg) - 1] = 0;
         lua_pushstring(l, errormsg);
         return lua_error(l);
     }
@@ -209,7 +210,8 @@ int luafuncs_loadfile(lua_State* l) {
     free(info);
     if (r != 0) {
         if (r == LUA_ERRSYNTAX) {
-            snprintf(errormsg,sizeof(errormsg),"Syntax error: %s",lua_tostring(l,-1));
+            snprintf(errormsg, sizeof(errormsg), "Syntax error: %s",
+                lua_tostring(l, -1));
             lua_pop(l, 1);
             lua_pushstring(l, errormsg);
             return lua_error(l);
