@@ -408,6 +408,7 @@ void* userdata) {
         callbackDimensions(gtm, 0, 0, 0, userdata);
         return;
     }
+    memset(info, 0, sizeof(*info));
 
     // duplicate path:
     info->path = strdup(gtm->path);
