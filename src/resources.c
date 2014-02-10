@@ -41,7 +41,7 @@ struct resourcearchive {
 struct resourcearchive* resourcearchives = NULL;
 #endif
 
-int resources_LoadZipFromFilePart(const char* path,
+int resources_loadZipFromFilePart(const char* path,
 size_t offsetinfile, size_t sizeinfile, int encrypted) {
 #ifdef USE_PHYSFS
     // allocate resource location struct:
@@ -70,16 +70,16 @@ size_t offsetinfile, size_t sizeinfile, int encrypted) {
     return 0;
 }
 
-int resources_LoadZipFromFile(const char* path, int encrypted) {
+int resources_loadZipFromFile(const char* path, int encrypted) {
 #ifdef USE_PHYSFS
-    return resources_LoadZipFromFilePart(path, 0, 0, encrypted);
+    return resources_loadZipFromFilePart(path, 0, 0, encrypted);
 #else  // USE_PHYSFS
     // no PhysFS -> no .zip support
     return 0;
 #endif  // USE_PHYSFS
 }
 
-int resources_LoadZipFromExecutable(const char* path, int encrypted) {
+int resources_loadZipFromExecutable(const char* path, int encrypted) {
 #ifdef USE_PHYSFS
 #ifdef WINDOWS
     // on windows and using PhysFS
@@ -147,7 +147,7 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
     size_t size = (size_t)latestSection + latestSectionSize;
 
     // now we have all information we want.
-    return resources_LoadZipFromFilePart(path, size, 0, encrypted);
+    return resources_loadZipFromFilePart(path, size, 0, encrypted);
 #else  // WINDOWS
     // on some unix with PhysFS
     // open file:
@@ -325,7 +325,7 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
         k++;
     }
     fclose(r);
-    return resources_LoadZipFromFilePart(path, filesize, 0, encrypted);
+    return resources_loadZipFromFilePart(path, filesize, 0, encrypted);
 #endif  // WINDOWS
 #else  // USE_PHYSFS
     // no PhysFS -> no .zip support
@@ -333,7 +333,7 @@ int resources_LoadZipFromExecutable(const char* path, int encrypted) {
 #endif  // USE_PHYSFS
 }
 
-int resources_LoadZipFromOwnExecutable(const char* first_commandline_arg,
+int resources_loadZipFromOwnExecutable(const char* first_commandline_arg,
 int encrypted) {
 #ifdef WINDOWS
     // locate our exe:
@@ -349,7 +349,7 @@ int encrypted) {
     }
 
     // load from our executable:
-    int result = resources_LoadZipFromExecutable(fname, encrypted);
+    int result = resources_loadZipFromExecutable(fname, encrypted);
     free(path);
     return result;
 #else
@@ -360,7 +360,7 @@ int encrypted) {
     }
 
     // check if the given argument is a valid file:
-    if (!file_DoesFileExist(first_commandline_arg)
+    if (!file_doesFileExist(first_commandline_arg)
     || file_IsDirectory(first_commandline_arg)) {
         // not pointing at a file as expected
         return 0;
@@ -374,14 +374,14 @@ int encrypted) {
     }
 
     // load from our executable:
-    int result = resources_LoadZipFromExecutable(path,
+    int result = resources_loadZipFromExecutable(path,
     encrypted);
     free(path);
     return result;
 #endif
 }
 
-int resource_IsFolderInZip(const char* path) {
+int resource_isFolderInZip(const char* path) {
     if (!file_IsPathRelative(path)) {
         return 0;
     }
@@ -402,7 +402,7 @@ int resource_IsFolderInZip(const char* path) {
     return 0;
 }
 
-char** resource_FileList(const char* path) {
+char** resource_getFileList(const char* path) {
     char** p = NULL;
     size_t filecount = 0;
     int directoryexists = 0;
@@ -519,7 +519,7 @@ char** resource_FileList(const char* path) {
     return p2;
 }
 
-int resources_LocateResource(const char* path,
+int resources_locateResource(const char* path,
 struct resourcelocation* location) {
 #ifdef USE_PHYSFS
     if (file_IsPathRelative(path)) {
@@ -528,6 +528,7 @@ struct resourcelocation* location) {
             return 0;
         }
         file_makeSlashesCrossplatform(archivepath);
+        file_removeDoubleSlashes(archivepath);
 
         // check resource archives:
         struct resourcearchive* a = resourcearchives;
@@ -569,13 +570,19 @@ struct resourcelocation* location) {
     }
 #endif
     // check the hard disk as last location:
-    if (file_DoesFileExist(path) && !file_IsDirectory(path)) {
+    char *pathNative = strdup(path);
+    if (!pathNative) {
+        return 0;
+    }
+    file_makeSlashesNative(pathNative);
+    if (file_doesFileExist(pathNative) && !file_IsDirectory(pathNative)) {
         // file exists on disk!
         if (location) {
             location->type = LOCATION_TYPE_DISK;
 
             // get an absolute path to the resource:
-            char* apath = file_getAbsolutePathFromRelativePath(path);
+            char* apath = file_getAbsolutePathFromRelativePath(pathNative);
+            free(pathNative);
             if (!apath) {
                 return 0;
             }
@@ -594,8 +601,12 @@ struct resourcelocation* location) {
 
             // free temp path string
             free(apath);
+        } else {
+            free(pathNative);
         }
         return 1;
+    } else {
+        free(pathNative);
     }
     return 0;
 }

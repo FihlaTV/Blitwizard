@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# This test checks if blitwizard.debug.getTextureUsageInfo
-# returns the correct value in a few basic cases.
+# This test checks if file listing works with zips.
 
 source luatests/preparetest.sh
 
@@ -29,6 +28,7 @@ RETURNVALUE="$?"
 # removing temporary files
 rm ./game.lua
 rm -r ./lstest.zip
+rm -f ./ziplsbinary$EXEEXT
 
 # return value:
 if [ "x$RETURNVALUE" = "x0" ]; then

@@ -96,11 +96,11 @@ int luafuncs_exists(lua_State *l) {
     if (!p) {
         return haveluaerror(l, badargument1, 1, "os.exists", "string", lua_strtype(l, 1));
     }
-    if (file_DoesFileExist(p)) {
+    if (file_doesFileExist(p)) {
         lua_pushboolean(l, 1);
     } else {
 #ifdef USE_PHYSFS
-        if (resources_LocateResource(p, NULL)) {
+        if (resources_locateResource(p, NULL)) {
             lua_pushboolean(l, 1);
             return 1;
         }
@@ -119,22 +119,52 @@ int luafuncs_exists(lua_State *l) {
 int luafuncs_isdir(lua_State *l) {
     const char *p = lua_tostring(l, 1);
     if (!p) {
-        lua_pushstring(l, "First argument is not a valid path string");
+        lua_pushstring(l, "first argument is not a valid path string");
         return lua_error(l);
     }
-    if (!file_DoesFileExist(p)) {
+    if (!file_doesFileExist(p)) {
 #ifdef USE_PHYSFS
-        if (resource_IsFolderInZip(p)) {
+        // this is not a regular file or directory in the filesystem.
+        // therefore, check for this folder being in the zip file.
+
+        // first, clean up and unify path:
+        char *path = strdup(p);
+        if (!path) {
+            return haveluaerror(l, "allocation failure");
+        }
+        if (!file_IsPathRelative(path)) {
+            file_makePathRelative(path, file_getCwd());
+        }
+        file_makeSlashesCrossplatform(path);
+        file_removeDoubleSlashes(path);
+
+        // check for path being in the zip file:
+        if (resource_isFolderInZip(path)) {
+            if (path) {
+                free(path);
+            }
             lua_pushboolean(l, 1);
             return 1;
         }
+
+        // check for path being a regular file in the zip file:
+        if (resources_locateResource(path, NULL)) {
+            lua_pushboolean(l, 0);
+            return 1;
+        }
+
+        if (path) {
+            free(path);
+        }
 #endif
+        // no such directory anywhere. emit error:
         char errmsg[500];
-        snprintf(errmsg, sizeof(errmsg), "No such file or directory: %s\n", p);
+        snprintf(errmsg, sizeof(errmsg), "no such file or directory: %s\n", p);
         errmsg[sizeof(errmsg)-1] = 0;
         lua_pushstring(l, errmsg);
         return lua_error(l);
     }
+    // check in the file system:
     if (file_IsDirectory(p)) {
         lua_pushboolean(l, 1);
     } else {
@@ -201,7 +231,7 @@ int luafuncs_ls(lua_State *l) {
     char **filelist = NULL;
 #ifdef USE_PHYSFS
     if (list_virtual) {
-        filelist = resource_FileList(pcrossrelative);
+        filelist = resource_getFileList(pcrossrelative);
         //printf("got filelist for %s: %p\n", pcrossrelative, filelist);
         char **p = filelist;
         if (p) {

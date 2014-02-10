@@ -70,7 +70,7 @@ struct filelistcontext* filelist_Create(const char* path) {
     }
 
     // check whether path exists and is a directory
-    if (!file_DoesFileExist(p)) {
+    if (!file_doesFileExist(p)) {
         free(p);
         return NULL;
     }
@@ -273,7 +273,7 @@ int filelist_GetNextFile(struct filelistcontext* ctx, char* namebuf, size_t name
         if (file_IsDirectory(p)) {
             *isdirectory = 1;
         }else{
-            if (file_DoesFileExist(p)) {
+            if (file_doesFileExist(p)) {
                 *isdirectory = 0;
             }else{
                 if (isdirectory) {

@@ -433,16 +433,16 @@ int attemptTemplateLoad(const char* path) {
 
     int loadFromZip = 0;
     struct resourcelocation loc;
-    if (!resource_IsFolderInZip(path)) {
+    if (!resource_isFolderInZip(path)) {
         // if file doesn't exist, report failure:
-        if (!file_DoesFileExist(p)) {
+        if (!file_doesFileExist(p)) {
             free(p);
             return 0;
         }
     } else {
         // check for file in our .zip archives:
         loadFromZip = 1;
-        if (!resources_LocateResource(p, &loc)) {
+        if (!resources_locateResource(p, &loc)) {
             free(p);
             return 0;
         }
@@ -822,9 +822,9 @@ int main_startup_openScript(int argc, char** argv) {
 #ifdef WINDOWS
     // windows
     // try encrypted first:
-    if (!resources_LoadZipFromOwnExecutable(NULL, 1)) {
+    if (!resources_loadZipFromOwnExecutable(NULL, 1)) {
         // ... ok, then attempt unencrypted:
-        resources_LoadZipFromOwnExecutable(NULL, 0);
+        resources_loadZipFromOwnExecutable(NULL, 0);
     }
 #else
 #ifndef ANDROID
@@ -834,9 +834,9 @@ int main_startup_openScript(int argc, char** argv) {
     if (argc > 0) {
         argv0 = argv[0];
     }
-    if (!resources_LoadZipFromOwnExecutable(argv0, 1)) {
+    if (!resources_loadZipFromOwnExecutable(argv0, 1)) {
         // ... ok, then attempt unencrypted:
-        resources_LoadZipFromOwnExecutable(argv0, 0);
+        resources_loadZipFromOwnExecutable(argv0, 0);
     }
 #endif
 #endif
@@ -849,7 +849,7 @@ int main_startup_openScript(int argc, char** argv) {
     // check if provided script path is a folder:
     if (file_IsDirectory(script)) {
         // make sure it isn't inside a resource file as a proper file:
-        if (!resources_LocateResource(script, NULL)) {
+        if (!resources_locateResource(script, NULL)) {
             // it isn't, so we can safely assume it is a folder.
             // -> append "game.lua" to the path
             if (filenamebuf) {
@@ -869,7 +869,7 @@ int main_startup_openScript(int argc, char** argv) {
     // check if script file is internal resource or disk file
     int scriptdiskfile = 0;
     struct resourcelocation s;
-    if (!resources_LocateResource(script, &s)) {
+    if (!resources_locateResource(script, &s)) {
         printfatalerror("Error: cannot locate script file \"%s\"", script);
         main_Quit(1);
         return 1;
@@ -977,7 +977,7 @@ int main(int argc, char** argv) {
 #if !defined(ANDROID)
     int checksystemwidetemplate = 1;
     // see if the template path points to a virtual zip folder:
-    if (resource_IsFolderInZip(option_templatepath)) {
+    if (resource_isFolderInZip(option_templatepath)) {
         // it does. run templates from here.
         checksystemwidetemplate = 0;
         if (!attemptTemplateLoad(option_templatepath)) {
@@ -985,7 +985,7 @@ int main(int argc, char** argv) {
         }
     } else {
         // see if there is a template directory & file:
-        if (file_DoesFileExist(option_templatepath)
+        if (file_doesFileExist(option_templatepath)
         && file_IsDirectory(option_templatepath)) {
             checksystemwidetemplate = 0;
 

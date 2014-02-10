@@ -70,7 +70,8 @@ TESTS += luatests/createobject.sh \
          luatests/setgetmass.sh \
          luatests/setmode.sh \
          luatests/textureusagereport.sh \
-         luatests/zipls.sh
+         luatests/zipls.sh \
+		 luatests/zipdofile.sh
 
 # -------------
 # Makefile targets:

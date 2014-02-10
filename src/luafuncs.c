@@ -220,7 +220,7 @@ int luafuncs_loadfile(lua_State* l) {
 #else
     // check our resources infrastructure for the file:
     struct resourcelocation s;
-    if (!resources_LocateResource(p, &s)) {
+    if (!resources_locateResource(p, &s)) {
         return haveluaerror(l, "Cannot find file \"%s\"", p);
     }
 
@@ -318,12 +318,12 @@ int luafuncs_loadResourceArchive(lua_State* l) {
         "blitwizard.loadResourceArchive",
         "string", lua_strtype(l, 1));
     }
-    if (!file_DoesFileExist(p) || file_IsDirectory(p)) {
+    if (!file_doesFileExist(p) || file_IsDirectory(p)) {
         return haveluaerror(l,
         "specified resource archive file \"%s\" does not exist", p);
     }
-    if (!resources_LoadZipFromFile(p, 1)) {
-        if (!resources_LoadZipFromFile(p, 0)) {
+    if (!resources_loadZipFromFile(p, 1)) {
+        if (!resources_loadZipFromFile(p, 0)) {
             return haveluaerror(l,
             "failed to load specified resource archive \"%s\"", p);
         }

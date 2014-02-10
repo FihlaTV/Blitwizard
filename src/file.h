@@ -34,7 +34,7 @@ char *file_getCanonicalPath(const char *path);
 
 char *file_getAbsolutePathFromRelativePath(const char *path);
 
-int file_DoesFileExist(const char *path);
+int file_doesFileExist(const char *path);
 
 int file_IsDirectory(const char *path);
 

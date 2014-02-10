@@ -186,7 +186,7 @@ struct audiosource *audiosourcefile_Create(const char *path) {
     // first, we want to know where this file is.
     // we shall query the resource management:
     struct resourcelocation l;
-    if (!resources_LocateResource(path, &l)) {
+    if (!resources_locateResource(path, &l)) {
         // resource management doesn't know about this file.
         return NULL;
     }

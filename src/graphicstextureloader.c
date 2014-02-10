@@ -307,7 +307,7 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
 #endif
 
     struct resourcelocation loc;
-    if (!resources_LocateResource(info->path, &loc)) {
+    if (!resources_locateResource(info->path, &loc)) {
 #ifdef DEBUGTEXTURELOADER
         printinfo("[TEXLOAD] resource not found: %s", info->path);
 #endif

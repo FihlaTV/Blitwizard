@@ -125,7 +125,7 @@ static const char* osinfo_GetDistributionName(void) {
     if (strlen(distribuf) > 0) {
         return distribuf;
     }
-    if (file_DoesFileExist("/etc/redhat-release")) {
+    if (file_doesFileExist("/etc/redhat-release")) {
         if (filecontains("/etc/redhat-release", "Red Hat")) {
             strcpy(distribuf, "Red Hat");
         }
@@ -139,7 +139,7 @@ static const char* osinfo_GetDistributionName(void) {
     if (filecontains("/etc/SUSE-release", "SUSE")) {
         strcpy(distribuf, "SUSE");
     }
-    if (file_DoesFileExist("/etc/debian_version")) {
+    if (file_doesFileExist("/etc/debian_version")) {
         // check for derivates:
         if (filecontains("/etc/lsb-release", "Ubuntu")) {
             strcpy(distribuf, "Ubuntu");

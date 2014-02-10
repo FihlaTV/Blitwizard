@@ -212,7 +212,7 @@ int file_IsDirectory(const char *path) {
 #endif
 }
 
-int file_DoesFileExist(const char *path) {
+int file_doesFileExist(const char *path) {
 #ifndef WINDOWS
         struct stat st;
         if (stat(path,&st) == 0) {
@@ -510,7 +510,7 @@ char *filesystem_GetUserFileDir(void) {
 #endif
 
 int file_CreateDirectory(const char *name) {
-    if (file_DoesFileExist(name)) {
+    if (file_doesFileExist(name)) {
         // file or directory already present, we cannot create it!
         return 0;
     }

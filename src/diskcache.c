@@ -132,7 +132,7 @@ static void diskcache_CloseLockedFile(FILE* f) {
 
 static FILE* diskcache_OpenLockedFile(const char* path, int write) {
     FILE* f;
-    if (!file_DoesFileExist(path)) {
+    if (!file_doesFileExist(path)) {
         // if we don't want to write, this means failure.
         if (!write) {
             return 0;
@@ -389,7 +389,7 @@ size_t datalength, void* userdata), void* userdata) {
 }
 
 void diskcache_Delete(const char* path) {
-    if (!file_DeleteFile(path) && file_DoesFileExist(path)) {
+    if (!file_DeleteFile(path) && file_doesFileExist(path)) {
         int attempts = 0;
         while (attempts < 10) {
             // attempt to open file with an exclusive lock, then retry:

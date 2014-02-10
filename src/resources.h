@@ -33,13 +33,13 @@
 // and decides where to pick any resource from (image, sound, ...).
 
 // Manage resource zip files:
-int resources_LoadZipFromFile(const char* path, int encrypted);
-int resources_LoadZipFromFilePart(const char* path,
+int resources_loadZipFromFile(const char *path, int encrypted);
+int resources_loadZipFromFilePart(const char *path,
 size_t offsetinfile, size_t sizeinfile, int encrypted);
-int resources_LoadZipFromExecutable(const char* path,
+int resources_loadZipFromExecutable(const char *path,
 int encrypted);
-int resources_LoadZipFromOwnExecutable(
-const char* first_commandline_arg, int encrypted);
+int resources_loadZipFromOwnExecutable(
+const char *first_commandline_arg, int encrypted);
 // (all functions return 1 on success, 0 on error)
 
 // Resource location info:
@@ -69,7 +69,7 @@ struct resourcelocation {
 };
 
 // Locate a resource:
-int resources_LocateResource(const char* resource,
+int resources_locateResource(const char *resource,
 struct resourcelocation* location);
 // Returns 1 if resource is found, in which case the given
 // resourceinfo struct is modified to share the information.
@@ -78,10 +78,10 @@ struct resourcelocation* location);
 
 // Check if a given folder exists in any of the zip files.
 // Returns 1 if yes, otherwise 0.
-int resource_IsFolderInZip(const char* path);
+int resource_isFolderInZip(const char *path);
 
 // Get a list of files in a given virtual folder:
-char** resource_FileList(const char* path);
+char **resource_getFileList(const char *path);
 
 #endif  // BLITWIZARD_RESOURCES_H_
 
