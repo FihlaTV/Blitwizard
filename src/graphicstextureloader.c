@@ -343,6 +343,7 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
             return;
         }
         memset(lfi, 0, sizeof(*lfi));
+        lfi->info = info;
         lfi->archive = loc.location.ziplocation.archive;
 
         // prompt image loader with our own image reader:
