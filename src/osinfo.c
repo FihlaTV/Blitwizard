@@ -250,7 +250,7 @@ int osinfo_CheckForCmdProg(const char* name) {
 
     // check if command line tool is present:
 #ifdef WINDOWS
-    if (!file_DoesFileExist(name) || file_IsDirectory(name)) {
+    if (!file_doesFileExist(name) || file_IsDirectory(name)) {
         // require tool to be present in current folder for windows for now
         return 0;
     }
