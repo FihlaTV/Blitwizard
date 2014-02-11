@@ -39,9 +39,9 @@
 #include "graphicstexturerequeststruct.h"
 #include "graphics2dspritestruct.h"
 
-#define SPRITECOUNT 5
-struct graphics2dsprite *spr[5];
-void createsprites(void) {
+#define SPRITECOUNT 6
+struct graphics2dsprite *spr[SPRITECOUNT];
+        void createsprites(void) {
     // create a few sprites:
     spr[0] = graphics2dsprites_create(
         ORBMASSIVENPOT, 0, 0, 0, 0);
@@ -77,13 +77,23 @@ void texturemanagerassertionscreatedonetick(void) {
 }
 
 void texturemanagerassertions(void) {
-
+    int i = 0;
+    while (i < SPRITECOUNT) {
+        if (i != 5) {
+            assert(!spr[i]->loadingError);
+        }
+        i++;
+    }
 }
 
 void texturemanagerassertionsallloaded(void) {
     int i = 0;
     while (i < SPRITECOUNT) {
-        assert(spr[i]->tex);
+        if (i != 5) {
+            assert(spr[i]->tex);
+        } else {
+            assert(spr[i]->loadingError);
+        }
         i++;
     }
 }
@@ -124,7 +134,7 @@ int main(int argc, char **argv) {
         uint64_t start = time_GetMilliseconds();
         uint64_t randomwait = (1000.0 * randomvalue());
         if (i == 5) {  // wait a bit longer in the 5th loop:
-            randomwait = randomwait + 4000;
+            randomwait = randomwait + 7000;
         }
         while (time_GetMilliseconds() < start + 1000 + randomwait) { 
             texturemanager_tick();
@@ -149,7 +159,7 @@ int main(int argc, char **argv) {
             // complete.
             // Assert this actually happened and everything is loaded up:
             texturemanagerassertionsallloaded();
-         }
+        }
         destroysprites();
         doConsoleLog();
         i++;

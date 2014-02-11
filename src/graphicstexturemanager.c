@@ -52,18 +52,7 @@
 #include "diskcache.h"
 #include "file.h"
 #include "graphicstexturerequeststruct.h"
-
-// texture system memory budget in megabyte:
-uint64_t textureSysMemoryBudgetMin = 100;
-uint64_t texturesysMemoryBudgetMax = 200;
-
-// texture gpu memory budget in megabyte:
-uint64_t textureGpuMemoryBudgetMin = 50;
-uint64_t textureGpuMemoryBudgetMax = 100;
-
-// actual resource use:
-uint64_t sysMemUse = 0;
-uint64_t gpuMemUse = 0;
+#include "graphicstexturemanagermembudget.h"
 
 // no texture uploads (e.g. device is currently lost)
 int noTextureUploads = 0;
@@ -78,11 +67,25 @@ mutex* textureReqListMutex = NULL;
 struct texturerequesthandle* textureRequestList = NULL;
 struct texturerequesthandle* unhandledRequestList = NULL;
 
+// list of deleted requests:
+struct deletedtexturerequest {
+    struct texturerequesthandle *handle;
+    struct deletedtexturerequest *next;
+};
+struct deletedtexturerequest* deletedRequestList = NULL;
+
 // pool allocator for texture requests:
 struct poolAllocator* textureReqBlockAlloc = NULL;
 
+
+
+// get global lock for accessing any texture request or the list:
 void texturemanager_lockForTextureAccess() {
     mutex_lock(textureReqListMutex);
+}
+// release lock:
+void texturemanager_releaseFromTextureAccess() {
+    mutex_release(textureReqListMutex);
 }
 
 static size_t texturemanager_getRequestCount_internal(void) {
@@ -100,28 +103,9 @@ static size_t texturemanager_getRequestCount_internal(void) {
     return count;
 }
 
-void texturemanager_releaseFromTextureAccess() {
-    mutex_release(textureReqListMutex);
-}
-
-int texturemanager_saveGPUMemory(void) {
-    return 0;
-    double current = (gpuMemUse / (1024 * 1024));
-    double m1 = textureGpuMemoryBudgetMin;
-    double m2 = textureGpuMemoryBudgetMax;
-    if (current > m1 * 0.8) {
-        if (current > m1 + (m2-m1)/2) {
-            // we should save memory more radically,
-            // approaching the upper limit
-            return 2;
-        }
-        return 1;
-    }
-    return 0;
-}
-
-int texturemanager_saveSystemMemory(void) {
-    return 0;
+static int texturemanager_requestSafeToDelete(
+        __attribute__ ((unused)) struct texturerequesthandle *request) {
+    return 1;
 }
 
 static int ispoweroftwo(int number) {
@@ -345,7 +329,7 @@ static void texturemanager_scaleTextureThread(void* userdata) {
 }
 
 static void texturemanager_scaleOnRetrieval(void* data,
-size_t datalength, void* userdata) {
+        size_t datalength, void* userdata) {
     texturemanager_lockForTextureAccess();
     // stuff came out of the disk cache. scale it!
     struct scaleonretrievalinfo* info = userdata;
@@ -357,7 +341,7 @@ size_t datalength, void* userdata) {
 }
 
 static void texturemanager_diskCacheRetrieval(void* data,
-size_t datalength, void* userdata) {
+        size_t datalength, void* userdata) {
     // obtained scaled texture from disk cache:
     struct graphicstexturescaled* s = userdata;
     texturemanager_lockForTextureAccess();
@@ -575,16 +559,21 @@ struct graphicstexturemanaged* gtm, int slot) {
 }
 
 static void texturemanager_initialLoadingDimensionsCallback
-(struct graphicstexturemanaged* gtm, size_t width, size_t height,
-int success, void* userdata);
+    (struct graphicstexturemanaged* gtm, size_t width, size_t height,
+    int success, void* userdata);
 
 static void texturemanager_initialLoadingDataCallback
-(struct graphicstexturemanaged* gtm, int success, void* userdata);
+    (struct graphicstexturemanaged* gtm, int success, void* userdata);
 
 static void texturemanager_processRequest(struct texturerequesthandle*
 request, int listLocked) {
     if (!listLocked) {
         mutex_lock(textureReqListMutex);
+    }
+
+    if (request->canceled) {
+        mutex_release(textureReqListMutex);
+        return;
     }
 
     // handle a request which has been waiting for a texture.
@@ -661,9 +650,9 @@ request, int listLocked) {
             // fire up the threaded loading process which
             // gives us the texture in the most common sizes
             graphicstextureloader_doInitialLoading(gtm,
-            texturemanager_initialLoadingDimensionsCallback,
-            texturemanager_initialLoadingDataCallback,
-            request);
+                texturemanager_initialLoadingDimensionsCallback,
+                texturemanager_initialLoadingDataCallback,
+                NULL);
         }
     }
 
@@ -731,9 +720,8 @@ request, int listLocked) {
 
 // callback with early dimension/size info:
 static void texturemanager_initialLoadingDimensionsCallback
-(struct graphicstexturemanaged* gtm, size_t width, size_t height,
-int success, void* userdata) {
-    struct texturerequesthandle* request = userdata;
+        (struct graphicstexturemanaged* gtm, size_t width, size_t height,
+        int success, __attribute__ ((unused)) void* userdata) {
     mutex_lock(textureReqListMutex);
 #ifdef DEBUGTEXTUREMANAGER
     printinfo("[TEXMAN] dimensions reported for %s", gtm->path);
@@ -745,18 +733,22 @@ int success, void* userdata) {
         height = 0;
         gtm->beingInitiallyLoaded = 0;
         gtm->initialLoadDone = 1;
-        request->textureDimensionInfoCallback(request,
-        0, 0, request->userdata);
-    } else {
-        request->textureDimensionInfoCallback(request,
-            width, height, request->userdata);
+    }
+    struct texturerequesthandle *req = unhandledRequestList;
+    while (req) {
+        if (req->gtm == gtm) {
+            req->textureDimensionInfoCallback(req,
+                width, height, req->userdata);
+        }
+        req = req->next;
     }
     mutex_release(textureReqListMutex);
 }
 
 // callback when texture was loaded fully:
 static void texturemanager_initialLoadingDataCallback
-(struct graphicstexturemanaged* gtm, int success, void* userdata) {
+(struct graphicstexturemanaged* gtm, int success,
+        __attribute__((unused)) void* userdata) {
     mutex_lock(textureReqListMutex);
     struct texturerequesthandle* request = userdata;
     gtm->beingInitiallyLoaded = 0;
@@ -767,9 +759,16 @@ static void texturemanager_initialLoadingDataCallback
 #endif
         gtm->failedToLoad = 1;
         gtm->failedToLoadTime = time(NULL);
-        assert(request->textureDimensionInfoCallback);
-        request->textureDimensionInfoCallback(request,
-        0, 0, request->userdata);
+
+        struct texturerequesthandle *req = unhandledRequestList;
+        while (req) {
+            if (req->gtm == gtm) {
+                request->textureDimensionInfoCallback(request,
+                    0, 0, request->userdata);
+            }
+            req = req->next;
+        }
+
         mutex_release(textureReqListMutex);
         return;
     } else {
@@ -825,24 +824,46 @@ void* userdata) {
     }
     request->gtm = gtm;
 
+    // from now on, lock out other texture manager code:
+    mutex_lock(textureReqListMutex);
+
     // if it failed to load and this was long ago,
     // schedule reload:
     if (gtm->failedToLoad && gtm->failedToLoadTime + 10 < time(NULL)) {
         gtm->failedToLoad = 0;
+        gtm->initialLoadDone = 1;
     }
 
-    mutex_lock(textureReqListMutex);
+    int isUnhandled = 1;
+
+    // if it is definitely in a failed state right now,
+    // report back failure:
+    if (gtm->failedToLoad) {
+        request->textureDimensionInfoCallback(
+            request, 0, 0, request->userdata);
+        isUnhandled = 0;
+    }
 
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
     size_t c = texturemanager_getRequestCount_internal();
 #endif
 
-    // add to unhandled texture request list:
-    request->unhandledNext = unhandledRequestList;
-    if (request->unhandledNext) {
-        request->unhandledNext->unhandledPrev = request;
+    if (isUnhandled) {
+        // add to unhandled texture request list:
+        request->unhandledNext = unhandledRequestList;
+        if (request->unhandledNext) {
+            request->unhandledNext->unhandledPrev = request;
+        }
+        unhandledRequestList = request;
+    } else {
+        // add it to regular list:
+        request->next = textureRequestList;
+        if (request->next) {
+            request->next->prev = request;
+        }
+        request->prev = NULL;
+        textureRequestList = request; 
     }
-    unhandledRequestList = request;
 
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
     assert(texturemanager_getRequestCount_internal() == c + 1);
@@ -887,8 +908,21 @@ struct texturerequesthandle* request) {
         }
     }
 
-    // free request:
-    poolAllocator_free(textureReqBlockAlloc, request);
+    // mark request as cancelled:
+    request->canceled = 1;
+
+    // move into deleted list or delete instantly if safe:
+    if (texturemanager_requestSafeToDelete(request)) {
+        poolAllocator_free(textureReqBlockAlloc, request);
+    } else {
+        struct deletedtexturerequest* dtex = malloc(sizeof(*dtex));
+        if (!dtex) {
+            // oops, that's not good. not much we can do about it though?
+        } else {
+            dtex->next = deletedRequestList;
+            deletedRequestList = dtex;
+        }
+    }
 
     mutex_release(textureReqListMutex);
 }

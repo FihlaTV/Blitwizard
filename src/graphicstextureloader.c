@@ -26,6 +26,9 @@
 //#define DEBUGTEXTURELOADER
 #endif
 
+#define MAXLOADWIDTH 10000
+#define MAXLOADHEIGHT 10000
+
 #include "config.h"
 #include "os.h"
 
@@ -49,17 +52,17 @@
 
 struct loaderfuncinfo;
 struct graphicstextureloader_initialLoadingThreadInfo {
-    void (*callbackDimensions)(struct graphicstexturemanaged* gtm,
-    size_t width, size_t height, int success, void* userdata);
-    void (*callbackData)(struct graphicstexturemanaged* gtm,
-    int success, void* userdata);
-    void* userdata;
-    char* path;
+    void (*callbackDimensions)(struct graphicstexturemanaged *gtm,
+    size_t width, size_t height, int success, void *userdata);
+    void (*callbackData)(struct graphicstexturemanaged *gtm,
+    int success, void *userdata);
+    void *userdata;
+    char *path;
     int padnpot;
     int failed;
 
     // present if loading from memory:
-    struct loaderfuncinfo* linfo;
+    struct loaderfuncinfo *linfo;
 
     // remember size temporarily:
     size_t width, height;
@@ -68,7 +71,7 @@ struct graphicstextureloader_initialLoadingThreadInfo {
     // this texture pointer must be treated as black box
     // by the loader thread, because other threads might
     // be messing around with it:
-    struct graphicstexturemanaged* gtm;
+    struct graphicstexturemanaged *gtm;
 };
 
 struct loaderfuncinfo {
@@ -80,7 +83,7 @@ struct loaderfuncinfo {
 };
 
 static void freeinitialloadinginfo(
-        struct graphicstextureloader_initialLoadingThreadInfo* info) {
+        struct graphicstextureloader_initialLoadingThreadInfo *info) {
     if (info->linfo) {
 #ifdef USE_PHYSFS
         if (info->linfo->file) {
@@ -93,9 +96,9 @@ static void freeinitialloadinginfo(
     free(info);
 }
 
-void graphicstextureloader_callbackSize(void* handle,
-int width, int height, void* userdata) {
-    struct graphicstextureloader_initialLoadingThreadInfo* info =
+void graphicstextureloader_callbackSize(void *handle,
+int width, int height, void *userdata) {
+    struct graphicstextureloader_initialLoadingThreadInfo *info =
     userdata;
     if (width > 0 && height > 0) {
         // store size, padded size:
@@ -125,9 +128,9 @@ int width, int height, void* userdata) {
     }
 }
 
-void graphicstextureloader_callbackData(void* handle,
-char* imgdata, unsigned int imgdatasize, void* userdata) {
-    struct graphicstextureloader_initialLoadingThreadInfo* info =
+void graphicstextureloader_callbackData(void *handle,
+char *imgdata, unsigned int imgdatasize, void *userdata) {
+    struct graphicstextureloader_initialLoadingThreadInfo *info =
     userdata;
 
     if (info->failed) {
@@ -222,8 +225,8 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
                     info->gtm->origscale = i;
 #ifdef DEBUGTEXTURELOADER
                     printinfo("[TEXLOAD] texture has now been loaded: %s "
-                    "(%d, %d)",
-                    info->path, info->width, info->height);
+                        "(%d, %d)",
+                        info->path, info->width, info->height);
 #endif
                 } else {
                     // see what would be the intended side size:
@@ -283,9 +286,9 @@ char* imgdata, unsigned int imgdatasize, void* userdata) {
 }
 
 #ifdef USE_PHYSFS
-static int graphicstextureloader_imageReadFunc(void* buffer,
-size_t bytes, void* userdata) {
-    struct loaderfuncinfo* lfi = userdata;
+static int graphicstextureloader_imageReadFunc(void *buffer,
+size_t bytes, void *userdata) {
+    struct loaderfuncinfo *lfi = userdata;
     if (bytes == 0) {
        return 0;
     }
@@ -306,7 +309,7 @@ size_t bytes, void* userdata) {
 }
 #endif
 
-static const char* pixelformattoname(int format) {
+static const char *pixelformattoname(int format) {
     switch (format) {
     case PIXELFORMAT_32RGBA:
         return "rgba";
@@ -321,8 +324,8 @@ static const char* pixelformattoname(int format) {
     }
 }
 
-void graphicstextureloader_initialLoaderThread(void* userdata) {
-    struct graphicstextureloader_initialLoadingThreadInfo* info =
+void graphicstextureloader_initialLoaderThread(void *userdata) {
+    struct graphicstextureloader_initialLoadingThreadInfo *info =
     userdata;
 #ifdef DEBUGTEXTURELOADER
     printinfo("[TEXLOAD] starting initial loading of %s", info->path);
@@ -341,8 +344,8 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
 
     if (loc.type == LOCATION_TYPE_DISK) {
         // use standard disk file image loader:
-        void* handle = img_loadImageThreadedFromFile(info->path,
-            4096, 4096, info->padnpot,
+        void *handle = img_loadImageThreadedFromFile(info->path,
+            MAXLOADWIDTH, MAXLOADHEIGHT, info->padnpot,
             pixelformattoname(graphicstexture_getDesiredFormat()),
             graphicstextureloader_callbackSize,
             graphicstextureloader_callbackData, info);
@@ -357,7 +360,7 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
 #ifdef USE_PHYSFS
     } else if (loc.type == LOCATION_TYPE_ZIP) {
         // prepare image reader info struct:
-        struct loaderfuncinfo* lfi = malloc(sizeof(*lfi));
+        struct loaderfuncinfo *lfi = malloc(sizeof(*lfi));
         if (!lfi) {
             printwarning("[TEXLOAD] memory allocation failed (1)");
             free(info->path);
@@ -370,9 +373,9 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
         lfi->archive = loc.location.ziplocation.archive;
 
         // prompt image loader with our own image reader:
-        void* handle = img_loadImageThreadedFromFunction(
+        void *handle = img_loadImageThreadedFromFunction(
             graphicstextureloader_imageReadFunc, lfi,
-            4096, 4096, info->padnpot,
+            MAXLOADWIDTH, MAXLOADHEIGHT, info->padnpot,
             pixelformattoname(graphicstexture_getDesiredFormat()),
             graphicstextureloader_callbackSize,
             graphicstextureloader_callbackData, info);
@@ -394,15 +397,15 @@ void graphicstextureloader_initialLoaderThread(void* userdata) {
     }
 }
 
-void graphicstextureloader_doInitialLoading(struct graphicstexturemanaged* gtm,
-void (*callbackDimensions)(struct graphicstexturemanaged* gtm,
-size_t width, size_t height, int success,
-void* userdata),
-void (*callbackData)(struct graphicstexturemanaged* gtm, int success,
-void* userdata),
-void* userdata) {
+void graphicstextureloader_doInitialLoading(struct graphicstexturemanaged *gtm,
+        void (*callbackDimensions)(struct graphicstexturemanaged *gtm,
+        size_t width, size_t height, int success,
+        void *userdata),
+        void (*callbackData)(struct graphicstexturemanaged *gtm, int success,
+        void *userdata),
+        void *userdata) {
     // create loader thread info:
-    struct graphicstextureloader_initialLoadingThreadInfo* info =
+    struct graphicstextureloader_initialLoadingThreadInfo *info =
     malloc(sizeof(*info));
     if (!info) {
         callbackDimensions(gtm, 0, 0, 0, userdata);
