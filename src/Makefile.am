@@ -90,4 +90,4 @@ install:
 	chmod 755 ${bindir}/blitwizard${EXEEXT}
 	chmod +x ${bindir}/blitwizard${EXEEXT}
 count:
-	cloc *.c *.h *.cpp imgloader/*.c imgloader/*.h *.cpp ../templates/console/console.lua ../templates/font/font.lua ../templates/http/http.lua ../templates/irc/irc.lua
+	cloc *.c *.h *.cpp imgloader/*.c imgloader/*.h *.cpp ../templates/init.lua ../templates/console/console.lua ../templates/font/font.lua ../templates/http/http.lua ../templates/irc/irc.lua ../templates/debug/debug.lua
