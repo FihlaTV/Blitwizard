@@ -146,9 +146,9 @@ static int texturemanager_badTextureDimensions(struct graphicstexturemanaged
         return 1;
     }
     // avoid non power of two:
-    if (!ispoweroftwo(width) || !ispoweroftwo(height)) {
+    /*if (!ispoweroftwo(width) || !ispoweroftwo(height)) {
         return 1;
-    }
+    }*/
     return 0;
 }
 
@@ -1126,13 +1126,16 @@ static int texturemanager_textureSafeToDelete(
 static int texturemanager_checkTextureForScaling(
 struct graphicstexturemanaged* gtm, struct graphicstexturemanaged* prev,
 void* userdata) {
+    if (gtm->beingInitiallyLoaded) {
+        return 1;
+    }
     // check specific texture for usage and possible downscaling:
     int i = texturemanager_decideOnPreferredSize(gtm,
     time(NULL), texturemanager_saveGPUMemory());
     texturemanager_findAndForceAllRequestsToDifferentSize(gtm, i);
     if (texturemanager_saveGPUMemory() == 0 &&
             gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + 20 > time(NULL)) {
-        assert(i == 0);
+        assert(i == 0 || i == gtm->scalelistcount - 1);
     }
     texturemanager_unloadUnneededVersions(gtm, i);
     return 1;
