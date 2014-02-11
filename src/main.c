@@ -591,12 +591,6 @@ int main_startup_do(int argc, char** argv) {
 
     // evaluate command line arguments:
 
-#ifdef WINDOWS
-    // obtain command line arguments a special way on windows:
-    int argc = __argc;
-    char** argv = __argv;
-#endif
-
     // we want to store the script arguments so we can pass them to lua:
     scriptargs = malloc(sizeof(char*) * MAXSCRIPTARGS);
     if (!scriptargs) {
@@ -961,6 +955,13 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 int main(int argc, char** argv) {
 #endif
 #endif
+
+#ifdef WINDOWS
+    // obtain command line arguments a special way on windows:
+    int argc = __argc;
+    char** argv = __argv;
+#endif
+
     if (main_startup_do(argc, argv) != 0) {
         return 1;
     }
