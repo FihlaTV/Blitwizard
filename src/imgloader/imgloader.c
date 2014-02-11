@@ -57,10 +57,10 @@ struct loaderthreadinfo {
     unsigned int imgdatasize, void *userdata);
     void *userdata;
 #ifdef WIN
-    //windows threads stuff
+    // windows threads stuff
     HANDLE threadhandle;
 #else
-    //pthreads for unix
+    // pthreads for unix
     pthread_t threadhandle;
     pthread_mutex_t threadeventmutex;
     int threadeventobject;
@@ -232,9 +232,11 @@ void *loaderthreadfunction(void *data) {
     }
 
     // enter callback if we got one
+#ifndef WIN
     pthread_mutex_t cachedthreadeventmutex;
     memcpy(&cachedthreadeventmutex, &i->threadeventmutex,
         sizeof(cachedthreadeventmutex));
+#endif
     if (i->callbackData) {
         i->callbackData(data, i->data, i->datasize, i->userdata);
     }
