@@ -956,7 +956,7 @@ int SDL_main(int argc, char** argv) {
 #else
 #ifdef WINDOWS
 int CALLBACK WinMain(HINSTANCE hInstance,
-HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+        HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 #else
 int main(int argc, char** argv) {
 #endif
@@ -986,7 +986,7 @@ int main(int argc, char** argv) {
 #endif
 
 #if defined(ANDROID) || defined(__ANDROID__)
-    printinfo("Blitwizard startup: Reading templates if present...");
+    printinfo("Blitwizard startup: reading templates if present...");
 #endif
 
     // Search & run templates. Separate code for desktop/android due to
@@ -1038,7 +1038,7 @@ int main(int argc, char** argv) {
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("[main] android: blitwizard startup: "
-    "executing lua start script...");
+        "executing lua start script...");
 #endif
 
     // push command line arguments into script state:
@@ -1053,7 +1053,7 @@ int main(int argc, char** argv) {
     }
     if (pushfailure) {
         printfatalerror("Error: couldn't push all script arguments "
-        "into script state");
+            "into script state");
         main_Quit(1);
         return 1;
     }
@@ -1074,7 +1074,7 @@ int main(int argc, char** argv) {
             error = outofmem;
         }
         printfatalerror("Error: an error occured when running \"%s\": %s",
-        script, error);
+            script, error);
         if (error != outofmem) {
             free(error);
         }
@@ -1091,7 +1091,7 @@ int main(int argc, char** argv) {
 
     // call init
     if (!luastate_CallFunctionInMainstate("blitwizard.onInit", 0, 1, 1,
-    &error, NULL, NULL)) {
+            &error, NULL, NULL)) {
         printfatalerror("Error: an error occured when calling "
         "blitwizard.onInit: %s",error);
         if (error != outofmem) {
@@ -1136,7 +1136,8 @@ int main(int argc, char** argv) {
             while (simulateaudiotime < time_GetMilliseconds()) {
                 char buf[48 * 4 * 2];
                 audiomixer_GetBuffer(buf, 48 * 4 * 2);
-                simulateaudiotime += 1; // 48 * 1000 times * 4 bytes * 2 channels per second = simulated 48kHz 32bit stereo audio
+                simulateaudiotime += 1; // 48 * 1000 times * 4 bytes * 2
+                    // channels per second = simulated 48kHz 32bit stereo audio
             }
         }
 #endif // ifdef USE_AUDIO
@@ -1157,7 +1158,8 @@ int main(int argc, char** argv) {
         // see how much time as already passed since the last frame:
         uint64_t delta = time_GetMilliseconds()-lastdrawingtime;
         if (delta > 600) {
-            printwarning("[main] warning: huge hang (%d ms) detected, skipping logic",
+            printwarning("[main] warning: huge hang (%d ms) detected, "
+                "skipping logic",
             (int)delta);
             // forget about keeping up with time, this was a huge hang:
             delta = 0;
@@ -1171,7 +1173,7 @@ int main(int argc, char** argv) {
             // the time passed is smaller than the optimal waiting time
             // -> sleep
             if (connections_NoConnectionsOpen() &&
-            !listeners_HaveActiveListeners()) {
+                    !listeners_HaveActiveListeners()) {
                 // no connections, use regular sleep
                 time_Sleep((deltaspan-10)-delta);
                 connections_SleepWait(0);
@@ -1194,7 +1196,8 @@ int main(int argc, char** argv) {
 
 #ifdef USE_GRAPHICS
         // check and trigger all sort of input events
-        graphics_CheckEvents(&quitevent, &mousebuttonevent, &mousemoveevent, &keyboardevent, &textevent, &putinbackground);
+        graphics_CheckEvents(&quitevent, &mousebuttonevent, &mousemoveevent,
+            &keyboardevent, &textevent, &putinbackground);
 #endif
         doConsoleLog();
 
@@ -1208,20 +1211,21 @@ int main(int argc, char** argv) {
         psteps2d_max++;
 #endif
         while (
-        // allow maximum of iterations in an attempt to keep up:
-        (logictimestamp < timeNow || physicstimestamp < timeNow) &&
-        (logiciterations < MAXLOGICITERATIONS
+                // allow maximum of iterations in an attempt to keep up:
+                (logictimestamp < timeNow || physicstimestamp < timeNow) &&
+                (logiciterations < MAXLOGICITERATIONS
 #if defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D)
- ||  physicsiterations < MAXPHYSICSITERATIONS
+                ||  physicsiterations < MAXPHYSICSITERATIONS
 #endif
-        )
-        // .. unless we're already doing this for >2 seconds:
-        && iterationStart + 2 >= time(NULL)
+                )
+                // .. unless we're already doing this for >2 seconds:
+                && iterationStart + 2 >= time(NULL)
             ) {
 #ifdef USE_PHYSICS2D
             if (physicsiterations < MAXPHYSICSITERATIONS &&
-            physicstimestamp < timeNow && (physicstimestamp <= logictimestamp
-            || logiciterations >= MAXLOGICITERATIONS)) {
+                    physicstimestamp < timeNow &&
+                    (physicstimestamp <= logictimestamp
+                    || logiciterations >= MAXLOGICITERATIONS)) {
                 int psteps = psteps2d_max;
                 while (psteps > 0) {
                     physics_step(physics2ddefaultworld,
@@ -1236,10 +1240,11 @@ int main(int argc, char** argv) {
             physicstimestamp = timeNow + 2000;
 #endif
             if (logiciterations < MAXLOGICITERATIONS &&
-            logictimestamp < timeNow && (logictimestamp <= physicstimestamp
-            || physicsiterations >= MAXPHYSICSITERATIONS)) {
+                    logictimestamp < timeNow &&
+                    (logictimestamp <= physicstimestamp
+                    || physicsiterations >= MAXPHYSICSITERATIONS)) {
                 // check how much logic we might want to do in a batch:
-                int k = (timeNow-logictimestamp)/TIMESTEP;
+                int k = (timeNow - logictimestamp)/TIMESTEP;
                 if (k > MAXBATCHEDLOGIC) {
                     k = MAXBATCHEDLOGIC;
                 }

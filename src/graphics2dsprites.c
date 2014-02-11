@@ -53,13 +53,13 @@ const float smoothmaxdist = 1.0f;
 static int spritesInListCount = 0;
 
 // sprite allocator:
-struct poolAllocator* spriteAllocator = NULL;
+struct poolAllocator *spriteAllocator = NULL;
 
 // counting the amount of times the zindex has changed on a sprite:
 uint64_t currentzindexsetid = 0;
 
 // the "lowest" sprites enabled for each event:
-static struct graphics2dsprite* lastEventSprite[SPRITE_EVENT_TYPE_COUNT];
+static struct graphics2dsprite *lastEventSprite[SPRITE_EVENT_TYPE_COUNT];
 static int recalculateLastEventSprite[SPRITE_EVENT_TYPE_COUNT];
 // all the sprites enabled for a given event (which are visible):
 int eventSpriteCount[SPRITE_EVENT_TYPE_COUNT];
@@ -83,7 +83,7 @@ __attribute__((constructor)) static void graphics2dsprites_init(void) {
 }
 
 static int graphics2dsprites_findLastEventSpritesCallback(
-        struct graphics2dsprite* sprite, void* userdata) {
+        struct graphics2dsprite *sprite, void *userdata) {
     int eventId = ((int)(int64_t)userdata);
     if (sprite->enabledForEvent[eventId] && sprite->visible) {
         lastEventSprite[eventId] = sprite;
@@ -113,7 +113,7 @@ static void graphics2dsprites_findLastEventSprites(void) {
 }
 
 static void graphics2dsprites_fixClippingWindow(struct
-graphics2dsprite* sprite) {
+        graphics2dsprite *sprite) {
     if (!sprite->texWidth || !sprite->texHeight
     || !sprite->clippingEnabled) {
         // size not known yet, we cannot fix cliping window.
@@ -138,10 +138,10 @@ graphics2dsprite* sprite) {
 
 // this callback will be called by the texture manager:
 static void graphics2dsprites_dimensionInfoCallback(
-__attribute__ ((unused)) struct texturerequesthandle* request,
-size_t width, size_t height, void* userdata) {
+        __attribute__ ((unused)) struct texturerequesthandle *request,
+        size_t width, size_t height, void *userdata) {
     mutex_lock(m);
-    struct graphics2dsprite* s = userdata;
+    struct graphics2dsprite *s = userdata;
 
     if (s->deleted) {
         mutex_release(m);
@@ -161,12 +161,12 @@ size_t width, size_t height, void* userdata) {
 }
 
 double graphics2dsprites_getAlpha(
-struct graphics2dsprite* sprite) {
+        struct graphics2dsprite *sprite) {
     return sprite->alpha;
 }
 
 void graphics2dsprites_setAlpha(
-struct graphics2dsprite* sprite, double alpha) {
+        struct graphics2dsprite *sprite, double alpha) {
     if (alpha > 1) {
         alpha = 1;
     }
@@ -178,9 +178,9 @@ struct graphics2dsprite* sprite, double alpha) {
 
 // this callback will be called by the texture manager:
 static void graphics2dsprites_textureHandlingDoneCallback(
-__attribute__ ((unused)) struct texturerequesthandle* request,
-void* userdata) {
-    struct graphics2dsprite* s = userdata;
+        __attribute__ ((unused)) struct texturerequesthandle *request,
+        void *userdata) {
+    struct graphics2dsprite *s = userdata;
 
     mutex_lock(m);
 
@@ -195,9 +195,9 @@ void* userdata) {
 
 // this callback will be called by the texture manager:
 static void graphics2dsprites_textureSwitchCallback(
-__attribute__ ((unused)) struct texturerequesthandle* request,
-struct graphicstexture* texture, void* userdata) {
-    struct graphics2dsprite* s = userdata;
+        __attribute__ ((unused)) struct texturerequesthandle *request,
+        struct graphicstexture *texture, void *userdata) {
+    struct graphics2dsprite *s = userdata;
 
     mutex_lock(m);
 
@@ -211,8 +211,8 @@ struct graphicstexture* texture, void* userdata) {
 }
 
 // Get texture dimensions if known:
-int graphics2dsprites_getGeometry(struct graphics2dsprite* sprite,
-size_t* width, size_t* height) {
+int graphics2dsprites_getGeometry(struct graphics2dsprite *sprite,
+        size_t *width, size_t *height) {
     if (!sprite) {
         return 0;
     }
@@ -243,7 +243,7 @@ size_t* width, size_t* height) {
 }
 
 // Check if actual texture is available:
-int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite) {
+int graphics2dsprites_isTextureAvailable(struct graphics2dsprite *sprite) {
     if (!sprite) {
         return 0;
     }
@@ -259,7 +259,7 @@ int graphics2dsprites_isTextureAvailable(struct graphics2dsprite* sprite) {
 }
 
 void graphics2dsprites_setClippingWindow(
-        struct graphics2dsprite* sprite,
+        struct graphics2dsprite *sprite,
         size_t x, size_t y, size_t w, size_t h) {
     if (!sprite) {
         return;
@@ -274,7 +274,7 @@ void graphics2dsprites_setClippingWindow(
     mutex_release(m);
 }
 
-void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite) {
+void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite *sprite) {
     if (!sprite) {
         return;
     }
@@ -285,8 +285,8 @@ void graphics2dsprites_unsetClippingWindow(struct graphics2dsprite* sprite) {
 
 struct doforallspritesonscreendata {
     int (*spriteInformation) (
-    struct graphics2dsprite* sprite,
-    const char* path, struct graphicstexture* tex,
+    struct graphics2dsprite *sprite,
+    const char *path, struct graphicstexture *tex,
     double r, double g, double b, double alpha,
     int visible, int cameraId, int textureFiltering);
     int cameraId;
@@ -294,13 +294,13 @@ struct doforallspritesonscreendata {
 
 static int abortedearly = 0;
 static int graphics2dsprites_doForAllSpritesCallback(
-        struct graphics2dsprite* s, void* userdata) {
+        struct graphics2dsprite *s, void *userdata) {
     // get info from userdata:
     struct doforallspritesonscreendata* data = userdata;
     // get callback from userdata:
     int (*spriteInformation) (
-    struct graphics2dsprite* sprite,
-    const char* path, struct graphicstexture* tex,
+    struct graphics2dsprite *sprite,
+    const char *path, struct graphicstexture *tex,
     double r, double g, double b, double alpha,
     int visible, int cameraId, int textureFiltering) = data->
         spriteInformation;
@@ -334,13 +334,13 @@ static int graphics2dsprites_doForAllSpritesCallback(
 #define DOFORALL_SORT_TOPTOBOTTOM 1
 #define DOFORALL_SORT_BOTTOMTOTOP 2
 void graphics2dsprites_doForAllSpritesOnScreen(
-int cameraId,
-int (*spriteInformation) (
-struct graphics2dsprite* sprite,
-const char* path, struct graphicstexture* tex,
-double r, double g, double b, double alpha,
-int visible, int cameraId, int textureFiltering),
-int sort, int lock) {
+        int cameraId,
+        int (*spriteInformation) (
+        struct graphics2dsprite *sprite,
+        const char *path, struct graphicstexture *tex,
+        double r, double g, double b, double alpha,
+        int visible, int cameraId, int textureFiltering),
+        int sort, int lock) {
     if (!spriteInformation) {
         return;
     }
@@ -426,8 +426,8 @@ int sort, int lock) {
     }
 }
 
-void graphics2dsprites_setTextureFiltering(struct graphics2dsprite* sprite,
-int filter) {
+void graphics2dsprites_setTextureFiltering(struct graphics2dsprite *sprite,
+        int filter) {
     if (!sprite) {
         return;
     }
@@ -436,8 +436,8 @@ int filter) {
     mutex_release(m);
 }
 
-void graphics2dsprites_resize(struct graphics2dsprite* sprite,
-double width, double height) {
+void graphics2dsprites_resize(struct graphics2dsprite *sprite,
+        double width, double height) {
     sprite->width = width;
     sprite->height = height;
     if (sprite->pinnedToCamera < 0) {
@@ -445,7 +445,7 @@ double width, double height) {
     }
 }
 
-static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
+static void graphics2dsprites_removeFromList(struct graphics2dsprite *sprite) {
     // Warning: this is NOT SAFE to call when not on the list!
 
     spritesInListCount--;
@@ -475,7 +475,7 @@ static void graphics2dsprites_removeFromList(struct graphics2dsprite* sprite) {
     }
 }
 
-void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
+void graphics2dsprites_destroy(struct graphics2dsprite *sprite) {
     if (!sprite) {
         return;
     }
@@ -507,8 +507,8 @@ void graphics2dsprites_destroy(struct graphics2dsprite* sprite) {
     mutex_release(m);
 }
 
-void graphics2dsprites_move(struct graphics2dsprite* sprite,
-double x, double y, double angle) {
+void graphics2dsprites_move(struct graphics2dsprite *sprite,
+        double x, double y, double angle) {
     mutex_lock(m);
 #ifdef SMOOTH_SPRITES
     sprite->prevx = x;
@@ -523,7 +523,7 @@ double x, double y, double angle) {
     mutex_release(m);
 }
 
-static void graphics2dsprites_addToList(struct graphics2dsprite* s) {
+static void graphics2dsprites_addToList(struct graphics2dsprite *s) {
     // Warning: this is NOT SAFE to call when already on the list!
 
 #if (!defined(NDEBUG) && defined(EXTRADEBUG))
@@ -570,8 +570,10 @@ static size_t graphics2dsprites_count_internal(void) {
     return 0;
 }
 
-struct graphics2dsprite* graphics2dsprites_create(
-const char* texturePath, double x, double y, double width, double height) {
+struct graphics2dsprite *graphics2dsprites_create(
+        const char *texturePath,
+        double x, double y,
+        double width, double height) {
     if (!texturePath) {
         return NULL;
     }
@@ -579,7 +581,7 @@ const char* texturePath, double x, double y, double width, double height) {
     mutex_lock(m);
 
     // create new sprite struct:
-    struct graphics2dsprite* s = poolAllocator_alloc(spriteAllocator);
+    struct graphics2dsprite *s = poolAllocator_alloc(spriteAllocator);
     if (!s) {
         mutex_release(m);
         texturemanager_releaseFromTextureAccess();
@@ -639,15 +641,15 @@ const char* texturePath, double x, double y, double width, double height) {
     return s;
 }
 
-int graphics2dsprites_getZIndex(struct graphics2dsprite* sprite) {
+int graphics2dsprites_getZIndex(struct graphics2dsprite *sprite) {
     mutex_lock(m);
     int z = sprite->zindex;
     mutex_release(m);
     return z;
 }
 
-void graphics2dsprites_setZIndex(struct graphics2dsprite* sprite,
-int zindex) {
+void graphics2dsprites_setZIndex(struct graphics2dsprite *sprite,
+        int zindex) {
     mutex_lock(m);
     if (!sprite || sprite->zindex == zindex) {
         // nothing to do.
@@ -670,8 +672,8 @@ int zindex) {
     mutex_release(m);
 }
 
-void graphics2dsprites_setPinnedToCamera(struct graphics2dsprite* sprite,
-int cameraId) {
+void graphics2dsprites_setPinnedToCamera(struct graphics2dsprite *sprite,
+        int cameraId) {
     if (!sprite) {
         return;
     }
@@ -698,15 +700,15 @@ int cameraId) {
     mutex_release(m);
 }
 
-int graphics2dsprites_getVisible(struct graphics2dsprite* sprite) {
+int graphics2dsprites_getVisible(struct graphics2dsprite *sprite) {
     mutex_lock(m);
     int r = sprite->visible;
     mutex_release(m);
     return r;
 }
 
-void graphics2dsprites_setVisible(struct graphics2dsprite* sprite,
-int visible) {
+void graphics2dsprites_setVisible(struct graphics2dsprite *sprite,
+        int visible) {
     mutex_lock(m);
     sprite->visible = (visible != 0);
     // only relevant if pinned:
@@ -748,8 +750,8 @@ int visible) {
     mutex_release(m);
 }
 
-void graphics2dsprites_setParallaxEffect(struct graphics2dsprite* sprite,
-double value) {
+void graphics2dsprites_setParallaxEffect(struct graphics2dsprite *sprite,
+        double value) {
     if (value <= 0) {
         value = 1;
     }
@@ -759,12 +761,12 @@ double value) {
 }
 
 void graphics2dsprite_calculateSizeOnScreen(
-const struct graphics2dsprite* sprite,
-int cameraId,
-double* screen_x, double* screen_y, double* screen_w,
-double* screen_h, double* screen_sourceX, double* screen_sourceY,
-double* screen_sourceW, double* screen_sourceH,
-double* source_angle, int* phoriflip, int compensaterotation) {
+        const struct graphics2dsprite *sprite,
+        int cameraId,
+        double* screen_x, double* screen_y, double* screen_w,
+        double* screen_h, double* screen_sourceX, double* screen_sourceY,
+        double* screen_sourceW, double* screen_sourceH,
+        double* source_angle, int* phoriflip, int compensaterotation) {
     assert(cameraId >= 0);
     assert(sprite);
     // get camera settings:
@@ -786,7 +788,7 @@ double* source_angle, int* phoriflip, int compensaterotation) {
         sourceHeight = texHeight;
     }
     double angle = sprite->angle;
-    struct graphicstexture* tex = sprite->tex;
+    struct graphicstexture *tex = sprite->tex;
     double sourceX = sprite->clippingX;
     double sourceY = sprite->clippingY;    
     double width = sprite->width;
@@ -919,9 +921,9 @@ double* source_angle, int* phoriflip, int compensaterotation) {
 }
 
 static int graphics2dsprites_reportVisibilityCallback(
-        struct graphics2dsprite* sprite,
-        __attribute__((unused)) const char* path,
-        __attribute__((unused)) struct graphicstexture* tex,
+        struct graphics2dsprite *sprite,
+        __attribute__((unused)) const char *path,
+        __attribute__((unused)) struct graphicstexture *tex,
         __attribute__((unused)) double r,
         __attribute__((unused)) double g,
         __attribute__((unused)) double b,
@@ -976,15 +978,15 @@ void graphics2dsprites_reportVisibility(void) {
     }
 }
 
-void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite* sprite,
-int event, int invisible) {
+void graphics2dsprites_setInvisibleForEvent(struct graphics2dsprite *sprite,
+        int event, int invisible) {
     mutex_lock(m);
     sprite->invisibleForEvent[event] = invisible;
     mutex_release(m);
 }
 
 void graphics2dsprites_enableForEvent(
-struct graphics2dsprite* sprite, int event, int enabled) {
+        struct graphics2dsprite *sprite, int event, int enabled) {
     mutex_lock(m);
     if (enabled == sprite->enabledForEvent[event]) {
         // nothing changes.
@@ -1018,13 +1020,13 @@ struct getSpriteAtScreenPosData {
     int cameraId;
     int x,y;
     int event;
-    struct graphics2dsprite* result;
+    struct graphics2dsprite *result;
 };
 struct getSpriteAtScreenPosData getspriteatscreenposdata;
 static int graphics2dsprites_getSpriteAtScreenPosCallback(
-        struct graphics2dsprite* sprite,
-        __attribute__((unused)) const char* path,
-        __attribute__((unused)) struct graphicstexture* tex,
+        struct graphics2dsprite *sprite,
+        __attribute__((unused)) const char *path,
+        __attribute__((unused)) struct graphicstexture *tex,
         __attribute__((unused)) double r,
         __attribute__((unused)) double g,
         __attribute__((unused)) double b,
@@ -1069,7 +1071,7 @@ static int graphics2dsprites_getSpriteAtScreenPosCallback(
 
 struct graphics2dsprite*
 graphics2dsprites_getSpriteAtScreenPos(
-int cameraId, int mx, int my, int event) {
+        int cameraId, int mx, int my, int event) {
     texturemanager_lockForTextureAccess();
     mutex_lock(m);
 
@@ -1090,22 +1092,22 @@ int cameraId, int mx, int my, int event) {
         &graphics2dsprites_getSpriteAtScreenPosCallback,
         DOFORALL_SORT_TOPTOBOTTOM, 0);
 
-    struct graphics2dsprite* result = getspriteatscreenposdata.result;
+    struct graphics2dsprite *result = getspriteatscreenposdata.result;
     mutex_release(m);
     texturemanager_releaseFromTextureAccess();
     return result;
 }
 
-void graphics2dsprites_setUserdata(struct graphics2dsprite* sprite,
-void* data) {
+void graphics2dsprites_setUserdata(struct graphics2dsprite *sprite,
+        void *data) {
     mutex_lock(m);
     sprite->userdata = data;
     mutex_release(m);
 }
 
-void* graphics2dsprites_getUserdata(struct graphics2dsprite* sprite) {
+void *graphics2dsprites_getUserdata(struct graphics2dsprite *sprite) {
     mutex_lock(m);
-    void* udata = sprite->userdata;
+    void *udata = sprite->userdata;
     mutex_release(m);
     return udata;
 }

@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2012-2013 Jonas Thiem
+  Copyright (C) 2012-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -39,15 +39,15 @@
 
 struct poolAllocator* objectGraphicsAllocator = NULL;
 __attribute__((constructor)) void
-    luacfuncs_objectgraphics_initAllocator(void) {
+        luacfuncs_objectgraphics_initAllocator(void) {
     objectGraphicsAllocator = poolAllocator_create(
     sizeof(struct objectgraphicsdata), 0);
 }
 
 // load object graphics. might do nothing if too many have been 
 // loaded this frame!
-void luafuncs_objectgraphics_load(struct blitwizardobject* o,
-const char* resource) {
+void luafuncs_objectgraphics_load(struct blitwizardobject *o,
+        const char* resource) {
     if (o->deleted == 1) {
         return;
     }
@@ -71,14 +71,14 @@ const char* resource) {
 
     if (!o->is3d && !o->graphics->sprite) {
         o->graphics->sprite = graphics2dsprites_create(
-        resource, x, y, 0, 0);
+            resource, x, y, 0, 0);
         graphics2dsprites_setUserdata(o->graphics->sprite, o);
         o->scale2d.x = 1;
         o->scale2d.y = 1;
     }
 }
 
-static int object_checkgraphics(struct blitwizardobject* o) {
+static int object_checkgraphics(struct blitwizardobject *o) {
     // check for graphics struct and attempt to create it:
     if (!o->graphics) {
         luafuncs_objectgraphics_load(o, o->respath);
@@ -89,8 +89,8 @@ static int object_checkgraphics(struct blitwizardobject* o) {
     return 1;
 }
 
-void luacfuncs_objectgraphics_setAlpha(struct blitwizardobject* o,
-double alpha) {
+void luacfuncs_objectgraphics_setAlpha(struct blitwizardobject *o,
+        double alpha) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -105,7 +105,7 @@ double alpha) {
     }
 }
 
-double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o) {
+double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject *o) {
     if (!object_checkgraphics(o)) {
         return 1;
     }
@@ -120,7 +120,7 @@ double luacfuncs_objectgraphics_getAlpha(struct blitwizardobject* o) {
     return o->graphics->alpha;
 }
 
-void luacfuncs_objectgraphics_updateParallax(struct blitwizardobject* o) {
+void luacfuncs_objectgraphics_updateParallax(struct blitwizardobject *o) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -130,7 +130,7 @@ void luacfuncs_objectgraphics_updateParallax(struct blitwizardobject* o) {
     }
 }
 
-void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
+void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject *o) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -169,7 +169,7 @@ void luacfuncs_objectgraphics_updatePosition(struct blitwizardobject* o) {
     }
 }
 
-void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
+void luafuncs_objectgraphics_unload(struct blitwizardobject *o) {
     if (o->is3d) {
 
     } else {
@@ -185,7 +185,7 @@ void luafuncs_objectgraphics_unload(struct blitwizardobject* o) {
 }
 
 int luafuncs_objectgraphics_needGeometryCallback(
-struct blitwizardobject* o) {
+        struct blitwizardobject *o) {
     if (!o->graphics || o->graphics->geometryCallbackDone) {
         return 0;
     }
@@ -207,7 +207,7 @@ struct blitwizardobject* o) {
 }
 
 int luafuncs_objectgraphics_needVisibleCallback(
-struct blitwizardobject* o) {
+        struct blitwizardobject *o) {
     if (!object_checkgraphics(o)) {
         return 0;
     }
@@ -230,7 +230,7 @@ struct blitwizardobject* o) {
 }
 
 int luacfuncs_objectgraphics_getOriginalDimensions(
-struct blitwizardobject* o, double *x, double *y, double *z) {
+        struct blitwizardobject *o, double *x, double *y, double *z) {
     if (!object_checkgraphics(o)) {
         return 0;
     }
@@ -261,7 +261,7 @@ void luacfuncs_objectgraphics_newFrame() {
 }
 
 void luacfuncs_objectgraphics_unsetTextureClipping(
-struct blitwizardobject* o) {
+        struct blitwizardobject *o) {
     if (!object_checkgraphics(o)) {  
         return;
     }
@@ -275,8 +275,8 @@ struct blitwizardobject* o) {
 }
 
 
-void luacfuncs_objectgraphics_setTextureClipping(struct blitwizardobject* o,
-size_t x, size_t y, size_t width, size_t height) {
+void luacfuncs_objectgraphics_setTextureClipping(struct blitwizardobject *o,
+        size_t x, size_t y, size_t width, size_t height) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -290,8 +290,8 @@ size_t x, size_t y, size_t width, size_t height) {
     }
 }
 
-void luacfuncs_objectgraphics_pinToCamera(struct blitwizardobject* o,
-int id) {
+void luacfuncs_objectgraphics_pinToCamera(struct blitwizardobject *o,
+        int id) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -303,12 +303,12 @@ int id) {
     }
 }
 
-int luacfuncs_objectgraphics_getVisible(struct blitwizardobject* o) {
+int luacfuncs_objectgraphics_getVisible(struct blitwizardobject *o) {
     return o->visible;
 }
 
-void luacfuncs_objectgraphics_setVisible(struct blitwizardobject* o,
-int visible) {
+void luacfuncs_objectgraphics_setVisible(struct blitwizardobject *o,
+        int visible) {
     o->visible = (visible != 0);
     if (!object_checkgraphics(o)) {
         return;
@@ -321,8 +321,8 @@ int visible) {
     }
 }
 
-void luacfuncs_objectgraphics_enableMouseClickEvent(struct blitwizardobject* o,
-int enabled) {
+void luacfuncs_objectgraphics_enableMouseClickEvent(struct blitwizardobject *o,
+        int enabled) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -335,8 +335,8 @@ int enabled) {
     }
 }
 
-void luacfuncs_objectgraphics_enableMouseMoveEvent(struct blitwizardobject* o,
-int enabled) {
+void luacfuncs_objectgraphics_enableMouseMoveEvent(struct blitwizardobject *o,
+        int enabled) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -350,7 +350,7 @@ int enabled) {
 }
 
 void luacfuncs_objectgraphics_setInvisibleToMouseEvents(
-struct blitwizardobject* o, int enabled) {
+        struct blitwizardobject *o, int enabled) {
     if (!object_checkgraphics(o)) {
         return;
     }
@@ -382,7 +382,7 @@ struct blitwizardobject* o, int enabled) {
 }
 
 void luacfuncs_objectgraphics_processMouseClick(int x, int y,
-int button) {
+        int button) {
     // find out which camera was clicked on:
     int cameraid = -1;
 #ifdef USE_SDL_GRAPHICS
@@ -400,14 +400,14 @@ int button) {
     }
 
     // process mouse click for 2d objects:
-    struct graphics2dsprite* s = graphics2dsprites_getSpriteAtScreenPos(
+    struct graphics2dsprite *s = graphics2dsprites_getSpriteAtScreenPos(
     cameraid, x, y, SPRITE_EVENT_TYPE_CLICK);
     if (s) {
         // get associated blitwizard 2d object:
-        struct blitwizardobject* o = graphics2dsprites_getUserdata(s);
+        struct blitwizardobject *o = graphics2dsprites_getUserdata(s);
 
         // trigger onMouseClick event:
-        lua_State* l = luastate_GetStatePtr();
+        lua_State *l = luastate_GetStatePtr();
         lua_pushnumber(l, ((double)x)/UNIT_TO_PIXELS);
         lua_pushnumber(l, ((double)y)/UNIT_TO_PIXELS);
         lua_pushnumber(l, button);
