@@ -104,14 +104,15 @@ struct texturerequesthandle;
 // call the texture manager api ever. This will break things.
 // (Because of deadlocks/threading issues)
 struct texturerequesthandle* texturemanager_requestTexture(
-const char* path,
-void (*textureDimensionInfo)(struct texturerequesthandle* request,
-size_t width, size_t height, void* userdata),
-void (*textureSwitch)(struct texturerequesthandle* request,
-struct graphicstexture* texture, void* userdata),
-void (*textureHandlingDone)(struct texturerequesthandle* request,
-void* userdata),
-void* userdata);
+    const char* path,
+    void (*textureDimensionInfo)(struct texturerequesthandle* request,
+        size_t width, size_t height, void* userdata),
+    void (*textureSwitch)(struct texturerequesthandle* request,
+        struct graphicstexture* texture, void* userdata),
+        void (*textureHandlingDone)(struct texturerequesthandle* request,
+        void* userdata),
+    void* userdata
+);
 
 // Use texturemanager_UsingRequest to report back how much
 // you use a texture, and at which visibility (so the texture
@@ -145,7 +146,7 @@ void* userdata);
 // because they will otherwise pop up with ugly low res textures
 // when suddenly getting visible again in close range :-)
 void texturemanager_usingRequest(
-struct texturerequesthandle* request, int visibility);
+    struct texturerequesthandle* request, int visibility);
 #define USING_AT_VISIBILITY_DETAIL 0
 #define USING_AT_VISIBILITY_NORMAL 1
 #define USING_AT_VISIBILITY_DISTANT 2
@@ -205,7 +206,7 @@ struct texturerequesthandle* request, int visibility);
 // When this function returns, you will be guaranteed to no
 // longer receive any callbacks related to this texture request.
 void texturemanager_destroyRequest(
-struct texturerequesthandle* request);
+    struct texturerequesthandle* request);
 
 // Call this as often as possible (preferrably right before rendering)
 // to allow the graphics texture manager to delete old textures

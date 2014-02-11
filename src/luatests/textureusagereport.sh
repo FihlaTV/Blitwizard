@@ -19,7 +19,7 @@ if blitwizard.console == nil then
     end)
     if result ~= true then
         os.chdir(cwd)
-        error \"cannot run this test without templates/console\"
+        error(\"cannot run this test without templates/console!\")
     end
     os.chdir(cwd)
 end
@@ -47,15 +47,22 @@ blitwizard.runDelayed(function()
             assert(blitwizard.debug.getTextureUsageInfo(os.templatedir() ..
             \"/font/default.png\") >= 0)
         end) ~= true then
-            print(\"console image isn't reported as used and should be\")
+            print(\"console image isn't reported as used and should be!\")
             os.exit(1)
         end
-
+        if pcall(function()
+            local p = os.templatedir() .. \"/font/default.png\"
+            assert(blitwizard.debug.getTextureGpuSizeInfo(p) == 0)
+        end) ~= true then
+            print(\"console image was downscaled and shouldn't be! (\" ..
+                \"usage was correctly recognised though)\")
+            os.exit(1)
+        end
         -- done!
         print(\"success\")
         os.exit(0)
-    end, 500)
-end, 5000)
+    end, 100000)
+end, 2000)
 " > ./test.lua
 $RUNBLITWIZARD ./test.lua &> ./testoutput
 echo "Lua script output: `cat ./testoutput`"

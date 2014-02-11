@@ -140,8 +140,6 @@ static void graphics2dsprites_fixClippingWindow(struct
 static void graphics2dsprites_dimensionInfoCallback(
         __attribute__ ((unused)) struct texturerequesthandle *request,
         size_t width, size_t height, void *userdata) {
-    printf("dimensionInfoCallback: %llu, %llu\n",
-        (unsigned long long)width, (unsigned long long)height);
     mutex_lock(m);
     struct graphics2dsprite *s = userdata;
 
@@ -155,10 +153,8 @@ static void graphics2dsprites_dimensionInfoCallback(
     graphics2dspritestree_update(s);
     if (s->texWidth == 0 && s->texHeight == 0) {
         // texture failed to load.
-        printf("texture failed to load: %s\n", s->path);
         s->loadingError = 1;
     } else {
-        printf("texture loaded: %s\n", s->path);
         graphics2dsprites_fixClippingWindow(s);
     }
     mutex_release(m);
@@ -201,7 +197,6 @@ static void graphics2dsprites_textureHandlingDoneCallback(
 static void graphics2dsprites_textureSwitchCallback(
         __attribute__ ((unused)) struct texturerequesthandle *request,
         struct graphicstexture *texture, void *userdata) {
-    printf("textureSwitchCallback\n");
     struct graphics2dsprite *s = userdata;
 
     mutex_lock(m);

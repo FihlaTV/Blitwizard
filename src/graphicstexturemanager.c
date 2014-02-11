@@ -166,35 +166,40 @@ static int texturemanager_badTextureDimensions(struct graphicstexturemanaged
 int texturemanager_decideOnPreferredSize(struct graphicstexturemanaged* gtm,
 time_t now, int savememory) {
     int wantsize = 0;
+    time_t usageDetail = gtm->lastUsage[USING_AT_VISIBILITY_DETAIL];
+    time_t usageNormal = gtm->lastUsage[USING_AT_VISIBILITY_NORMAL];
+    if (usageDetail > usageNormal) {
+        usageNormal = usageDetail;
+    }
+    time_t usageDistant = gtm->lastUsage[USING_AT_VISIBILITY_DISTANT];
+    if (usageNormal > usageDistant) {
+        usageDistant = usageNormal;
+    }
+    time_t usageInvisible = gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE];
     // downscaling based on distance:
-    if (gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + SCALEDOWNSECONDS
-    < now || savememory == 2 || texturemanager_badTextureDimensions(gtm)) {
+    if (usageDetail + SCALEDOWNSECONDS < now || savememory == 2
+            || texturemanager_badTextureDimensions(gtm)) {
         // it hasn't been in detail closeup for a few seconds,
-        // go down to high scaling:
+        // -> go down to high scaling:
         wantsize = 4;  // high
-        if (gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] + SCALEDOWNSECONDSLONG
-        < now ||
-            (savememory &&  // previous detail use is long ago:
-            gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
-            SCALEDOWNSECONDSLONG < now &&
-            gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] + SCALEDOWNSECONDS
-            < now)) {
+        if (usageNormal + SCALEDOWNSECONDSLONG < now
+            ||
+            (savememory &&
+            usageDetail + SCALEDOWNSECONDSLONG < now &&
+            usageNormal + SCALEDOWNSECONDS < now)) {
             // it hasn't been used at normal distance for a long time
             // (or detail distance for quite a while and normal for a short
             // time and we want memory).
-            // go down to medium scaling:
+            // -> go down to medium scaling:
             wantsize = 3;  // medium
-            if (gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] +
-            SCALEDOWNSECONDSVERYLONG < now &&
+            if (usageNormal + SCALEDOWNSECONDSVERYLONG < now &&
             gtm->lastUsage[USING_AT_VISIBILITY_DETAIL]
             < SCALEDOWNSECONDSVERYLONG &&
                 // require memory saving plans or
                 // recent invisible use to go to low:
                 (savememory ||
-                (gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE] +
-                SCALEDOWNSECONDSLONG > now &&
-                gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE] >
-                gtm->lastUsage[USING_AT_VISIBILITY_NORMAL]
+                (usageInvisible + SCALEDOWNSECONDSLONG > now &&
+                usageInvisible > usageNormal
                 )
             )) {
                 // both normal and distant use are quite a while in the past,
@@ -207,35 +212,26 @@ time_t now, int savememory) {
     if (
     // invisible and not recently close up, and very long not normal:
     (
-        gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE] +
-        SCALEDOWNSECONDS > now &&
-        gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
-        SCALEDOWNSECONDSLONG < now &&
-        gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] +
-        SCALEDOWNSECONDSVERYLONG < now &&
-        gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] <
-        gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE]
+        usageInvisible > usageDistant &&
+        usageDetail + SCALEDOWNSECONDSLONG < now &&
+        usageNormal + SCALEDOWNSECONDSVERYLONG < now
     )
     ||
     // all uses including distant use are quite in the past:
     (
-        gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] +
-        SCALEDOWNSECONDSVERYVERYLONG < now &&
-        gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] + 
-        SCALEDOWNSECONDSVERYVERYLONG < now &&
+        usageDetail + SCALEDOWNSECONDSVERYVERYLONG < now &&
+        usageNormal + SCALEDOWNSECONDSVERYVERYLONG < now &&
         (
-            gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
-            SCALEDOWNSECONDSLONG < now ||
-            (gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
-            SCALEDOWNSECONDS < now && savememory)
+            usageDistant + SCALEDOWNSECONDSLONG < now ||
+            (usageDistant + SCALEDOWNSECONDS < now && savememory)
         )
     )
     ) {
         wantsize = 1;  // tiny
         if (savememory == 2 &&
-        gtm->lastUsage[USING_AT_VISIBILITY_DISTANT] +
-        SCALEDOWNSECONDSVERYLONG < now) {
-            // suggest unloading:
+                usageDistant +
+                SCALEDOWNSECONDSVERYLONG < now) {
+            // suggest unloading entirely:
             wantsize = -1;
         }
     }
@@ -1051,7 +1047,7 @@ int newsize) {
 }
 
 static void texturemanager_findAndForceAllRequestsToDifferentSize(
-struct graphicstexturemanaged* gtm, int newsize) {
+        struct graphicstexturemanaged* gtm, int newsize) {
     // a texture should be downscaled/upscaled.
     // find all using requests and force them to use the new version.
 
@@ -1134,6 +1130,10 @@ void* userdata) {
     int i = texturemanager_decideOnPreferredSize(gtm,
     time(NULL), texturemanager_saveGPUMemory());
     texturemanager_findAndForceAllRequestsToDifferentSize(gtm, i);
+    if (texturemanager_saveGPUMemory() == 0 &&
+            gtm->lastUsage[USING_AT_VISIBILITY_DETAIL] + 20 > time(NULL)) {
+        assert(i == 0);
+    }
     texturemanager_unloadUnneededVersions(gtm, i);
     return 1;
 }
