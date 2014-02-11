@@ -196,7 +196,7 @@ void texturemanager_usingRequest(
 #endif
 
 // How often to check all textures for down- and upscaling:
-#define ADAPTINTERVAL 5
+#define ADAPTINTERVAL 1
 
 
 // Destroy a texture request. You will still get a textureSwitch
