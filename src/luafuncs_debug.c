@@ -38,6 +38,7 @@
 #include "config.h"
 #include "os.h"
 
+#include "main.h"
 #include "file.h"
 #include "luaheader.h"
 #include "luaerror.h"
@@ -57,6 +58,18 @@ int luafuncs_debug_getGpuMemoryUse(lua_State* l) {
 #else
     lua_pushnumber(l, 0);
 #endif
+    return 1;
+}
+
+/// Return the current frames per second.
+// This indicates whether your game is running fluid or not -
+// which largely depends on the power of the computer it is running on.
+// Values of 30 or higher mean it is running well, lower values indicate
+// stuttering.
+// @function getFps
+// @treturn number the measured FPS value
+int luafuncs_debug_getFps(lua_State* l) {
+    lua_pushnumber(l, measuredFPS);
     return 1;
 }
 

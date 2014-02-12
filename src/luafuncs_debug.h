@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -26,6 +26,7 @@
 
 #include "luaheader.h"
 
+int luafuncs_debug_getFps(lua_State* l);
 int luafuncs_debug_getGpuMemoryUse(lua_State* l);
 int luafuncs_debug_getTextureUsageInfo(lua_State* l);
 int luafuncs_debug_getTextureGpuSizeInfo(lua_State* l);

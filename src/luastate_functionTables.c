@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -319,22 +319,24 @@ void luastate_CreateObjectTable(lua_State* l) {
 
 void luastate_CreateDebugTable(lua_State* l) {
     lua_newtable(l);
+    luastate_registerfunc(l, &luafuncs_debug_getFps,
+        "getFps");
     luastate_registerfunc(l, &luafuncs_debug_getTextureUsageInfo,
-    "getTextureUsageInfo");
+        "getTextureUsageInfo");
     luastate_registerfunc(l, &luafuncs_debug_getTextureGpuSizeInfo,
-    "getTextureGpuSizeInfo");
+        "getTextureGpuSizeInfo");
     luastate_registerfunc(l, &luafuncs_debug_getTextureRamSizeInfo,
-    "getTextureRamSizeInfo");
+        "getTextureRamSizeInfo");
     luastate_registerfunc(l, &luafuncs_debug_getGpuMemoryUse,
-    "getGpuMemoryUse");
+        "getGpuMemoryUse");
     luastate_registerfunc(l, &luafuncs_debug_getLogicStats,
-    "getLogicStats");
+        "getLogicStats");
     luastate_registerfunc(l, &luafuncs_debug_getTextureRequestCount,
-    "getTextureRequestCount");
+        "getTextureRequestCount");
     luastate_registerfunc(l, &luafuncs_debug_get2dSpriteCount,
-    "get2dSpriteCount");
+        "get2dSpriteCount");
     luastate_registerfunc(l, &luafuncs_debug_getAudioChannelCount,
-    "getAudioChannelCount");
+        "getAudioChannelCount");
     luastate_registerfunc(l, &luafuncs_debug_getAllTextures,
         "getAllTextures");
     luastate_registerfunc(l, &luafuncs_debug_getWaitingTextureRequests,

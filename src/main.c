@@ -941,6 +941,31 @@ int main_startup_openScript(int argc, char** argv) {
     return 0;
 }
 
+static uint64_t lastFPSmeasurement = 0;
+static int FPSframeCounter = 0;
+double measuredFPS = 0;
+static void measureFPS() {
+    if (lastFPSmeasurement == 0) {
+        lastFPSmeasurement = time_GetMilliseconds();
+        return;
+    }
+    uint64_t now = time_GetMilliseconds();
+    // don't continue if time frame passed is too short:
+    if (now - lastFPSmeasurement < 500) {
+        return;
+    }
+    // measure the FPS:
+    double timeDiff = ((uint64_t)now - lastFPSmeasurement);
+    measuredFPS = ((double)FPSframeCounter) / (timeDiff / 1000.0);
+    // reset conter and timer:
+    FPSframeCounter = 0;
+    lastFPSmeasurement = now;
+}
+
+static void measureFPS_frameDrawn() {
+    FPSframeCounter++;
+}
+
 // NO MAIN IF UNIT TEST:
 #ifndef UNITTEST
 // ---
@@ -1173,6 +1198,7 @@ int main(int argc, char** argv) {
         if (delta < (deltaspan-10)) {
             // the time passed is smaller than the optimal waiting time
             // -> sleep
+            printf("sleeping.\n");
             if (connections_NoConnectionsOpen() &&
                     !listeners_HaveActiveListeners()) {
                 // no connections, use regular sleep
@@ -1313,6 +1339,10 @@ int main(int argc, char** argv) {
 #endif
         }
 #endif
+
+        // measure FPS:
+        measureFPS_frameDrawn();
+        measureFPS();
 
         // we might want to quit if there is nothing else to do
 #ifdef USE_AUDIO
