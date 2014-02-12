@@ -1642,9 +1642,11 @@ double* qx, double* qy, double* qz, double* qrot) {
 #endif
 }
 
+#if (defined(USE_PHYSICS2D) || defined(USE_PHYSICS3D))
 void luacfuncs_objectphysics_replaceObjectRef(
         struct physicsobject* old, struct physicsobject* new) {
     struct blitwizardobject* obj = physics_getObjectUserdata(old);
     obj->physics->object = new;    
 }
+#endif
 
