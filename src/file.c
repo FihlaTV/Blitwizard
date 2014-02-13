@@ -88,10 +88,19 @@ void file_makeSlashesNative(char *path) {
 }
 
 void file_makeSlashesCrossplatform(char *path) {
+    unsigned int skipbeforeindex = 0;
+#ifdef WIN
+    if (strlen(path) >= 2 && path[0] == '\\' && path[1] == '\\') {
+        // skip network folder \\ stuff since that isn't really cross-platform
+        skipbeforeindex = 2;
+    }
+#endif
     unsigned int i = 0;
     while (i < strlen(path)) {
-        if (file_IsDirectorySeparator(path[i])) {
-            path[i] = '/';
+        if (i >= skipbeforeindex) {
+            if (file_IsDirectorySeparator(path[i])) {
+                path[i] = '/';
+            }
         }
         i++;
     }
@@ -379,7 +388,7 @@ char *file_GetDirectoryPathFromFilePath(const char *path) {
             free(pathcopy);
             return strdup("");
         } else {
-            pathcopy[i+1] = 0;
+            pathcopy[i + 1] = 0;
             return pathcopy;
         }
     }
@@ -387,6 +396,12 @@ char *file_GetDirectoryPathFromFilePath(const char *path) {
 
 int file_IsPathRelative(const char *path) {
 #ifdef WINDOWS
+    // check network paths:
+    if (strlen(path) >= 2 && path[0] == '\\' && path[1] == '\\') {
+        // network path -> absolute
+        return 1;
+    }
+    // check regular paths:
     if (PathIsRelative(path) == TRUE) {
         return 1;
     }
@@ -541,16 +556,28 @@ void file_removeDoubleSlashes(char *path) {
     unsigned int i = 0;
     int previousslash = 0;
     unsigned int len = strlen(path);
+    unsigned int skipbeforeindex = 0;
+#ifdef WIN
+    // don't remove network folder stuff
+    if (path[0] == '\\' && strlen(path) > 1) {
+        if (path[1] == '\\') {
+            skipbeforeindex = 1;
+            // this will retain \\ but shorten \\\ to \\.
+        }
+    }
+#endif
     while (i < len) {
-        if (file_IsDirectorySeparator(path[i])) {
-            if (previousslash) {
-                memmove(path+i, path+i+1, len-i);
-                len--;
-                continue;
+        if (i >= skipbeforeindex) {
+            if (file_IsDirectorySeparator(path[i])) {
+                if (previousslash) {
+                    memmove(path+i, path+i+1, len-i);
+                    len--;
+                    continue;
+                }
+                previousslash = 1;
+            } else {
+                previousslash = 0;
             }
-            previousslash = 1;
-        } else {
-            previousslash = 0;
         }
         i++;
     }
