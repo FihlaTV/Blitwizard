@@ -66,8 +66,8 @@
  to collect information on a blitwizard bug.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2013</li>
         <li><strong>License</strong>: zlib</li>
+        <li><strong>Copyright</strong>: 2013</li>
         <li><strong>Author</strong>: Jonas Thiem (jonas.thiem@gmail.com)</li>
     </ul>
 
@@ -87,6 +87,10 @@
 	<td class="name" ><a href="#getAudioChannelCount">getAudioChannelCount ()</a></td>
 	<td class="summary">Get the amount of sounds which are playing at this
  very moment.</td>
+	</tr>
+	<tr>
+	<td class="name" ><a href="#getFps">getFps ()</a></td>
+	<td class="summary">Return the current frames per second.</td>
 	</tr>
 	<tr>
 	<td class="name" ><a href="#getLogicStats">getLogicStats ()</a></td>
@@ -208,6 +212,30 @@
     <ol>
 
         number total number of active audio channels
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getFps"></a>
+    <strong>getFps ()</strong>
+    </dt>
+    <dd>
+    Return the current frames per second.
+ This indicates whether your game is running fluid or not -
+ which largely depends on the power of the computer it is running on.
+ Values of 30 or higher mean it is running well, lower values indicate
+ stuttering.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        the measured FPS value
     </ol>
 
 

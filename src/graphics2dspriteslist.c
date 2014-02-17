@@ -107,6 +107,9 @@ static AVLTreeNode *findlastnode(void) {
         return cachedlast;
     }
     AVLTreeNode *node = avl_tree_root_node(spritetree);
+    if (!node) {
+        return NULL;
+    }
     while (1) {
         AVLTreeNode* newnode = avl_tree_node_child(node, AVL_TREE_NODE_RIGHT);
         if (!newnode) {

@@ -122,6 +122,11 @@ int graphics_Init(char** error, int use3dgraphics) {
         SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
         "1", SDL_HINT_OVERRIDE);
 
+        // set minimize settings on linux to fix issues with Gnome 3:
+#ifdef UNIX
+        SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+#endif
+
         // initialize SDL
         if (SDL_Init(SDL_INIT_TIMER) < 0) {
             snprintf(errormsg,sizeof(errormsg),"Failed to initialize SDL: %s", SDL_GetError());
@@ -544,6 +549,11 @@ int resizable, const char* title, const char* renderer, char** error) {
     // destroy old window/renderer if we got one
     graphics_Close(1);
 
+    // set minimize settings on linux to fix issues with Gnome 3:
+#ifdef UNIX
+    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+#endif
+
     // create window
     if (fullscreen) {
         mainwindow = SDL_CreateWindow(title, 0, 0, width, height,
@@ -693,18 +703,6 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
             }
             if (e.type == SDL_WINDOWEVENT) {
                 if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-#ifndef WINDOWS
-#ifdef LINUX
-                    // if we are a fullscreen window, ensure we are
-                    // fullscreened
-                    // FIXME: just a workaround for
-                    // http://bugzilla.libsdl.org/show_bug.cgi?id=1349
-                    if (mainwindowfullscreen) {
-                        //SDL_SetWindowFullscreen(mainwindow, SDL_FALSE);
-                        //SDL_SetWindowFullscreen(mainwindow, SDL_TRUE);
-                    }
-#endif
-#endif
                 }
             }
             if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {

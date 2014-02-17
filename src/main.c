@@ -1198,7 +1198,6 @@ int main(int argc, char** argv) {
         if (delta < (deltaspan-10)) {
             // the time passed is smaller than the optimal waiting time
             // -> sleep
-            printf("sleeping.\n");
             if (connections_NoConnectionsOpen() &&
                     !listeners_HaveActiveListeners()) {
                 // no connections, use regular sleep
