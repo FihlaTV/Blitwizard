@@ -937,7 +937,9 @@ static int graphics2dsprites_reportVisibilityCallback(
         return 1;
     }
     if (!sprite->visible || sprite->alpha <= 0) {
-        // sprite is set to invisible;
+        // sprite is set to invisible:
+        texturemanager_usingRequest(sprite->request,
+        USING_AT_VISIBILITY_INVISIBLE);
         return 1;
     }
 

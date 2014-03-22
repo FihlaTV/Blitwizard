@@ -982,6 +982,13 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef WINDOWS
+#if (defined(USE_SDL_AUDIO) || defined(USE_SDL_GRAPHICS))
+    // tell SDL we're ready to go:
+    SDL_SetMainReady();
+#endif
+#endif
+
+#ifdef WINDOWS
     // obtain command line arguments a special way on windows:
     int argc = __argc;
     char** argv = __argv;

@@ -46,13 +46,17 @@
 #include "luafuncs_vector.h"
 
 
-/// Rotate a 2d vector around (0, 0) by a specified angle.
+/// Rotate a 2d vector around (0, 0) by a specified angle in degrees.
 // @function rotate2d
 // @tparam number pos_x the x coordinate of the vector to be rotated
 // @tparam number pos_y the y coordinate of the vector to be rotated
-// @tparam number angle the angle by which the vector should be rotated
+// @tparam number angle the angle in degrees by which the vector should be rotated
 // @treturn number the X coordinate of the rotated vector
 // @treturn number the Y coordinate of the rotated vector
+// @usage
+//  -- get the vector 1,0 turned around one quarter counter-clockwise
+//  -- (by 90 degree):
+//  new_x, new_y = blitwizard.vector.rotate2d(1.0, 0.0, 90)
 int luafuncs_vector_rotate2d(lua_State* l) {
     const char func[] = "vector.rotate2d";
     if (lua_type(l, 1) != LUA_TNUMBER) {

@@ -176,13 +176,19 @@ time_t now, int savememory) {
         usageDistant = usageNormal;
     }
     time_t usageInvisible = gtm->lastUsage[USING_AT_VISIBILITY_INVISIBLE];
+    if (usageDetail > usageInvisible || usageNormal > usageInvisible || usageDistant
+            > usageInvisible) {
+        usageInvisible = 0;
+    }
     // downscaling based on distance:
     if (usageDetail + SCALEDOWNSECONDS < now || savememory == 2
-            || texturemanager_badTextureDimensions(gtm)) {
+            || texturemanager_badTextureDimensions(gtm)
+            || (usageInvisible > usageDetail && usageDetail < 5000)) {
         // it hasn't been in detail closeup for a few seconds,
         // -> go down to high scaling:
         wantsize = 4;  // high
         if (usageNormal + SCALEDOWNSECONDSLONG < now
+            || (usageNormal + SCALEDOWNSECONDS < now && usageInvisible > usageNormal)
             ||
             (savememory &&
             usageDetail + SCALEDOWNSECONDSLONG < now &&

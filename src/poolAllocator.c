@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -50,6 +50,17 @@ struct poolAllocator {
     struct pool* pools;  // pointer to all pools
     int firstfreepool; // pool with lowest index which is not full
 };
+
+void poolAllocator_destroy(struct poolAllocator* alloc) {
+    int i = alloc->poolcount - 1;
+    while (i >= 0) {
+        free(alloc->pools[i].memory);
+        i--;
+    }
+    free(alloc->pools);
+    mutex_destroy(alloc->m);
+    free(alloc);
+}
 
 struct poolAllocator* poolAllocator_create(size_t size, int threadsafe) {
     if (size == 0) {

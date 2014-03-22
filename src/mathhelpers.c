@@ -68,7 +68,7 @@ static double anglefromzero(double x, double y) {
     if (substract180 == 1) {
         if (angle > 0) {
             angle = 180-angle;
-        }else{
+        } else {
             angle = -(180+angle);
         }
     }
