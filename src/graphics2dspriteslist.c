@@ -29,6 +29,7 @@
 #include "graphics2dspriteslist.h"
 #include "threading.h"
 #include "avl-tree/avl-tree.h"
+#include "avl-tree-helpers.h"
 
 #ifdef USE_GRAPHICS
 
@@ -91,102 +92,18 @@ static AVLTreeNode *findfirstnode(void) {
     if (cachedfirst) {
         return cachedfirst;
     }
-    AVLTreeNode *node = avl_tree_root_node(spritetree);
-    while (1) {
-        AVLTreeNode* newnode = avl_tree_node_child(node, AVL_TREE_NODE_LEFT);
-        if (!newnode) {
-            cachedfirst = node;
-            return node;
-        }
-        node = newnode;
-    }
+    cachedfirst = avl_tree_find_first_node(spritetree);
+    return cachedfirst;
 }
 
 static AVLTreeNode *findlastnode(void) {
     if (cachedlast) {
         return cachedlast;
     }
-    AVLTreeNode *node = avl_tree_root_node(spritetree);
-    if (!node) {
-        return NULL;
-    }
-    while (1) {
-        AVLTreeNode* newnode = avl_tree_node_child(node, AVL_TREE_NODE_RIGHT);
-        if (!newnode) {
-            cachedlast = node;
-            return node;
-        }
-        node = newnode;
-    }
+    cachedlast = avl_tree_find_last_node(spritetree);
+    return cachedlast;
 }
 
-static AVLTreeNode *findoutermostnode(AVLTreeNode *node, int forwards) {
-    while (1) {
-        AVLTreeNode *child;
-        if (forwards) {
-            child = avl_tree_node_child(node,
-                AVL_TREE_NODE_LEFT);
-        } else {
-            child = avl_tree_node_child(node,
-                AVL_TREE_NODE_RIGHT);
-        }
-        if (child) {
-            node = child;
-        } else {
-            break;
-        }
-    }
-    return node;
-}
-
-static AVLTreeNode *findnext(AVLTreeNode *node, int forwards) {
-    assertverifynode(node);
-    // see if we have a parent:
-    AVLTreeNode *dontreturnto = NULL;
-    while (1) {
-        assertverifynode(node);
-        // get next child in order if present:
-        AVLTreeNode* child;
-        if (forwards) {
-            child = avl_tree_node_child(
-                node, AVL_TREE_NODE_RIGHT);
-        } else {
-            child = avl_tree_node_child(
-                node, AVL_TREE_NODE_LEFT);
-        }
-        if (child && child != dontreturnto) {
-            assertverifynode(child);
-            // we want to go here! but the outermost child of this
-            return findoutermostnode(child, forwards);
-        }
-        // get next sibling (through parent) if possible:
-        AVLTreeNode* parent = avl_tree_node_parent(node);
-        if (parent) {
-            assertverifynode(parent);
-            // the parent may atually be our next node:
-            if (forwards) {
-                if (node == avl_tree_node_child(parent,
-                        AVL_TREE_NODE_LEFT)) {
-                    // parent is our forward/right node!
-                    return parent;
-                }
-            } else {
-                if (node == avl_tree_node_child(parent,
-                        AVL_TREE_NODE_RIGHT)) {
-                    // parent is our backwards/left node!
-                    return parent;
-                }
-            }
-            // look at this as node now, but make sure
-            // that we don't return back to this node.
-            dontreturnto = node;
-            node = parent;
-        } else {
-            // no parent either? we're done!
-            return NULL;
-        }
-    }
-}
 
 static void graphics2dspriteslist_doForAllSprites_Internal(
         int (*callback)(struct graphics2dsprite *sprite,
@@ -201,7 +118,7 @@ static void graphics2dspriteslist_doForAllSprites_Internal(
         if (!callback(avl_tree_node_value(node), userdata)) {
             return;
         }
-        node = findnext(node, fromtop);
+        node = avl_tree_find_next(node, fromtop);
     }
     return;
 }
