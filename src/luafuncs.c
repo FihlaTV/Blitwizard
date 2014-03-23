@@ -477,7 +477,7 @@ int luafuncs_dofile(lua_State* l) {
 }
 
 int luafuncs_getTime(lua_State* l) {
-    lua_pushnumber(l, time_GetMilliseconds());
+    lua_pushnumber(l, time_getMilliseconds());
     return 1;
 }
 
@@ -540,7 +540,7 @@ int luafuncs_trandom(lua_State* l) {
 
 int luafuncs_getRendererName(lua_State* l) {
 #ifdef USE_GRAPHICS
-    const char* p = graphics_GetCurrentRendererName();
+    const char* p = graphics_getCurrentRendererName();
     if (!p) {
         lua_pushnil(l);
         return 1;

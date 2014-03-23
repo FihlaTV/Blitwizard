@@ -553,7 +553,7 @@ const char* main_getRunDir() {
 uint64_t scriptTerminateTime = 0;
 int scriptMaxRuntime = 5000;
 int terminateCurrentScript(void* userdata) {
-    return (time_GetMilliseconds() < scriptTerminateTime);
+    return (time_getMilliseconds() < scriptTerminateTime);
 }
 
 
@@ -573,7 +573,7 @@ static int scriptargcount = 0;
 int main_startup_do(int argc, char** argv) {
     thread_markAsMainThread();
 
-    scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
+    scriptTerminateTime = time_getMilliseconds() + scriptMaxRuntime;
 
 #if defined(ANDROID) || defined(__ANDROID__)
     printinfo("Blitwizard %s starting", VERSION);
@@ -666,7 +666,8 @@ int main_startup_do(int argc, char** argv) {
                 }
                 if (strcasecmp(argv[i], "-long-execution") == 0) {
                     scriptMaxRuntime = 20000;
-                    scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
+                    scriptTerminateTime = time_getMilliseconds() +
+                        scriptMaxRuntime;
                     i++;
                     continue;
                 }
@@ -944,12 +945,12 @@ int main_startup_openScript(int argc, char** argv) {
 static uint64_t lastFPSmeasurement = 0;
 static int FPSframeCounter = 0;
 double measuredFPS = 0;
-static void measureFPS() {
+static void measureFPS(void) {
     if (lastFPSmeasurement == 0) {
-        lastFPSmeasurement = time_GetMilliseconds();
+        lastFPSmeasurement = time_getMilliseconds();
         return;
     }
-    uint64_t now = time_GetMilliseconds();
+    uint64_t now = time_getMilliseconds();
     // don't continue if time frame passed is too short:
     if (now - lastFPSmeasurement < 500) {
         return;
@@ -962,7 +963,7 @@ static void measureFPS() {
     lastFPSmeasurement = now;
 }
 
-static void measureFPS_frameDrawn() {
+static void measureFPS_frameDrawn(void) {
     FPSframeCounter++;
 }
 
@@ -1148,25 +1149,25 @@ int main(int argc, char** argv) {
 #ifdef USE_AUDIO
     uint64_t simulateaudiotime = 0;
     if (simulateaudio) {
-        simulateaudiotime = time_GetMilliseconds();
+        simulateaudiotime = time_getMilliseconds();
     }
 #endif
 
-    uint64_t logictimestamp = time_GetMilliseconds();
+    uint64_t logictimestamp = time_getMilliseconds();
     uint64_t lastdrawingtime = 0;
-    uint64_t physicstimestamp = time_GetMilliseconds();
+    uint64_t physicstimestamp = time_getMilliseconds();
     while (!wantquit) {
         // tell scripts running this frame how long they can run:
-        scriptTerminateTime = time_GetMilliseconds() + scriptMaxRuntime;
+        scriptTerminateTime = time_getMilliseconds() + scriptMaxRuntime;
 
         // do console logging:
         doConsoleLog(); 
-        uint64_t timeNow = time_GetMilliseconds();
+        uint64_t timeNow = time_getMilliseconds();
 
 #ifdef USE_AUDIO
         // simulate audio
         if (simulateaudio) {
-            while (simulateaudiotime < time_GetMilliseconds()) {
+            while (simulateaudiotime < time_getMilliseconds()) {
                 char buf[48 * 4 * 2];
                 audiomixer_GetBuffer(buf, 48 * 4 * 2);
                 simulateaudiotime += 1; // 48 * 1000 times * 4 bytes * 2
@@ -1184,21 +1185,21 @@ int main(int argc, char** argv) {
         int nodraw = 1;
 #else
         int nodraw = 1;
-        if (graphics_AreGraphicsRunning()) {
+        if (graphics_areGraphicsRunning()) {
             nodraw = 0;
         }
 #endif
         // see how much time as already passed since the last frame:
-        uint64_t delta = time_GetMilliseconds()-lastdrawingtime;
+        uint64_t delta = time_getMilliseconds() - lastdrawingtime;
         if (delta > 600) {
             printwarning("[main] warning: huge hang (%d ms) detected, "
                 "skipping logic",
             (int)delta);
             // forget about keeping up with time, this was a huge hang:
             delta = 0;
-            lastdrawingtime = time_GetMilliseconds();
-            physicstimestamp = time_GetMilliseconds();
-            logictimestamp = time_GetMilliseconds();
+            lastdrawingtime = time_getMilliseconds();
+            physicstimestamp = time_getMilliseconds();
+            logictimestamp = time_getMilliseconds();
         }
 
         // sleep/limit FPS as much as we can
@@ -1208,7 +1209,7 @@ int main(int argc, char** argv) {
             if (connections_NoConnectionsOpen() &&
                     !listeners_HaveActiveListeners()) {
                 // no connections, use regular sleep
-                time_Sleep((deltaspan-10)-delta);
+                time_sleep((deltaspan-10)-delta);
                 connections_SleepWait(0);
             } else {
                 // use connection select wait to get connection events
@@ -1221,7 +1222,7 @@ int main(int argc, char** argv) {
         }
 
         // Remember drawing time and process net events
-        lastdrawingtime = time_GetMilliseconds();
+        lastdrawingtime = time_getMilliseconds();
         if (!luafuncs_ProcessNetEvents()) {
             // there was an error processing the events
             main_Quit(1);
@@ -1229,7 +1230,7 @@ int main(int argc, char** argv) {
 
 #ifdef USE_GRAPHICS
         // check and trigger all sort of input events
-        graphics_CheckEvents(&quitevent, &mousebuttonevent, &mousemoveevent,
+        graphics_checkEvents(&quitevent, &mousebuttonevent, &mousemoveevent,
             &keyboardevent, &textevent, &putinbackground);
 #endif
         doConsoleLog();
@@ -1306,8 +1307,8 @@ int main(int argc, char** argv) {
                  logictimestamp < timeNow) {
                 // we got a problem: we aren't finished,
                 // but we hit the iteration limit
-                physicstimestamp = time_GetMilliseconds();
-                logictimestamp = time_GetMilliseconds();
+                physicstimestamp = time_getMilliseconds();
+                logictimestamp = time_getMilliseconds();
                 printwarning("[main] warning: logic is too slow, "
                 "maximum logic iterations have been reached (%d)",
                 (int)MAXLOGICITERATIONS);
@@ -1334,12 +1335,12 @@ int main(int argc, char** argv) {
         doConsoleLog();
 
 #ifdef USE_GRAPHICS
-        if (graphics_AreGraphicsRunning()) {
+        if (graphics_areGraphicsRunning()) {
 #ifdef ANDROID
             if (!appinbackground) {
 #endif
                 // draw a frame
-                graphicsrender_Draw();
+                graphicsrender_draw();
 #ifdef ANDROID
             }
 #endif
@@ -1354,7 +1355,7 @@ int main(int argc, char** argv) {
 #ifdef USE_AUDIO
         if (
 #ifdef USE_GRAPHICS
-        !graphics_AreGraphicsRunning() &&
+        !graphics_areGraphicsRunning() &&
 #endif
         connections_NoConnectionsOpen() &&
         !listeners_HaveActiveListeners() && audiomixer_NoSoundsPlaying()

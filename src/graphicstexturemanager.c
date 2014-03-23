@@ -465,7 +465,7 @@ struct graphicstexturemanaged* gtm, int slot) {
 #endif
                     // we need to retrieve this from the disk cache:
                     gtm->scalelist[i].locked = 1;
-                    diskcache_Retrieve(gtm->scalelist[i].diskcachepath,
+                    diskcache_retrieve(gtm->scalelist[i].diskcachepath,
                     texturemanager_diskCacheRetrieval,
                     (void*)&gtm->scalelist[i]);
                     // for now, return a random size:
@@ -543,7 +543,7 @@ struct graphicstexturemanaged* gtm, int slot) {
                             scaleinfo->scaletarget->locked = 1;
                             // get original texture from disk cache:
                             gtm->scalelist[gtm->origscale].locked = 1;
-                            diskcache_Retrieve(gtm->scalelist[gtm->origscale].
+                            diskcache_retrieve(gtm->scalelist[gtm->origscale].
                             diskcachepath, texturemanager_scaleOnRetrieval,
                             scaleinfo);
                             // for now, return random texture:
@@ -814,15 +814,15 @@ void* userdata) {
     graphicstexturelist_getTextureByName(canonicalPath);
     if (!gtm) {
         // add new texture entry:
-        gtm = graphicstexturelist_AddTextureToList(
+        gtm = graphicstexturelist_addTextureToList(
             canonicalPath);
         if (!gtm) {
             poolAllocator_free(textureReqBlockAlloc, request);
             free(canonicalPath);
             return NULL;
         }
-        graphicstexturelist_AddTextureToHashmap(
-        gtm);
+        graphicstexturelist_addTextureToHashmap(
+            gtm);
     }
     request->gtm = gtm;
 
@@ -1102,7 +1102,7 @@ struct graphicstexturemanaged* gtm, int neededversion) {
             if (gtm->scalelist[i].refcount <= 0 && i != neededversion) {
                 // unload texture from GPU
                 if (gtm->scalelist[i].gt) {
-                    graphicstexture_Destroy(gtm->scalelist[i].gt);
+                    graphicstexture_destroy(gtm->scalelist[i].gt);
                     gtm->scalelist[i].gt = NULL;
                     gpuMemUse -= 4 * gtm->scalelist[i].width *
                     gtm->scalelist[i].height;
@@ -1163,7 +1163,7 @@ static void texturemanager_adaptTextures(void) {
 uint64_t lastUploadReset = 0;
 void texturemanager_tick(void) {
     // measure when we started:
-    uint64_t start = time_GetMilliseconds();
+    uint64_t start = time_getMilliseconds();
 
     // lock global mutex:
     mutex_lock(textureReqListMutex);
@@ -1186,7 +1186,7 @@ void texturemanager_tick(void) {
     mutex_release(textureReqListMutex);
 
     // measure end and emit warning if this took too long:
-    uint64_t end = time_GetMilliseconds();
+    uint64_t end = time_getMilliseconds();
     uint64_t delta = end - start;
     if (delta > 500) {
         printwarning("[TEXMAN] huge hang (%d ms) detected. This shouldn't"
@@ -1233,7 +1233,7 @@ void texturemanager_deviceLost(void) {
             break;
         }
         mutex_release(textureReqListMutex);
-        time_Sleep(500);
+        time_sleep(500);
         mutex_lock(textureReqListMutex);
         needtowait = 1;
     }
@@ -1266,7 +1266,7 @@ void texturemanager_deviceLost(void) {
     }
 
     // now throw all GPU textures away:
-    graphicstexturelist_InvalidateHWTextures();
+    graphicstexturelist_invalidateHWTextures();
 
     // move all regular requests to unhandled requests:
     while (textureRequestList) {
@@ -1292,7 +1292,7 @@ void texturemanager_wipeTexture(const char* tex) {
     while (!texturemanager_textureSafeToDelete(gtm)) {
         // we need to wait. (this sucks, yes.)
         mutex_release(textureReqListMutex);
-        time_Sleep(500);
+        time_sleep(500);
         mutex_lock(textureReqListMutex);
     }
 
@@ -1330,7 +1330,7 @@ void texturemanager_wipeTexture(const char* tex) {
     }
 
     // wipe texture (it should be reloaded again):
-    graphicstexturelist_InvalidateTextureInHW(gtm);
+    graphicstexturelist_invalidateTextureInHW(gtm);
     int i = 0;
     while (i < gtm->scalelistcount) {
         struct graphicstexturescaled* st = &(gtm->scalelist[i]);

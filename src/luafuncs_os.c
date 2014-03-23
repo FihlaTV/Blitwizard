@@ -502,7 +502,7 @@ int luafuncs_sleep(lua_State *l) {
         return haveluaerror(l, badargument2, 1, "os.sleep",
         "amount of milliseconds to sleep needs to be positive");
     }
-    time_Sleep(ms);
+    time_sleep(ms);
     return 0;
 }
 

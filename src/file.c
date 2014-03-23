@@ -106,7 +106,7 @@ void file_makeSlashesCrossplatform(char *path) {
     }
 }
 
-size_t file_GetSize(const char *name) {
+size_t file_getSize(const char *name) {
 #ifdef UNIX
     // use stat to get file size:
     struct stat info;
@@ -540,7 +540,7 @@ int file_CreateDirectory(const char *name) {
 #endif
 }
 
-int file_DeleteFile(const char *name) {
+int file_deleteFile(const char *name) {
 #ifdef UNIX
     return (unlink(name) == 0);
 #else

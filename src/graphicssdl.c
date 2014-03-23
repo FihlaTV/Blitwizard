@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -46,6 +46,11 @@
 #include "main.h"
 #endif
 
+#ifdef USE_SDL_GRAPHICS_OPENGL3
+#define GL3_PROTOTYPES 1
+#include <GL/glew.h>
+#endif
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
@@ -53,11 +58,14 @@
 #include "graphics.h"
 #include "graphicstexturelist.h"
 
-
-SDL_Window* mainwindow = NULL;
-SDL_Renderer* mainrenderer = NULL;
+SDL_Window *mainwindow = NULL;
+SDL_Renderer *mainrenderer = NULL;
+#ifdef USE_SDL_GRAPHICS_OPENGL3
+SDL_GLContext *maincontext
+#endif
 int sdlvideoinit = 0;
 int sdlinit = 0;
+int manualopengl = 0;
 
 extern int graphicsactive;  // whether graphics are active/opened (1) or not (0)
 int inbackground = 0;  // whether program has focus (1) or not (0)
@@ -68,7 +76,7 @@ double centerx = 0;
 double centery = 0;
 double zoom = 1;
 
-int graphics_HaveValidWindow() {
+int graphics_haveValidWindow() {
     if (mainwindow) {
         return 1;
     }
@@ -77,13 +85,13 @@ int graphics_HaveValidWindow() {
 
 
 // initialize the video sub system, returns 1 on success or 0 on error:
-static int graphics_InitVideoSubsystem(char** error) {
+static int graphics_initVideoSubsystem(char **error) {
     char errormsg[512];
     // initialize SDL video if not done yet
     if (!sdlvideoinit) {
          // set scaling settings
         SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
-        "1", SDL_HINT_OVERRIDE);
+            "1", SDL_HINT_OVERRIDE);
 
         // initialize SDL
         if (!sdlinit) {
@@ -91,15 +99,20 @@ static int graphics_InitVideoSubsystem(char** error) {
                 snprintf(errormsg, sizeof(errormsg),
                     "Failed to initialize SDL: %s", SDL_GetError());
                 errormsg[sizeof(errormsg)-1] = 0;
-                *error = strdup(errormsg);
+                if (error) {
+                    *error = strdup(errormsg);
+                }
                 return 0;
             }
             sdlinit = 1;
         }
         if (SDL_VideoInit(NULL) < 0) {
-            snprintf(errormsg,sizeof(errormsg),"Failed to initialize SDL video: %s", SDL_GetError());
+            snprintf(errormsg, sizeof(errormsg),
+                "Failed to initialize SDL video: %s", SDL_GetError());
             errormsg[sizeof(errormsg)-1] = 0;
-            *error = strdup(errormsg);
+            if (error) {
+                *error = strdup(errormsg);
+            }
             return 0;
         }
         sdlvideoinit = 1;
@@ -113,7 +126,7 @@ static void graphics_setInitialHints(void) {
    "1", SDL_HINT_OVERRIDE);
 }
 
-int graphics_Init(char** error, int use3dgraphics) {
+int graphics_init(char **error, int use3dgraphics) {
     char errormsg[512];
     graphics3d = (use3dgraphics ? 1 : 0);
 
@@ -142,7 +155,7 @@ int graphics_Init(char** error, int use3dgraphics) {
 }
 
 
-int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
+int graphics_getWindowDimensions(unsigned int *width, unsigned int *height) {
     if (!graphics3d && mainwindow) {
         int w,h;
         SDL_GetWindowSize(mainwindow, &w,&h);
@@ -158,14 +171,14 @@ int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
 
 
 
-void graphics_Close(int preservetextures) {
+void graphics_close(int preservetextures) {
     if (!graphics3d) {
         // close graphics, and destroy textures if instructed to do so
         graphicsactive = 0;
         if (mainrenderer) {
             if (preservetextures) {
                 // preserve textures if not instructed to destroy them
-                graphicstexturelist_TransferTexturesFromHW();
+                graphicstexturelist_transferTexturesFromHW();
             }
             SDL_DestroyRenderer(mainrenderer);
             mainrenderer = NULL;
@@ -178,7 +191,7 @@ void graphics_Close(int preservetextures) {
 }
 
 #ifdef ANDROID
-void graphics_ReopenForAndroid() {
+void graphics_reopenForAndroid() {
     // throw away hardware textures:
     texturemanager_deviceLost();
 
@@ -189,7 +202,7 @@ void graphics_ReopenForAndroid() {
 
     // preserve renderer:
     char renderer[512];
-    const char* p = graphics_GetCurrentRendererName();
+    const char *p = graphics_GetCurrentRendererName();
     int len = strlen(p)+1;
     if (len >= sizeof(renderer)) {
         len = sizeof(renderer)-1;
@@ -208,26 +221,26 @@ void graphics_ReopenForAndroid() {
     title[sizeof(title)-1] = 0;
 
     // close window:
-    graphics_Close(0);
+    graphics_close(0);
 
     // reopen:
-    char* e;
-    graphics_SetMode(w, h, 1, 0, title, renderer, &e);
+    char *e;
+    graphics_setMode(w, h, 1, 0, title, renderer, &e);
 
     // transfer textures back to hardware:
     graphicstexturemanager_DeviceReopened();
 }
 #endif
 
-const char* graphics_GetWindowTitle() {
+const char *graphics_getWindowTitle() {
     if (!mainrenderer || !mainwindow) {
         return NULL;
     }
     return SDL_GetWindowTitle(mainwindow);
 }
 
-void graphics_Quit() {
-    graphics_Close(0);
+void graphics_quit() {
+    graphics_close(0);
     if (!graphics3d) {
         if (sdlvideoinit) {
             SDL_VideoQuit();
@@ -240,11 +253,17 @@ void graphics_Quit() {
 SDL_RendererInfo info;
 #if defined(ANDROID)
 static char openglstaticname[] = "opengl";
+static char opengl3staticname[] = "opengl3";
 #endif
-const char* graphics_GetCurrentRendererName() {
+const char *graphics_getCurrentRendererName() {
     if (!mainrenderer) {
         return NULL;
     }
+#ifdef USE_SDL_GRAPHICS_OPENGL3
+    if (manualopengl) {
+        return opengl3staticname;
+    }
+#endif
     SDL_GetRendererInfo(mainrenderer, &info);
 #if defined(ANDROID)
     if (strcasecmp(info.name, "opengles") == 0) {
@@ -258,10 +277,10 @@ const char* graphics_GetCurrentRendererName() {
     return info.name;
 }
 
-int* videomodesx = NULL;
-int* videomodesy = NULL;
+int *videomodesx = NULL;
+int *videomodesy = NULL;
 
-static void graphics_ReadVideoModes(void) {
+static void graphics_readVideoModes(void) {
     // free old video mode data
     if (videomodesx) {
         free(videomodesx);
@@ -324,16 +343,16 @@ static void graphics_ReadVideoModes(void) {
     }
 }
 
-int graphics_GetNumberOfVideoModes() {
-    char* error;
-    if (!graphics_InitVideoSubsystem(&error)) {
+int graphics_getNumberOfVideoModes() {
+    char *error;
+    if (!graphics_initVideoSubsystem(&error)) {
         printwarning("Failed to initialise video subsystem: %s", error);
         if (error) {
             free(error);
         }
         return 0;
     }
-    graphics_ReadVideoModes();
+    graphics_readVideoModes();
     int i = 0;
     while (videomodesx && videomodesx[i] > 0
             && videomodesy && videomodesy[i] > 0) {
@@ -342,17 +361,17 @@ int graphics_GetNumberOfVideoModes() {
     return i;
 }
 
-void graphics_GetVideoMode(int index, int* x, int* y) {
-    graphics_ReadVideoModes();
+void graphics_getVideoMode(int index, int *x, int *y) {
+    graphics_readVideoModes();
     *x = videomodesx[index];
     *y = videomodesy[index];
 }
 
-void graphics_GetDesktopVideoMode(int* x, int* y) {
-    char* error;
+void graphics_getDesktopVideoMode(int *x, int *y) {
+    char *error;
     *x = 0;
     *y = 0;
-    if (!graphics_InitVideoSubsystem(&error)) {
+    if (!graphics_initVideoSubsystem(&error)) {
         printwarning("Failed to initialise video subsystem: %s", error);
         if (error) {
             free(error);
@@ -370,21 +389,21 @@ void graphics_GetDesktopVideoMode(int* x, int* y) {
     }
 }
 
-void graphics_MinimizeWindow(void) {
+void graphics_minimizeWindow(void) {
     if (!mainwindow) {
         return;
     }
     SDL_MinimizeWindow(mainwindow);
 }
 
-int graphics_IsFullscreen(void) {
+int graphics_isFullscreen(void) {
     if (mainwindow) {
         return mainwindowfullscreen;
     }
     return 0;
 }
 
-void graphics_ToggleFullscreen(void) {
+void graphics_toggleFullscreen(void) {
     if (!graphics3d) {
         if (!mainwindow) {
             return;
@@ -404,7 +423,7 @@ void graphics_ToggleFullscreen(void) {
 }
 
 #ifdef WINDOWS
-HWND graphics_GetWindowHWND() {
+HWND graphics_getWindowHWND() {
     if (!mainwindow) {
         return NULL;
     }
@@ -419,14 +438,14 @@ HWND graphics_GetWindowHWND() {
 }
 #endif
 
-int graphics_SetMode(int width, int height, int fullscreen,
-int resizable, const char* title, const char* renderer, char** error) {
+int graphics_setMode(int width, int height, int fullscreen,
+int resizable, const char *title, const char *renderer, char **error) {
     graphics_calculateUnitToPixels(width, height);
 
 #if defined(ANDROID)
     if (!fullscreen) {
         // do not use windowed on Android
-        *error = strdup("Windowed mode is not supported on Android");
+        *error = strdup("windowed mode is not supported on Android");
         return 0;
     }
 #endif
@@ -434,7 +453,7 @@ int resizable, const char* title, const char* renderer, char** error) {
     char errormsg[512];
 
     // initialize SDL video if not done yet
-    if (!graphics_InitVideoSubsystem(error)) {
+    if (!graphics_initVideoSubsystem(error)) {
         return 0;
     }
 
@@ -443,10 +462,18 @@ int resizable, const char* title, const char* renderer, char** error) {
 #ifdef ANDROID
     char preferredrenderer[20] = "opengles";
 #else
+#ifdef USE_SDL_GRAPHICS_OPENGL3
+    char preferredrenderer[20] = "opengl3";
+#else
     char preferredrenderer[20] = "opengl";
 #endif
+#endif
+#else
+#ifdef USE_SDL_GRAPHICS_OPENGL3
+    char preferredrenderer[20] = "opengl3";
 #else
     char preferredrenderer[20] = "direct3d";
+#endif
 #endif
     int softwarerendering = 0;
     if (renderer) {
@@ -497,7 +524,7 @@ int resizable, const char* title, const char* renderer, char** error) {
     //  see if anything changes at all
     unsigned int oldw = 0;
     unsigned int oldh = 0;
-    graphics_GetWindowDimensions(&oldw,&oldh);
+    graphics_getWindowDimensions(&oldw,&oldh);
     if (mainwindow && mainrenderer &&
     width == (int)oldw && height == (int)oldh) {
         SDL_RendererInfo info;
@@ -508,8 +535,8 @@ int resizable, const char* title, const char* renderer, char** error) {
                 SDL_SetWindowTitle(mainwindow, title);
             }
             //  toggle fullscreen if desired
-            if (graphics_IsFullscreen() != fullscreen) {
-                graphics_ToggleFullscreen();
+            if (graphics_isFullscreen() != fullscreen) {
+                graphics_toggleFullscreen();
             }
             return 1;
         }
@@ -520,12 +547,12 @@ int resizable, const char* title, const char* renderer, char** error) {
     //   giving us a fake resized/padded/whatever output we don't want.
     if (fullscreen) {
         //  check all video modes in the list SDL returns for us
-        int count = graphics_GetNumberOfVideoModes();
+        int count = graphics_getNumberOfVideoModes();
         int i = 0;
         int supportedmode = 0;
         while (i < count) {
             int w,h;
-            graphics_GetVideoMode(i, &w, &h);
+            graphics_getVideoMode(i, &w, &h);
             if (w == width && h == height) {
                 supportedmode = 1;
                 break;
@@ -535,7 +562,7 @@ int resizable, const char* title, const char* renderer, char** error) {
         if (!supportedmode) {
             //  check for desktop video mode aswell
             int w,h;
-            graphics_GetDesktopVideoMode(&w,&h);
+            graphics_getDesktopVideoMode(&w,&h);
             if (w == 0 || h == 0 || width != w || height != h) {
                 *error = strdup("Video mode is not supported");
                 return 0;
@@ -547,7 +574,7 @@ int resizable, const char* title, const char* renderer, char** error) {
     texturemanager_deviceLost();
 
     // destroy old window/renderer if we got one
-    graphics_Close(1);
+    graphics_close(1);
 
     // set minimize settings on linux to fix issues with Gnome 3:
 #ifdef UNIX
@@ -639,7 +666,18 @@ int resizable, const char* title, const char* renderer, char** error) {
 
 int lastfingerdownx,lastfingerdowny;
 
-void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int button, int release, int x, int y), void (*mousemoveevent)(int x, int y), void (*keyboardevent)(const char* button, int release), void (*textevent)(const char* text), void (*putinbackground)(int background)) {
+void graphics_checkEvents(
+        void (*quitevent)(void),
+        void (*mousebuttonevent)(int button, int release, int x, int y),
+        void (*mousemoveevent)(int x, int y),
+        void (*keyboardevent)(const char *button, int release),
+        void (*textevent)(const char *text),
+        void (*putinbackground)(int background)) {
+    // initialize SDL video if not done yet
+    if (!graphics_initVideoSubsystem(NULL)) {
+        return 0;
+    }
+    
     if (!graphics3d) {
         SDL_Event e;
         memset(&e, 0, sizeof(e));
@@ -760,39 +798,39 @@ void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int 
     }
 }
 
-int graphics_GetCameraCount() {
+int graphics_getCameraCount() {
     // we only support one fake camera
     return 1;
 }
 
-int graphics_GetCameraWidth(int index) {
+int graphics_getCameraWidth(int index) {
     unsigned int w = 0;
     unsigned int h = 0;
-    graphics_GetWindowDimensions(&w, &h);    
+    graphics_getWindowDimensions(&w, &h);    
     return w;
 }
 
-int graphics_GetCameraHeight(int index) {
+int graphics_getCameraHeight(int index) {
     unsigned int w = 0;
     unsigned int h = 0;
-    graphics_GetWindowDimensions(&w, &h);
+    graphics_getWindowDimensions(&w, &h);
     return h;
 }
 
-void graphics_SetCamera2DCenterXY(int index, double x, double y) {
+void graphics_setCamera2DCenterXY(int index, double x, double y) {
     centerx = x;
     centery = y;
 }
 
-double graphics_GetCamera2DAspectRatio(int index) {
+double graphics_getCamera2DAspectRatio(int index) {
     return 1.0;
 }
 
-double graphics_GetCamera2DCenterX(int index) {
+double graphics_getCamera2DCenterX(int index) {
     return centerx;
 }
 
-double graphics_GetCamera2DCenterY(int index) {
+double graphics_getCamera2DCenterY(int index) {
     return centery;
 }
 

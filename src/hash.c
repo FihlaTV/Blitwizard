@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -65,8 +65,8 @@ uint32_t fnv_32_upper_buf(const void *buf, size_t len) {
 
 // End of public domain code.
 
-hashmap* hashmap_New(uint32_t size) {
-    hashmap* hmap = malloc(sizeof(*hmap));
+hashmap *hashmap_new(uint32_t size) {
+    hashmap *hmap = malloc(sizeof(*hmap));
     if (!hmap) {
         return NULL;
     }
@@ -80,7 +80,8 @@ hashmap* hashmap_New(uint32_t size) {
     return hmap;
 }
 
-uint32_t hashmap_GetIndex(hashmap* h, const char* buf, size_t len, int ignorecase) {
+uint32_t hashmap_getIndex(hashmap *h, const char *buf,
+        size_t len, int ignorecase) {
     uint32_t index;
     if (ignorecase) {
         index = fnv_32_upper_buf(buf, len) % h->size;
@@ -90,9 +91,10 @@ uint32_t hashmap_GetIndex(hashmap* h, const char* buf, size_t len, int ignorecas
     return index;
 }
 
-void hashmap_Free(hashmap* h) {
+void hashmap_free(hashmap *h) {
     if (h->items) {
         free(h->items);
     }
     free(h);
 }
+

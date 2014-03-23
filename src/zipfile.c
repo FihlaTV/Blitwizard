@@ -355,7 +355,7 @@ size_t sizeinfile, int encrypted) {
     // initialise sizeinfile to something senseful if zero:
     if (zfa->sizeinfile == 0) {
         // initialise to possible file size:
-        zfa->sizeinfile = file_GetSize(zfa->fname)-zfa->offsetinfile;
+        zfa->sizeinfile = file_getSize(zfa->fname)-zfa->offsetinfile;
         if (zfa->sizeinfile == 0) {
             fclose(zfa->f);
             free(zfa->fname);

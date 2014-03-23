@@ -103,10 +103,12 @@
 #define HAVE_3D_GRAPHICS
 #endif
 
+// Check if we have visible 2d graphics of any sort:
 #if defined(USE_OGRE_GRAPHICS) || defined(USE_SDL_GRAPHICS)
 #define HAVE_2D_GRAPHICS
 #endif
 
+// see if we want null graphics:
 #ifdef USE_GRAPHICS
 #define HAVE_GRAPHICS
 #ifndef HAVE_2D_GRAPHICS

@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -42,10 +42,11 @@ extern "C" {
 extern double UNIT_TO_PIXELS;
 extern int unittopixelsset;
 
-int graphics_AreGraphicsRunning(void);
+int graphics_areGraphicsRunning(void);
 // Returns 1 if the graphics are open/active, otherwise 0.
 
-int graphics_SetMode(int width, int height, int fullscreen, int resizable, const char* title, const char* renderer, char** error);
+int graphics_setMode(int width, int height, int fullscreen,
+    int resizable, const char *title, const char *renderer, char **error);
 // Set or change graphics mode.
 // This can possibly cause all textures to become unloaded and reloaded,
 // so is a possibly very slow operation.
@@ -53,164 +54,164 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
 // If you want the best for your system, go for NULL.
 
 // Return the name of the current renderer
-const char* graphics_GetCurrentRendererName(void);
+const char *graphics_getCurrentRendererName(void);
 // Get the renderer currently used for the active graphics mode.
 // Returns NULL when no mode has been set.
 
 #ifdef WINDOWS
-HWND graphics_GetWindowHWND(void); // get win32 HWND handle for the window
+HWND graphics_getWindowHWND(void); // get win32 HWND handle for the window
 #endif
 
-int graphics_GetNumberOfVideoModes(void);
+int graphics_getNumberOfVideoModes(void);
 // Get the number of supported video modes (= the modes usable in fullscreen)
 
-void graphics_GetVideoMode(int index, int* width, int* height);
+void graphics_getVideoMode(int index, int* width, int* height);
 // Get the video mode at the given index (0..graphics_GetNumberOfVideoMode()-1)
 
-void graphics_GetDesktopVideoMode(int* x, int* y);
+void graphics_getDesktopVideoMode(int* x, int* y);
 // Get the current video mode of the desktop
 
-void graphics_Close(int preservetextures);
+void graphics_close(int preservetextures);
 // Close the graphics. preservetextures 1: keep them available for use,
 // 0: dispose of them
 
-void graphics_Quit(void);
+void graphics_quit(void);
 // Quit the graphics completely
 
-int graphics_IsFullscreen(void);
+int graphics_isFullscreen(void);
 // Return if the graphics are currently running at full screen.
 // 1: yes, 0: no. Undefined result when no graphics mode set
 
-void graphics_MinimizeWindow(void);
+void graphics_minimizeWindow(void);
 // Minimize the window
 
-int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height);
+int graphics_getWindowDimensions(unsigned int* width, unsigned int* height);
 // 1 on success, 0 on error (window not opened most likely)
 
-const char* graphics_GetWindowTitle(void);
+const char* graphics_getWindowTitle(void);
 // Return the current title of the window
 
-void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int button, int release, int x, int y), void (*mousemoveevent)(int x, int y), void (*keyboardevent)(const char* button, int release), void (*textevent)(const char* text), void (*putinbackground)(int background));
+void graphics_checkEvents(void (*quitevent)(void), void (*mousebuttonevent)(int button, int release, int x, int y), void (*mousemoveevent)(int x, int y), void (*keyboardevent)(const char* button, int release), void (*textevent)(const char* text), void (*putinbackground)(int background));
 // Check for events and return info about them through the provided callbacks
 
-void graphics_TransferTexturesFromHW(void);
+void graphics_transferTexturesFromHW(void);
 // Transfer textures from SDL, e.g. if app is in background
 
-int graphics_TransferTexturesToHW(void);
+int graphics_transferTexturesToHW(void);
 // Transfer textures back to SDL
 
 #ifdef ANDROID
-void graphics_ReopenForAndroid(void);
+void graphics_reopenForAndroid(void);
 // Reopen graphics and reupload textures. Required when coming back into foreground
 #endif
 
-int graphics_HaveValidWindow(void);
+int graphics_haveValidWindow(void);
 // Returns 1 if a window is open, otherwise 0
 
 
 // CAMERA HANDLING:
 
-int graphics_GetCameraCount(void);
+int graphics_getCameraCount(void);
 // Get count of cameras
 
-int graphics_GetCameraX(int index);
+int graphics_getCameraX(int index);
 // Get the screen X position of the specified camera
 // 'index' specifies the index from 0..count-1
 // for the specific camera.
 
-int graphics_GetCameraY(int index);
+int graphics_getCameraY(int index);
 // Get the screen Y position of the specified camera
 
-int graphics_GetCameraWidth(int index);
+int graphics_getCameraWidth(int index);
 // Get the screen width of the specified camera
 
-int graphics_GetCameraHeight(int index);
+int graphics_getCameraHeight(int index);
 // Get the screen height of the specified camera
 
-void graphics_SetCameraXY(int index, int x, int y);
+void graphics_setCameraXY(int index, int x, int y);
 // Update the screen X/Y position of the camera
 
-void graphics_SetCameraSize(int index, int width, int height);
+void graphics_setCameraSize(int index, int width, int height);
 // Update width/height of the given camera
 
-double graphics_GetCamera2DZoom(int index);
+double graphics_getCamera2DZoom(int index);
 // Get 2d zoom factor of camera
 // A 2d unit on screen equals (UNIT_TO_PIXELS * factor)
 // pixels.
 
-void graphics_SetCamera2DZoom(int index, double zoom);
+void graphics_setCamera2DZoom(int index, double zoom);
 // Set 2d camera zoom factor
 
-double graphics_GetCamera3DFov(int index);
+double graphics_getCamera3DFov(int index);
 // Get the camera's 3d field of view.
 // Returns the angle that is visible through
 // the camera horizontally, e.g. 90 for 90 degree.
 
-double graphics_SetCamera3DFov(int index, double fov);
+double graphics_setCamera3DFov(int index, double fov);
 // Set the camera's 3d field of view.
 
-double graphics_GetCamera2DAspectRatio(int index);
+double graphics_getCamera2DAspectRatio(int index);
 // Get camera 2d aspect ratio.
 // Specified in vertical/horizontal,
 // 1: square, 0.5: twice as wide as vertically high
 
-void graphics_SetCamera2DAspectRatio(int index, double ratio);
+void graphics_setCamera2DAspectRatio(int index, double ratio);
 // Set camera 2d aspect ratio
 
-double graphics_GetCamera3DAspectRatio(int index);
+double graphics_getCamera3DAspectRatio(int index);
 // Get the camera 3d aspect ratio, see 2d aspect ratio.
 
-void graphics_SetCamera3DAspectRatio(int index, double ratio);
+void graphics_setCamera3DAspectRatio(int index, double ratio);
 // Set the camera 3d aspect ratio
 
-double graphics_GetCamera2DCenterX(int index);
+double graphics_getCamera2DCenterX(int index);
 // Get camera 2d center x position
 
-double graphics_GetCamera2DCenterY(int index);
+double graphics_getCamera2DCenterY(int index);
 // Get camera 2d center y position
 
-void graphics_SetCamera2DCenterXY(int index, double x, double y);
+void graphics_setCamera2DCenterXY(int index, double x, double y);
 // Set a new camera 2d center to focus at
 
-double graphics_GetCamera3DCenterX(int index);
-double graphics_GetCamera3DCenterY(int index);
-double graphics_GetCamera3DCenterZ(int index);
+double graphics_getCamera3DCenterX(int index);
+double graphics_getCamera3DCenterY(int index);
+double graphics_getCamera3DCenterZ(int index);
 // Get camera 3d center x/y/z position
 
-void graphics_SetCamera3DCenterXYZ(int index, double x, double y,
+void graphics_setCamera3DCenterXYZ(int index, double x, double y,
 double z);
 // Set a new camera 3d center to focus at 
 
-double graphics_GetCamera2DRotation(int index);
+double graphics_getCamera2DRotation(int index);
 // Get the 2d rotation angle (degree, counter-clockwise around the
 // center)
 
-void graphics_SetCamera2DRotation(int index, double degree);
+void graphics_setCamera2DRotation(int index, double degree);
 // Set the 2d rotation angle
 
-void graphics_GetCamera3DRotation(int index,
+void graphics_getCamera3DRotation(int index,
 double* x, double* y, double* z, double* r);
 // Get camera 3d rotation as quaternion
 
-void graphics_SetCamera3DRotation(int index,
+void graphics_setCamera3DRotation(int index,
 double x, double y, double z, double r);
 // Set camera 3d rotation as quaternion
 
-double graphics_GetCamera3DZNear(int index);
+double graphics_getCamera3DZNear(int index);
 // Get 3d camera z near clipping value
 
-double graphics_GetCamera3DZFar(int index);
+double graphics_getCamera3DZFar(int index);
 // Get 3d camera z far clipping value
 
-void graphics_SetCamera3DZNearFar(int index,
+void graphics_setCamera3DZNearFar(int index,
 double near, double far);
 // Set 3d camera z near/far clipping values
 
-int graphics_AddCamera(void);
+int graphics_addCamera(void);
 // Add a camera. Returns new camera index on success (>=0),
 // -1 on error.
 
-void graphics_DeleteCamera(int index);
+void graphics_deleteCamera(int index);
 // Delete a specified camera.
 // IMPORTANT: This will cause all cameras with a higher
 // index to move down by one!

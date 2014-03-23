@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -59,7 +59,7 @@ static uint64_t currentRelativeTS = 0;
 static int insideRunDelayedCallback = 0;
 
 __attribute__ ((constructor)) void luacfuncs_runDelayed_Init(void) {
-    runDelayedTS = time_GetMilliseconds();
+    runDelayedTS = time_getMilliseconds();
 }
 
 size_t luacfuncs_runDelayed_getScheduledCount(void) {
@@ -118,12 +118,12 @@ void luacfuncs_runDelayed_Do() {
 
     lua_State* l = luastate_GetStatePtr();
     if (runDelayedTS == 0) {
-        runDelayedTS = time_GetMilliseconds();
+        runDelayedTS = time_getMilliseconds();
         return;
     }
     luacfuncs_runDelayed_CleanDelayedRuns(l);
     uint64_t oldTime = runDelayedTS;
-    runDelayedTS = time_GetMilliseconds();
+    runDelayedTS = time_getMilliseconds();
     if (oldTime < runDelayedTS) {
         // time has passed, check timeouts
         struct timeoutfunc* tf = timeoutfuncs;

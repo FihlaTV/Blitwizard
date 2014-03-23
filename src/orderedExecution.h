@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -68,9 +68,9 @@ struct orderedExecutionPipeline;
 // of a specific entry:
 struct orderedExecutionOrderDependencies {
     // dependency lists:
-    void** before; // list of data pointers which need to run before
+    void **before; // list of data pointers which need to run before
     size_t beforeEntryCount;
-    void** after;  // list of data pointers which need to run after
+    void **after;  // list of data pointers which need to run after
     size_t afterEntryCount;
     // Note: listing data pointers which haven't been
     // added yet with orderedExeuction_Add is valid.
@@ -81,11 +81,11 @@ struct orderedExecutionOrderDependencies {
 };
 
 // create a new pipeline:
-struct orderedExecutionPipeline* orderedExecution_new(void (*func)(void* data));
+struct orderedExecutionPipeline *orderedExecution_new(void (*func)(void *data));
 
 // add a new entry to be called (represented by the data entry):
-int orderedExecution_add(struct orderedExecutionPipeline* pipeline,
-void* data, struct orderedExecutionOrderDependencies* deps);
+int orderedExecution_add(struct orderedExecutionPipeline *pipeline,
+void *data, struct orderedExecutionOrderDependencies *deps);
 // This function will make a deep copy of the deps struct:
 // You may free the dependency struct (including the before/after list)
 // after passing it to this function.
@@ -94,12 +94,12 @@ void* data, struct orderedExecutionOrderDependencies* deps);
 // when orderedExecution_Do is called.
 
 // remove an entry again:
-void orderedExecution_remove(struct orderedExecutionPipeline* pipeline,
-void* data);
+void orderedExecution_remove(struct orderedExecutionPipeline *pipeline,
+void *data);
 
 // call all entries in the pipeline in their according order:
-void orderedExecution_do(struct orderedExecutionPipeline* pipeline,
-void** datawithfaultydependencies);
+void orderedExecution_do(struct orderedExecutionPipeline *pipeline,
+void **datawithfaultydependencies);
 
 #endif  // BLITWIZARD_ORDEREDEXECUTION_H_
 

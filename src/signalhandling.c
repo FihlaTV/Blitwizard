@@ -234,13 +234,13 @@ static void handleerror(const char* name) {
 
     // at this point, we risk minimizing although it might cause
     // a followup crash:
-    time_Sleep(500);
+    time_sleep(500);
 #ifdef USE_GRAPHICS
-    graphics_MinimizeWindow();
+    graphics_minimizeWindow();
 #endif
 
     // wait until we quit:
-    while (1) {time_Sleep(5000);}
+    while (1) {time_sleep(5000);}
 }
 
 #ifdef WINDOWS

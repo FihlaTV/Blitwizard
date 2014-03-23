@@ -349,7 +349,7 @@ void graphics2dsprites_doForAllSpritesOnScreen(
         return;
     }
 
-    int c = graphics_GetCameraCount();
+    int c = graphics_getCameraCount();
     if (cameraId < 0 || cameraId >= c) {
         return;
     }
@@ -359,13 +359,13 @@ void graphics2dsprites_doForAllSpritesOnScreen(
     }
 
     // get position of camera in game world:
-    double zoom = graphics_GetCamera2DZoom(cameraId);
-    double ratio = graphics_GetCamera2DAspectRatio(cameraId);
-    double centerx = graphics_GetCamera2DCenterX(cameraId);
-    double centery = graphics_GetCamera2DCenterY(cameraId);
+    double zoom = graphics_getCamera2DZoom(cameraId);
+    double ratio = graphics_getCamera2DAspectRatio(cameraId);
+    double centerx = graphics_getCamera2DCenterX(cameraId);
+    double centery = graphics_getCamera2DCenterY(cameraId);
     unsigned int winw,winh;
-    winw = graphics_GetCameraWidth(cameraId);
-    winh = graphics_GetCameraHeight(cameraId);
+    winw = graphics_getCameraWidth(cameraId);
+    winh = graphics_getCameraHeight(cameraId);
     // FIXME: take care of aspect ratio here at some point
     // top-left position:
     double posx = centerx - (((double)winw)/UNIT_TO_PIXELS)*0.5*zoom;
@@ -770,10 +770,10 @@ void graphics2dsprite_calculateSizeOnScreen(
     assert(cameraId >= 0);
     assert(sprite);
     // get camera settings:
-    double zoom = graphics_GetCamera2DZoom(cameraId);
-    double ratio = graphics_GetCamera2DAspectRatio(cameraId);
-    double centerx = graphics_GetCamera2DCenterX(cameraId);
-    double centery = graphics_GetCamera2DCenterY(cameraId);
+    double zoom = graphics_getCamera2DZoom(cameraId);
+    double ratio = graphics_getCamera2DAspectRatio(cameraId);
+    double centerx = graphics_getCamera2DCenterX(cameraId);
+    double centery = graphics_getCamera2DCenterY(cameraId);
     assert(zoom > 0);
 
     // various size info things:
@@ -800,7 +800,7 @@ void graphics2dsprite_calculateSizeOnScreen(
     // texture size of full sized original texture)
     size_t actualTexW, actualTexH;
     if (tex) {
-        graphics_GetTextureDimensions(tex, &actualTexW, &actualTexH);
+        graphics_getTextureDimensions(tex, &actualTexW, &actualTexH);
     } else {
         actualTexW = texWidth;
         actualTexH = texHeight;
@@ -870,8 +870,8 @@ void graphics2dsprite_calculateSizeOnScreen(
 
         // screen center offset (if not pinned):
         unsigned int winw,winh;
-        winw = graphics_GetCameraWidth(cameraId);
-        winh = graphics_GetCameraHeight(cameraId);
+        winw = graphics_getCameraWidth(cameraId);
+        winh = graphics_getCameraHeight(cameraId);
         x += (winw/2.0);
         y += (winh/2.0);
 
@@ -944,8 +944,8 @@ static int graphics2dsprites_reportVisibilityCallback(
     }
 
     // get camera settings:
-    int sw = graphics_GetCameraWidth(cameraId);
-    int sh = graphics_GetCameraHeight(cameraId);
+    int sw = graphics_getCameraWidth(cameraId);
+    int sh = graphics_getCameraHeight(cameraId);
 
     // get sprite pos on screen:
     double x, y, w, h;
@@ -971,7 +971,7 @@ void graphics2dsprites_reportVisibility(void) {
         return;
     }
     int i = 0;
-    while (i < graphics_GetCameraCount()) {
+    while (i < graphics_getCameraCount()) {
         graphics2dsprites_doForAllSpritesOnScreen(
             i,
             &graphics2dsprites_reportVisibilityCallback,

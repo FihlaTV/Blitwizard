@@ -62,7 +62,7 @@ extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
 
 
-void graphicstexture_Destroy(struct graphicstexture* gt) {
+void graphicstexture_destroy(struct graphicstexture *gt) {
     if (!thread_isMainThread()) {
         return;
     }
@@ -138,13 +138,13 @@ static int graphicstexture_pixelFormatToSDLFormat(int format) {
     }
 }
 
-struct graphicstexture* graphicstexture_create(void* data,
-size_t width, size_t height, int format) {
+struct graphicstexture *graphicstexture_create(void *data,
+        size_t width, size_t height, int format) {
     if (!thread_isMainThread()) {
         return NULL;
     }
     // create basic texture struct:
-    struct graphicstexture* gt = malloc(sizeof(*gt));
+    struct graphicstexture *gt = malloc(sizeof(*gt));
     if (!gt) {
         return NULL;
     }
@@ -155,28 +155,29 @@ size_t width, size_t height, int format) {
 
     // create hw texture
 #ifdef DEBUGUPLOADTIMING
-    uint64_t ts1 = time_GetMilliseconds();
+    uint64_t ts1 = time_getMilliseconds();
 #endif
     gt->sdltex = SDL_CreateTexture(mainrenderer,
     graphicstexture_pixelFormatToSDLFormat(format),
     SDL_TEXTUREACCESS_STREAMING,
     gt->width, gt->height);
     if (!gt->sdltex) {
-        graphicstexture_Destroy(gt);
+        graphicstexture_destroy(gt);
         return NULL;
     }
 #ifdef DEBUGUPLOADTIMING
-    uint64_t ts2 = time_GetMilliseconds();
+    uint64_t ts2 = time_getMilliseconds();
 #endif
 
     // lock texture
-    void* pixels; int pitch;
+    void *pixels;
+    int pitch;
     if (SDL_LockTexture(gt->sdltex, NULL, &pixels, &pitch) != 0) {
-        graphicstexture_Destroy(gt);
+        graphicstexture_destroy(gt);
         return NULL;
     }
 #ifdef DEBUGUPLOADTIMING
-    uint64_t ts3 = time_GetMilliseconds();
+    uint64_t ts3 = time_getMilliseconds();
 #endif
 
     // copy pixels into texture
@@ -184,14 +185,14 @@ size_t width, size_t height, int format) {
     // FIXME: we probably need to handle pitch here??
 
 #ifdef DEBUGUPLOADTIMING
-    uint64_t ts4 = time_GetMilliseconds();
+    uint64_t ts4 = time_getMilliseconds();
 #endif
 
     // unlock texture
     SDL_UnlockTexture(gt->sdltex);
 
 #ifdef DEBUGUPLOADTIMING
-    uint64_t ts5 = time_GetMilliseconds();
+    uint64_t ts5 = time_getMilliseconds();
     if (ts5-ts1 > 100) {
         printwarning("[sdltex] texture upload duration: %dms total, "
             "%dms creation, %dms lock, %dms copy, %dms unlock",
@@ -206,23 +207,24 @@ size_t width, size_t height, int format) {
     return gt;
 }
 
-void graphics_GetTextureDimensions(struct graphicstexture* texture,
-size_t* width, size_t* height) {
+void graphics_getTextureDimensions(struct graphicstexture *texture,
+        size_t *width, size_t *height) {
     *width = texture->width;
     *height = texture->height;
 }
 
-int graphics_GetTextureFormat(struct graphicstexture* gt) {
+int graphics_getTextureFormat(struct graphicstexture *gt) {
     return gt->format;
 }
 
-int graphicstexture_PixelsFromTexture(
-struct graphicstexture* gt, void* pixels) {
+int graphicstexture_pixelsFromTexture(
+        struct graphicstexture *gt, void *pixels) {
     if (!thread_isMainThread()) {
         return 0;
     }
     // Lock SDL Texture
-    void* pixelsptr;int pitch;
+    void *pixelsptr;
+    int pitch;
     if (SDL_LockTexture(gt->sdltex, NULL, &pixelsptr, &pitch) != 0) {
         // locking failed, we cannot extract pixels
         return 0;

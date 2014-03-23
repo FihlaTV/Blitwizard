@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -54,38 +54,38 @@
 static unsigned int nulldevicewidth = 0;
 static unsigned int nulldeviceheight = 0;
 static unsigned int nulldevicefullscreen = 0;
-static char* nulldevicetitle = NULL;
+static char *nulldevicetitle = NULL;
 extern int graphicsactive;  // whether any graphics are running or not
 
-int graphics_HaveValidWindow() {
+int graphics_haveValidWindow() {
     if (nulldevicewidth && nulldeviceheight) {
         return 1;
     }
     return 0;
 }
 
-void graphics_InvalidateHWTexture(struct graphicstexture* gt) {
+void graphics_invalidateHWTexture(struct graphicstexture *gt) {
     return;
 }
 
-void graphics_DestroyHWTexture(struct graphicstexture* gt) {
+void graphics_destroyHWTexture(struct graphicstexture *gt) {
     return;
 }
 
-int graphics_Init(char** error, int use3dgraphics) {
+int graphics_init(char **error, int use3dgraphics) {
     *error = strdup("3d graphics not available");
     return 1;
 }
 
-int graphics_TextureToHW(struct graphicstexture* gt) {
+int graphics_textureToHW(struct graphicstexture *gt) {
     return 1;
 }
 
-void graphics_TextureFromHW(struct graphicstexture* gt) {
+void graphics_textureFromHW(struct graphicstexture *gt) {
     return;
 }
 
-int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
+int graphics_getWindowDimensions(unsigned int *width, unsigned int *height) {
     if (nulldevicewidth) {
         *width = nulldevicewidth;
         *height = nulldeviceheight;
@@ -94,7 +94,7 @@ int graphics_GetWindowDimensions(unsigned int* width, unsigned int* height) {
     return 0;
 }
 
-void graphics_Close(int preservetextures) {
+void graphics_close(int preservetextures) {
     graphicsactive = 0;
     nulldevicewidth = 0;
     nulldeviceheight = 0;
@@ -105,37 +105,37 @@ void graphics_Close(int preservetextures) {
 }
 
 #ifdef ANDROID
-void graphics_ReopenForAndroid() {
+void graphics_reopenForAndroid() {
 
 }
 #endif
 
-const char* graphics_GetWindowTitle() {
+const char *graphics_getWindowTitle() {
     if (!nulldevicewidth && !nulldeviceheight) {
         return NULL;
     }
     return nulldevicetitle;
 }
 
-void graphics_Quit() {
+void graphics_quit() {
     graphics_Close(0);
 }
 
 static char nullstaticname[] = "nulldevice";
-const char* graphics_GetCurrentRendererName() {
+const char *graphics_getCurrentRendererName() {
     return nullstaticname;
 }
 
-int graphics_GetNumberOfVideoModes() {
+int graphics_getNumberOfVideoModes() {
     return GRAPHICS_NULL_VIDEOMODES_COUNT;
 }
 
-void graphics_GetVideoMode(int index, int* x, int* y) {
+void graphics_getVideoMode(int index, int *x, int *y) {
     *x = GRAPHICS_NULL_VIDEOMODES_X[index];
     *y = GRAPHICS_NULL_VIDEOMODES_Y[index];
 }
 
-void graphics_GetDesktopVideoMode(int* x, int* y) {
+void graphics_getDesktopVideoMode(int *x, int *y) {
     if (nulldevicefullscreen && nulldevicewidth) {
         *x = nulldevicewidth;
         *y = nulldeviceheight;
@@ -145,18 +145,18 @@ void graphics_GetDesktopVideoMode(int* x, int* y) {
     }
 }
 
-void graphics_MinimizeWindow() {
+void graphics_minimizeWindow() {
     return;
 }
 
-int graphics_IsFullscreen() {
+int graphics_isFullscreen() {
     if (nulldevicewidth) {
         return nulldevicefullscreen;
     }
     return 0;
 }
 
-void graphics_ToggleFullscreen() {
+void graphics_toggleFullscreen() {
     if (!nulldevicewidth) {
         return;
     }
@@ -168,12 +168,12 @@ void graphics_ToggleFullscreen() {
 }
 
 #ifdef WINDOWS
-HWND graphics_GetWindowHWND() {
+HWND graphics_getWindowHWND() {
     return NULL;
 }
 #endif
 
-int graphics_SetMode(int width, int height, int fullscreen, int resizable, const char* title, const char* renderer, char** error) {
+int graphics_setMode(int width, int height, int fullscreen, int resizable, const char *title, const char *renderer, char **error) {
 
 #if defined(ANDROID)
     if (!fullscreen) {
@@ -207,16 +207,22 @@ int graphics_SetMode(int width, int height, int fullscreen, int resizable, const
 }
 
 
-void graphicsrender_StartFrame() {
+void graphicsrender_startFrame() {
     return;
 }
 
-void graphicsrender_CompleteFrame() {
+void graphicsrender_completeFrame() {
     return;
 }
 
 
-void graphics_CheckEvents(void (*quitevent)(void), void (*mousebuttonevent)(int button, int release, int x, int y), void (*mousemoveevent)(int x, int y), void (*keyboardevent)(const char* button, int release), void (*textevent)(const char* text), void (*putinbackground)(int background)) {
+void graphics_checkEvents(
+        void (*quitevent)(void),
+        void (*mousebuttonevent)(int button, int release, int x, int y),
+        void (*mousemoveevent)(int x, int y),
+        void (*keyboardevent)(const char *button, int release),
+        void (*textevent)(const char *text),
+        void (*putinbackground)(int background)) {
     return;
 }
 

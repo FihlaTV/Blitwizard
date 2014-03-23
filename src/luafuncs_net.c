@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -214,7 +214,7 @@ static int garbagecollect_netstream(lua_State* l) {
 
                     // keep open and autoclose when no activity:
                     if (stream->c->canautoclose && stream->c->lastreadtime
-                            + 20000 > time_GetMilliseconds()) {
+                            + 20000 > time_getMilliseconds()) {
 #ifdef CONNECTIONSDEBUG
                         printinfo("[connections] keeping %d around for "
                         "autoclose", stream->c->socket);
@@ -806,7 +806,7 @@ int connectionevents(int port, int socket, const char* ip, void* sslptr, void* u
     c->targetport = port;
     c->connected = 1;
     c->luarefcount = 1; // since we pass it to the callback now.
-    c->lastreadtime = time_GetMilliseconds();
+    c->lastreadtime = time_getMilliseconds();
     c->error = -1;
     c->userdata = l;
     c->autoclosecallback = &clearconnectioncallbacks;

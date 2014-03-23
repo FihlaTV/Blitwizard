@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -80,7 +80,7 @@ int luafuncs_setMode(lua_State* l) {
 #ifdef USE_GRAPHICS
     if (lua_gettop(l) <= 0) {
         // close window if no parameters
-        graphics_Quit();
+        graphics_quit();
         return 0;
     }
 
@@ -121,7 +121,7 @@ int luafuncs_setMode(lua_State* l) {
 
     // apply mode:
     char* error;
-    if (!graphics_SetMode(x, y, fullscreen, 0, title, renderer, &error)) {
+    if (!graphics_setMode(x, y, fullscreen, 0, title, renderer, &error)) {
         if (error) {
             lua_pushstring(l, error);
             free(error);
@@ -172,7 +172,7 @@ int luafuncs_gameUnitToPixels(lua_State* l) {
 int luafuncs_getWindowSize(lua_State* l) {
 #ifdef USE_GRAPHICS
     unsigned int w,h;
-    if (!graphics_GetWindowDimensions(&w,&h)) {
+    if (!graphics_getWindowDimensions(&w,&h)) {
         lua_pushstring(l, "Failed to get window size");
         return lua_error(l);
     }
@@ -202,12 +202,12 @@ int luafuncs_getWindowSize(lua_State* l) {
 //   end
 int luafuncs_getDisplayModes(lua_State* l) {
 #ifdef USE_GRAPHICS
-    int c = graphics_GetNumberOfVideoModes();
+    int c = graphics_getNumberOfVideoModes();
     lua_createtable(l, 1, 0);
 
     // first, add desktop mode
     int desktopw,desktoph;
-    graphics_GetDesktopVideoMode(&desktopw, &desktoph);
+    graphics_getDesktopVideoMode(&desktopw, &desktoph);
 
     // resolution table with desktop width, height
     lua_createtable(l, 2, 0);
@@ -228,7 +228,7 @@ int luafuncs_getDisplayModes(lua_State* l) {
     while (i <= c) {
         // add all supported video modes...
         int w,h;
-        graphics_GetVideoMode(i, &w, &h);
+        graphics_getVideoMode(i, &w, &h);
 
         // ...but not the desktop mode twice
         if (w == desktopw && h == desktoph) {
@@ -311,7 +311,7 @@ int luafuncs_forceTextureReload(lua_State* l) {
 int luafuncs_getDesktopDisplayMode(lua_State* l) {
 #ifdef USE_GRAPHICS
     int w,h;
-    graphics_GetDesktopVideoMode(&w, &h);
+    graphics_getDesktopVideoMode(&w, &h);
     lua_pushnumber(l, w);
     lua_pushnumber(l, h);
     return 2;

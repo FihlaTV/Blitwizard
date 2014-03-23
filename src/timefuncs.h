@@ -28,7 +28,7 @@
 #include "os.h"
 #include <stdint.h>
 
-uint64_t time_GetMilliseconds(void);
+uint64_t time_getMilliseconds(void);
 // Timestamp derived from SDL_GetTicks(),
 // but deals with wraps (SDL_GetTicks() is originally
 // an uint32_t).
@@ -41,14 +41,14 @@ uint64_t time_GetMilliseconds(void);
 // returned, but the time will never wrap/suddenly
 // jump backwards until uint64_t is exceeded.
 
-uint64_t time_GetMicroseconds(void);
+uint64_t time_getMicroseconds(void);
 // Time which has passed in micro seconds since an undefined
 // point in time (e.g. program start).
 //
 // Please note this is unimplemented on some systems
 // (returns always 0).
 
-void time_Sleep(uint32_t milliseconds);
+void time_sleep(uint32_t milliseconds);
 // Sleep for a specified amount of time.
 
 #endif  // BLITWIZARD_TIMEFUNCS_H_

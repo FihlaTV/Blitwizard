@@ -53,7 +53,7 @@ int startinitialised = 0;
 
 uint64_t oldtime = 0;
 uint64_t timeoffset = 0;
-uint64_t time_GetMilliseconds() {
+uint64_t time_getMilliseconds() {
 #if defined(HAVE_SDL) || defined(WINDOWS)
 #ifdef HAVE_SDL
     uint64_t i = SDL_GetTicks();
@@ -109,7 +109,7 @@ uint64_t time_GetMilliseconds() {
     return i;
 }
 
-uint64_t time_GetMicroseconds() {
+uint64_t time_getMicroseconds() {
 #ifdef LINUX
     if (!startinitialised) {
         clock_gettime(CLOCK_MONOTONIC, &lastunixtime);
@@ -129,7 +129,7 @@ uint64_t time_GetMicroseconds() {
 #endif
 }
 
-void time_Sleep(uint32_t milliseconds) {
+void time_sleep(uint32_t milliseconds) {
 #ifdef HAVE_SDL
     SDL_Delay(milliseconds);
 #else

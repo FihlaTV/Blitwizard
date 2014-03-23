@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -46,6 +46,10 @@
 #include "main.h"
 #endif
 
+#ifdef USE_SDL_GRAPHICS_OPENGL3
+#include <GL/glew.h>
+#endif
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
@@ -69,19 +73,20 @@ extern int inbackground;
 extern int graphics3d;
 extern int mainwindowfullscreen;
 
-void graphics_SetCamera2DZoom(int index, double newzoom) {
+void graphics_setCamera2DZoom(int index, double newzoom) {
     if (index == 0) {
         zoom = newzoom;
     }
 }
 
-double graphics_GetCamera2DZoom(int index) {
+double graphics_getCamera2DZoom(int index) {
     if (index != 0) {return 0;}
     return zoom;
 }
 
-void graphicsrender_DrawRectangle(int x, int y, int width, int height,
-float r, float g, float b, float a) {
+void graphicsrender_drawRectangle(
+        int x, int y, int width, int height,
+        float r, float g, float b, float a) {
     if (!graphics3d) {
         SDL_SetRenderDrawColor(mainrenderer, (int)((float)r * 255.0f),
         (int)((float)g * 255.0f), (int)((float)b * 255.0f), (int)((float)a * 255.0f));
@@ -96,7 +101,14 @@ float r, float g, float b, float a) {
     }
 }
 
-int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float alpha, unsigned int sourcex, unsigned int sourcey, unsigned int sourcewidth, unsigned int sourceheight, unsigned int drawwidth, unsigned int drawheight, int rotationcenterx, int rotationcentery, double rotationangle, int horiflipped, double red, double green, double blue, int textureFiltering) {
+int graphicsrender_drawCropped(
+        struct graphicstexture* gt, int x, int y, float alpha,
+        unsigned int sourcex, unsigned int sourcey,
+        unsigned int sourcewidth, unsigned int sourceheight,
+        unsigned int drawwidth, unsigned int drawheight,
+        int rotationcenterx, int rotationcentery, double rotationangle,
+        int horiflipped,
+        double red, double green, double blue, int textureFiltering) {
     if (alpha <= 0) {
         return 1;
     }
@@ -188,12 +200,12 @@ int graphicsrender_DrawCropped(struct graphicstexture* gt, int x, int y, float a
     return 1;
 }
 
-void graphicssdlrender_StartFrame(void) {
+void graphicssdlrender_startFrame(void) {
     SDL_SetRenderDrawColor(mainrenderer, 0, 0, 0, 1);
     SDL_RenderClear(mainrenderer);
 }
 
-void graphicssdlrender_CompleteFrame(void) {
+void graphicssdlrender_completeFrame(void) {
     SDL_RenderPresent(mainrenderer);
 }
 
@@ -217,7 +229,7 @@ static int graphicssdlrender_spriteCallback(
     &sourceWidth, &sourceHeight, &angle, &horiflip, 0);
 
     // render:
-    graphicsrender_DrawCropped(tex, x, y, sprite->alpha,
+    graphicsrender_drawCropped(tex, x, y, sprite->alpha,
     sourceX, sourceY, sourceWidth, sourceHeight, width, height,
     sourceWidth/2, sourceHeight/2, angle, horiflip,
     sprite->r, sprite->g, sprite->b,
@@ -225,18 +237,18 @@ static int graphicssdlrender_spriteCallback(
     return 1;
 }
 
-void graphicsrender_Draw(void) {
-    graphicssdlrender_StartFrame();
+void graphicsrender_draw(void) {
+    graphicssdlrender_startFrame();
 
     graphics2dsprites_lockListOrTreeAccess();
     // render world sprites:
-    double w = graphics_GetCameraWidth(0);
-    double h = graphics_GetCameraHeight(0);
-    double z = graphics_GetCamera2DZoom(0);
+    double w = graphics_getCameraWidth(0);
+    double h = graphics_getCameraHeight(0);
+    double z = graphics_getCamera2DZoom(0);
     double cwidth = (w/UNIT_TO_PIXELS) * z;
     double cheight = (w/UNIT_TO_PIXELS) * z;
-    double ctopleftx = graphics_GetCamera2DCenterX(0) - cwidth/2;
-    double ctoplefty = graphics_GetCamera2DCenterY(0) - cheight/2;
+    double ctopleftx = graphics_getCamera2DCenterX(0) - cwidth/2;
+    double ctoplefty = graphics_getCamera2DCenterY(0) - cheight/2;
     graphics2dspritestree_doForAllSpritesSortedBottomToTop(
         ctopleftx, ctoplefty, cwidth, cheight,
         &graphicssdlrender_spriteCallback, NULL);
@@ -245,7 +257,7 @@ void graphicsrender_Draw(void) {
         &graphicssdlrender_spriteCallback, NULL);
     graphics2dsprites_releaseListOrTreeAccess();
 
-    graphicssdlrender_CompleteFrame();
+    graphicssdlrender_completeFrame();
 }
 
 #endif  // USE_SDL_GRAPHICS

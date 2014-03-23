@@ -260,7 +260,7 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
         // check for auto close:
         if (c->canautoclose && c->wantautoclose &&
                 (c->error >= 0 || c->lastreadtime + 30000 <
-                time_GetMilliseconds()) && !c->closewhensent) {
+                time_getMilliseconds()) && !c->closewhensent) {
             if (c->error >= 0) { // connection already error'd, we can get rid of it:
 #ifdef CONNECTIONSDEBUG
                 printinfo("[connections] autoclosing connection %d", c->socket);
@@ -488,7 +488,7 @@ int connections_CheckAll(int (*connectedcallback)(struct connection* c), int (*r
                 }
                 if (r > 0) { // we successfully received new bytes
                     c->inbufbytes += r;
-                    c->lastreadtime = time_GetMilliseconds();
+                    c->lastreadtime = time_getMilliseconds();
                     int closed = 0;
                     if (!connections_ProcessReceivedData(c, readcallback,
                             &closed)) {
@@ -582,7 +582,7 @@ void connections_Init(struct connection* c, const char* target, int port, int li
     c->lowdelay = lowdelay;
     c->targetport = port;
     c->linebuffered = linebuffered;
-    c->lastreadtime = time_GetMilliseconds();
+    c->lastreadtime = time_getMilliseconds();
     if (connectionlist) {
         c->next = connectionlist;
     }

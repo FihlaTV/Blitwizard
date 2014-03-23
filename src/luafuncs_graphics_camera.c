@@ -177,7 +177,7 @@ int index, int arg, const char* func) {
 }
 
 int toluacameraid(lua_State* l,
-int index, int arg, const char* func) {
+        int index, int arg, const char* func) {
     struct luacameralistentry* le = toluacameralistentry(l, index, arg,
     func);
     return le->cameraslot;
@@ -189,7 +189,7 @@ int index, int arg, const char* func) {
 // @treturn table a table list array containing @{blitwizard.graphics.camera|camera} items
 int luafuncs_getCameras(lua_State* l) {
     lua_newtable(l);
-    int c = graphics_GetCameraCount();
+    int c = graphics_getCameraCount();
     int i = 0;
     while (i < c) {
         struct luacameralistentry* e = malloc(sizeof(*e));
@@ -250,7 +250,7 @@ int luafuncs_camera_destroy(lua_State* l) {
 #else
     struct luacameralistentry* e = toluacameralistentry(
     l, 1, 0, "blitwizard.graphics.camera:destroy");
-    graphics_DeleteCamera(e->cameraslot);
+    graphics_deleteCamera(e->cameraslot);
     int slot = e->cameraslot;
     e->cameraslot = -1;
     // now, disable all existing entries in the list of refs we gave out:
@@ -281,7 +281,7 @@ int luafuncs_camera_new(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
     return haveluaerror(l, "the SDL renderer doesn't support multiple cameras");
 #else
-    int i = graphics_AddCamera();
+    int i = graphics_addCamera();
     if (i < 0) {
         return haveluaerror(l, "error when adding the new camera");
     }
@@ -361,14 +361,14 @@ int luafuncs_camera_screenPosTo2dWorldPos(lua_State* l) {
     double y = lua_tonumber(l, 3);
     
     // calculate camera top left world position:
-    double tx = graphics_GetCamera2DCenterX(e->cameraslot);
-    double ty = graphics_GetCamera2DCenterY(e->cameraslot);
+    double tx = graphics_getCamera2DCenterX(e->cameraslot);
+    double ty = graphics_getCamera2DCenterY(e->cameraslot);
     double zoomscale =
-    (UNIT_TO_PIXELS * graphics_GetCamera2DZoom(e->cameraslot))
-    / (double)UNIT_TO_PIXELS_DEFAULT;
-    double cameraWidth = graphics_GetCameraWidth(e->cameraslot)
+        (UNIT_TO_PIXELS * graphics_getCamera2DZoom(e->cameraslot))
+        / (double)UNIT_TO_PIXELS_DEFAULT;
+    double cameraWidth = graphics_getCameraWidth(e->cameraslot)
         / (double)UNIT_TO_PIXELS;
-    double cameraHeight = graphics_GetCameraHeight(e->cameraslot)
+    double cameraHeight = graphics_getCameraHeight(e->cameraslot)
         / (double)UNIT_TO_PIXELS;
     tx -= (cameraWidth / zoomscale) * 0.5f;
     ty -= (cameraHeight / zoomscale) * 0.5f;
@@ -382,8 +382,8 @@ int luafuncs_camera_screenPosTo2dWorldPos(lua_State* l) {
     y += cameraHeight / 2;
 
     // the onscreen coordinates need to be translated into "zoomed" space:
-    x /= graphics_GetCamera2DZoom(e->cameraslot);
-    y /= graphics_GetCamera2DZoom(e->cameraslot);
+    x /= graphics_getCamera2DZoom(e->cameraslot);
+    y /= graphics_getCamera2DZoom(e->cameraslot);
 
     lua_pushnumber(l, tx + x);
     lua_pushnumber(l, ty + y);
@@ -410,17 +410,19 @@ int luafuncs_camera_screenPosTo2dWorldPos(lua_State* l) {
 // camera:set2dCenter(3, 3)
 int luafuncs_camera_set2dCenter(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:set2dCenter");
+        l, 1, 0, "blitwizard.graphics.camera:set2dCenter");
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.graphics.camera:set2dCenter", "number", lua_strtype(l, 2));
+            "blitwizard.graphics.camera:set2dCenter", "number",
+            lua_strtype(l, 2));
     }
     if (lua_type(l, 3) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 2,
-        "blitwizard.graphics.camera:set3dCenter", "number", lua_strtype(l, 3));
+            "blitwizard.graphics.camera:set3dCenter", "number",
+            lua_strtype(l, 3));
     }
-    graphics_SetCamera2DCenterXY(e->cameraslot, lua_tonumber(l, 2),
-    lua_tonumber(l, 3)); 
+    graphics_setCamera2DCenterXY(e->cameraslot, lua_tonumber(l, 2),
+        lua_tonumber(l, 3)); 
     return 0;
 }
 
@@ -478,9 +480,9 @@ int luafuncs_camera_getDimensions(lua_State* l) {
 
     // return visible area dimensions:
     // FIXME: take aspect ratio into account once it can be changed
-    double w = graphics_GetCameraWidth(e->cameraslot);
-    double h = graphics_GetCameraHeight(e->cameraslot);
-    double z = graphics_GetCamera2DZoom(e->cameraslot);
+    double w = graphics_getCameraWidth(e->cameraslot);
+    double h = graphics_getCameraHeight(e->cameraslot);
+    double z = graphics_getCamera2DZoom(e->cameraslot);
     if (!considerzoom) {
         z = 1;
     }
@@ -500,9 +502,9 @@ int luafuncs_camera_getDimensions(lua_State* l) {
 // @treturn number height Height of the camera on the screen in pixels
 int luafuncs_camera_getPixelDimensionsOnScreen(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:getPixelDimensionsOnScreen");
-    lua_pushnumber(l, graphics_GetCameraWidth(e->cameraslot));
-    lua_pushnumber(l, graphics_GetCameraHeight(e->cameraslot));
+        l, 1, 0, "blitwizard.graphics.camera:getPixelDimensionsOnScreen");
+    lua_pushnumber(l, graphics_getCameraWidth(e->cameraslot));
+    lua_pushnumber(l, graphics_getCameraHeight(e->cameraslot));
     return 2;
 }
 
@@ -512,20 +514,21 @@ int luafuncs_camera_getPixelDimensionsOnScreen(lua_State* l) {
 // @tparam number height Height of the camera on the screen in pixels
 int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {
 #ifdef USE_SDL_GRAPHICS
-    return haveluaerror(l, "the SDL renderer doesn't support resizing cameras");
+    return haveluaerror(l, "the SDL renderer doesn't support resizing "
+        "cameras");
 #else
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizad.graphics.camera:setPixelDimensionsOnScreen");
+        l, 1, 0, "blitwizad.graphics.camera:setPixelDimensionsOnScreen");
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1, "blitwizard.graphics.camera:"
-        "setPixelDimensionsOnScreen", "number", lua_strtype(l, 2));
+            "setPixelDimensionsOnScreen", "number", lua_strtype(l, 2));
     }
     if (lua_type(l, 3) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 2, "blitwizard.graphics.camera:"
-        "setPixelDimensionsOnScreen", "number", lua_strtype(l, 3));
+            "setPixelDimensionsOnScreen", "number", lua_strtype(l, 3));
     }
-    graphics_SetCameraSize(e->cameraslot, lua_tonumber(l, 2),
-    lua_tonumber(l, 3));
+    graphics_setCameraSize(e->cameraslot, lua_tonumber(l, 2),
+        lua_tonumber(l, 3));
     return 0;
 #endif
 }
@@ -536,8 +539,8 @@ int luafuncs_camera_setPixelDimensionsOnScreen(lua_State* l) {
 // @treturn number zoom_factor the zoom factor of the camera
 int luafuncs_camera_get2dZoomFactor(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:get2dZoomFactor");
-    lua_pushnumber(l, graphics_GetCamera2DZoom(e->cameraslot));
+        l, 1, 0, "blitwizard.graphics.camera:get2dZoomFactor");
+    lua_pushnumber(l, graphics_getCamera2DZoom(e->cameraslot));
     return 1;
 }
 
@@ -550,18 +553,18 @@ int luafuncs_camera_get2dZoomFactor(lua_State* l) {
 // @tparam number zoom_factor the new zoom factor
 int luafuncs_camera_set2dZoomFactor(lua_State* l) {
     struct luacameralistentry* e = toluacameralistentry(
-    l, 1, 0, "blitwizard.graphics.camera:set2dZoomFactor");
+        l, 1, 0, "blitwizard.graphics.camera:set2dZoomFactor");
     if (lua_type(l, 2) != LUA_TNUMBER) {
         return haveluaerror(l, badargument1, 1,
-        "blitwizard.graphics.camera:set2dZoomFactor",
-        "number", lua_strtype(l, 2));
+            "blitwizard.graphics.camera:set2dZoomFactor",
+            "number", lua_strtype(l, 2));
     }
     if (lua_tonumber(l, 2) <= 0) {
         return haveluaerror(l, badargument2, 1,
-        "blitwizard.graphics.camera:set2dZoomFactor",
-        "zoom factor is zero or negative");
+            "blitwizard.graphics.camera:set2dZoomFactor",
+            "zoom factor is zero or negative");
     }
-    graphics_SetCamera2DZoom(e->cameraslot, lua_tonumber(l, 2));
+    graphics_setCamera2DZoom(e->cameraslot, lua_tonumber(l, 2));
     return 0;
 }
 

@@ -46,21 +46,21 @@ size_t width, size_t height, int format);
 // graphicstexture_getDesiredFormat() is rejected.
 
 // Destroy graphics texure by handle:
-void graphicstexture_Destroy(struct graphicstexture* texture);
+void graphicstexture_destroy(struct graphicstexture* texture);
 
 // Get texture dimensions:
-void graphics_GetTextureDimensions(struct graphicstexture* texture,
+void graphics_getTextureDimensions(struct graphicstexture* texture,
 size_t* width, size_t* height);
 
 // Get texture format
-int graphics_GetTextureFormat(struct graphicstexture* texture);
+int graphics_getTextureFormat(struct graphicstexture* texture);
 
 // Extract pixel data from texture again (not necessarily supported
 // by all renderers). The pixels pointer must point to a buffer
 // which is large enough to hold the pixel data of the texture.
 // Returns 1 on success (pixels will be modified to hold the data),
 // otherwise 0 (pixels will have undefined contents).
-int graphicstexture_PixelsFromTexture(
+int graphicstexture_pixelsFromTexture(
 struct graphicstexture* gt, void* pixels);
 
 #endif  // BLITWIZARD_GRAPHICSTEXTURE_H_

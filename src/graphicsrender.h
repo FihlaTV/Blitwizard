@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,7 +24,7 @@
 #ifndef BLITWIZARD_GRAPHICSRENDER_H_
 #define BLITWIZARD_GRAPHICSRENDER_H_
 
-void graphicsrender_Draw(void);
+void graphicsrender_draw(void);
 // Draw a frame
 
 #endif  // BLITWIZARD_GRAPHICSRENDER_H_

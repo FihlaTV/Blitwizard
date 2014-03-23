@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -51,7 +51,7 @@
 #include "threading.h"
 
 
-void graphicstexture_Destroy(struct graphicstexture* gt) {
+void graphicstexture_destroy(struct graphicstexture *gt) {
     if (!thread_IsMainThread()) {
         return;
     }
@@ -65,13 +65,13 @@ int graphicstexture_getDesiredFormat(void) {
     return PIXELFORMAT_32RGBA;
 }
 
-struct graphicstexture* graphicstexture_create(void* data,
-size_t width, size_t height, int format) {
+struct graphicstexture *graphicstexture_create(void *data,
+        size_t width, size_t height, int format) {
     if (!thread_IsMainThread()) {
         return NULL;
     }
     // create basic texture struct:
-    struct graphicstexture* gt = malloc(sizeof(*gt));
+    struct graphicstexture *gt = malloc(sizeof(*gt));
     if (!gt) {
         return NULL;
     }
@@ -102,18 +102,18 @@ size_t width, size_t height, int format) {
     return gt;
 }
 
-void graphics_GetTextureDimensions(struct graphicstexture* texture,
-size_t* width, size_t* height) {
+void graphics_getTextureDimensions(struct graphicstexture *texture,
+        size_t *width, size_t *height) {
     *width = texture->width;
     *height = texture->height;
 }
 
-int graphics_GetTextureFormat(struct graphicstexture* gt) {
+int graphics_getTextureFormat(struct graphicstexture *gt) {
     return gt->format;
 }
 
-int graphicstexture_PixelsFromTexture(
-struct graphicstexture* gt, void* pixels) {
+int graphicstexture_pixelsFromTexture(
+        struct graphicstexture *gt, void *pixels) {
     if (!thread_IsMainThread()) {
         return 0;
     }

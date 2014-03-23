@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -31,7 +31,7 @@
 // Stores data in the disk cache and returns the path
 // which may be used to retrieve it again.
 // Please free() the path as soon as you're done with it.
-char* diskcache_Store(char* data, size_t datalength);
+char *diskcache_store(char *data, size_t datalength);
 
 // Retrieve a disk cache item again by path.
 // On success, the callback is called with the pointer to the
@@ -39,11 +39,11 @@ char* diskcache_Store(char* data, size_t datalength);
 // On failure, the callback will be passed NULL as data pointer.
 // The callback will happen in another thread!
 // Be sure your callback is thread-safe!
-void diskcache_Retrieve(const char* path, void (*callback)(void* data,
-size_t datalength, void* userdata), void* userdata);
+void diskcache_retrieve(const char *path, void (*callback)(void* data,
+    size_t datalength, void* userdata), void* userdata);
 
 // Delete an item from the disk cache:
-void diskcache_Delete(const char* path);
+void diskcache_delete(const char *path);
 
 #endif  // BLITWIZARD_DISKCACHE_H_
 

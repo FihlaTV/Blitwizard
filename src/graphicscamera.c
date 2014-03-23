@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2013 Jonas Thiem
+  Copyright (C) 2013-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -45,7 +45,7 @@
 #define MAXCAMERAS 16
 struct cameraentry* camentry[MAXCAMERAS];
 
-void addFirstCamera(void);
+static void addFirstCamera(void);
 __attribute__((constructor)) void clearCameraEntries(void) {
     int i = 0;
     while (i < MAXCAMERAS) {
@@ -55,13 +55,13 @@ __attribute__((constructor)) void clearCameraEntries(void) {
     addFirstCamera();
 }
 
-void addFirstCamera(void) {
+static void addFirstCamera(void) {
     if (camentry[0] == NULL) {
         assert(graphics_AddCamera() == 0);
     }
 }
 
-int graphics_GetCameraCount(void) {
+int graphics_getCameraCount(void) {
     int c = 0;
     int i = 0;
     while (i < MAXCAMERAS) {
@@ -75,7 +75,7 @@ int graphics_GetCameraCount(void) {
     return c;
 }
 
-int graphics_AddCamera(void) {
+int graphics_addCamera(void) {
     int i = 0;
     while (i < MAXCAMERAS) {
         if (camentry[i] == NULL) {
@@ -94,7 +94,7 @@ int graphics_AddCamera(void) {
     return -1;
 }
 
-void graphics_DeleteCamera(int index) {
+void graphics_deleteCamera(int index) {
     if (index < 0 || index >= MAXCAMERAS ||
     !camentry[index]) {
         return;
@@ -131,7 +131,7 @@ int graphics_getCameraAt(int x, int y) {
     return -1;
 }
 
-int graphics_GetCameraWidth(int index) {
+int graphics_getCameraWidth(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return -1;
@@ -139,7 +139,7 @@ int graphics_GetCameraWidth(int index) {
     return camentry[index]->width;
 }
 
-int graphics_GetCameraHeight(int index) {
+int graphics_getCameraHeight(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return -1;
@@ -147,7 +147,7 @@ int graphics_GetCameraHeight(int index) {
     return camentry[index]->height;
 }
 
-double graphics_GetCamera2DZoom(int index) {
+double graphics_getCamera2DZoom(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return 0;
@@ -156,7 +156,7 @@ double graphics_GetCamera2DZoom(int index) {
     return camentry[index]->i2d.zoom;
 }
 
-void graphics_SetCamera2DZoom(int index, double zoom) {
+void graphics_setCamera2DZoom(int index, double zoom) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return;
@@ -165,7 +165,7 @@ void graphics_SetCamera2DZoom(int index, double zoom) {
     camentry[index]->i2d.zoom = zoom;
 }
 
-void graphics_SetCameraSize(int index, int w, int h) {
+void graphics_setCameraSize(int index, int w, int h) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return;
@@ -176,7 +176,7 @@ void graphics_SetCameraSize(int index, int w, int h) {
     camentry[index]->height = h;
 }
 
-double graphics_GetCamera2DAspectRatio(int index) {
+double graphics_getCamera2DAspectRatio(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return 1;
@@ -184,7 +184,7 @@ double graphics_GetCamera2DAspectRatio(int index) {
     return camentry[index]->i2d.aspectratio;
 }
 
-double graphics_GetCamera2DCenterX(int index) {
+double graphics_getCamera2DCenterX(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return 0;
@@ -192,7 +192,7 @@ double graphics_GetCamera2DCenterX(int index) {
     return camentry[index]->i2d.centerx;
 }
 
-double graphics_GetCamera2DCenterY(int index) {
+double graphics_getCamera2DCenterY(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return 0;
@@ -200,7 +200,7 @@ double graphics_GetCamera2DCenterY(int index) {
     return camentry[index]->i2d.centery;
 }
 
-void graphics_SetCamera2DCenterXY(int index, double x, double y) {
+void graphics_setCamera2DCenterXY(int index, double x, double y) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return;
@@ -209,7 +209,7 @@ void graphics_SetCamera2DCenterXY(int index, double x, double y) {
     camentry[index]->i2d.centery = y;
 }
 
-int graphics_GetCameraX(int index) {
+int graphics_getCameraX(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return 0;
@@ -217,7 +217,7 @@ int graphics_GetCameraX(int index) {
     return camentry[index]->x;
 }
 
-int graphics_GetCameraY(int index) {
+int graphics_getCameraY(int index) {
     if (index < 0 || index >= MAXCAMERAS
     || !camentry[index]) {
         return 0;

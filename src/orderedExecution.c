@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "avl-tree/avl-tree.h"
+#include "avl-tree-helpers.h"
 #include "poolAllocator.h"
 #include "orderedExecution.h"
 
@@ -199,6 +200,25 @@ struct orderedExecutionEntryHashBucket *orderedExecution_getOrCreateBucket(
     return data;  // return bucket
 }
 
+static void orderedExecution_updateBuckets(
+        struct orderedExecutionPipeline *p,
+        struct orderedExecutionEntry *e, int add) {
+    // go through all deps and update the buckets of the affected items:
+    int i = 0;
+    while (i < e->deps.beforeEntryCount) {
+        void *ptr = e->deps.before[i];
+        struct orderedExecutionEntryHashBucket *bucket =
+            orderedExecution_getOrCreateBucket(p, ptr, 1);
+        i++;
+    }
+    if (add) {
+        // add hash bucket info:
+        
+    } else {
+        // remove 
+    }
+}
+
 void orderedExecution_deleteBucket(struct orderedExecutionPipeline *p,
         void *data) {
     // find the hash bucket and delete it, if found
@@ -277,11 +297,12 @@ static int orderedExecution_add_internal(struct orderedExecutionPipeline *p,
     // cycle detection:
     struct orderedExecutionEntryHashBucket *hb =
         orderedExecution_getOrCreateBucket(p, e->data, 1);
+
     if (1 == 2) {  // FIXME: add detection
         // in case of cycle:
         goto invalid;
     }
-    // add:
+    // add to lists:
     if (e->deps.runAfterAll) {
         orderedExecution_addToList(p->runAfterAllList, e);
         e->list = 1;
@@ -356,23 +377,24 @@ void orderedExecution_do(struct orderedExecutionPipeline *p,
     p->entriesToBeAddedCount = 0;
 
     // handle the actual calls:
-    
-    /*struct orderedExecutionEntry *e;
-    e = p->orderedListBeforeAll;
-    while (e) {
-        p->func(e);
-        e = e->next;
+    AVLTreeNode *node = avl_tree_find_first_node(p->runBeforeAllList);
+    while (node) {
+        struct orderedExecutionEntry *entry = avl_tree_node_value(node);
+        p->func(entry->data);
+        node = avl_tree_find_next(node, 1);
     }
-    e = p->orderedListNormal;
-    while (e) {
-        p->func(e);
-        e = e->next;
+    node = avl_tree_find_first_node(p->runNormalList);
+    while (node) {
+        struct orderedExecutionEntry *entry = avl_tree_node_value(node);
+        p->func(entry->data);
+        node = avl_tree_find_next(node, 1);
     }
-    e = p->orderedListAfterAll;
-    while (e) {
-        p->func(e);
-        e = e->next;
-    }*/
+    node = avl_tree_find_first_node(p->runAfterAllList);
+    while (node) {
+        struct orderedExecutionEntry *entry = avl_tree_node_value(node);
+        p->func(entry->data);
+        node = avl_tree_find_next(node, 1);
+    }
 }
 
 

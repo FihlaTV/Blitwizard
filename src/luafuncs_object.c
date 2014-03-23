@@ -1649,7 +1649,7 @@ int luafuncs_object_pinToCamera(lua_State* l) {
     if (lua_gettop(l) >= 2 && lua_type(l, 2) != LUA_TNIL) {
         cameraId = toluacameraid(l, 2, 1, "blitwizard.object:pinToCamera");
     } else {
-        if (graphics_GetCameraCount() <= 0) {
+        if (graphics_getCameraCount() <= 0) {
             return haveluaerror(l, "there are no cameras");
         }
         cameraId = 0;
@@ -1703,7 +1703,7 @@ int luacfuncs_object_doAllSteps(int count) {
     // see if we want to do a full step (consider all objects)
     // or a non-full one (consider just the important objects).
     // we want to do a full one 4 times a second.
-    uint64_t now = time_GetMilliseconds();
+    uint64_t now = time_getMilliseconds();
     int full = 0;
     if (lastFullStep + 2000 < now) {
         // we missed so many full steps, it makes no sense to catch up:

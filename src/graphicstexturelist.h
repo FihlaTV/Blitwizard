@@ -56,18 +56,18 @@ struct graphicstexturescaled {
       // everything read-only, but you must not change anything or obtain
       // a full lock (locked)
     struct graphicstexture* gt;  // NULL if not loaded or not in GPU memory
-    void* pixels; // not NULL if texture is in regular memory
-    char* diskcachepath;  // path to raw disk cache file or NULL
+    void *pixels; // not NULL if texture is in regular memory
+    char *diskcachepath;  // path to raw disk cache file or NULL
     size_t width, height;  // width/height of this particular scaled entry
     size_t paddedWidth, paddedHeight;  // width/height of this entry, padded
-    struct graphicstexturemanaged* parent;
+    struct graphicstexturemanaged *parent;
     int refcount;  // requests using this particular size
     size_t lastGpuUpload;
 };
 
 // A managed texture entry containing all the different sized cached versions:
 struct graphicstexturemanaged {
-    char* path;  // original texture path this represents
+    char *path;  // original texture path this represents
     struct graphicstexturescaled* scalelist;  // one dimensional array
     int scalelistcount;  // count of scalelist array items
     int origscale;  // array index of scalelist of item scaled in original size
@@ -83,68 +83,69 @@ struct graphicstexturemanaged {
     time_t lastUsage[USING_AT_COUNT];
 
     // initialise to zeros and then don't touch:
-    struct graphicstexturemanaged* next;
-    struct graphicstexturemanaged* hashbucketnext;
+    struct graphicstexturemanaged *next;
+    struct graphicstexturemanaged *hashbucketnext;
 
     // original texture size if known (otherwise zero):
     size_t width,height;
 };
 
 // Find a texture by doing a hash map lookup:
-struct graphicstexturemanaged* graphicstexturelist_getTextureByName
-(const char* name);
+struct graphicstexturemanaged *graphicstexturelist_getTextureByName
+    (const char *name);
 
 // Add a texture to the hash map:
-void graphicstexturelist_AddTextureToHashmap(
-struct graphicstexturemanaged* gt);
+void graphicstexturelist_addTextureToHashmap(
+    struct graphicstexturemanaged *gt);
 
 // Remove a texture from the hash map:
-void graphicstexturelist_RemoveTextureFromHashmap(
-struct graphicstexturemanaged* gt);
+void graphicstexturelist_removeTextureFromHashmap(
+    struct graphicstexturemanaged *gt);
 
 // get all sizes of a specific graphics texture out of GPU memory:
-void graphicstexturelist_TransferTextureFromHW(
-struct graphicstexturemanaged* gt);
+void graphicstexturelist_transferTextureFromHW(
+    struct graphicstexturemanaged *gt);
 
 // invalidate a texture's scaled versions in GPU memory:
-void graphicstexturelist_InvalidateTextureInHW(
-struct graphicstexturemanaged* gt);
+void graphicstexturelist_invalidateTextureInHW(
+    struct graphicstexturemanaged *gt);
 
 // get all textures out of GPU memory:
-void graphicstexturelist_TransferTexturesFromHW(void);
+void graphicstexturelist_transferTexturesFromHW(void);
 
 // invalidate all textures' copies in GPU memory:
-void graphicstexturelist_InvalidateHWTextures(void);
+void graphicstexturelist_invalidateHWTextures(void);
 
 // get previous texture in texture list:
-struct graphicstexturemanaged* graphicstexturelist_GetPreviousTexture(
-struct graphicstexturemanaged* gt);
+struct graphicstexturemanaged *graphicstexturelist_getPreviousTexture(
+    struct graphicstexturemanaged *gt);
 
 // add a new empty graphics texture with the given file path
 // set to the list and return it:
-struct graphicstexturemanaged* graphicstexturelist_AddTextureToList(
-const char* path);
+struct graphicstexturemanaged *graphicstexturelist_addTextureToList(
+    const char *path);
 
 // Remove a texture from the linear list (it might still be in the hash map):
 // You need to specify the previous list entry, which you can
 // obtain through graphicstexturelist_GetPreviousTexture.
-void graphicstexturelist_RemoveTextureFromList(
-struct graphicstexturemanaged* gt, struct graphicstexturemanaged* prev);
+void graphicstexturelist_removeTextureFromList(
+    struct graphicstexturemanaged *gt,
+    struct graphicstexturemanaged *prev);
 
 // Destroy a texture. It will be removed from the linear list and the
 // hash map, then all its disk cache entries of the graphicstexturescaled
 // list will be diskcache_Delete()'d, the textures will be
-// graphicstexture_Destroy()'d, and the char* struct members will be free'd.
-void graphicstexturelist_DestroyTexture(struct graphicstexturemanaged* gt);
+// graphicstexture_Destroy()'d, and the char *struct members will be free'd.
+void graphicstexturelist_destroyTexture(struct graphicstexturemanaged *gt);
 
 // Calls graphicstexturelist_DestroyTexture on all textures.
-void graphicstexturelist_FreeAllTextures(void);
+void graphicstexturelist_freeAllTextures(void);
 
 // Do something with all textures:
 void graphicstexturelist_doForAllTextures(
-int (*callback)(struct graphicstexturemanaged* texture,
-struct graphicstexturemanaged* previoustexture, void* userdata),
-void* userdata);
+    int (*callback)(struct graphicstexturemanaged *texture,
+        struct graphicstexturemanaged *previoustexture, void* userdata),
+    void* userdata);
 // Return 0 from the callback if you deleted a texture.
 // Return 1 if you just changed it (or read it).
 
