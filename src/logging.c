@@ -183,8 +183,8 @@ void printfatalerror(const char* fmt, ...) {
     if (!crashed) {
         // we only want to do this in non-crash situations,
         // since otherwise this will probably cause worse crashing
-        if (graphics_AreGraphicsRunning() && graphics_IsFullscreen()) {
-            graphics_MinimizeWindow();
+        if (graphics_areGraphicsRunning() && graphics_isFullscreen()) {
+            graphics_minimizeWindow();
         }
     }
 #endif
@@ -194,7 +194,7 @@ void printfatalerror(const char* fmt, ...) {
     "The application cannot continue due to a fatal error:\n\n%s",
     printline);
 #ifdef USE_SDL_GRAPHICS
-    MessageBox(graphics_GetWindowHWND(), printerror, "Fatal error", MB_OK|MB_ICONERROR);
+    MessageBox(graphics_getWindowHWND(), printerror, "Fatal error", MB_OK|MB_ICONERROR);
 #else
     MessageBox(NULL, printerror, "Fatal error", MB_OK|MB_ICONERROR);
 #endif
