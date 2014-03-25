@@ -46,12 +46,15 @@
 #include "main.h"
 #endif
 
-#ifdef USE_SDL_GRAPHICS_OPENGL3
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
 #include <GL/glew.h>
 #endif
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+#include <SDL2/SDL_opengl.h>
+#endif
 
 #include "graphicstexture.h"
 #include "graphics.h"
@@ -64,8 +67,11 @@
 #include "graphics2dspriteslist.h"
 #include "graphics2dspritestree.h"
 
-extern SDL_Window* mainwindow;
-extern SDL_Renderer* mainrenderer;
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+SDL_GLContext *maincontext;
+#endif
+extern SDL_Window *mainwindow;
+extern SDL_Renderer *mainrenderer;
 extern int sdlvideoinit;
 
 extern int graphicsactive;
@@ -102,7 +108,7 @@ void graphicsrender_drawRectangle(
 }
 
 int graphicsrender_drawCropped(
-        struct graphicstexture* gt, int x, int y, float alpha,
+        struct graphicstexture *gt, int x, int y, float alpha,
         unsigned int sourcex, unsigned int sourcey,
         unsigned int sourcewidth, unsigned int sourceheight,
         unsigned int drawwidth, unsigned int drawheight,
@@ -201,6 +207,13 @@ int graphicsrender_drawCropped(
 }
 
 void graphicssdlrender_startFrame(void) {
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (maincontext) {
+        glClear(GL_COLOR_BUFFER_BIT);
+        SDL_GL_SwapWindow(mainwindow);
+        return;
+    }
+#endif
     SDL_SetRenderDrawColor(mainrenderer, 0, 0, 0, 1);
     SDL_RenderClear(mainrenderer);
 }
@@ -210,9 +223,9 @@ void graphicssdlrender_completeFrame(void) {
 }
 
 static int graphicssdlrender_spriteCallback(
-        struct graphics2dsprite* sprite,
-        void* userdata) {
-    struct graphicstexture* tex = sprite->tex;
+        struct graphics2dsprite *sprite,
+        void *userdata) {
+    struct graphicstexture *tex = sprite->tex;
     if (!tex) {
         return 1;
     }
@@ -225,15 +238,15 @@ static int graphicssdlrender_spriteCallback(
     double angle;
     int horiflip;
     graphics2dsprite_calculateSizeOnScreen(
-    sprite, 0, &x, &y, &width, &height, &sourceX, &sourceY,
-    &sourceWidth, &sourceHeight, &angle, &horiflip, 0);
+        sprite, 0, &x, &y, &width, &height, &sourceX, &sourceY,
+        &sourceWidth, &sourceHeight, &angle, &horiflip, 0);
 
     // render:
     graphicsrender_drawCropped(tex, x, y, sprite->alpha,
-    sourceX, sourceY, sourceWidth, sourceHeight, width, height,
-    sourceWidth/2, sourceHeight/2, angle, horiflip,
-    sprite->r, sprite->g, sprite->b,
-    sprite->textureFiltering);
+        sourceX, sourceY, sourceWidth, sourceHeight, width, height,
+        sourceWidth/2, sourceHeight/2, angle, horiflip,
+        sprite->r, sprite->g, sprite->b,
+        sprite->textureFiltering);
     return 1;
 }
 

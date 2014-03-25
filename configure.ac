@@ -71,13 +71,13 @@ AC_ARG_ENABLE([sdl-graphics],
 esac],
 [enable_sdlgraphics=yes])
 
-AC_ARG_ENABLE([sdl-graphics-opengl3],
-    [AS_HELP_STRING([--disable-sdl-graphics-opengl3],[disable the OpenGL 3 advanced rendering backend for the SDL-powered graphics.])],
+AC_ARG_ENABLE([sdl-graphics-opengl-effects],
+    [AS_HELP_STRING([--disable-sdl-graphics-opengl-effects],[disable the advanced OpenGL effects backend for the SDL-powered graphics.])],
 [case "${enableval}" in
-    yes | no ) enable_sdlgraphics_opengl3="${enableval}" ;;
-    *) AC_MSG_ERROR(bad value ${enableval} for --disable-sdl-graphics-opengl3) ;;
+    yes | no ) enable_sdlgraphics_opengl_effects="${enableval}" ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --disable-sdl-graphics-opengl-effects) ;;
 esac],
-[enable_sdlgraphics_opengl3=yes])
+[enable_sdlgraphics_opengl_effects=yes])
 
 AC_ARG_ENABLE([ogre-graphics],
     [AS_HELP_STRING([--disable-ogre-graphics],[disable 2d/3d graphics support through Ogre (default is enabled)])],
@@ -106,11 +106,11 @@ AC_ARG_ENABLE([sdl],
 AS_IF([test "x$enable_sdl" = xno], [
     enable_sdlaudio="no"
     enable_sdlgraphics="no"
-    enable_sdlgraphics_opengl3="no"
+    enable_sdlgraphics_opengl_effects="no"
 ])
 
 AS_IF([test "x$enable_sdlgraphics" = xno], [
-    enable_sdlgraphics_opengl3="no"
+    enable_sdlgraphics_opengl_effects="no"
 ])
 
 AC_ARG_ENABLE([graphics],
@@ -123,7 +123,7 @@ AC_ARG_ENABLE([graphics],
 
 AS_IF([test "x$enable_graphics" = xno], [
     enable_sdlgraphics="no"
-    enable_sdlgraphics_opengl3="no"
+    enable_sdlgraphics_opengl_effects="no"
     enable_ogregraphics="no"
 ])
 
@@ -217,7 +217,7 @@ STATIC_LIBS_USE=""
 # Remember which flags we need because we don't use some libs at all
 
 SDL_GRAPHICS_FEATURE_ENABLED="yes"
-SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="yes"
+SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="yes"
 OGRE_GRAPHICS_FEATURE_ENABLED="yes"
 NULL_GRAPHICS_FEATURE_ENABLED="yes"
 AUDIO_FEATURE_ENABLED="yes"
@@ -282,10 +282,10 @@ AS_IF([test "x$enable_sdlgraphics" = xyes], [
 ])
 AS_IF([test "x$enable_sdlgraphics" = xno],[
     SDL_GRAPHICS_FEATURE_ENABLED="no, disabled"
-    SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, SDL graphics unavailable"
+    SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, SDL graphics unavailable"
 ])
-AS_IF([test "x$enable_sdlgraphics_opengl3" = xno], [
-    SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, disabled"
+AS_IF([test "x$enable_sdlgraphics_opengl_effects" = xno], [
+    SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, disabled"
 ])
 AS_IF([test "x$enable_sdlaudio" = xno],[
     # Windows can do audio without SDL (WaveOut):
@@ -346,7 +346,7 @@ AS_IF([test "x$enable_graphics" = xyes],[ # START enable_graphics block
             LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
   libpng: no"
             SDL_GRAPHICS_FEATURE_ENABLED="no, need libpng"
-            SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, SDL graphics unavailable"
+            SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, SDL graphics unavailable"
             OGRE_GRAPHICS_FEATURE_ENABLED="no, need libpng"
             NULL_GRAPHICS_FEATURE_ENABLED="no, need libpng"
             GRAPHICS_FEATURE_ENABLED="no, need libpng"
@@ -375,7 +375,7 @@ AS_IF([test "x$enable_graphics" = xyes],[ # START enable_graphics block
             LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
   zlib: no"
             GRAPHICS_FEATURE_ENABLED="no, need zlib"
-            SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, SDL graphics unavailable"
+            SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, SDL graphics unavailable"
             NULL_GRAPHICS_FEATURE_ENABLED="no, need zlib"
             SDL_GRAPHICS_FEATURE_ENABLED="no, need zlib"
             OGRE_GRAPHICS_FEATURE_ENABLED="no, need zlib"
@@ -449,7 +449,7 @@ AS_IF([test -z "$maybeos"],[
         AC_WARN([Cannot find Xlib header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
         OGRE_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
         SDL_GRAPHICS_FEATURE_ENABLED="no, need X11 headers"
-        SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, SDL graphics unavailable"
+        SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, SDL graphics unavailable"
         AUDIO_FEATURE_ENABLED="no, need SDL2"
         COMPILE_OGRE="no"
         NEEDSDL="no"
@@ -459,7 +459,7 @@ AS_IF([test -z "$maybeos"],[
             AC_WARN([Cannot find Xext header files required for Ogre3D and SDL2. No Ogre3D or SDL2 support possible.])
             OGRE_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
             SDL_GRAPHICS_FEATURE_ENABLED="no, need Xext headers"
-            SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, SDL graphics unavailable"
+            SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, SDL graphics unavailable"
             AUDIO_FEATURE_ENABLED="no, need SDL2"
             COMPILE_OGRE="no"
             NEEDSDL="no"
@@ -471,14 +471,14 @@ AS_IF([test -z "$maybeos"],[
 
 # Check for OpenGL headers:
 AS_IF([test "x$NEEDSDL" = xyes], [
-    AS_IF([test "x$SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED" = xyes],[
+    AS_IF([test "x$SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED" = xyes],[
         AC_MSG_CHECKING([for OpenGL headers])
         AC_CHECK_HEADERS([GL/glew.h],,
         [
             AC_MSG_RESULT([no])
             AC_WARN([Cannot find OpenGL headers required for advanced SDL 2 graphics effects. No shader support for SDL 2 graphics available.])
             # without libGL, no point of having opengl 3 graphics
-            SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, OpenGL headers not found"
+            SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, OpenGL headers not found"
         ], [])
     ])
 ])
@@ -522,7 +522,7 @@ AS_IF([test "x$NEEDSDL" = xyes],[
             LIBS_DEP_INFO_TEXT="${LIBS_DEP_INFO_TEXT}
   SDL2: no"
             SDL_GRAPHICS_FEATURE_ENABLED="no, need SDL2"
-            SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED="no, SDL graphics unavailable"
+            SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, SDL graphics unavailable"
             # Windows can do audio without SDL (WaveOut):
             AS_IF([test "x$WINDOWS" = xno],[
                 AUDIO_FEATURE_ENABLED="no, need SDL2"
@@ -849,9 +849,11 @@ AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS"
     AC_DEFINE([USE_SDL_GRAPHICS], [], [Enable SDL graphics subsystem])
 
-    AS_IF([test "xSDL_GRAPHICS_OPENGL3_FEATURE_ENABLED" = xyes],[
-        FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS_OPENGL3"
-        AC_DEFINE([USE_SDL_GRAPHICS_OPENGL3], [], [Enable SDL advanced OpenGL 3 graphics])
+    AS_IF([test "x$SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED" = xyes],[
+        FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS_OPENGL_EFFECTS"
+        FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lGL"
+        AC_DEFINE([USE_SDL_GRAPHICS_OPENGL_EFFECTS], [],
+            [Enable SDL advanced OpenGL 3 graphics])
     ])
 ])
 AS_IF([test "x$ZIP_FEATURE_ENABLED" = xyes],[
@@ -864,7 +866,7 @@ AS_IF([test "x$ZIP_FEATURE_ENABLED" = xyes],[
     ])
     FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_PHYSFS"
     AC_DEFINE([USE_PHYSFS], [],
-    [Enable .zip archive loading support based on PhysFS])
+        [Enable .zip archive loading support based on PhysFS])
 ])
 AS_IF([test "x$OGRE_GRAPHICS_FEATURE_ENABLED" = xyes],[
     statictest=`echo $STATIC_LIBS_USE | grep Ogre3D`
@@ -1211,7 +1213,7 @@ DEPS_INFO_OUTPUT="
 This results in the following feature set:
   + Graphics:
    SDL Graphics (2d only): ${SDL_GRAPHICS_FEATURE_ENABLED}
-    Advanced OGL 3 SDL Graphics: ${SDL_GRAPHICS_OPENGL3_FEATURE_ENABLED}
+    Advanced OGL effects in SDL Graphics: ${SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED}
    Ogre Graphics (2d or 3d): ${OGRE_GRAPHICS_FEATURE_ENABLED}
    Null device graphics: ${NULL_GRAPHICS_FEATURE_ENABLED}
   + Audio:

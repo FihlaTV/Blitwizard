@@ -46,13 +46,17 @@
 #include "main.h"
 #endif
 
-#ifdef USE_SDL_GRAPHICS_OPENGL3
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
 #define GL3_PROTOTYPES 1
 #include <GL/glew.h>
+#include <GL/glu.h>
 #endif
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+#include <SDL2/SDL_opengl.h>
+#endif
 
 #include "graphicstexture.h"
 #include "graphics.h"
@@ -60,8 +64,9 @@
 
 SDL_Window *mainwindow = NULL;
 SDL_Renderer *mainrenderer = NULL;
-#ifdef USE_SDL_GRAPHICS_OPENGL3
-SDL_GLContext *maincontext
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+static SDL_GLContext _context;
+SDL_GLContext *maincontext = NULL;
 #endif
 int sdlvideoinit = 0;
 int sdlinit = 0;
@@ -142,7 +147,8 @@ int graphics_init(char **error, int use3dgraphics) {
 
         // initialize SDL
         if (SDL_Init(SDL_INIT_TIMER) < 0) {
-            snprintf(errormsg,sizeof(errormsg),"Failed to initialize SDL: %s", SDL_GetError());
+            snprintf(errormsg, sizeof(errormsg),
+                "Failed to initialize SDL: %s", SDL_GetError());
             errormsg[sizeof(errormsg)-1] = 0;
             *error = strdup(errormsg);
             return 0;
@@ -183,6 +189,12 @@ void graphics_close(int preservetextures) {
             SDL_DestroyRenderer(mainrenderer);
             mainrenderer = NULL;
         }
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+        if (maincontext) {
+            SDL_GL_DeleteContext(*maincontext);
+            maincontext = NULL;
+        }
+#endif
         if (mainwindow) {
             SDL_DestroyWindow(mainwindow);
             mainwindow = NULL;
@@ -233,9 +245,15 @@ void graphics_reopenForAndroid() {
 #endif
 
 const char *graphics_getWindowTitle() {
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if ((!mainrenderer && !maincontext) || !mainwindow) {
+        return NULL;
+    }
+#else
     if (!mainrenderer || !mainwindow) {
         return NULL;
     }
+#endif
     return SDL_GetWindowTitle(mainwindow);
 }
 
@@ -253,17 +271,17 @@ void graphics_quit() {
 SDL_RendererInfo info;
 #if defined(ANDROID)
 static char openglstaticname[] = "opengl";
-static char opengl3staticname[] = "opengl3";
 #endif
+static char opengleffectsstaticname[] = "opengleffects";
 const char *graphics_getCurrentRendererName() {
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (manualopengl) {
+        return opengleffectsstaticname;
+    }
+#endif
     if (!mainrenderer) {
         return NULL;
     }
-#ifdef USE_SDL_GRAPHICS_OPENGL3
-    if (manualopengl) {
-        return opengl3staticname;
-    }
-#endif
     SDL_GetRendererInfo(mainrenderer, &info);
 #if defined(ANDROID)
     if (strcasecmp(info.name, "opengles") == 0) {
@@ -438,8 +456,98 @@ HWND graphics_getWindowHWND() {
 }
 #endif
 
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+static int graphics_setModeWithOpenGL(int width, int height, int fullscreen,
+        int resizable, const char *title, const char *renderer, char **error) {
+    // we want OpenGL 2.1:
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 2 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
+
+    _context = SDL_GL_CreateContext(mainwindow);
+    maincontext = &_context;
+    if (!maincontext) {
+        *error = strdup("failed to create OpenGL 2.1 context");
+        return 0;
+    }
+
+    // attempt to enable vsync:
+    SDL_GL_SetSwapInterval(1);
+
+    // set up projection and model view matrix:
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glClearColor(0, 0, 0, 0);
+
+    return 1;
+}
+#endif
+
+static int graphics_setModeWithRenderer(int width, int height, int fullscreen,
+        int resizable, const char *title, const char *renderer,
+        int softwarerendering, char **error) {
+    // get renderer index
+    int rendererindex = -1;
+    if (strlen(renderer) > 0 && !softwarerendering) {
+        int count = SDL_GetNumRenderDrivers();
+        if (count > 0) {
+            int r = 0;
+            while (r < count) {
+                SDL_RendererInfo info;
+                SDL_GetRenderDriverInfo(r, &info);
+                if (strcasecmp(info.name, renderer) == 0) {
+                    rendererindex = r;
+                    break;
+                }
+                r++;
+            }
+        }
+    }
+
+    // Create renderer
+    if (!softwarerendering) {
+        mainrenderer = SDL_CreateRenderer(mainwindow, rendererindex,
+            SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+        if (!mainrenderer) {
+            softwarerendering = 1;
+        }
+    }
+    if (softwarerendering) {
+        mainrenderer = SDL_CreateRenderer(mainwindow, -1,
+            SDL_RENDERER_SOFTWARE);
+    }
+    if (!mainrenderer) {
+        // we failed to create the renderer
+        if (mainwindow) {
+            // destroy window aswell in case it is open
+            SDL_DestroyWindow(mainwindow);
+            mainwindow = NULL;
+        }
+        char errormsg[128];
+        if (softwarerendering) {
+            snprintf(errormsg, sizeof(errormsg),
+                "Failed to create SDL renderer (backend software): %s",
+                SDL_GetError());
+        } else {
+            SDL_RendererInfo info;
+            SDL_GetRenderDriverInfo(rendererindex, &info);
+            snprintf(errormsg, sizeof(errormsg),
+                "Failed to create SDL renderer (backend %s): %s",
+                info.name, SDL_GetError());
+        }
+        errormsg[sizeof(errormsg)-1] = 0;
+        *error = strdup(errormsg);
+        return 0;
+    } else {
+        SDL_RendererInfo info;
+        SDL_GetRendererInfo(mainrenderer, &info);
+    }
+    return 1;
+}
+
 int graphics_setMode(int width, int height, int fullscreen,
-int resizable, const char *title, const char *renderer, char **error) {
+        int resizable, const char *title, const char *renderer, char **error) {
     graphics_calculateUnitToPixels(width, height);
 
 #if defined(ANDROID)
@@ -462,18 +570,18 @@ int resizable, const char *title, const char *renderer, char **error) {
 #ifdef ANDROID
     char preferredrenderer[20] = "opengles";
 #else
-#ifdef USE_SDL_GRAPHICS_OPENGL3
-    char preferredrenderer[20] = "opengl3";
-#else
+//#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+//    char preferredrenderer[20] = "opengleffects";
+//#else
     char preferredrenderer[20] = "opengl";
-#endif
+//#endif
 #endif
 #else
-#ifdef USE_SDL_GRAPHICS_OPENGL3
-    char preferredrenderer[20] = "opengl3";
-#else
+//#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+//    char preferredrenderer[20] = "opengleffects";
+//#else
     char preferredrenderer[20] = "direct3d";
-#endif
+//#endif
 #endif
     int softwarerendering = 0;
     if (renderer) {
@@ -503,33 +611,32 @@ int resizable, const char *title, const char *renderer, char **error) {
         }
     }
 
-    // get renderer index
-    int rendererindex = -1;
-    if (strlen(preferredrenderer) > 0 && !softwarerendering) {
-        int count = SDL_GetNumRenderDrivers();
-        if (count > 0) {
-            int r = 0;
-            while (r < count) {
-                SDL_RendererInfo info;
-                SDL_GetRenderDriverInfo(r, &info);
-                if (strcasecmp(info.name, preferredrenderer) == 0) {
-                    rendererindex = r;
-                    break;
-                }
-                r++;
-            }
-        }
-    }
-
     //  see if anything changes at all
     unsigned int oldw = 0;
     unsigned int oldh = 0;
     graphics_getWindowDimensions(&oldw,&oldh);
-    if (mainwindow && mainrenderer &&
+    if (mainwindow &&
     width == (int)oldw && height == (int)oldh) {
+        int rendererchanged = 1;
+
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+        if (!mainrenderer && strcasecmp(preferredrenderer,
+                "opengleffects") == 0) {
+            if (maincontext) {
+                rendererchanged = 0;
+            }
+        }
+#endif
+
         SDL_RendererInfo info;
-        SDL_GetRendererInfo(mainrenderer, &info);
-        if (strcasecmp(preferredrenderer, info.name) == 0) {
+        if (mainrenderer) {
+            SDL_GetRendererInfo(mainrenderer, &info);
+            if (strcasecmp(preferredrenderer, info.name) == 0) {
+                rendererchanged = 0;
+            }
+        }
+
+        if (rendererchanged) {
             //  same renderer and resolution
             if (strcmp(SDL_GetWindowTitle(mainwindow), title) != 0) {
                 SDL_SetWindowTitle(mainwindow, title);
@@ -564,7 +671,7 @@ int resizable, const char *title, const char *renderer, char **error) {
             int w,h;
             graphics_getDesktopVideoMode(&w,&h);
             if (w == 0 || h == 0 || width != w || height != h) {
-                *error = strdup("Video mode is not supported");
+                *error = strdup("video mode is not supported");
                 return 0;
             }
         }
@@ -583,18 +690,30 @@ int resizable, const char *title, const char *renderer, char **error) {
 
     // create window
     if (fullscreen) {
+        uint32_t flags = SDL_WINDOW_FULLSCREEN;
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+        if (strcmp(preferredrenderer, "opengleffects") == 0) {
+            flags |= SDL_WINDOW_OPENGL;
+        }
+#endif
         mainwindow = SDL_CreateWindow(title, 0, 0, width, height,
-        SDL_WINDOW_FULLSCREEN);
+            flags);
         mainwindowfullscreen = 1;
     } else {
+        uint32_t flags = 0;
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+        if (strcmp(preferredrenderer, "opengleffects") == 0) {
+            flags |= SDL_WINDOW_OPENGL;
+        }
+#endif
         mainwindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED, width, height, 0);
+            SDL_WINDOWPOS_CENTERED, width, height, flags);
         mainwindowfullscreen = 0;
     }
 
     if (!mainwindow) {
         snprintf(errormsg, sizeof(errormsg),
-        "Failed to open SDL window: %s", SDL_GetError());
+            "Failed to open SDL window: %s", SDL_GetError());
         errormsg[sizeof(errormsg)-1] = 0;
         *error = strdup(errormsg);
         return 0;
@@ -607,50 +726,28 @@ int resizable, const char *title, const char *renderer, char **error) {
         if (fullscreen) {  // we failed to get the requested resolution:
             SDL_DestroyWindow(mainwindow);
             snprintf(errormsg, sizeof(errormsg), "Failed to open "
-            "SDL window: ended up with other resolution than requested");
+                "SDL window: ended up with other resolution than requested");
             *error = strdup(errormsg);
             return 0;
         }
     }
 
-    // Create renderer
-    if (!softwarerendering) {
-        mainrenderer = SDL_CreateRenderer(mainwindow, rendererindex,
-        SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
-        if (!mainrenderer) {
-            softwarerendering = 1;
-            strcpy(preferredrenderer, "software");
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (strcasecmp(preferredrenderer, "opengleffects") == 0 && !softwarerendering) {
+        if (!graphics_setModeWithOpenGL(width, height, fullscreen,
+                resizable, title, preferredrenderer, error)) {
+            return 0;
         }
-    }
-    if (softwarerendering) {
-        mainrenderer = SDL_CreateRenderer(mainwindow, -1,
-        SDL_RENDERER_SOFTWARE);
-    }
-    if (!mainrenderer) {
-        // we failed to create the renderer
-        if (mainwindow) {
-            // destroy window aswell in case it is open
-            SDL_DestroyWindow(mainwindow);
-            mainwindow = NULL;
-        }
-        if (softwarerendering) {
-            snprintf(errormsg, sizeof(errormsg),
-            "Failed to create SDL renderer (backend software): %s",
-            SDL_GetError());
-        } else {
-            SDL_RendererInfo info;
-            SDL_GetRenderDriverInfo(rendererindex, &info);
-            snprintf(errormsg, sizeof(errormsg),
-            "Failed to create SDL renderer (backend %s): %s",
-            info.name, SDL_GetError());
-        }
-        errormsg[sizeof(errormsg)-1] = 0;
-        *error = strdup(errormsg);
-        return 0;
     } else {
-        SDL_RendererInfo info;
-        SDL_GetRendererInfo(mainrenderer, &info);
+#endif
+        if (!graphics_setModeWithRenderer(width, height, fullscreen,
+                resizable, title, preferredrenderer, softwarerendering,
+                error)) {
+            return 0;
+        }
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     }
+#endif
 
     // notify texture manager that device is back
     texturemanager_deviceRestored();
@@ -675,7 +772,7 @@ void graphics_checkEvents(
         void (*putinbackground)(int background)) {
     // initialize SDL video if not done yet
     if (!graphics_initVideoSubsystem(NULL)) {
-        return 0;
+        return;
     }
     
     if (!graphics3d) {
