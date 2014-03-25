@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,20 +21,33 @@
 
 */
 
-#ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
-#define BLITWIZARD_GRAPHICSTEXTURESDL_H_
-
 #include "os.h"
+#include "graphicssdlglext.h"
 
-struct graphicstexture {
-    // basic info
-    size_t width,height;
-    int format;
-    // SDL info
-    union {
-        SDL_Texture* sdltex;
-    };
-};
+#ifdef NEED_OPENGL
 
-#endif  // BLITWIZARD_GRAPHICSTEXTURESDL_H_
+#if !defined(MAC)
+PFNGLGENBUFFERSARBPROC glGenBuffersARB = NULL;
+#endif
+
+#ifdef WINDOWS
+#define glGetProcAddress wglGetProcAddress
+typedef const unsigned char* glPStr;
+#else
+#ifndef MAC
+#define glGetProcAddress glXGetProcAddress
+typedef const unsigned char* glPStr;
+#else
+// nothing to load on Mac OS X
+#endif
+#endif
+
+void graphicssdlglext_init(void) {
+#ifndef MAC
+    glGenBuffersARB = (PFNGLGENBUFFERSARBPROC)glGetProcAddress(
+        (glPStr)"glGenBuffersARB");
+#endif
+}
+
+#endif
 

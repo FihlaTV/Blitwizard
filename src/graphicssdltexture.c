@@ -45,9 +45,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
+#include "blitwizard_opengl.h"
+
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "graphicssdltexturestruct.h"
+#include "graphicssdlglext.h"
 #include "threading.h"
 
 // uncomment for no texture upload timing measurements:
@@ -58,6 +61,9 @@
 #undef DEBUGPLOADTIMING
 #endif
 
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+extern SDL_GLContext *maincontext;
+#endif
 extern SDL_Window* mainwindow;
 extern SDL_Renderer* mainrenderer;
 
@@ -66,9 +72,19 @@ void graphicstexture_destroy(struct graphicstexture *gt) {
     if (!thread_isMainThread()) {
         return;
     }
-    if (gt->sdltex) {
-        SDL_DestroyTexture(gt->sdltex);
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (maincontext) {
+        // delete the OpenGL PBO texture
+
+    } else {
+#endif
+        // delete ordinary SDL texture
+        if (gt->sdltex) {
+            SDL_DestroyTexture(gt->sdltex);
+        }
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     }
+#endif
     free(gt);
 }
 

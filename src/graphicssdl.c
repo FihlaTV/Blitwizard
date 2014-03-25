@@ -46,21 +46,15 @@
 #include "main.h"
 #endif
 
-#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-#define GL3_PROTOTYPES 1
-#include <GL/glew.h>
-#include <GL/glu.h>
-#endif
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
-#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-#include <SDL2/SDL_opengl.h>
-#endif
+
+#include "blitwizard_opengl.h"
 
 #include "graphicstexture.h"
 #include "graphics.h"
 #include "graphicstexturelist.h"
+#include "graphicssdlglext.h"
 
 SDL_Window *mainwindow = NULL;
 SDL_Renderer *mainrenderer = NULL;
@@ -121,6 +115,11 @@ static int graphics_initVideoSubsystem(char **error) {
             return 0;
         }
         sdlvideoinit = 1;
+
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+        // load up OpenGL extension function pointers:
+        graphicssdlglext_init();
+#endif
     }
     return 1;
 }

@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,20 +21,39 @@
 
 */
 
-#ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
-#define BLITWIZARD_GRAPHICSTEXTURESDL_H_
+#ifndef BLITWIZARD_OPENGL_H_
+#define BLITWIZARD_OPENGL_H_
 
+// include basic compile time options:
+#include "config.h"
 #include "os.h"
 
-struct graphicstexture {
-    // basic info
-    size_t width,height;
-    int format;
-    // SDL info
-    union {
-        SDL_Texture* sdltex;
-    };
-};
+// check if we need OpenGL at all:
+#undef NEED_OPENGL
+#if (defined(USE_SDL_GRAPHICS_OPENGL_EFFECTS))
+#define NEED_OPENGL
+#endif
 
-#endif  // BLITWIZARD_GRAPHICSTEXTURESDL_H_
+// if we need OpenGL, include it now:
+#ifdef NEED_OPENGL
+#undef GL_GLEXT_PROTOTYPES
+#if (defined(WINDOWS) || defined(MAC))
+// windows, mac: get regular gl.h + glext.h
+#include <GL/gl.h>
+#include <GL/glext.h>
+#else
+// linux/other X11 systems: get glx.h
+#include <GL/glu.h>
+#include <GL/glext.h>
+#include <GL/glx.h>
+#include <GL/glxext.h>
+#endif
+#endif
+
+// if using SDL graphics, get the SDL OpenGL header as well:
+#if (defined(USE_SDL_GRAPHICS) && defined(NEED_OPENGL))
+#include <SDL2/SDL_opengl.h>
+#endif
+
+#endif  // BLITWIZARD_OPENGL_H_
 

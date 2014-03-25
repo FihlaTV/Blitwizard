@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,20 +21,18 @@
 
 */
 
-#ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
-#define BLITWIZARD_GRAPHICSTEXTURESDL_H_
+#ifndef BLITWIZARD_GRAPHICSSDLGLEXT_H_
+#define BLITWIZARD_GRAPHICSSDLGLEXT_H_
 
-#include "os.h"
+#include "blitwizard_opengl.h"
 
-struct graphicstexture {
-    // basic info
-    size_t width,height;
-    int format;
-    // SDL info
-    union {
-        SDL_Texture* sdltex;
-    };
-};
+#if (defined(NEED_OPENGL) && !defined(MAC))
+// function pointers:
+extern PFNGLGENBUFFERSARBPROC glGenBuffersARB;
 
-#endif  // BLITWIZARD_GRAPHICSTEXTURESDL_H_
+// load up function pointers
+void graphicssdlglext_init(void);
+#endif
+
+#endif  // BLITWIZARD_GRAPHICSSDLGLEXT_H_
 
