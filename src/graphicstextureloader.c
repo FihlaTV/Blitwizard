@@ -315,7 +315,7 @@ size_t bytes, void *userdata) {
 }
 #endif
 
-static const char *pixelformattoname(int format) {
+const char *pixelformattoname(int format) {
     switch (format) {
     case PIXELFORMAT_32RGBA:
         return "rgba";
@@ -350,9 +350,10 @@ void graphicstextureloader_initialLoaderThread(void *userdata) {
 
     if (loc.type == LOCATION_TYPE_DISK) {
         // use standard disk file image loader:
+        info->format = graphicstexture_getDesiredFormat();
         void *handle = img_loadImageThreadedFromFile(info->path,
             MAXLOADWIDTH, MAXLOADHEIGHT, info->padnpot,
-            pixelformattoname(graphicstexture_getDesiredFormat()),
+            pixelformattoname(info->format),
             graphicstextureloader_callbackSize,
             graphicstextureloader_callbackData, info);
         if (!handle) {

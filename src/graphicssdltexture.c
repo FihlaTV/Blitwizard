@@ -188,6 +188,7 @@ struct graphicstexture *graphicstexture_createHWPBO(
 }
 #endif
 
+const char *pixelformattoname(int format);
 struct graphicstexture *graphicstexture_createHWSDL(
         struct graphicstexture *gt,
         void *data,
@@ -197,9 +198,9 @@ struct graphicstexture *graphicstexture_createHWSDL(
     uint64_t ts1 = time_getMilliseconds();
 #endif
     gt->sdltex = SDL_CreateTexture(mainrenderer,
-    graphicstexture_pixelFormatToSDLFormat(format),
-    SDL_TEXTUREACCESS_STREAMING,
-    gt->width, gt->height);
+        graphicstexture_pixelFormatToSDLFormat(format),
+        SDL_TEXTUREACCESS_STREAMING,
+        gt->width, gt->height);
     if (!gt->sdltex) {
         graphicstexture_destroy(gt);
         return NULL;
@@ -263,10 +264,10 @@ struct graphicstexture *graphicstexture_create(void *data,
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
+        printf("Got a main context!\n");
         return graphicstexture_createHWPBO(gt, data, width, height, format,
             time);
     }
-
 #endif
     return graphicstexture_createHWSDL(gt, data, width, height, format,
         time); 
