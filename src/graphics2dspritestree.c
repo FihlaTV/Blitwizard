@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "graphics2dspritestree.h"
 #include "graphics2dspritestruct.h"

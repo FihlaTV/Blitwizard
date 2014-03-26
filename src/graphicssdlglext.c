@@ -27,7 +27,9 @@
 #ifdef NEED_OPENGL
 
 #if !defined(MAC)
-PFNGLGENBUFFERSARBPROC glGenBuffersARB = NULL;
+PFNGLGENBUFFERSARBPROC glGenBuffers = NULL;
+PFNGLBUFFERDATAARBPROC glBufferData = NULL;
+PFNGLBINDBUFFERARBPROC glBindBuffer = NULL;
 #endif
 
 #ifdef WINDOWS
@@ -42,11 +44,32 @@ typedef const unsigned char* glPStr;
 #endif
 #endif
 
-void graphicssdlglext_init(void) {
+static int glextinit = 0;
+
+int graphicssdlglext_init(void) {
+    if (glextinit) {
+        return 1;
+    }
+    glextinit = 1;
 #ifndef MAC
-    glGenBuffersARB = (PFNGLGENBUFFERSARBPROC)glGetProcAddress(
-        (glPStr)"glGenBuffersARB");
+    // PBO functions:
+    glGenBuffers = (PFNGLGENBUFFERSARBPROC)glGetProcAddress(
+        (glPStr)"glGenBuffers");
+    if (!glGenBuffers) {
+        return 0;
+    }
+    glBufferData = (PFNGLBUFFERDATAARBPROC)glGetProcAddress(
+        (glPStr)"glBufferData");
+    if (!glBufferData) {
+        return 0;
+    }
+    glBindBuffer = (PFNGLBINDBUFFERARBPROC)glGetProcAddress(
+        (glPStr)"glBindBuffer");
+    if (!glBindBuffer) {
+        return 0;
+    }
 #endif
+    return 1;
 }
 
 #endif

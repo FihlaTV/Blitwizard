@@ -51,15 +51,19 @@
 #include "imgloader/imgloader.h"
 
 struct loaderfuncinfo;
+// the main info struct for our texture loader thread:
 struct graphicstextureloader_initialLoadingThreadInfo {
     void (*callbackDimensions)(struct graphicstexturemanaged *gtm,
     size_t width, size_t height, int success, void *userdata);
     void (*callbackData)(struct graphicstexturemanaged *gtm,
-    int success, void *userdata);
+        int success, void *userdata);
     void *userdata;
     char *path;
     int padnpot;
     int failed;
+
+    // texture format we decided on:
+    int format;
 
     // present if loading from memory:
     struct loaderfuncinfo *linfo;
@@ -74,6 +78,7 @@ struct graphicstextureloader_initialLoadingThreadInfo {
     struct graphicstexturemanaged *gtm;
 };
 
+// the info struct for the file I/O function that parses from memory
 struct loaderfuncinfo {
 #ifdef USE_PHYSFS
     struct graphicstextureloader_initialLoadingThreadInfo *info;
@@ -129,7 +134,7 @@ int width, int height, void *userdata) {
 }
 
 void graphicstextureloader_callbackData(void *handle,
-char *imgdata, unsigned int imgdatasize, void *userdata) {
+        char *imgdata, unsigned int imgdatasize, void *userdata) {
     struct graphicstextureloader_initialLoadingThreadInfo *info =
     userdata;
 
@@ -206,6 +211,7 @@ char *imgdata, unsigned int imgdatasize, void *userdata) {
             int i = 0;
             while (i < scalecount) {
                 info->gtm->scalelist[i].parent = info->gtm;
+                info->gtm->scalelist[i].format = info->format;
                 if (i == 0) {
                     // original size
                     info->gtm->scalelist[i].pixels = imgdata;
@@ -369,6 +375,7 @@ void graphicstextureloader_initialLoaderThread(void *userdata) {
         }
         memset(lfi, 0, sizeof(*lfi));
         info->linfo = lfi;
+        info->format = graphicstexture_getDesiredFormat();
         lfi->info = info;
         lfi->archive = loc.location.ziplocation.archive;
 
@@ -376,7 +383,7 @@ void graphicstextureloader_initialLoaderThread(void *userdata) {
         void *handle = img_loadImageThreadedFromFunction(
             graphicstextureloader_imageReadFunc, lfi,
             MAXLOADWIDTH, MAXLOADHEIGHT, info->padnpot,
-            pixelformattoname(graphicstexture_getDesiredFormat()),
+            pixelformattoname(info->format),
             graphicstextureloader_callbackSize,
             graphicstextureloader_callbackData, info);
         if (!handle) {

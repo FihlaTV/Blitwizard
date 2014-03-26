@@ -105,7 +105,11 @@ static int graphicstexture_SDLFormatToPixelFormat(int format) {
 
 static volatile int infoprinted = 0;
 int graphicstexture_getDesiredFormat(void) {
-/*
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (maincontext) {
+        return PIXELFORMAT_32BGRA;
+    }
+#endif
     SDL_RendererInfo rinfo;
     if (SDL_GetRendererInfo(mainrenderer, &rinfo) == 0) {
         unsigned int i = 0;
@@ -130,7 +134,7 @@ int graphicstexture_getDesiredFormat(void) {
     } else {
         printwarning("[sdltex] SDL_GetRendererInfo call failed: %s",
             SDL_GetError());
-    }*/
+    }
     if (!infoprinted) {
         infoprinted = 1;
         printwarning("[sdltex] cannot find optimal pixel format!");
@@ -154,21 +158,40 @@ static int graphicstexture_pixelFormatToSDLFormat(int format) {
     }
 }
 
-struct graphicstexture *graphicstexture_create(void *data,
-        size_t width, size_t height, int format) {
-    if (!thread_isMainThread()) {
-        return NULL;
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+int graphicstexture_bindGl(struct graphicstexture *gt, uint64_t time) {
+    if (gt->creationtime + 30 > time) {
+        // wait for it to upload first.
+        return 0;
     }
-    // create basic texture struct:
-    struct graphicstexture *gt = malloc(sizeof(*gt));
-    if (!gt) {
-        return NULL;
-    }
-    memset(gt, 0, sizeof(*gt));
-    gt->width = width;
-    gt->height = height;
-    gt->format = format;
+    glBindTexture(GL_TEXTURE_2D, gt->texid);
+    return 1;
+}
 
+struct graphicstexture *graphicstexture_createHWPBO(
+        struct graphicstexture *gt,
+        void *data,
+        size_t width, size_t height, int format, uint64_t time) {
+    glGenBuffers(1, &gt->pboid);
+
+    // bind buffer and fill
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, gt->pboid);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * 4,
+        data, GL_STREAM_DRAW_ARB);
+
+    // create a texture from the PBO:
+    glGenTextures(1, &gt->texid);
+    glBindTexture(GL_TEXTURE_2D, gt->texid);
+    glTexImage2D(GL_TEXTURE_2D,
+        0, 4, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, data);
+    return gt;
+}
+#endif
+
+struct graphicstexture *graphicstexture_createHWSDL(
+        struct graphicstexture *gt,
+        void *data,
+        size_t width, size_t height, int format, uint64_t time) {
     // create hw texture
 #ifdef DEBUGUPLOADTIMING
     uint64_t ts1 = time_getMilliseconds();
@@ -221,6 +244,32 @@ struct graphicstexture *graphicstexture_create(void *data,
     SDL_SetTextureBlendMode(gt->sdltex, SDL_BLENDMODE_BLEND);
 
     return gt;
+}
+
+struct graphicstexture *graphicstexture_create(void *data,
+        size_t width, size_t height, int format, uint64_t time) {
+    if (!thread_isMainThread()) {
+        return NULL;
+    }
+    // create basic texture struct:
+    struct graphicstexture *gt = malloc(sizeof(*gt));
+    if (!gt) {
+        return NULL;
+    }
+    memset(gt, 0, sizeof(*gt));
+    gt->width = width;
+    gt->height = height;
+    gt->format = format;
+
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (maincontext) {
+        return graphicstexture_createHWPBO(gt, data, width, height, format,
+            time);
+    }
+
+#endif
+    return graphicstexture_createHWSDL(gt, data, width, height, format,
+        time); 
 }
 
 void graphics_getTextureDimensions(struct graphicstexture *texture,

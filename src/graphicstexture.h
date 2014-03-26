@@ -24,7 +24,9 @@
 #ifndef BLITWIZARD_GRAPHICSTEXTURE_H_
 #define BLITWIZARD_GRAPHICSTEXTURE_H_
 
-#include <stdlib.h>
+#include <stdint.h>
+
+#include "os.h"
 
 struct graphicstexture;
 
@@ -40,20 +42,29 @@ int graphicstexture_getDesiredFormat(void);
 
 // Create a graphics texture (for 3d accelerated renderers,
 // it must be created in GPU memory!) and return a handle:
-struct graphicstexture* graphicstexture_create(void* data,
-size_t width, size_t height, int format);
+struct graphicstexture *graphicstexture_create(void *data,
+    size_t width, size_t height, int format, uint64_t time);
+// time needs to be a milliseconds timestamp.
+// It may be required for OpenGL upload waiting.
 // Please note in the current implementation, a format not matching
 // graphicstexture_getDesiredFormat() is rejected.
 
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+// Bind a graphics texture for OpenGL operations.
+int graphicstexture_bindGl(struct graphicstexture *gt, uint64_t time);
+// Returns 1 on success, 0 on failure. That may happen if the texture
+// is still uploading, in which case you simply have to try again later.
+#endif
+
 // Destroy graphics texure by handle:
-void graphicstexture_destroy(struct graphicstexture* texture);
+void graphicstexture_destroy(struct graphicstexture *texture);
 
 // Get texture dimensions:
-void graphics_getTextureDimensions(struct graphicstexture* texture,
+void graphics_getTextureDimensions(struct graphicstexture *texture,
 size_t* width, size_t* height);
 
 // Get texture format
-int graphics_getTextureFormat(struct graphicstexture* texture);
+int graphics_getTextureFormat(struct graphicstexture *texture);
 
 // Extract pixel data from texture again (not necessarily supported
 // by all renderers). The pixels pointer must point to a buffer
@@ -61,7 +72,7 @@ int graphics_getTextureFormat(struct graphicstexture* texture);
 // Returns 1 on success (pixels will be modified to hold the data),
 // otherwise 0 (pixels will have undefined contents).
 int graphicstexture_pixelsFromTexture(
-struct graphicstexture* gt, void* pixels);
+struct graphicstexture *gt, void *pixels);
 
 #endif  // BLITWIZARD_GRAPHICSTEXTURE_H_
 

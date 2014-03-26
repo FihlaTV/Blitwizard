@@ -115,11 +115,6 @@ static int graphics_initVideoSubsystem(char **error) {
             return 0;
         }
         sdlvideoinit = 1;
-
-#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-        // load up OpenGL extension function pointers:
-        graphicssdlglext_init();
-#endif
     }
     return 1;
 }
@@ -468,6 +463,15 @@ static int graphics_setModeWithOpenGL(int width, int height, int fullscreen,
         *error = strdup("failed to create OpenGL 2.1 context");
         return 0;
     }
+
+    // load up OpenGL extension function pointers:
+    if (!graphicssdlglext_init()) {
+        *error = strdup("failed to get all extension functions - "
+            "you may need a newer graphics card driver or your "
+            "hardware may not support all required functionality");
+        return 0;
+    }
+
 
     // attempt to enable vsync:
     SDL_GL_SetSwapInterval(1);

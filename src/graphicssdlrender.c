@@ -46,15 +46,10 @@
 #include "main.h"
 #endif
 
-#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-#include <GL/glew.h>
-#endif
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
-#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-#include <SDL2/SDL_opengl.h>
-#endif
+
+#include "blitwizard_opengl.h"
 
 #include "graphicstexture.h"
 #include "graphics.h"
@@ -78,6 +73,8 @@ extern int graphicsactive;
 extern int inbackground;
 extern int graphics3d;
 extern int mainwindowfullscreen;
+
+static uint64_t renderts = 0;
 
 void graphics_setCamera2DZoom(int index, double newzoom) {
     if (index == 0) {
@@ -107,7 +104,7 @@ void graphicsrender_drawRectangle(
     }
 }
 
-int graphicsrender_drawCropped(
+static int graphicsrender_drawCropped_GL(
         struct graphicstexture *gt, int x, int y, float alpha,
         unsigned int sourcex, unsigned int sourcey,
         unsigned int sourcewidth, unsigned int sourceheight,
@@ -115,66 +112,66 @@ int graphicsrender_drawCropped(
         int rotationcenterx, int rotationcentery, double rotationangle,
         int horiflipped,
         double red, double green, double blue, int textureFiltering) {
-    if (alpha <= 0) {
-        return 1;
-    }
-    if (alpha > 1) {
-        alpha = 1;
-    }
+    // source UV coords:
+    double sx = sourcex / (double)gt->width;
+    double sy = sourcey / (double)gt->height;
+    double sw = sourcewidth / (double)gt->width;
+    double sh = sourceheight / (double)gt->height;
 
+    glPushMatrix();
+    //glRotated((rotationangle / M_PI) * 180, x + drawwidth / 2,
+    //    0, y + drawwidth / 2);
+    if (graphicstexture_bindGl(gt, renderts)) {
+        glBegin(GL_QUADS);
+        //glColor3f(1, 0, 0);
+        glVertex2d(x, y);
+        glVertex2d(x, y + drawheight);
+        glVertex2d(x + drawwidth, y + drawheight);
+        glVertex2d(x + drawwidth, y);       
+        glEnd();
+    }
+    glPopMatrix();
+    return 1;
+}
+
+static int graphicsrender_drawCropped_SDL(
+        struct graphicstexture *gt, int x, int y, float alpha,
+        unsigned int sourcex, unsigned int sourcey,
+        unsigned int sourcewidth, unsigned int sourceheight,
+        unsigned int drawwidth, unsigned int drawheight,
+        int rotationcenterx, int rotationcentery, double rotationangle,
+        int horiflipped,
+        double red, double green, double blue, int textureFiltering) {
     // calculate source dimensions
     SDL_Rect src,dest;
     src.x = sourcex;
     src.y = sourcey;
-
-    if (sourcewidth > 0) {
-        src.w = sourcewidth;
-    } else {
-        src.w = gt->width;
-    }
-    if (sourceheight > 0) {
-        src.h = sourceheight;
-    } else {
-        src.h = gt->height;
-    }
+    src.w = sourcewidth;
+    src.h = sourceheight;
 
     // set target dimensinos
-    dest.x = x; dest.y = y;
-    if (drawwidth == 0 || drawheight == 0) {
-        dest.w = src.w;dest.h = src.h;
-    } else {
-        dest.w = drawwidth; dest.h = drawheight;
-    }
+    dest.x = x;
+    dest.y = y;
+    dest.w = drawwidth;
+    dest.h = drawheight;    
 
-    // render
+    // set alpha mod:
     int i = (int)((float)255.0f * alpha);
     if (SDL_SetTextureAlphaMod(gt->sdltex, i) < 0) {
         printwarning("Warning: Cannot set texture alpha "
         "mod %d: %s\n", i, SDL_GetError());
     }
+
+    // calculate rotation center:
     SDL_Point p;
     p.x = (int)((double)rotationcenterx * ((double)drawwidth / src.w));
     p.y = (int)((double)rotationcentery * ((double)drawheight / src.h));
-    if (red > 1) {
-        red = 1;
-    }
-    if (red < 0) {
-        red = 0;
-    }
-    if (blue > 1) {
-        blue = 1;
-    }
-    if (blue < 0) {
-        blue = 0;
-    }
-    if (green > 1) {
-        green = 1;
-    }
-    if (green < 0) {
-        green = 0;
-    }
+
+    // set draw color:
     SDL_SetTextureColorMod(gt->sdltex, (red * 255.0f),
-    (green * 255.0f), (blue * 255.0f));
+        (green * 255.0f), (blue * 255.0f));
+
+    // set texture filter:
     if (!textureFiltering) {
         // disable texture filter
         /* SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY,
@@ -183,10 +180,12 @@ int graphicsrender_drawCropped(
         // this doesn't work. we will need to wait for:
         // https://bugzilla.libsdl.org/show_bug.cgi?id=2167
     }
+
+    // actual draw call:
     if (horiflipped) {
         // draw rotated and flipped
         SDL_RenderCopyEx(mainrenderer, gt->sdltex, &src, &dest,
-        rotationangle, &p, SDL_FLIP_HORIZONTAL);
+            rotationangle, &p, SDL_FLIP_HORIZONTAL);
     } else {
         if (rotationangle > 0.001 || rotationangle < -0.001) {
             // draw rotated
@@ -206,11 +205,77 @@ int graphicsrender_drawCropped(
     return 1;
 }
 
+int graphicsrender_drawCropped(
+        struct graphicstexture *gt, int x, int y, float alpha,
+        unsigned int sourcex, unsigned int sourcey,
+        unsigned int sourcewidth, unsigned int sourceheight,
+        unsigned int drawwidth, unsigned int drawheight,
+        int rotationcenterx, int rotationcentery, double rotationangle,
+        int horiflipped,
+        double red, double green, double blue, int textureFiltering) {
+    if (alpha <= 0) {
+        return 1;
+    }
+    if (alpha > 1) {
+        alpha = 1;
+    }
+    if (red > 1) {
+        red = 1;
+    }
+    if (red < 0) {
+        red = 0;
+    }
+    if (blue > 1) {
+        blue = 1;
+    }
+    if (blue < 0) {
+        blue = 0;
+    }
+    if (green > 1) {
+        green = 1;
+    }
+    if (green < 0) {
+        green = 0;
+    }
+    if (sourcewidth == 0) {
+        sourcewidth = gt->width;
+    }
+    if (sourceheight == 0) {
+        sourceheight = gt->height;
+    }
+    if (drawwidth == 0 || drawheight == 0) {
+        drawwidth = sourcewidth;
+        drawheight = sourceheight;
+    }
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (maincontext) {
+        return graphicsrender_drawCropped_GL(gt, x, y, alpha,
+            sourcex, sourcey, sourcewidth, sourceheight,
+            drawwidth, drawheight, rotationcenterx, rotationcentery,
+            rotationangle, horiflipped, red, green, blue, textureFiltering);
+    }
+#endif
+    return graphicsrender_drawCropped_SDL(gt, x, y, alpha,
+        sourcex, sourcey, sourcewidth, sourceheight,
+        drawwidth, drawheight, rotationcenterx, rotationcentery,
+        rotationangle, horiflipped, red, green, blue, textureFiltering);
+}
+
 void graphicssdlrender_startFrame(void) {
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
+        renderts = time_getMilliseconds();
+
+        glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
-        SDL_GL_SwapWindow(mainwindow);
+
+        glDisable(GL_DEPTH_TEST);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        int actualwidth, actualheight;
+        SDL_GetWindowSize(mainwindow, &actualwidth, &actualheight);
+        glOrtho(0, actualwidth, actualheight, 0, -1, 1);
         return;
     }
 #endif
@@ -219,6 +284,12 @@ void graphicssdlrender_startFrame(void) {
 }
 
 void graphicssdlrender_completeFrame(void) {
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    if (maincontext) {
+        SDL_GL_SwapWindow(mainwindow);
+        return;
+    }
+#endif
     SDL_RenderPresent(mainrenderer);
 }
 

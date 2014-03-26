@@ -54,6 +54,11 @@
 #include "graphicstexturerequeststruct.h"
 #include "graphicstexturemanagermembudget.h"
 
+// global texture manager timestamp,
+// since keeping that for each frame/tick is faster
+// than constantly spamming calls to time_getMilliseconds()
+static uint64_t texmants = 0;
+
 // no texture uploads (e.g. device is currently lost)
 int noTextureUploads = 0;
 
@@ -449,8 +454,9 @@ struct graphicstexturemanaged* gtm, int slot) {
                     return texturemanager_getRandomGPUTexture(gtm);
                 }
                 gtm->scalelist[i].gt = graphicstexture_create(
-                gtm->scalelist[i].pixels, gtm->scalelist[i].paddedWidth,
-                gtm->scalelist[i].paddedHeight, PIXELFORMAT_32RGBA);
+                    gtm->scalelist[i].pixels, gtm->scalelist[i].paddedWidth,
+                    gtm->scalelist[i].paddedHeight, gtm->scalelist[i].format,
+                    texmants);
                 gpuMemUse += 4 * gtm->scalelist[i].width * gtm->scalelist[i].height;
                 if (!gtm->scalelist[i].gt) {
                     // creaton failed, return random other size:
@@ -1130,8 +1136,9 @@ static int texturemanager_textureSafeToDelete(
 }
 
 static int texturemanager_checkTextureForScaling(
-struct graphicstexturemanaged* gtm, struct graphicstexturemanaged* prev,
-void* userdata) {
+        struct graphicstexturemanaged* gtm,
+        struct graphicstexturemanaged* prev,
+        void* userdata) {
     if (gtm->beingInitiallyLoaded) {
         return 1;
     }
@@ -1162,8 +1169,10 @@ static void texturemanager_adaptTextures(void) {
 
 uint64_t lastUploadReset = 0;
 void texturemanager_tick(void) {
+    texmants = time_getMilliseconds();
+
     // measure when we started:
-    uint64_t start = time_getMilliseconds();
+    uint64_t start = texmants;
 
     // lock global mutex:
     mutex_lock(textureReqListMutex);

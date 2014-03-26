@@ -56,6 +56,7 @@ struct graphicstexturescaled {
       // everything read-only, but you must not change anything or obtain
       // a full lock (locked)
     struct graphicstexture* gt;  // NULL if not loaded or not in GPU memory
+    int format;  // the pixel format (see graphicstexture.h)
     void *pixels; // not NULL if texture is in regular memory
     char *diskcachepath;  // path to raw disk cache file or NULL
     size_t width, height;  // width/height of this particular scaled entry

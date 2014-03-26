@@ -28,10 +28,12 @@
 
 #if (defined(NEED_OPENGL) && !defined(MAC))
 // function pointers:
-extern PFNGLGENBUFFERSARBPROC glGenBuffersARB;
+extern PFNGLGENBUFFERSARBPROC glGenBuffers;
+extern PFNGLBUFFERDATAARBPROC glBufferData;
+extern PFNGLBINDBUFFERARBPROC glBindBuffer;
 
 // load up function pointers
-void graphicssdlglext_init(void);
+int graphicssdlglext_init(void);
 #endif
 
 #endif  // BLITWIZARD_GRAPHICSSDLGLEXT_H_

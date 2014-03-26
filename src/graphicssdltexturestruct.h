@@ -24,15 +24,24 @@
 #ifndef BLITWIZARD_GRAPHICSTEXTURESDL_H_
 #define BLITWIZARD_GRAPHICSTEXTURESDL_H_
 
+#include <stdint.h>
+
 #include "os.h"
 
 struct graphicstexture {
     // basic info
     size_t width,height;
     int format;
-    // SDL info
+    // texture data:
     union {
+        // SDL texture:
         SDL_Texture* sdltex;
+        // OpenGL PBO-uploaded texture:
+        struct {
+            uint64_t creationtime;
+            uint32_t pboid;
+            uint32_t texid;
+        };
     };
 };
 
