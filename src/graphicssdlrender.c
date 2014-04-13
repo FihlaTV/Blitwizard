@@ -120,12 +120,11 @@ static int graphicsrender_drawCropped_GL(
 
     glEnable(GL_TEXTURE_2D);
     glPushMatrix();
-    //glRotated((rotationangle / M_PI) * 180, x + drawwidth / 2,
-    //    0, y + drawwidth / 2);
+    glRotated((rotationangle / M_PI) * 180, x + drawwidth / 2,
+        0, y + drawwidth / 2);
+    glActiveTexture(GL_TEXTURE0);
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
-        //glColor3f(1, 0, 0);
-        glEnable(GL_TEXTURE_2D);
         glVertex2d(x, y);
         glVertex2d(x, y + drawheight);
         glVertex2d(x + drawwidth, y + drawheight);
@@ -133,6 +132,12 @@ static int graphicsrender_drawCropped_GL(
         glEnd();
     }
     glPopMatrix();
+    GLenum err;
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicsrender_drawCropped_GL: "
+            "error after render: %s",
+            gluErrorString(err));
+    }
     return 1;
 }
 
@@ -266,10 +271,20 @@ int graphicsrender_drawCropped(
 void graphicssdlrender_startFrame(void) {
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
+        GLenum err;
+        if ((err = glGetError()) != GL_NO_ERROR) {
+            printwarning("graphicsrender_startFrame: earlier error "
+                "around: %s", gluErrorString(err));
+        }
+
         renderts = time_getMilliseconds();
 
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
+        if ((err = glGetError()) != GL_NO_ERROR) {
+            printwarning("graphicsrender_startFrame: "
+                "glClear error: %s", gluErrorString(err));
+        }
 
         glDisable(GL_DEPTH_TEST);
         glMatrixMode(GL_PROJECTION);
@@ -289,6 +304,12 @@ void graphicssdlrender_completeFrame(void) {
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
         SDL_GL_SwapWindow(mainwindow);
+        GLenum err;
+        if ((err = glGetError()) != GL_NO_ERROR) {
+            printwarning("graphicsrender_completeFrame: "
+                "error after SDL_GL_SwapWindow: %s",
+                gluErrorString(err));
+        }
         return;
     }
 #endif
