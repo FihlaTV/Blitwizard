@@ -104,6 +104,7 @@ void graphicsrender_drawRectangle(
     }
 }
 
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
 static int graphicsrender_drawCropped_GL(
         struct graphicstexture *gt, int x, int y, float alpha,
         unsigned int sourcex, unsigned int sourcey,
@@ -140,6 +141,7 @@ static int graphicsrender_drawCropped_GL(
     }
     return 1;
 }
+#endif
 
 static int graphicsrender_drawCropped_SDL(
         struct graphicstexture *gt, int x, int y, float alpha,
