@@ -473,7 +473,9 @@ AS_IF([test -z "$maybeos"],[
 AS_IF([test "x$NEEDSDL" = xyes], [
     AS_IF([test "x$SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED" = xyes],[
         AC_MSG_CHECKING([for OpenGL headers])
-        AC_CHECK_HEADERS([GL/glew.h],,
+        AC_CHECK_HEADERS([GL/glew.h],[
+            AC_MSG_RESULT([yes])
+        ],
         [
             AC_MSG_RESULT([no])
             AC_WARN([Cannot find OpenGL headers required for advanced SDL 2 graphics effects. No shader support for SDL 2 graphics available.])

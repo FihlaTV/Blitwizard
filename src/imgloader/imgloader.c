@@ -21,12 +21,30 @@
 
 */
 
-#include <endian.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+#ifndef __BIG_ENDIAN
+#define __BIG_ENDIAN 1
+#endif
+#ifndef __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN 2
+#endif
+
+// check endianness:
+#ifdef __BIG_ENDIAN__
+#define __BYTE_ORDER __BIG_ENDIAN
+#elif __LITTLE_ENDIAN__
+#define __BYTE_ORDER __LITTLE_ENDIAN
+#else
+#ifndef __BYTE_ORDER
+// "guess" byte order:
+#define __BYTE_ORDER __LITTLE_ENDIAN
+#endif
+#endif
 
 #include "pngloader.h"
 #include "imgloader.h"
