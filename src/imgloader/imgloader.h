@@ -111,10 +111,14 @@ void img_freeHandle(void *handle);
 //  If you use this function before using free() on the image data,
 //  you will suffer a memory leak!
 
+// BIG ENDIAN:
 void img_convertRGBAtoBGRA(char *imgdata, int datasize);
 void img_convertRGBAtoABGR(char *imgdata, int datasize);
 void img_convertRGBAtoARGB(char *imgdata, int datasize);
-// convert image data to bgra if needed
+// LITTLE ENDIAN:
+void img_convertIntelABGRtoRGBA(char *imgdata, int datasize);
+void img_convertIntelABGRtoBGRA(char *imgdata, int datasize);
+void img_convertIntelABGRtoARGB(char *imgdata, int datasize);
 
 void img_scale(int bytesize, char *imgdata, int originalwidth,
     int originalheight, int pitch, char **newdata,

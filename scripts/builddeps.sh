@@ -54,6 +54,7 @@ RANLIB=`cat scripts/.buildinfo | grep RANLIB | sed -e 's/^.*\=//'`
 AR=`cat scripts/.buildinfo | grep AR | sed -e 's/^.*\=//'`
 HOST=`cat scripts/.buildinfo | grep HOST | sed -e 's/^.*\=//'`
 MACBUILD=`cat scripts/.buildinfo | grep MACBUILD | sed -e 's/^.*\=//'`
+DEBUG=`cat scripts/.buildinfo | grep DEBUG | sed -e 's/^.*\=//'`
 
 export CC="$CC"
 export AR="$AR"
@@ -69,16 +70,21 @@ echo "$use_lib_flags" > scripts/.depsarebuilt_flags
 # libpng/zlib/imglib:
 if [ ! -e libs/libimglib.a ]; then
     if [ -n "`echo $static_libs_use | grep imgloader`" ]; then
+        USE_CFLAGS="-g"
+        if [ "x$DEBUG" = xno ]; then
+            echo "Loltest"
+            USE_CFLAGS=" -DNDEBUG "
+        fi
         # static png:
         if [ -n "`echo $static_libs_use | grep png`" ]; then
             echo "Compiling libpng..."
-            CC="$CC" AR="$AR" cd src/imgloader && make deps-png || { echo "Failed to compile libpng"; exit 1; }
+            CC="$CC" AR="$AR" cd src/imgloader && make deps-png ADDITIONAL_CFLAGS="$USE_CFLAGS" || { echo "Failed to compile libpng"; exit 1; }
             cd "$dir"
         fi
         #static zlib
         if [ -n "`echo $static_libs_use | grep zlib`" ]; then
             echo "Compiling zlib..."
-            CC="$CC" AR="$AR" cd src/imgloader && make deps-zlib || { echo "Failed to compile zlib"; exit 1; }
+            CC="$CC" AR="$AR" cd src/imgloader && make deps-zlib ADDITIONAL_CFLAGS="$USE_CFLAGS" || { echo "Failed to compile zlib"; exit 1; }
             cd "$dir"
         fi
         echo "Compiling imgloader..."

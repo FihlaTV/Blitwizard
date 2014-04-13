@@ -483,6 +483,9 @@ static int graphics_setModeWithOpenGL(int width, int height, int fullscreen,
     glLoadIdentity();
     glClearColor(0, 0, 0, 0);
 
+    // various:
+    glEnable(GL_TEXTURE_2D);
+
     return 1;
 }
 #endif
@@ -573,18 +576,18 @@ int graphics_setMode(int width, int height, int fullscreen,
 #ifdef ANDROID
     char preferredrenderer[20] = "opengles";
 #else
-//#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-//    char preferredrenderer[20] = "opengleffects";
-//#else
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    char preferredrenderer[20] = "opengleffects";
+#else
     char preferredrenderer[20] = "opengl";
-//#endif
+#endif
 #endif
 #else
-//#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-//    char preferredrenderer[20] = "opengleffects";
-//#else
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+    char preferredrenderer[20] = "opengleffects";
+#else
     char preferredrenderer[20] = "direct3d";
-//#endif
+#endif
 #endif
     int softwarerendering = 0;
     if (renderer) {

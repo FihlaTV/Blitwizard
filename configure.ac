@@ -851,7 +851,7 @@ AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
 
     AS_IF([test "x$SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED" = xyes],[
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS_OPENGL_EFFECTS"
-        FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lGL"
+        FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lGL -lGLU"
         AC_DEFINE([USE_SDL_GRAPHICS_OPENGL_EFFECTS], [],
             [Enable SDL advanced OpenGL 3 graphics])
     ])
@@ -1077,6 +1077,11 @@ AS_IF([test -z "$maybeos"],[
         AM_CONDITIONAL([MAC_APP_PATHS], [test 0 = 1])
         LIBS="-pthread -ldl -lm -lrt"
         WRITELINE="\nluatarget=posix\nCXX=$CXX\nCC=$CC\nAR=$AR\nSTATIC_LIBS_USE=$STATIC_LIBS_USE\nHOST=$TGHOST\nUSE_LIB_FLAGS=$FINAL_USE_LIB_FLAGS\nRANLIB=$RANLIB\nMACBUILD=no\nWINDOWSBUILD=no\n"
+        AS_IF([test "x$enable_debug" = xyes],[
+            WRITELINE="$WRITELINE\nDEBUG=on\n"
+        ],[
+            WRITELINE="$WRITELINE\nDEBUG=off\n"
+        ])
     ],[
         # Mac OS X:
 
@@ -1090,6 +1095,11 @@ AS_IF([test -z "$maybeos"],[
         AM_CONDITIONAL([MAC_APP_PATHS], [test 1 = 1])
         LIBS="$LIBS -lm -liconv -pthread -framework CoreServices -framework Carbon -framework AudioUnit -framework ForceFeedback -framework OpenGL -framework AppKit -framework Cocoa -framework Foundation -framework IOKit -framework CoreAudio"
         WRITELINE="\nEXEEXT=$EXEEXT\nluatarget=posix\nCXX=$CXX\nCC=$CC\nSTATIC_LIBS_USE=$STATIC_LIBS_USE\nAR=$AR\nHOST=$TGHOST\nUSE_LIB_FLAGS=$FINAL_USE_LIB_FLAGS\nRANLIB=$RANLIB\nMACBUILD=yes\nWINDOWSBUILD=no\n"
+        AS_IF([test "x$enable_debug" = xyes],[
+            WRITELINE="$WRITELINE\nDEBUG=on\n"
+        ],[
+            WRITELINE="$WRITELINE\nDEBUG=off\n"
+        ])
     ])
 
     echo -e "$WRITELINE" > scripts/.buildinfo
@@ -1133,6 +1143,11 @@ AS_IF([test -z "$maybeos"],[
     AC_SUBST(TGHOST)
     
     WRITELINE="\nEXEEXT=$EXEEXT\nluatarget=mingw\nCXX=$CXX\nCC=$CC\nAR=$AR\nHOST=$TGHOST\nUSE_LIB_FLAGS=$FINAL_USE_LIB_FLAGS\nRANLIB=$RANLIB\nSTATIC_LIBS_USE=$STATIC_LIBS_USE\nMACBUILD=no\nWINDOWSBUILD=yes\n"
+    AS_IF([test "x$enable_debug" = xyes],[
+        WRITELINE="$WRITELINE\nDEBUG=on\n"
+    ],[
+        WRITELINE="$WRITELINE\nDEBUG=off\n"
+    ])
     echo -e "$WRITELINE" > scripts/.buildinfo
 
     CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"

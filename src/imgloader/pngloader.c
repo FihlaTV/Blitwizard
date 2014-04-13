@@ -146,11 +146,11 @@ int pngloader_loadRGBA(const char *pngdata, unsigned int pngdatasize,
     }
 
     // check whether there is a size limit
-    if (maxwidth && width > maxwidth) {
+    if (maxwidth && width > (unsigned int)maxwidth) {
         pngloader_freeLoadInfo(linfo);
         return 0;
     }
-    if (maxheight && height > maxheight) {
+    if (maxheight && height > (unsigned int)maxheight) {
         pngloader_freeLoadInfo(linfo);
         return 0;
     }
@@ -212,7 +212,7 @@ int pngloader_loadRGBA(const char *pngdata, unsigned int pngdatasize,
         pngloader_freeLoadInfo(linfo);
         return 0;
     }
-    int r = 0;
+    unsigned int r = 0;
     while (r < height) {
         linfo->row_pointers[r] = linfo->imgdat + channels * width * r;
         r++;
@@ -234,15 +234,14 @@ int pngloader_loadRGBA(const char *pngdata, unsigned int pngdatasize,
         // ugly conversion stuff :p
         r = 0;
         while (r < height) {
-            int k = 0;
+            unsigned int k = 0;
             while (k < width) {
                 // copy three channels we got:
                 memcpy(k * 4 + r * width * 4 + newimgdat, k * 3 +
                     r * width * 3 + linfo->imgdat, 3);
 
-                // copy the three channels we got
+                // set alpha to opaque:
                 ((char*)newimgdat)[(k * 4) + (r * width * 4) + 3] = 255;
-                // set alpha to opaque
                 k++;
             }
             r++;

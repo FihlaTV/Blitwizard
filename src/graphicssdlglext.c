@@ -30,6 +30,7 @@
 PFNGLGENBUFFERSARBPROC glGenBuffers = NULL;
 PFNGLBUFFERDATAARBPROC glBufferData = NULL;
 PFNGLBINDBUFFERARBPROC glBindBuffer = NULL;
+PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
 #endif
 
 #ifdef WINDOWS
@@ -66,6 +67,11 @@ int graphicssdlglext_init(void) {
     glBindBuffer = (PFNGLBINDBUFFERARBPROC)glGetProcAddress(
         (glPStr)"glBindBuffer");
     if (!glBindBuffer) {
+        return 0;
+    }
+    glDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)glGetProcAddress(
+        (glPStr)"glDeleteBuffers");
+    if (!glDeleteBuffers) {
         return 0;
     }
 #endif

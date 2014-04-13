@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     assert(main_startup_do(argc, argv) == 0);
     main_initAudio();
     // open up graphics:
-    assert(graphics_SetMode(640, 480, 0, 0, "Test", NULL, NULL));
+    assert(graphics_setMode(640, 480, 0, 0, "Test", NULL, NULL));
     // create a few sprites and see what happens:
     createsprites();
     texturemanagerassertionsjustcreated();
@@ -131,12 +131,12 @@ int main(int argc, char **argv) {
         texturemanagerassertionsjustcreated();
         texturemanagerassertions();
         // wait a bit:
-        uint64_t start = time_GetMilliseconds();
+        uint64_t start = time_getMilliseconds();
         uint64_t randomwait = (1000.0 * randomvalue());
         if (i == 5) {  // wait a bit longer in the 5th loop:
             randomwait = randomwait + 7000;
         }
-        while (time_GetMilliseconds() < start + 1000 + randomwait) { 
+        while (time_getMilliseconds() < start + 1000 + randomwait) { 
             texturemanager_tick();
             texturemanagerassertionscreatedonetick();
             texturemanagerassertions();

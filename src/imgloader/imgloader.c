@@ -21,10 +21,12 @@
 
 */
 
+#include <endian.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "pngloader.h"
 #include "imgloader.h"
@@ -36,6 +38,7 @@
 #endif
 
 #ifndef WIN
+#include <errno.h>
 #include <pthread.h>
 #endif
 
@@ -88,8 +91,9 @@ size_t imageheight, void *data) {
         finalheight = imgloader_getPaddedSize(finalheight);
     }
     // abort early if final size is too lage:
-    if ((finalwidth > i->maxsizex && i->maxsizex > 0)
-            || (finalheight > i->maxsizey && i->maxsizey > 0)) {
+    if ((finalwidth > (size_t)i->maxsizex && (size_t)i->maxsizex > 0)
+            || (finalheight > (size_t)i->maxsizey &&
+                (size_t)i->maxsizey > 0)) {
         return 0;
     }
     if (i->callbackSize) {
@@ -103,6 +107,7 @@ unsigned __stdcall loaderthreadfunction(void *data) {
 #else
 void *loaderthreadfunction(void *data) {
 #endif
+    printf("LALALA");
     struct loaderthreadinfo* i = data;
     // first, we probably need to load the image from a file first
     if (!i->memdata && i->path) {
@@ -177,6 +182,35 @@ void *loaderthreadfunction(void *data) {
         i->memdata = NULL;
         
         if (i->data) {
+//#ifndef NDEBUG
+            printf("[imglib] Converting to %s\n", i->format);
+//#endif
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+            printf("LITTLE ENDIAN\n");
+            // our current format is ABGR (since png outputs big endian
+            // RGBA, but we assume little endian/intel byte order)
+            // convert if needed
+            if (strcasecmp(i->format, "rgba") == 0) {
+                printf("doing conversion.\n");
+                printf("previous first 4 bytes: %u %u %u %u\n",
+                    (unsigned char)i->data[0],
+                    (unsigned char)i->data[1],
+                    (unsigned char)i->data[2],
+                    (unsigned char)i->data[3]);
+                img_convertIntelABGRtoRGBA(i->data, i->datasize);
+                printf("resulting first 4 bytes: %u %u %u %u\n",
+                    (unsigned char)i->data[0],
+                    (unsigned char)i->data[1],
+                    (unsigned char)i->data[2],
+                    (unsigned char)i->data[3]);
+            }
+            if (strcasecmp(i->format, "bgra") == 0) {
+                img_convertIntelABGRtoBGRA(i->data, i->datasize);
+            }
+            if (strcasecmp(i->format, "argb") == 0) {
+                img_convertIntelABGRtoARGB(i->data, i->datasize);
+            }
+#elif __BYTE_ORDER == __BIG_ENDIAN
             // convert if needed
             if (strcasecmp(i->format, "bgra") == 0) {
                 img_convertRGBAtoBGRA(i->data, i->datasize);
@@ -187,12 +221,15 @@ void *loaderthreadfunction(void *data) {
             if (strcasecmp(i->format, "argb") == 0) {
                 img_convertRGBAtoARGB(i->data, i->datasize);
             }
+#else
+#error "unsupported byte order"
+#endif
             // pad up if needed:
             if (i->padnpot) {
                 size_t finalwidth = imgloader_getPaddedSize(i->imagewidth);
                 size_t finalheight = imgloader_getPaddedSize(i->imageheight);
-                if (finalwidth != i->imagewidth || finalheight !=
-                        i->imageheight) {
+                if (finalwidth != (size_t)i->imagewidth || finalheight !=
+                        (size_t)i->imageheight) {
                     // we need to pad up:
                     char *newdata = malloc(finalwidth * finalheight * 4);
                     if (!newdata) {
@@ -206,10 +243,10 @@ void *loaderthreadfunction(void *data) {
                         char *p2 = i->data;
                         while (k < finalheight) {
                             // copy partial old row:
-                            if (k < i->imageheight) {
+                            if (k < (size_t)i->imageheight) {
                                 memcpy(p, p2, i->imagewidth * 4);
                                 // null remaining line:
-                                if (finalwidth > i->imagewidth) {
+                                if (finalwidth > (size_t)i->imagewidth) {
                                     memset(p + (i->imagewidth * 4),
                                         0, (finalwidth - i->imagewidth) * 4
                                     );
@@ -398,16 +435,26 @@ char **imgdata) {
     if (path) {
         if (i->path) {
             *path = strdup(i->path);
-        }else{
+        } else {
             *path = NULL;
         }
     }
     //*imgdatasize = i->datasize; // can be calculated from width*height*4
 }
 
-static void img_freeHandleThread(void *handle) {
-    if (!handle) {return;}
-    struct loaderthreadinfo* i = handle;
+#ifdef WIN
+static unsigned __stdcall img_freeHandleThread(void *handle) {
+#else
+static void *img_freeHandleThread(void *handle) {
+#endif
+    if (!handle) {
+#ifdef WIN
+        return 0;
+#else
+        return NULL;
+#endif
+    }
+    struct loaderthreadinfo *i = handle;
     while (!img_checkSuccess(handle)) {
 #ifdef WIN
         Sleep(100);
@@ -419,17 +466,28 @@ static void img_freeHandleThread(void *handle) {
     if (i->format) {free(i->format);}
     if (i->path) {free(i->path);}
     //if (i->data) {free(i->data);} //the user needs to do that!
+    free(handle);
 #ifdef WIN
     CloseHandle(i->threadhandle);
+    return 0;
 #else
     //should be done by pthread_exit()
+    return NULL;
 #endif
-    free(handle);
 }
 
 void img_freeHandle(void *handle) {
-    thread_spawnWithPriority(NULL, 0,
-        &img_freeHandleThread, handle);
+#ifdef WIN
+    HANDLE h = (HANDLE)_beginthreadex(NULL, 0,
+        img_freeHandleThread, handle, 0, NULL);
+    CloseHandle(h);
+#else
+    pthread_t thread;
+    while (pthread_create(&thread, NULL, img_freeHandleThread, handle) != 0) {
+        assert(errno == EAGAIN);
+    }
+    pthread_detach(thread);
+#endif    
 }
 
 
@@ -444,11 +502,23 @@ unsigned char thirdchannelto, unsigned char fourthchannelto) {
         char oldlayout[4];
         memcpy(oldlayout, data + r, 4);
         *(char*)(data + r + firstchannelto) = oldlayout[0];
-        *(char*)(data + r + secondchannelto) = oldlayout[2];
+        *(char*)(data + r + secondchannelto) = oldlayout[1];
         *(char*)(data + r + thirdchannelto) = oldlayout[2];
         *(char*)(data + r + fourthchannelto) = oldlayout[3];
         r += 4;
     }
+}
+
+void img_convertIntelABGRtoRGBA(char *imgdata, int datasize) {
+    img_convert(imgdata, datasize, 3, 2, 1, 0);
+}
+
+void img_convertIntelABGRtoBGRA(char *imgdata, int datasize) {
+    img_convert(imgdata, datasize, 1, 2, 3, 0);
+}
+
+void img_convertIntelABGRtoARGB(char *imgdata, int datasize) {
+    img_convert(imgdata, datasize, 2, 1, 0, 3);
 }
 
 void img_convertRGBAtoBGRA(char *imgdata, int datasize) {
@@ -508,9 +578,4 @@ void img_scale(int bytesize, char *imgdata, int originalwidth,
     }
 }
 
-void img_4to3channel(char *imgdata, int width, int height,
-char **newdata, int channeltodrop) {
-    *newdata = NULL;
-    //FIXME
-}
 

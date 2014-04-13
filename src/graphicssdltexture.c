@@ -75,7 +75,14 @@ void graphicstexture_destroy(struct graphicstexture *gt) {
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
         // delete the OpenGL PBO texture
-
+        if (gt->texid > 0) {
+            glDeleteTextures(1, &gt->texid);
+            gt->texid = 0;
+        }
+        if (gt->pboid > 0) {
+            glDeleteBuffers(1, &gt->pboid);
+            gt->pboid = 0;
+        }
     } else {
 #endif
         // delete ordinary SDL texture
@@ -143,16 +150,16 @@ int graphicstexture_getDesiredFormat(void) {
 }
 
 static int graphicstexture_pixelFormatToSDLFormat(int format) {
-    // little endian blitwizard pixel format to SDL pixel format
+    // blitwizard pixel format to SDL pixel format
     switch (format) {
     case PIXELFORMAT_32RGBA:
-        return SDL_PIXELFORMAT_ABGR8888;
-    case PIXELFORMAT_32ARGB:
         return SDL_PIXELFORMAT_BGRA8888;
-    case PIXELFORMAT_32ABGR:
-        return SDL_PIXELFORMAT_RGBA8888;
-    case PIXELFORMAT_32BGRA:
+    case PIXELFORMAT_32ARGB:
         return SDL_PIXELFORMAT_ARGB8888;
+    case PIXELFORMAT_32ABGR:
+        return SDL_PIXELFORMAT_ABGR8888;
+    case PIXELFORMAT_32BGRA:
+        return SDL_PIXELFORMAT_BGRA8888;
     default:
         return -1;
     }
@@ -172,19 +179,86 @@ struct graphicstexture *graphicstexture_createHWPBO(
         struct graphicstexture *gt,
         void *data,
         size_t width, size_t height, int format, uint64_t time) {
+    // clear OpenGL error:
+    while (glGetError() != GL_NO_ERROR) {glGetError();}
+    
+    GLenum err;
     glGenBuffers(1, &gt->pboid);
-
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->pboid = 0;
+        printwarning("graphicstexture_createHWPBO: PBO creation: "
+            "glGenBuffers failed");
+        goto failure;
+    }
     // bind buffer and fill
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, gt->pboid);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHWPBO: PBO CREATION: "
+            "glBindBuffer failed");
+        goto failure;
+    }
     glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * 4,
         data, GL_STREAM_DRAW_ARB);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHWPBO: PBO creation: "
+            "glBufferData failed");
+        goto failure;
+    }
 
-    // create a texture from the PBO:
+    // create a new texture:
     glGenTextures(1, &gt->texid);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHWPBO: texture creation: "
+            "glGenTextures failed");
+        goto failure;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHWPBO: texture creation: "
+        "glTexParameteri failed (GL_TEXTURE_BASE_LEVEL)");
+        goto failure;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHWPBO: texture creation: "
+            "glTexParameteri failed (GL_TEXTURE_MAX_LEVEL)");
+        goto failure;
+    }
+
+    // transfer PBO to texture:
     glBindTexture(GL_TEXTURE_2D, gt->texid);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHWPBO: transfer: "
+            "glBindTexture failed");
+        goto failure;
+    }
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, gt->pboid);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHWPBO: transfer: "
+            "glBindBuffer failed");
+        goto failure;
+    }
     glTexImage2D(GL_TEXTURE_2D,
-        0, 4, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, data);
+        0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8,
+        0);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHWPBO: transfer: "
+            "glTexImage2D failed");
+        goto failure;
+    }
     return gt;
+
+failure:
+    printwarning("graphicstexture_createHWPBO: failed; OpenGL "
+        "error string is: %s", gluErrorString(err));
+    // clean up all error bits:
+    while (glGetError() != GL_NO_ERROR) {glGetError();}
+    // destroy texture:
+    graphicstexture_destroy(gt);
+    return NULL;
 }
 #endif
 
@@ -264,7 +338,6 @@ struct graphicstexture *graphicstexture_create(void *data,
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
-        printf("Got a main context!\n");
         return graphicstexture_createHWPBO(gt, data, width, height, format,
             time);
     }

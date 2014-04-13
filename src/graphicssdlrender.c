@@ -118,12 +118,14 @@ static int graphicsrender_drawCropped_GL(
     double sw = sourcewidth / (double)gt->width;
     double sh = sourceheight / (double)gt->height;
 
+    glEnable(GL_TEXTURE_2D);
     glPushMatrix();
     //glRotated((rotationangle / M_PI) * 180, x + drawwidth / 2,
     //    0, y + drawwidth / 2);
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
         //glColor3f(1, 0, 0);
+        glEnable(GL_TEXTURE_2D);
         glVertex2d(x, y);
         glVertex2d(x, y + drawheight);
         glVertex2d(x + drawwidth, y + drawheight);

@@ -21,6 +21,7 @@
 
 */
 
+#include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include "imgloader/imgloader.h"
@@ -58,7 +59,7 @@ static void callbackSizeMustFireBeforeData(void *handle, int imgwidth,
     assert(imgwidth == reportedSizeW);
     assert(imgheight == reportedSizeH);
 
-    time_Sleep(500); // delay thread
+    time_sleep(500); // delay thread
 }
 
 int main(int argc, char **argv) {
@@ -73,7 +74,7 @@ int main(int argc, char **argv) {
         5000, 5000, 1, "rgba", callbackSizeMustFireBeforeData,
         callbackDataMustBeFailure, NULL);
     while (!img_checkSuccess(handle)) {
-        time_Sleep(500);
+        time_sleep(500);
     }
     img_freeHandle(handle);
 
@@ -90,7 +91,7 @@ int main(int argc, char **argv) {
         callbackDataMustBeSuccess, NULL);
     assert(!img_checkSuccess(handle));
     while (!img_checkSuccess(handle)) {
-        time_Sleep(500);
+        time_sleep(500);
     }
     img_freeHandle(handle);
 
@@ -106,7 +107,7 @@ int main(int argc, char **argv) {
         5000, 5000, 0, "rgba", callbackSizeMustFireBeforeData,
         callbackDataMustBeSuccess, NULL);
     while (!img_checkSuccess(handle)) {
-        time_Sleep(500);
+        time_sleep(500);
     }
     img_freeHandle(handle);
     fprintf(stderr, "test complete! have fun using blitwizard\n");

@@ -6,11 +6,11 @@ video games or multimedia applications.
 
 LICENSE:
 
-  The license of blitwizard is zlib (open e.g. src/main.c and read at the top).
+  The license of blitwizard is zlib (open e.g. src/main.c and read at the
+  top), but it contains and/or uses other libraries, see README-libs.txt.
+
   The examples are public domain including graphics and the blitwizard logo,
   which was designed by uoou - thanks :-)
-
-  Blitwizard uses various libraries. Check their licenses in README-libs.txt
   
 HOW TO USE:
 

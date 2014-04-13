@@ -27,4 +27,4 @@
 #define ORBMASSIVE "ctests/orbmassive.png"
 #define ORBMASSIVENPOT "ctests/orbmassivenpot.png"
 #define NOSUCHIMAGE "doesntexist.png"
-
+#define COLORSIMAGE "ctests/imgloadertestimage.png"
