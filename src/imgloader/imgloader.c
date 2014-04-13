@@ -273,7 +273,7 @@ void *loaderthreadfunction(void *data) {
 #endif
 }
 
-void startthread(struct loaderthreadinfo* i) {
+void startthread(struct loaderthreadinfo *i) {
 #ifdef WIN
     i->threadhandle = (HANDLE)_beginthreadex(NULL, 0,
     loaderthreadfunction, i, 0, NULL);
@@ -287,21 +287,21 @@ void startthread(struct loaderthreadinfo* i) {
 }
 
 void *img_loadImageThreadedFromFile(const char *path, int maxwidth,
-int maxheight, int padnpot, const char *format,
-void (*callbackSize)(void *handle, int imgwidth, int imgheight,
-void *userdata),
-void (*callbackData)(void *handle, char *imgdata,
-unsigned int imgdatasize, void *userdata),
-void *userdata) {
+        int maxheight, int padnpot, const char *format,
+        void (*callbackSize)(void *handle, int imgwidth, int imgheight,
+        void *userdata),
+        void (*callbackData)(void *handle, char *imgdata,
+        unsigned int imgdatasize, void *userdata),
+        void *userdata) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
     memset(t, 0, sizeof(*t));
-    t->path = malloc(strlen(path)+1);
+    t->path = malloc(strlen(path) + 1);
     if (!t->path) {
         free(t);
         return NULL;
     }
-    t->format = malloc(strlen(format)+1);
+    t->format = malloc(strlen(format) + 1);
     if (!t->format) {
         free(t->path);free(t);
         return NULL;
@@ -329,15 +329,18 @@ void *img_loadImageThreadedFromFunction(
     unsigned int imgdatasize, void *userdata),
     void *callbackuserdata
 ) {
-    struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
-    if (!t) {return NULL;}
+    struct loaderthreadinfo *t = malloc(sizeof(struct loaderthreadinfo));
+    if (!t) {
+        return NULL;
+    }
     memset(t, 0, sizeof(*t));
     t->readfunc = readfunc;
     t->readfuncptr = readfuncuserdata;
     t->userdata = callbackuserdata;
-    t->format = malloc(strlen(format)+1);
+    t->format = malloc(strlen(format) + 1);
     if (!t->format) {
-        free(t->memdata);free(t);
+        free(t->memdata);
+        free(t);
         return NULL;
     }
     strcpy(t->format, format);
@@ -351,13 +354,13 @@ void *img_loadImageThreadedFromFunction(
 }
 
 void *img_loadImageThreadedFromMemory(const void *memdata,
-unsigned int memdatasize, int maxwidth, int maxheight, int padnpot,
-const char *format,
-void (*callbackSize)(void *handle, int imgwidth, int imgheight,
-void *userdata),
-void (*callbackData)(void *handle, char *imgdata,
-unsigned int imgdatasize, void *userdata),
-void *userdata) {
+        unsigned int memdatasize, int maxwidth, int maxheight, int padnpot,
+        const char *format,
+        void (*callbackSize)(void *handle, int imgwidth, int imgheight,
+        void *userdata),
+        void (*callbackData)(void *handle, char *imgdata,
+        unsigned int imgdatasize, void *userdata),
+        void *userdata) {
     struct loaderthreadinfo* t = malloc(sizeof(struct loaderthreadinfo));
     if (!t) {return NULL;}
     memset(t, 0, sizeof(*t));
@@ -367,9 +370,10 @@ void *userdata) {
         free(t);
         return NULL;
     }
-    t->format = malloc(strlen(format)+1);
+    t->format = malloc(strlen(format) + 1);
     if (!t->format) {
-        free(t->memdata);free(t);
+        free(t->memdata);
+        free(t);
         return NULL;
     }
     strcpy(t->format, format);
@@ -385,8 +389,10 @@ void *userdata) {
 }
 
 int img_checkSuccess(void *handle) {
-    if (!handle) {return 1;}
-    struct loaderthreadinfo* i = handle;
+    if (!handle) {
+        return 1;
+    }
+    struct loaderthreadinfo *i = handle;
 #ifdef WIN
     if (WaitForSingleObject(i->threadhandle, 0) == WAIT_OBJECT_0) {
 #else
@@ -403,16 +409,15 @@ int img_checkSuccess(void *handle) {
 }
 
 void img_GetData(void *handle, char **path, int *imgwidth, int *imgheight,
-char **imgdata) {
+        char **imgdata) {
     if (!handle) {
         *imgwidth = 0;
         *imgheight = 0;
         *imgdata = NULL;
         *path = NULL;
-        //*imgdatasize = 0;
         return;
     }
-    struct loaderthreadinfo* i = handle;
+    struct loaderthreadinfo *i = handle;
     *imgwidth = i->imagewidth;
     *imgheight = i->imageheight;
     *imgdata = i->data;
@@ -423,7 +428,6 @@ char **imgdata) {
             *path = NULL;
         }
     }
-    //*imgdatasize = i->datasize; // can be calculated from width*height*4
 }
 
 #ifdef WIN
@@ -446,9 +450,15 @@ static void *img_freeHandleThread(void *handle) {
         usleep(100 * 1000);
 #endif
     }
-    if (i->memdata) {free(i->memdata);}
-    if (i->format) {free(i->format);}
-    if (i->path) {free(i->path);}
+    if (i->memdata) {
+        free(i->memdata);
+    }
+    if (i->format) {
+        free(i->format);
+    }
+    if (i->path) {
+        free(i->path);
+    }
     //if (i->data) {free(i->data);} //the user needs to do that!
     free(handle);
 #ifdef WIN
@@ -476,8 +486,8 @@ void img_freeHandle(void *handle) {
 
 
 static void img_convert(char *data, int datasize,
-unsigned char firstchannelto, unsigned char secondchannelto,
-unsigned char thirdchannelto, unsigned char fourthchannelto) {
+        unsigned char firstchannelto, unsigned char secondchannelto,
+        unsigned char thirdchannelto, unsigned char fourthchannelto) {
     if (!data) {
         return;
     }
@@ -530,10 +540,10 @@ void img_scale(int bytesize, char *imgdata, int originalwidth,
     }
 
     // do scaling:
-    int r,k;
+    int r, k;
     r = 0;
-    float scalex = ((float)originalwidth/(float)targetwidth);
-    float scaley = ((float)originalheight/(float)targetheight);
+    float scalex = ((float)originalwidth / (float)targetwidth);
+    float scaley = ((float)originalheight / (float)targetheight);
     while (r < targetwidth) {
         k = 0;
         while (k < targetheight) {
@@ -542,12 +552,12 @@ void img_scale(int bytesize, char *imgdata, int originalwidth,
             // get X source coordinate:
             int fromx = (float)r * scalex;
             if (fromx < 0) {fromx = 0;}
-            if (fromx >= originalwidth) {fromx = originalwidth-1;}
+            if (fromx >= originalwidth) {fromx = originalwidth - 1;}
 
             // get Y source coordinate:
             int fromy = (float)k * scaley;
             if (fromy < 0) {fromy = 0;}
-            if (fromy >= originalheight) {fromy = originalheight-1;}
+            if (fromy >= originalheight) {fromy = originalheight - 1;}
 
             // do pixel copy:
             memcpy(
