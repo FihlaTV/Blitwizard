@@ -107,7 +107,6 @@ unsigned __stdcall loaderthreadfunction(void *data) {
 #else
 void *loaderthreadfunction(void *data) {
 #endif
-    printf("LALALA");
     struct loaderthreadinfo* i = data;
     // first, we probably need to load the image from a file first
     if (!i->memdata && i->path) {
@@ -182,27 +181,12 @@ void *loaderthreadfunction(void *data) {
         i->memdata = NULL;
         
         if (i->data) {
-//#ifndef NDEBUG
-            printf("[imglib] Converting to %s\n", i->format);
-//#endif
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-            printf("LITTLE ENDIAN\n");
             // our current format is ABGR (since png outputs big endian
             // RGBA, but we assume little endian/intel byte order)
             // convert if needed
             if (strcasecmp(i->format, "rgba") == 0) {
-                printf("doing conversion.\n");
-                printf("previous first 4 bytes: %u %u %u %u\n",
-                    (unsigned char)i->data[0],
-                    (unsigned char)i->data[1],
-                    (unsigned char)i->data[2],
-                    (unsigned char)i->data[3]);
                 img_convertIntelABGRtoRGBA(i->data, i->datasize);
-                printf("resulting first 4 bytes: %u %u %u %u\n",
-                    (unsigned char)i->data[0],
-                    (unsigned char)i->data[1],
-                    (unsigned char)i->data[2],
-                    (unsigned char)i->data[3]);
             }
             if (strcasecmp(i->format, "bgra") == 0) {
                 img_convertIntelABGRtoBGRA(i->data, i->datasize);
