@@ -50,17 +50,20 @@ TEST_CFLAGS= $(AM_CFLAGS) -DUNITTEST
 # -------------
 # C tests
 # -------------
-check_PROGRAMS = $(testd)/test-imgloader $(testd)/test-texman-1 $(testd)/test-imgloader-colors
-__testd__test_imgloader_SOURCES = $(testd)/test-imgloader.c $(source_code_files)
-__testd__test_imgloader_LDFLAGS = $(FINAL_LD_FLAGS)
-__testd__test_imgloader_CFLAGS = $(TEST_CFLAGS)
-__testd__test_imgloader_colors_SOURCES = $(testd)/test-imgloader-colors.c $(source_code_files)
+check_PROGRAMS = $(testd)/test-imgloader-basic $(testd)/test-texman-basic $(testd)/test-imgloader-colors $(testd)/test-texman-availability
+__testd__test_imgloader_basic_SOURCES = $(testd)/test-imgloader-basic.c $(source_code_files)
+__testd__test_imgloader_basic_LDFLAGS = $(FINAL_LD_FLAGS)
+__testd__test_imgloader_basic_CFLAGS = $(TEST_CFLAGS)
+__testd__test_imgloader_basic_colors_SOURCES = $(testd)/test-imgloader-colors.c $(source_code_files)
 __testd__test_imgloader_colors_LDFLAGS = $(FINAL_LD_FLAGS)
 __testd__test_imgloader_colors_CFLAGS = $(TEST_CFLAGS)
-__testd__test_texman_1_SOURCES = $(testd)/test-texman-1.c $(source_code_files)
-__testd__test_texman_1_LDFLAGS = $(FINAL_LD_FLAGS)
-__testd__test_texman_1_CFLAGS = $(TEST_CFLAGS)
-TESTS += $(testd)/test-imgloader $(testd)/test-texman-1 $(testd)/test-imgloader-colors
+__testd__test_texman_basic_SOURCES = $(testd)/test-texman-basic.c $(source_code_files)
+__testd__test_texman_basic_LDFLAGS = $(FINAL_LD_FLAGS)
+__testd__test_texman_basic_CFLAGS = $(TEST_CFLAGS)
+__testd__test_texman_availability_SOURCES = $(testd)/test-texman-2.c $(source_code_files)
+__testd__test_texman_availability_LDFLAGS = $(FINAL_LD_FLAGS)
+__testd__test_texman_availability_CFLAGS = $(TEST_CFLAGS)
+TESTS += $(testd)/test-imgloader-basic $(testd)/test-texman-basic $(testd)/test-imgloader-colors $(testd)/test-texman-availability
 
 # -------------
 # Lua tests
