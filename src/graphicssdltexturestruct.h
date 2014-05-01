@@ -28,9 +28,14 @@
 
 #include "os.h"
 
+#ifdef USE_SDL_GRAPHICS
+
+#include <SDL2/SDL.h>
+#include "blitwizard_opengl.h"
+
 struct graphicstexture {
     // basic info
-    size_t width,height;
+    size_t width, height;
     int format;
     // texture data:
     union {
@@ -44,6 +49,8 @@ struct graphicstexture {
         };
     };
 };
+
+#endif  // USE_SDL_GRAPHICS
 
 #endif  // BLITWIZARD_GRAPHICSTEXTURESDL_H_
 

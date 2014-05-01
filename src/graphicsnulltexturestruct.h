@@ -26,13 +26,17 @@
 
 #include "os.h"
 
+#ifdef USE_NULL_GRAPHICS
+
 struct graphicstexture {
     // basic info
-    size_t width,height;
+    size_t width, height;
     int format;
     // pixel data
     void* pixdata;
 };
+
+#endif  // USE_NULL_GRAPHICS
 
 #endif  // BLITWIZARD_GRAPHICSTEXTURENULL_H_
 

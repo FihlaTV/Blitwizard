@@ -59,21 +59,40 @@ struct texturerequesthandle;
 // texturemanager_RequestTexture allows you to request a texture.
 // You will get a request handle that identifies your request.
 //
-// You provide two callbacks: the textureDimensionInfo callback,
-// and the textureSwitch callback.
+// RATIONALE OF A REQUEST:
 //
-// The texture manager will call the first one as soon as the
-// texture dimensions are known. This is usually quite early.
+// You simply express interest in obtaining the texture.
 //
-// The texture manager will call the second one with an actual
+// Please note you are not guaranteed to get te texture shortly or
+// at any point in time at all, see the following documentation of
+// the third callback named textureandlingDone. However, in that case
+// you will be informed that the texture manager has no interest in
+// providing you with it.
+//
+// You will almost certainly get the texture if you report usage
+// right after filing the request with texturemanager_usingRequest.
+//
+// CALLBACK PARAMETER DOCUMENTATION:
+//
+// You provide three callbacks: the textureDimensionInfo callback,
+// the textureSwitch callback and the textureHandlingDone callback.
+//
+// 1.) textureDimensionInfo:
+// The texture manager will call the textureDimensionInfo callback
+// as soon as the texture dimensions are known. This is usually quite
+// early. You are guaranteed to get this callback.
+//
+// 2.) textureSwitch:
+// The texture manager will call textureSwitch with an actual
 // texture as soon as it is available. IT MIGHT BE OF DIFFERENT
-// DIMENSIONS THEN THE ONE YOU GOT. Also, the callback can be
-// called again any time, at which point it will provide a new
-// texture and THE OLD ONE WILL GET INVALID with the next call
-// of texturemanager_tick().
+// DIMENSIONS THEN THE ONE YOU GOT WITH textureDimensionInfo.
+// Also, the callback can be called again any time, at which point
+// it will provide a new texture and THE OLD ONE WILL GET INVALID
+// with the next call of texturemanager_tick().
 // (Exception: when texturemanager_deviceLost() is called, it
 // becomes invalid right with the callback. This can currently
 // not be solved differently, sorry)
+// You may also never get this callback, see the next one.
 //
 // The textureSwitch texture passed to you can be NULL aswell!
 // (you must stop using the old one and not draw anything until
@@ -82,17 +101,29 @@ struct texturerequesthandle;
 // This means the texture manager can essentially provide you
 // with any chain of different texture versions and you always
 // must use the newest one and stop using the older ones.
-//
 // The texture manager will ensure the old ones are properly
 // free'd from memory, don't attempt to do that yourself.
 //
+// 3.) textureHandlingDone:
+// The texturemanager will call the textureHandlingDone callback
+// once it will no longer consider your request. This means if you
+// haven't received textureSwitch by now, the texture may not be
+// loaded at all or not very soon. THIS DOESN'T MEAN YOU WILL NO LONGER
+// GET FURTHER textureSwitch CALLS - you can still get them and must
+// still abide to them, but you shouldn't wait further for your texture
+// to arrive in short time. You are guaranteed to get this callback,
+// and it will always happen after textureDimensionInfo.
+//
+// DELETiON OF A REQUEST:
+//
 // If you no longer wish to use a texture or all the future
-// versions of it you might end up with, use
-// texturemanager_DestroyRequest.
+// versions of it you might end up with, use texturemanager_DestroyRequest.
+//
+// MULTIPLE REQUESTS TO SAME TEXTURE:
 //
 // Multiple requests of the same texture might or might not
 // give you the same texture. (The texture manager certainly
-// will try to avoid duplication)
+// will try to avoid duplication, but there is no guarantee)
 //
 // NOTE: Report back usage of your texture through
 // texturemanager_UsingRequest. Do it even if your current
@@ -100,16 +131,21 @@ struct texturerequesthandle;
 // cannot actually draw things. The texture manager will
 // give your texture higher priority if usage is high.
 //
-// BEWARE OF THE CALLBACKS: Inside the callbacks, don't
-// call the texture manager api ever. This will break things.
-// (Because of deadlocks/threading issues)
+// IMPORTANT NOTE TO AVOID CRASHES:
+//
+// The api is thread-safe. However:
+//
+// Inside the callbacks, don't call the texture manager api ever.
+// This will break things and it isn't supported. (Because of
+// deadlocks/threading issues)
+//
 struct texturerequesthandle* texturemanager_requestTexture(
     const char* path,
     void (*textureDimensionInfo)(struct texturerequesthandle* request,
         size_t width, size_t height, void* userdata),
     void (*textureSwitch)(struct texturerequesthandle* request,
         struct graphicstexture* texture, void* userdata),
-        void (*textureHandlingDone)(struct texturerequesthandle* request,
+    void (*textureHandlingDone)(struct texturerequesthandle* request,
         void* userdata),
     void* userdata
 );

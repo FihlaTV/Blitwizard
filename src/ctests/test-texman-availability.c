@@ -38,37 +38,71 @@
 #include "logging.h"
 #include "graphicstexturerequeststruct.h"
 #include "graphics2dspritestruct.h"
-
-struct graphics2dsprite *spr;
-void createsprites(void) {
-    // create a few sprites:
-    spr = graphics2dsprites_create(
-        ORBLARGE, 0, 0, 0, 0);
-}
-
-void destroysprite(void) {
-    graphics2dsprites_destroy(spr);
-}
+#include "graphicssdltexturestruct.h"
 
 extern int main_startup_do(int argc, char **argv);
 extern int main_initAudio(void);
+
+struct texturerequesthandle *req = NULL;
+static size_t obtainedWidth = 0;
+static size_t obtainedHeight = 0;
+static struct graphicstexture *tex = NULL;
+
+static void textureDimensionInfoCallback(struct texturerequesthandle
+        *request, size_t width, size_t height, void *userdata) {
+    assert(request == req);
+    assert(userdata == NULL);
+    assert(obtainedWidth == 0 && obtainedHeight == 0);
+    assert(width > 0);
+    assert(height > 0);
+
+}
+
+static void textureSwitch(struct texturerequestandle *request,
+        struct graphicstexture *texture, void* userdata) {
+    assert(userdata == NULL);
+    assert(obtainedWidth != 0 && obtainedHeight != 0);
+    assert(req == request);
+    assert(!tex);
+    tex = texture;
+}
+
+static void textureHandlingDone(struct texturerequesthandle *request,
+        void *userdata) {
+    // this shouldn't happen.
+    assert(0);
+}
 
 int main(int argc, char **argv) {
     // initialise blitwizard:
     assert(main_startup_do(argc, argv) == 0);
     main_initAudio();
+
     // open up graphics:
     assert(graphics_setMode(640, 480, 0, 0, "Test", NULL, NULL));
-    // create a few sprites and see what happens:
-    createsprites();
-    //texturemanagerassertionsjustcreated();
-    //texturemanagerassertions();
+
+    // create a texture request:
+    req = texturemanager_requestTexture(ORBLARGE,
+        &textureDimensionInfoCallback,
+        &textureSwitch,
+        &textureHandlingDone,
+        NULL);
     texturemanager_tick();
     doConsoleLog();
+
     // now wait for the texture to load:
+    while (!tex) {
+        texturemanager_tick();
+    }
 
     // assert that the largest version is available:
-    return 77;
+#if (defined(USE_SDL_GRAPHICS) || defined(USE_NULL_GRAPHICS))
+    assert(obtainedWidth == tex->width);
+    assert(obtainedHeight == tex->height);
+#else
+#error "unsupported graphics backend - please update test2
+#endif
+    return 0;
 }
 
 #else  // USE_GRAPHICS

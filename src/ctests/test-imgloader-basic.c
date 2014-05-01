@@ -21,6 +21,11 @@
 
 */
 
+#include "config.h"
+#include "os.h"
+
+#ifdef USE_GRAPHICS
+
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
@@ -114,3 +119,13 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+#else  // USE_GRAPHICS
+
+#include <stdio.h>
+
+int main(int argc, const char **argv) {
+    fprintf(stderr, "Nothing to test, no graphics available.\n");
+    return 77;
+}
+
+#endif  // USE_GRAPHICS

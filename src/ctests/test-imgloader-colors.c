@@ -22,7 +22,7 @@
 */
 
 #include "config.h"
-#include "Os.h"
+#include "os.h"
 
 #ifdef USE_GRAPHICS
 
