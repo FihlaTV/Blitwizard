@@ -21,6 +21,11 @@
 
 */
 
+#include "config.h"
+#include "Os.h"
+
+#ifdef USE_GRAPHICS
+
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
@@ -136,4 +141,13 @@ int main(int argc, char **argv) {
     fprintf(stderr, "test complete! have fun using blitwizard\n");
     return 0;
 }
+
+#else
+
+int main(int argc, const char **argv) {
+    fprintf(stderr, "Nothing to test, no graphics available.\n");
+    return 77;
+}
+
+#endif
 

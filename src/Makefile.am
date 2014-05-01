@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I m4
 # -------------
 # listing of non-os dependant blitwizard object files:
 # -------------
-source_code_files = audio.c audiomixer.c audiosourcefadepanvol.c audiosourceffmpeg.c audiosourceflac.c audiosourcefile.c audiosourceformatconvert.c audiosourceloop.c audiosourceogg.c audiosourceprereadcache.c audiosourceresample.c audiosourceresourcefile.c audiosourcewave.c avl-tree/avl-tree.c avl-tree-helpers.c connections.c file.c filelist.c diskcache.c graphics.c graphics2dsprites.c graphics2dspriteslist.c graphics2dspritestree.c graphicscamera.c graphicsnull.c graphicsnullrender.c graphicsnulltexture.c graphicsogre.cpp graphicsogrerender.cpp graphicssdl.c graphicssdlglext.c graphicssdlrender.c graphicssdltexture.c graphicstexturelist.c graphicstextureloader.c graphicstexturemanager.c graphicstexturemanagermembudget.c hash.c hostresolver.c ipcheck.c library.c listeners.c logging.c luaerror.c luafuncs.c luafuncs_debug.c luafuncs_graphics.c luafuncs_graphics_camera.c luafuncs_media_object.c luafuncs_net.c luafuncs_object.c luafuncs_objectgraphics.c luafuncs_objectphysics.c luafuncs_os.c luafuncs_physics.c luafuncs_rundelayed.c luafuncs_string.c luafuncs_vector.c luastate.c luastate_functionTables.c main.c mathhelpers.c orderedExecution.c osinfo.c physics.cpp physicsinternal.cpp poolAllocator.c signalhandling.c threading.c timefuncs.c win32console.c resources.c sockets.c zipdecryptionnone.c zipfile.c
+source_code_files = audio.c audiomixer.c audiosourcefadepanvol.c audiosourceffmpeg.c audiosourceflac.c audiosourcefile.c audiosourceformatconvert.c audiosourceloop.c audiosourceogg.c audiosourceprereadcache.c audiosourceresample.c audiosourceresourcefile.c audiosourcewave.c avl-tree/avl-tree.c avl-tree-helpers.c connections.c file.c filelist.c diskcache.c graphics.c graphics2dsprites.c graphics2dspriteslist.c graphics2dspritestree.c graphicscamera.c graphicsnull.c graphicsnullrender.c graphicsnulltexture.c graphicsogre.cpp graphicsogrerender.cpp graphicssdl.c graphicssdlglext.c graphicssdlrender.c graphicssdltexture.c graphicstexturelist.c graphicstextureloader.c graphicstexturemanager.c graphicstexturemanagermembudget.c graphicstexturemanagertexturedecide.c hash.c hostresolver.c ipcheck.c library.c listeners.c logging.c luaerror.c luafuncs.c luafuncs_debug.c luafuncs_graphics.c luafuncs_graphics_camera.c luafuncs_media_object.c luafuncs_net.c luafuncs_object.c luafuncs_objectgraphics.c luafuncs_objectphysics.c luafuncs_os.c luafuncs_physics.c luafuncs_rundelayed.c luafuncs_string.c luafuncs_vector.c luastate.c luastate_functionTables.c main.c mathhelpers.c orderedExecution.c osinfo.c physics.cpp physicsinternal.cpp poolAllocator.c signalhandling.c threading.c timefuncs.c win32console.c resources.c sockets.c zipdecryptionnone.c zipfile.c
 
 # -------------
 # OS dependant object files:
@@ -54,13 +54,13 @@ check_PROGRAMS = $(testd)/test-imgloader-basic $(testd)/test-texman-basic $(test
 __testd__test_imgloader_basic_SOURCES = $(testd)/test-imgloader-basic.c $(source_code_files)
 __testd__test_imgloader_basic_LDFLAGS = $(FINAL_LD_FLAGS)
 __testd__test_imgloader_basic_CFLAGS = $(TEST_CFLAGS)
-__testd__test_imgloader_basic_colors_SOURCES = $(testd)/test-imgloader-colors.c $(source_code_files)
+__testd__test_imgloader_colors_SOURCES = $(testd)/test-imgloader-colors.c $(source_code_files)
 __testd__test_imgloader_colors_LDFLAGS = $(FINAL_LD_FLAGS)
 __testd__test_imgloader_colors_CFLAGS = $(TEST_CFLAGS)
 __testd__test_texman_basic_SOURCES = $(testd)/test-texman-basic.c $(source_code_files)
 __testd__test_texman_basic_LDFLAGS = $(FINAL_LD_FLAGS)
 __testd__test_texman_basic_CFLAGS = $(TEST_CFLAGS)
-__testd__test_texman_availability_SOURCES = $(testd)/test-texman-2.c $(source_code_files)
+__testd__test_texman_availability_SOURCES = $(testd)/test-texman-availability.c $(source_code_files)
 __testd__test_texman_availability_LDFLAGS = $(FINAL_LD_FLAGS)
 __testd__test_texman_availability_CFLAGS = $(TEST_CFLAGS)
 TESTS += $(testd)/test-imgloader-basic $(testd)/test-texman-basic $(testd)/test-imgloader-colors $(testd)/test-texman-availability

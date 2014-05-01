@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     // now wait for the texture to load:
 
     // assert that the largest version is available:
-    return 0;
+    return 77;
 }
 
 #else  // USE_GRAPHICS
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 
 int main(int argc, const char **argv) {
     fprintf(stderr, "Nothing to test, no graphics available.\n");
-    return 0;
+    return 77;
 }
 
 #endif
