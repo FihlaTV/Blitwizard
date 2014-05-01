@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
         &textureSwitch,
         &textureHandlingDone,
         NULL);
+    texturemanager_usingRequest(req, USING_AT_VISIBILITY_DETAIL);
     texturemanager_tick();
     doConsoleLog();
 

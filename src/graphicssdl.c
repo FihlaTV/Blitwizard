@@ -786,17 +786,23 @@ void graphics_checkEvents(
         memset(&e, 0, sizeof(e));
         while (SDL_PollEvent(&e) == 1) {
             if (e.type == SDL_QUIT) {
-                quitevent();
+                if (quitevent) {
+                    quitevent();
+                }
             }
             if (e.type == SDL_MOUSEMOTION) {
-                mousemoveevent(e.motion.x, e.motion.y);
+                if (mousemoveevent) {
+                    mousemoveevent(e.motion.x, e.motion.y);
+                }
             }
             if (e.type == SDL_WINDOWEVENT &&
                 (e.window.event == SDL_WINDOWEVENT_MINIMIZED
                 || e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)) {
                 // app was put into background
                 if (!inbackground) {
-                    putinbackground(1);
+                    if (putinbackground) {
+                        putinbackground(1);
+                    }
                     inbackground = 1;
                 }
             }
@@ -805,7 +811,9 @@ void graphics_checkEvents(
                 || e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)) {
                 // app is pulled back into foreground
                 if (inbackground) {
-                    putinbackground(0);
+                    if (putinbackground) {
+                        putinbackground(0);
+                    }
                     inbackground = 0;
                 }
             }
@@ -815,7 +823,9 @@ void graphics_checkEvents(
                     release = 1;
                 }
                 int button = e.button.button;
-                mousebuttonevent(button, release, e.button.x, e.button.y);
+                if (mousebuttonevent) {
+                    mousebuttonevent(button, release, e.button.x, e.button.y);
+                }
             }
             if (e.type == SDL_FINGERDOWN || e.type == SDL_FINGERUP) {
                 int release = 0;
@@ -837,10 +847,14 @@ void graphics_checkEvents(
                 x = y;
                 y = temp;
                 int button = SDL_BUTTON_LEFT;
-                mousebuttonevent(button, release, x, y);
+                if (mousebuttonevent) {
+                    mousebuttonevent(button, release, x, y);
+                }
             }
             if (e.type == SDL_TEXTINPUT) {
-                textevent(e.text.text);
+                if (textevent) {
+                    textevent(e.text.text);
+                }
             }
             if (e.type == SDL_WINDOWEVENT) {
                 if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
@@ -893,7 +907,9 @@ void graphics_checkEvents(
                         break;
                 }
                 if (strlen(keybuf) > 0) {
-                    keyboardevent(keybuf, release);
+                    if (keyboardevent) {
+                        keyboardevent(keybuf, release);
+                    }
                 }
             }
             memset(&e, 0, sizeof(e));

@@ -137,6 +137,10 @@ int main(int argc, char **argv) {
             randomwait = randomwait + 7000;
         }
         while (time_getMilliseconds() < start + 1000 + randomwait) { 
+            // avoid the impression of hanging:
+            graphics_checkEvents(NULL, NULL, NULL, NULL, NULL, NULL);
+           
+            // process texture manager: 
             texturemanager_tick();
             texturemanagerassertionscreatedonetick();
             texturemanagerassertions();
