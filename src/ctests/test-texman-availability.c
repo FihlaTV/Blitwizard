@@ -50,16 +50,20 @@ static struct graphicstexture *tex = NULL;
 
 static void textureDimensionInfoCallback(struct texturerequesthandle
         *request, size_t width, size_t height, void *userdata) {
+    fprintf(stdout, "got textureDimensionInfoCallback. dimensions: %u, %u\n",\
+        width, height);
     assert(request == req);
     assert(userdata == NULL);
     assert(obtainedWidth == 0 && obtainedHeight == 0);
     assert(width > 0);
     assert(height > 0);
-
+    obtainedWidth = width;
+    obtainedHeight = height;
 }
 
-static void textureSwitch(struct texturerequestandle *request,
+static void textureSwitchCallback(struct texturerequestandle *request,
         struct graphicstexture *texture, void* userdata) {
+    fprintf(stdout, "got textureSwitchCallback. pointer: %p\n", texture);
     assert(userdata == NULL);
     assert(obtainedWidth != 0 && obtainedHeight != 0);
     assert(req == request);
@@ -67,10 +71,10 @@ static void textureSwitch(struct texturerequestandle *request,
     tex = texture;
 }
 
-static void textureHandlingDone(struct texturerequesthandle *request,
+static void textureHandlingDoneCallback(struct texturerequesthandle *request,
         void *userdata) {
-    // this shouldn't happen.
-    assert(0);
+    fprintf(stdout, "got textureHandlingDoneCallback. texture: %p\n", tex);
+    assert(tex);
 }
 
 int main(int argc, char **argv) {
@@ -84,8 +88,8 @@ int main(int argc, char **argv) {
     // create a texture request:
     req = texturemanager_requestTexture(ORBLARGE,
         &textureDimensionInfoCallback,
-        &textureSwitch,
-        &textureHandlingDone,
+        &textureSwitchCallback,
+        &textureHandlingDoneCallback,
         NULL);
     texturemanager_usingRequest(req, USING_AT_VISIBILITY_DETAIL);
     texturemanager_tick();
