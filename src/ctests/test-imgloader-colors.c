@@ -21,6 +21,11 @@
 
 */
 
+/* UNIT TEST
+ * This unit test verifies that the color channels of the built-in image
+ * loader are correctly ordered with various different pixel formats.
+ */
+
 #include "config.h"
 #include "os.h"
 

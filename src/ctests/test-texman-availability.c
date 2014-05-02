@@ -21,6 +21,13 @@
 
 */
 
+/* UNIT TEST
+ * This unit test verifies that a requested texture from the texture manager
+ * for which instant detail usage is reported will be available timely.
+ * It will also check for the correct order and amount of the callbacks issued
+ * by the texture manager
+ */
+
 #include "config.h"
 #include "os.h"
 

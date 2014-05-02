@@ -21,6 +21,11 @@
 
 */
 
+/* UNIT TEST
+ * This unit test creates some 2d sprites, and then it verifies that sprites
+ * will eventually get their textures loaded by the texture manager.
+ */
+
 #include "config.h"
 #include "os.h"
 

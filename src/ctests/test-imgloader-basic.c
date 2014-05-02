@@ -21,6 +21,12 @@
 
 */
 
+/* UNIT TEST
+ * This unit test loads a few images with blitwizard's imgloader and verifies
+ * that the images are properly loaded (or properly rejected if e.g. larger
+ * than the specified maximum size).
+ */
+
 #include "config.h"
 #include "os.h"
 
