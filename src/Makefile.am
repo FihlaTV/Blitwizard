@@ -49,6 +49,9 @@ TEST_CFLAGS= $(AM_CFLAGS) -DUNITTEST
 
 # -------------
 # C tests
+# These tests test the internal C code and they are generally more
+# fine-grained and detailed than the lua tests (see below) and they're
+# testing smaller components.
 # -------------
 check_PROGRAMS = $(testd)/test-imgloader-basic $(testd)/test-texman-2dsprites $(testd)/test-imgloader-colors $(testd)/test-texman-availability
 __testd__test_imgloader_basic_SOURCES = $(testd)/test-imgloader-basic.c $(source_code_files)
@@ -67,6 +70,9 @@ TESTS += $(testd)/test-imgloader-basic $(testd)/test-texman-2dsprites $(testd)/t
 
 # -------------
 # Lua tests
+# The lua tests test the final api from the outside (unlike the C tests that
+# usually test inner components). Naturally, they operate a bit less
+# fine-grained than the C tests and they usually have a slightly larger scope.
 # -------------
 TESTS += luatests/createobject.sh \
          luatests/filelist.sh \
