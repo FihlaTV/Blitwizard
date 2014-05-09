@@ -304,6 +304,10 @@ struct graphicstexturemanaged* gtm, int slot) {
                 // let's do it right now:
                 if (!thread_isMainThread()) {
                     // impossible from this thread.
+                    printwarning("[TEXMAN] Internal error: upload from "
+                        "wrong thread");
+                    fprintf(stderr, "texturemanager: internal error: upload "
+                        "from wrong thread");
                     return texturemanager_getRandomGPUTexture(gtm);
                 }
                 gtm->scalelist[i].gt = graphicstexture_create(
@@ -541,8 +545,11 @@ request, int listLocked) {
         request->handedTextureScaledEntry->refcount++;
 
         // hand out texture:
-        request->textureDimensionInfoCallback(request,
-        gtm->width, gtm->height, request->userdata);
+        if (!request->textureDimensionInfoCallbackIssued) {
+            request->textureDimensionInfoCallbackIssued = 1;
+            request->textureDimensionInfoCallback(request,
+                gtm->width, gtm->height, request->userdata);
+        }
         request->textureSwitchCallback(request, gt, request->userdata);
     }
 
@@ -598,8 +605,11 @@ static void texturemanager_initialLoadingDimensionsCallback
     struct texturerequesthandle *req = unhandledRequestList;
     while (req) {
         if (req->gtm == gtm) {
-            req->textureDimensionInfoCallback(req,
-                width, height, req->userdata);
+            if (!req->textureDimensionInfoCallbackIssued) {
+                req->textureDimensionInfoCallback(req,
+                    width, height, req->userdata);
+                req->textureDimensionInfoCallbackIssued = 1;
+            }
         }
         req = req->next;
     }

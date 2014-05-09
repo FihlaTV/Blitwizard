@@ -55,5 +55,10 @@
 #include <SDL2/SDL_opengl.h>
 #endif
 
+// finally, define the glext stuff:
+#ifdef NEED_OPENGL
+#include "graphicssdlglext.h"
+#endif
+
 #endif  // BLITWIZARD_OPENGL_H_
 

@@ -598,6 +598,18 @@ int luafuncs_object_setInvisibleToMouse(lua_State* l) {
 // the 3d world.
 // Objects can have behaviour and collision info attached and move
 // around. They are what eventually makes the action in your game!
+//
+// Note: blitwizard objects will NOT get deleted if you no longer have
+// references to them (like regular lua objects).
+// They will only disappear if you use
+// @{blitwizard.object:destroy|object:destroy} explicitely.
+// This means as a consequence, you can create objects and set their
+// behaviour with @{blitwizard.object:doAlways} and then just forget about
+// them and leave them do their stuff.
+//
+// If you lose all references to an object and you need to obtain it again,
+// you can still find it with @{blitwizard.getAllObjects} which has a list of
+// all existing objects.
 // @function new
 // @tparam number type specify object type: blitwizard.object.o2d or blitwizard.object.o3d
 // @tparam string resource (optional) if you specify the file path to a resource here (optional), this resource will be loaded and used as a visual representation for the object. The resource must be a supported graphical object, e.g. an image (.png) or a 3d model (.mesh). You can also specify nil here if you don't want any resource to be used.

@@ -17,7 +17,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 ]]
 
 --[[--
- The font namespace allows to draw bitmap fonts.
+ The font module allows to draw bitmap fonts.
  One bitmap font is included and can be used by submitting "default".
 
  <i>Keep in mind when releasing your game:</i> please note this module
@@ -25,7 +25,7 @@ Permission is granted to anyone to use this software for any purpose, including 
  <b>blitwizard templates</b>, so it is unavailable if you don't ship
  the templates with your game.
  @author Jonas Thiem (jonas.thiem@gmail.com)
- @copyright 2013
+ @copyright 2013-2014
  @license zlib
  @module blitwizard.font
 ]]

@@ -180,9 +180,15 @@ struct graphicstexture *graphicstexture_createHWPBO(
         void *data,
         size_t width, size_t height, int format, uint64_t time) {
     // clear OpenGL error:
-    while (glGetError() != GL_NO_ERROR) {glGetError();}
-    
     GLenum err;
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHWPBO: lingering error %s",
+            gluErrorString(err));
+        while (glGetError() != GL_NO_ERROR) {
+            glGetError();
+        }
+    }
+    
     glGenBuffers(1, &gt->pboid);
     if ((err = glGetError()) != GL_NO_ERROR) {
         gt->pboid = 0;
@@ -204,6 +210,8 @@ struct graphicstexture *graphicstexture_createHWPBO(
             "glBufferData failed");
         goto failure;
     }
+
+    glActiveTexture(GL_TEXTURE0);
 
     // create a new texture:
     glGenTextures(1, &gt->texid);

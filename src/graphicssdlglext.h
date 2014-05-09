@@ -28,6 +28,9 @@
 
 #if (defined(NEED_OPENGL) && !defined(MAC))
 // function pointers:
+#undef glGenBuffers
+#undef glBufferData
+#undef glBindBuffer
 extern PFNGLGENBUFFERSARBPROC glGenBuffers;
 extern PFNGLBUFFERDATAARBPROC glBufferData;
 extern PFNGLBINDBUFFERARBPROC glBindBuffer;

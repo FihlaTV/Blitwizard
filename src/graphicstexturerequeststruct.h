@@ -46,6 +46,9 @@ struct texturerequesthandle {
     struct graphicstexture* handedTexture;
     struct graphicstexturescaled* handedTextureScaledEntry;
 
+    // remember whether we already issued the dimensions callback:
+    int textureDimensionInfoCallbackIssued;
+
     // remember whether we issued a texture handling callback:
     int textureHandlingDoneIssued;
 

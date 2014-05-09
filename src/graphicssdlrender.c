@@ -119,13 +119,20 @@ static int graphicsrender_drawCropped_GL(
     double sw = sourcewidth / (double)gt->width;
     double sh = sourceheight / (double)gt->height;
 
+    GLenum err;
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicsrender_drawCropped_GL: "
+            "lingering error before render: %s",
+            gluErrorString(err));
+    }
+
     glEnable(GL_TEXTURE_2D);
     glPushMatrix();
     glRotated((rotationangle / M_PI) * 180, x + drawwidth / 2,
         0, y + drawwidth / 2);
-    glActiveTexture(GL_TEXTURE0);
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
+        glColor4f(1, 1, 1, 1);
         glVertex2d(x, y);
         glVertex2d(x, y + drawheight);
         glVertex2d(x + drawwidth, y + drawheight);
@@ -133,7 +140,6 @@ static int graphicsrender_drawCropped_GL(
         glEnd();
     }
     glPopMatrix();
-    GLenum err;
     if ((err = glGetError()) != GL_NO_ERROR) {
         printwarning("graphicsrender_drawCropped_GL: "
             "error after render: %s",

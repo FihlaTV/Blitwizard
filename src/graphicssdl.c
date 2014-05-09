@@ -66,7 +66,7 @@ int sdlvideoinit = 0;
 int sdlinit = 0;
 int manualopengl = 0;
 
-extern int graphicsactive;  // whether graphics are active/opened (1) or not (0)
+extern int graphicsactive;  // whether graphics are active/open (1) or not (0)
 int inbackground = 0;  // whether program has focus (1) or not (0)
 int graphics3d = 0;  // 1: Ogre graphics, 0: SDL graphics
 int mainwindowfullscreen; // whether fullscreen (1) or not (0)
@@ -739,7 +739,8 @@ int graphics_setMode(int width, int height, int fullscreen,
     }
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-    if (strcasecmp(preferredrenderer, "opengleffects") == 0 && !softwarerendering) {
+    if (strcasecmp(preferredrenderer, "opengleffects") == 0 &&
+            !softwarerendering) {
         if (!graphics_setModeWithOpenGL(width, height, fullscreen,
                 resizable, title, preferredrenderer, error)) {
             return 0;
