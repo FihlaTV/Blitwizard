@@ -64,11 +64,13 @@
 #ifdef LINUX
 #define glGetErrorString gluErrorString
 #else
+#ifdef NEED_OPENGL
 __attribute__((unused)) static const char* glGetErrorString(
         __attribute__((unused)) GLenum error) {
     return "no OpenGL error string support for this platform provided "
         "(by blitwizard)";
 }
+#endif
 #endif
 
 #endif  // BLITWIZARD_OPENGL_H_
