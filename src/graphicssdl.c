@@ -465,7 +465,7 @@ static int graphics_setModeWithOpenGL(int width, int height, int fullscreen,
     }
 
     // load up OpenGL extension function pointers:
-    if (!graphicssdlglext_init()) {
+    if (!graphicssdlglext_init(1)) {
         *error = strdup("failed to get all extension functions - "
             "you may need a newer graphics card driver or your "
             "hardware may not support all required functionality");

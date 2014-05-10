@@ -63,7 +63,9 @@
 // on platforms with GLU, get OpenGL error messages with that
 #ifdef LINUX
 #define glGetErrorString gluErrorString
+#define glMakeCurrent glXMakeCurrent
 #else
+#define glMakeCurrent wglMakeCurrent
 #ifdef NEED_OPENGL
 __attribute__((unused)) static const char* glGetErrorString(
         __attribute__((unused)) GLenum error) {

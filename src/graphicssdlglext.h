@@ -40,7 +40,7 @@ extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 #endif
 
 // load up function pointers
-int graphicssdlglext_init(void);
+int graphicssdlglext_init(int forcereload);
 #endif
 
 #endif  // BLITWIZARD_GRAPHICSSDLGLEXT_H_

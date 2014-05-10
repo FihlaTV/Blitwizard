@@ -50,8 +50,8 @@ typedef const unsigned char* glPStr;
 
 static int glextinit = 0;
 
-int graphicssdlglext_init(void) {
-    if (glextinit) {
+int graphicssdlglext_init(int forcereload) {
+    if (glextinit && !forcereload) {
         return 1;
     }
     glextinit = 1;
