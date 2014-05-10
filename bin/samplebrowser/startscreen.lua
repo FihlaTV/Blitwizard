@@ -36,7 +36,7 @@ blitwizard engine - source code file
 
 function blitwizard.onInit()
     -- this will open up a graphics window:
-    blitwizard.graphics.setMode(800 * 1, 600 * 1, "blitwizard", false, "opengl")
+    blitwizard.graphics.setMode(800 * 1, 600 * 1, "blitwizard", false)
     blitwizard.graphics.getCameras()[1]:set2dZoomFactor(2) -- zoom into things
 
     -- Introduction text:
