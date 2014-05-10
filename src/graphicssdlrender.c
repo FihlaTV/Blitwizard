@@ -123,7 +123,7 @@ static int graphicsrender_drawCropped_GL(
     if ((err = glGetError()) != GL_NO_ERROR) {
         printwarning("graphicsrender_drawCropped_GL: "
             "lingering error before render: %s",
-            gluErrorString(err));
+            glGetErrorString(err));
     }
 
     glEnable(GL_TEXTURE_2D);
@@ -143,7 +143,7 @@ static int graphicsrender_drawCropped_GL(
     if ((err = glGetError()) != GL_NO_ERROR) {
         printwarning("graphicsrender_drawCropped_GL: "
             "error after render: %s",
-            gluErrorString(err));
+            glGetErrorString(err));
     }
     return 1;
 }
@@ -282,7 +282,7 @@ void graphicssdlrender_startFrame(void) {
         GLenum err;
         if ((err = glGetError()) != GL_NO_ERROR) {
             printwarning("graphicsrender_startFrame: earlier error "
-                "around: %s", gluErrorString(err));
+                "around: %s", glGetErrorString(err));
         }
 
         renderts = time_getMilliseconds();
@@ -291,7 +291,7 @@ void graphicssdlrender_startFrame(void) {
         glClear(GL_COLOR_BUFFER_BIT);
         if ((err = glGetError()) != GL_NO_ERROR) {
             printwarning("graphicsrender_startFrame: "
-                "glClear error: %s", gluErrorString(err));
+                "glClear error: %s", glGetErrorString(err));
         }
 
         glDisable(GL_DEPTH_TEST);
@@ -316,7 +316,7 @@ void graphicssdlrender_completeFrame(void) {
         if ((err = glGetError()) != GL_NO_ERROR) {
             printwarning("graphicsrender_completeFrame: "
                 "error after SDL_GL_SwapWindow: %s",
-                gluErrorString(err));
+                glGetErrorString(err));
         }
         return;
     }

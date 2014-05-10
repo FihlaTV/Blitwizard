@@ -35,6 +35,9 @@ extern PFNGLGENBUFFERSARBPROC glGenBuffers;
 extern PFNGLBUFFERDATAARBPROC glBufferData;
 extern PFNGLBINDBUFFERARBPROC glBindBuffer;
 extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers;
+#ifdef WINDOWS
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
+#endif
 
 // load up function pointers
 int graphicssdlglext_init(void);

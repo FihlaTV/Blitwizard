@@ -40,7 +40,7 @@
 #if (defined(WINDOWS) || defined(MAC))
 // windows, mac: get regular gl.h + glext.h
 #include <GL/gl.h>
-#include <GL/glext.h>
+#include "src/wglheaders/glext.h"
 #else
 // linux/other X11 systems: get glx.h
 #include <GL/glu.h>
@@ -58,6 +58,17 @@
 // finally, define the glext stuff:
 #ifdef NEED_OPENGL
 #include "graphicssdlglext.h"
+#endif
+
+// on platforms with GLU, get OpenGL error messages with that
+#ifdef LINUX
+#define glGetErrorString gluErrorString
+#else
+__attribute__((unused)) static const char* glGetErrorString(
+        __attribute__((unused)) GLenum error) {
+    return "no OpenGL error string support for this platform provided "
+        "(by blitwizard)";
+}
 #endif
 
 #endif  // BLITWIZARD_OPENGL_H_

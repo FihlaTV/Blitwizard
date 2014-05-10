@@ -167,7 +167,7 @@ static int graphicstexture_pixelFormatToSDLFormat(int format) {
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
 int graphicstexture_bindGl(struct graphicstexture *gt, uint64_t time) {
-    if (gt->creationtime + 30 > time) {
+    if (gt->uploadtime + 30 > time) {
         // wait for it to upload first.
         return 0;
     }
@@ -179,11 +179,14 @@ struct graphicstexture *graphicstexture_createHWPBO(
         struct graphicstexture *gt,
         void *data,
         size_t width, size_t height, int format, uint64_t time) {
+    if (format != PIXELFORMAT_32RGBA) {
+        return NULL;
+    }
     // clear OpenGL error:
     GLenum err;
     if ((err = glGetError()) != GL_NO_ERROR) {
         printwarning("graphicstexture_createHWPBO: lingering error %s",
-            gluErrorString(err));
+            glGetErrorString(err));
         while (glGetError() != GL_NO_ERROR) {
             glGetError();
         }
@@ -257,13 +260,16 @@ struct graphicstexture *graphicstexture_createHWPBO(
             "glTexImage2D failed");
         goto failure;
     }
+    gt->uploadtime = time;
     return gt;
 
 failure:
     printwarning("graphicstexture_createHWPBO: failed; OpenGL "
-        "error string is: %s", gluErrorString(err));
+        "error string is: %s", glGetErrorString(err));
     // clean up all error bits:
-    while (glGetError() != GL_NO_ERROR) {glGetError();}
+    while (glGetError() != GL_NO_ERROR) {
+        glGetError();
+    }
     // destroy texture:
     graphicstexture_destroy(gt);
     return NULL;
@@ -274,7 +280,8 @@ const char *pixelformattoname(int format);
 struct graphicstexture *graphicstexture_createHWSDL(
         struct graphicstexture *gt,
         void *data,
-        size_t width, size_t height, int format, uint64_t time) {
+        size_t width, size_t height, int format,
+        __attribute__((unused)) uint64_t time) {
     // create hw texture
 #ifdef DEBUGUPLOADTIMING
     uint64_t ts1 = time_getMilliseconds();
@@ -282,7 +289,7 @@ struct graphicstexture *graphicstexture_createHWSDL(
     gt->sdltex = SDL_CreateTexture(mainrenderer,
         graphicstexture_pixelFormatToSDLFormat(format),
         SDL_TEXTUREACCESS_STREAMING,
-        gt->width, gt->height);
+        width, height);
     if (!gt->sdltex) {
         graphicstexture_destroy(gt);
         return NULL;

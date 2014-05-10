@@ -49,7 +49,9 @@
 #include <SDL2/SDL.h>
 #endif
 #ifdef USE_SDL_GRAPHICS_OPENGL3
+#ifndef WINDOWS
 #include <GL/glew.h>
+#endif
 #endif
 
 #include "graphicstexture.h"

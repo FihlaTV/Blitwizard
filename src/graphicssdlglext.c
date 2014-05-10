@@ -31,6 +31,9 @@ PFNGLGENBUFFERSARBPROC glGenBuffers = NULL;
 PFNGLBUFFERDATAARBPROC glBufferData = NULL;
 PFNGLBINDBUFFERARBPROC glBindBuffer = NULL;
 PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
+#ifdef WINDOWS
+PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
+#endif
 #endif
 
 #ifdef WINDOWS
@@ -74,6 +77,13 @@ int graphicssdlglext_init(void) {
     if (!glDeleteBuffers) {
         return 0;
     }
+#ifdef WINDOWS
+    glActiveTexture = (PFNGLACTIVETEXTUREPROC)glGetProcAddress(
+        "glActiveTexture");
+    if (!glActiveTexture) {
+        return 0;
+    }
+#endif
 #endif
     return 1;
 }

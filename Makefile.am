@@ -8,6 +8,7 @@ docs:
 clean:
 	cd libs && rm -f libblitwizard*.a
 	cd libs && rm -f libimglib.a
+	cd src && make clean
 install: all
 	cd src && $(MAKE) install
 cppcheck:

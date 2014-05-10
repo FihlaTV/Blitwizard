@@ -473,17 +473,76 @@ AS_IF([test -z "$maybeos"],[
 AS_IF([test "x$NEEDSDL" = xyes], [
     AS_IF([test "x$SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED" = xyes],[
         AC_MSG_CHECKING([for OpenGL headers])
-        AC_CHECK_HEADERS([GL/glew.h],[
-            AC_MSG_RESULT([yes])
-        ],
-        [
-            AC_MSG_RESULT([no])
-            AC_WARN([Cannot find OpenGL headers required for advanced SDL 2 graphics effects. No shader support for SDL 2 graphics available.])
-            # without libGL, no point of having opengl 3 graphics
-            SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, OpenGL headers not found"
-        ], [])
+        AS_IF([test "x$WINDOWS" = xno],[
+            AC_CHECK_HEADERS([GL/glew.h],[
+                AC_MSG_RESULT([yes])
+            ],
+            [
+                AC_MSG_RESULT([no])
+                AC_WARN([Cannot find OpenGL headers required for advanced SDL 2 graphics effects. No shader support for SDL 2 graphics available.])
+                # without libGL, no point of having opengl 3 graphics
+                SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, OpenGL headers not found"
+            ], [])
+        ], [
+            AC_CHECK_HEADERS([GL/gl.h],[
+                AC_MSG_RESULT([yes])
+            ],
+            [
+                AC_MSG_RESULT([no])
+                AC_WARN([Cannot find OpenGL headers required for advanced SDL 2 graphics effects. No shader support for SDL 2 graphics available.])
+                # without libGL, no point of having opengl 3 graphics
+                SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, OpenGL headers not found"
+            ], [])
+        ])
     ])
 ])
+AS_IF([test "x$NEEDSDL" = xyes], [
+    AS_IF([test "x$SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED" = xyes],[
+        AS_IF([test "x$WINDOWS" = xyes],[
+            # -lopengl32 check:
+            AC_MSG_CHECKING([for -lopengl32 availability])
+            echo "int main(int argc, const char** argv) {return 0;}" > ./test.c
+            rm -f ./testbin
+            $CC -L./ test.c -lopengl32 -o ./testbin > /dev/null 2>&1
+            rm ./test.c
+            AS_IF([test ! -f ./testbin],[
+                AC_MSG_RESULT([no])
+                SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED="no, opengl32 lib not usable"
+            ],[
+                AS_IF([test -f ./testbin.exe ],[
+                    rm ./testbin.exe
+                ],[
+                    rm -f ./testbin
+                ])
+                AC_MSG_RESULT([yes])
+                LIBS="$LIBS -lopengl32"
+            ])
+        ])
+    ])
+])
+
+
+# x86 target platform check:
+AC_MSG_CHECKING([for x86 / 32bit target])
+echo -e "#ifndef __i386__\n#ifndef _M_X86\n#error \"nope\"\n#endif\n#endif\nint main(int argc, const char** argv) {return 0;}" > ./test.c
+IS_32_PLATFORM="no"
+rm -f ./testbin
+$CC -L./ test.c -lopengl32 -o ./testbin > /dev/null 2>&1
+rm ./test.c
+AS_IF([test ! -f ./testbin],[
+    AC_MSG_RESULT([no])
+],[
+    AS_IF([test -f ./testbin.exe ],[
+        rm ./testbin.exe
+    ],[
+        rm -f ./testbin
+    ])
+    AC_MSG_RESULT([yes])
+    IS_32_PLATFORM="yes"
+])
+
+
+
 
 # Check Ogre3D:
 AS_IF([test "x$COMPILE_OGRE" = xyes],[
@@ -853,7 +912,11 @@ AS_IF([test "x$SDL_GRAPHICS_FEATURE_ENABLED" = xyes],[
 
     AS_IF([test "x$SDL_GRAPHICS_OPENGL_EFFECTS_FEATURE_ENABLED" = xyes],[
         FINAL_USE_LIB_FLAGS="$FINAL_USE_LIB_FLAGS -DUSE_SDL_GRAPHICS_OPENGL_EFFECTS"
-        FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lGL -lGLU"
+        AS_IF([test "x$WINDOWS" = xyes],[
+            FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lopengl32"
+        ],[
+            FINAL_LD_FLAGS="$FINAL_LD_FLAGS -lGL -lGLU"
+        ])
         AC_DEFINE([USE_SDL_GRAPHICS_OPENGL_EFFECTS], [],
             [Enable SDL advanced OpenGL 3 graphics])
     ])
@@ -1152,10 +1215,14 @@ AS_IF([test -z "$maybeos"],[
     ])
     echo -e "$WRITELINE" > scripts/.buildinfo
 
-    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
-    CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS -Wl,--large-address-aware -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    LARGE_ADDRESS_AWARE_FLAG=""
+    AS_IF([test "x$IS_32_PLATFORM" = xyes],[
+        LARGE_ADDRESS_AWARE_FLAG=" -Wl,--large-address-aware"
+    ])
+    CFLAGS="$ADDITIONAL_CFLAGS $CFLAGS $LARGE_ADDRESS_AWARE_FLAG -static-libgcc -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
+    CXXFLAGS="$ADDITIONAL_CFLAGS $CFLAGS $LARGE_ADDRESS_AWARE_FLAG -static-libgcc -static-libstdc++ -mwindows -mthreads -L../ -I../ `cd $scriptsdir && sh ./checksse.sh`"
     LIBS="$LIBS -lshlwapi -lgdi32 -limm32 -ldbghelp -loleaut32 -lws2_32 -lole32 -lwinmm -luuid -lversion"
-    
+
     # -lwbemuuid check:
     AC_MSG_CHECKING([for -lwbemuuid availability])
     echo "int main(int argc, const char** argv) {return 0;}" > ./test.c

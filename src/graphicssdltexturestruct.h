@@ -43,7 +43,7 @@ struct graphicstexture {
         SDL_Texture* sdltex;
         // OpenGL PBO-uploaded texture:
         struct {
-            uint64_t creationtime;
+            uint64_t uploadtime;
             uint32_t pboid;
             uint32_t texid;
         };
