@@ -134,9 +134,13 @@ static int graphicsrender_drawCropped_GL(
         glBegin(GL_QUADS);
         glColor4f(1, 1, 1, 1);
         glVertex2d(x, y);
+        glTexCoord2f(sx, sy);
         glVertex2d(x, y + drawheight);
+        glTexCoord2f(sx, sy + sh);
         glVertex2d(x + drawwidth, y + drawheight);
-        glVertex2d(x + drawwidth, y);       
+        glTexCoord2f(sx + sw, sy + sh);
+        glVertex2d(x + drawwidth, y);
+        glTexCoord2f(sx + sw, sy);
         glEnd();
     }
     glPopMatrix();
