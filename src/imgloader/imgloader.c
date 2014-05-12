@@ -203,29 +203,60 @@ void *loaderthreadfunction(void *data) {
             // our current format is ABGR (since png outputs big endian
             // RGBA, but we assume little endian/intel byte order)
             // convert if needed
-            if (strcasecmp(i->format, "rgba") == 0) {
+            if (strcasecmp(i->format, "rgba") == 0 ||
+                    strcasecmp(i->format, "rgba_upsidedown") == 0) {
                 img_convertIntelABGRtoRGBA(i->data, i->datasize);
             }
-            if (strcasecmp(i->format, "bgra") == 0) {
+            if (strcasecmp(i->format, "bgra") == 0 ||
+                    strcasecmp(i->format, "bgra_upsidedown") == 0) {
                 img_convertIntelABGRtoBGRA(i->data, i->datasize);
             }
-            if (strcasecmp(i->format, "argb") == 0) {
+            if (strcasecmp(i->format, "argb") == 0 ||
+                    strcasecmp(i->format, "argb_upsidedown") == 0) {
                 img_convertIntelABGRtoARGB(i->data, i->datasize);
             }
 #elif __BYTE_ORDER == __BIG_ENDIAN
             // convert if needed
-            if (strcasecmp(i->format, "bgra") == 0) {
+            if (strcasecmp(i->format, "bgra") == 0 ||
+                    strcasecmp(i->format, "bgra_upsidedown") == 0) {
                 img_convertRGBAtoBGRA(i->data, i->datasize);
             }
-            if (strcasecmp(i->format, "abgr") == 0) {
+            if (strcasecmp(i->format, "abgr") == 0 ||
+                    strcasecmp(i->format, "abgr_upsidedown") == 0) {
                 img_convertRGBAtoABGR(i->data, i->datasize);
             }
-            if (strcasecmp(i->format, "argb") == 0) {
+            if (strcasecmp(i->format, "argb") == 0 ||
+                    strcasecmp(i->format, "argb_upsidedown") == 0) {
                 img_convertRGBAtoARGB(i->data, i->datasize);
             }
 #else
 #error "unsupported byte order"
 #endif
+            // turn upside down if needed:
+            if (strlen(i->format) > strlen("upsidedown")) {
+                if (memcmp(i->format + strlen(i->format)
+                        - strlen("upsidedown"), "upsidedown", strlen(
+                        "upsidedown")) == 0) {
+                    // do a vertical mirror:
+                    char *line = malloc(4 * i->imagewidth);
+                    size_t t = 0;
+                    size_t linebytes = 4 * i->imagewidth;
+                    while (t < ((size_t)i->imageheight) / 2) {
+                        size_t otherline = (i->imageheight - t);
+                        if (otherline != t) {
+                            memcpy(line, i->data + (t * 4 * i->imagewidth),
+                                linebytes);
+                            memcpy(i->data + (t * 4 * i->imagewidth),
+                                i->data + (otherline * 4 * i->imagewidth),
+                                linebytes);
+                            memcpy(i->data + (otherline * 4 * i->imagewidth),
+                                line, linebytes);
+                        }
+                        t++;
+                    }
+                }
+            }
+                            
             // pad up if needed:
             if (i->padnpot) {
                 size_t finalwidth = imgloader_getPaddedSize(i->imagewidth);

@@ -36,6 +36,10 @@ struct graphicstexture;
 #define PIXELFORMAT_32ABGR 3
 #define PIXELFORMAT_32BGRA 4
 #define PIXELFORMAT_UNKNOWN (-1)
+#define PIXELFORMAT_32RGBA_UPSIDEDOWN 101
+#define PIXELFORMAT_32ARGB_UPSIDEDOWN 102
+#define PIXELFORMAT_32ABGR_UPSIDEDOWN 103
+#define PIXELFORMAT_32BGRA_UPSIDEDOWN 104
 
 // Get the pixel format the renderer wants to receive the texture in:
 int graphicstexture_getDesiredFormat(void);

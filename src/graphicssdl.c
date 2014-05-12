@@ -458,6 +458,7 @@ static int graphics_setModeWithOpenGL(int width, int height, int fullscreen,
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
 
     _context = SDL_GL_CreateContext(mainwindow);
+
     maincontext = &_context;
     if (!maincontext) {
         *error = strdup("failed to create OpenGL 2.1 context");

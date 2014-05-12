@@ -114,10 +114,14 @@ static int graphicsrender_drawCropped_GL(
         int horiflipped,
         double red, double green, double blue, int textureFiltering) {
     // source UV coords:
-    double sx = sourcex / (double)gt->width;
-    double sy = sourcey / (double)gt->height;
-    double sw = sourcewidth / (double)gt->width;
-    double sh = sourceheight / (double)gt->height;
+    assert(gt->width > 0);
+    assert(gt->height > 0);
+    double sx = ((double)sourcex) / (double)gt->width;
+    double sy = ((double)sourcey) / (double)gt->height;
+    double sw = ((double)sourcewidth) / (double)gt->width;
+    double sh = ((double)sourceheight) / (double)gt->height;
+    assert(sw >= 0);
+    assert(sh >= 0);
 
     GLenum err;
     if ((err = glGetError()) != GL_NO_ERROR) {
@@ -132,7 +136,7 @@ static int graphicsrender_drawCropped_GL(
         0, y + drawwidth / 2);
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
-        glColor4f(1, 1, 1, 1);
+        //glColor4f(1, 1, 1, 1);
         glVertex2d(x, y);
         glTexCoord2f(sx, sy);
         glVertex2d(x, y + drawheight);
