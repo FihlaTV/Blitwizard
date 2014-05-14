@@ -142,11 +142,13 @@ void memorylog(const char* str) {
     mutex_release(memLogMutex);
 }
 
-void printerror(const char* fmt, ...) {
+void printerror_internal(const char* file, int line, const char* fmt, ...) {
     char printline[2048];
+    snprintf(printline, sizeof(printline) - 1, "(%s:%d) ", file, line);
     va_list a;
     va_start(a, fmt);
-    vsnprintf(printline, sizeof(printline)-1, fmt, a);
+    vsnprintf(printline + strlen(printline),
+        sizeof(printline) - (1 + strlen(printline)), fmt, a);
     printline[sizeof(printline)-1] = 0;
     va_end(a);
 #ifdef ANDROID
@@ -160,11 +162,14 @@ void printerror(const char* fmt, ...) {
 #endif
 }
 
-void printfatalerror(const char* fmt, ...) {
+void printfatalerror_internal(const char* file, int line,
+        const char* fmt, ...) {
     char printline[2048];
+    snprintf(printline, sizeof(printline) - 1, "(%s:%d) ", file, line);
     va_list a;
     va_start(a, fmt);
-    vsnprintf(printline, sizeof(printline)-1, fmt, a);
+    vsnprintf(printline + strlen(printline),
+        sizeof(printline) - (1 + strlen(printline)), fmt, a);
     printline[sizeof(printline)-1] = 0;
     va_end(a);
 #ifdef ANDROID
@@ -201,11 +206,13 @@ void printfatalerror(const char* fmt, ...) {
 #endif
 }
 
-void printwarning(const char* fmt, ...) {
+void printwarning_internal(const char* file, int line, const char* fmt, ...) {
     char printline[2048];
+    snprintf(printline, sizeof(printline) - 1, "(%s:%d) ", file, line);
     va_list a;
     va_start(a, fmt);
-    vsnprintf(printline, sizeof(printline)-1, fmt, a);
+    vsnprintf(printline + strlen(printline),
+        sizeof(printline) - (1 + strlen(printline)), fmt, a);
     printline[sizeof(printline)-1] = 0;
     va_end(a);
 #if defined(ANDROID) || defined(__ANDROID__)

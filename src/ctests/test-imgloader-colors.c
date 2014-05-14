@@ -44,7 +44,7 @@
 
 static volatile int callbackSizeHappened = 0;
 int format = 0;
-char *formats[] = { "rgba", "bgra" };
+char *formats[] = { "rgba", "bgra", "rgba_upsidedown" };
 
 static size_t imageDataSize;
 static void callbackDataCheckColor(void *handle, char *imgdata,
@@ -64,7 +64,8 @@ static void callbackDataCheckColor(void *handle, char *imgdata,
     unsigned char *imgdatau = (unsigned char*)imgdata;
 
     // Now verify the colors in the image:
-    if (strcasecmp(formats[format], "rgba") == 0) {
+    if (strcasecmp(formats[format], "rgba") == 0 ||
+            strcasecmp(formats[format], "rgba_upsidedown") == 0) {
         // pixel 1/4: 0xffffff00
         printf("first pixel/rgba: %u %u %u %u\n",
             imgdatau[0], imgdatau[1], imgdatau[2],
@@ -127,7 +128,7 @@ static void callbackSizeMustFireBeforeData(void *handle, int imgwidth,
 int main(int argc, char **argv) {
     // test various formats:
     int i = 0;
-    while (i < 2) {
+    while (i < 3) {
         format = i;
         callbackSizeHappened = 0;
         reportedSizeW = 4;

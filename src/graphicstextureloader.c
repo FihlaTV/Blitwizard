@@ -325,6 +325,14 @@ const char *pixelformattoname(int format) {
         return "abgr";
     case PIXELFORMAT_32BGRA:
         return "bgra";
+    case PIXELFORMAT_32RGBA_UPSIDEDOWN:
+        return "rgba_upsidedown";
+    case PIXELFORMAT_32ARGB_UPSIDEDOWN:
+        return "argb_upsidedown";
+    case PIXELFORMAT_32ABGR_UPSIDEDOWN:
+        return "abgr_upsidedown";
+    case PIXELFORMAT_32BGRA_UPSIDEDOWN:
+        return "bgra_upsidedown";
     default:
         return "unknown";
     }

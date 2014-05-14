@@ -29,11 +29,18 @@ extern "C" {
 #endif
 
 extern volatile int crashed;
-extern char* memorylogbuf;
-void printerror(const char* fmt, ...);
-void printfatalerror(const char* fmt, ...);
-void printwarning(const char* fmt, ...);
-void printinfo(const char* fmt, ...);
+extern char *memorylogbuf;
+void printerror_internal(const char *file, int line, const char *fmt, ...);
+void printfatalerror_internal(const char *file, int line, const char *fmt,
+    ...);
+void printwarning_internal(const char *file, int line, const char *fmt, ...);
+void printinfo(const char *fmt, ...);
+
+#define printwithline(func, fmt, ...) print##func##_internal(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
+//#define printwithline(func, fmt, ...) print##func##_internal("(" __FILE__ ":%d)", __LINE__, ##__VA_ARGS__)
+#define printwarning(fmt, ...) printwithline(warning, fmt, ##__VA_ARGS__)
+#define printerror(fmt, ...) printwithline(error, fmt, ##__VA_ARGS__)
+#define printfatalerror(fmt, ...) printwithline(fatalerror, fmt, ##__VA_ARGS__)
 
 // once the Lua state is ready, enable blitwizard.onLog:
 void doConsoleLog(void);

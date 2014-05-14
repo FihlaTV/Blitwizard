@@ -114,7 +114,7 @@ static volatile int infoprinted = 0;
 int graphicstexture_getDesiredFormat(void) {
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
-        return PIXELFORMAT_32BGRA;
+        return PIXELFORMAT_32BGRA_UPSIDEDOWN;
     }
 #endif
     SDL_RendererInfo rinfo;
@@ -179,7 +179,7 @@ struct graphicstexture *graphicstexture_createHWPBO(
         struct graphicstexture *gt,
         void *data,
         size_t width, size_t height, int format, uint64_t time) {
-    if (format != PIXELFORMAT_32BGRA) {
+    if (format != PIXELFORMAT_32BGRA_UPSIDEDOWN) {
         printwarning("graphicstexture_createHWPBO: failed; unsupported "
             "pixel format %d requested", format);
         return NULL;

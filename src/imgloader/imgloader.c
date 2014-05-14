@@ -237,19 +237,20 @@ void *loaderthreadfunction(void *data) {
                 if (memcmp(i->format + strlen(i->format)
                         - strlen("upsidedown"), "upsidedown", strlen(
                         "upsidedown")) == 0) {
-                    // do a vertical mirror:
+                    // do vertical mirroring:
                     char *line = malloc(4 * i->imagewidth);
                     size_t t = 0;
                     size_t linebytes = 4 * i->imagewidth;
-                    while (t < ((size_t)i->imageheight) / 2) {
-                        size_t otherline = (i->imageheight - t);
+                    size_t maxline = ((size_t)i->imageheight) / 2;
+                    while (t < maxline) {
+                        size_t otherline = (i->imageheight - (t + 1));
                         if (otherline != t) {
-                            memcpy(line, i->data + (t * 4 * i->imagewidth),
+                            memcpy(line, i->data + (t * linebytes),
                                 linebytes);
-                            memcpy(i->data + (t * 4 * i->imagewidth),
-                                i->data + (otherline * 4 * i->imagewidth),
+                            memcpy(i->data + (t * linebytes),
+                                i->data + (otherline * linebytes),
                                 linebytes);
-                            memcpy(i->data + (otherline * 4 * i->imagewidth),
+                            memcpy(i->data + (otherline * linebytes),
                                 line, linebytes);
                         }
                         t++;
