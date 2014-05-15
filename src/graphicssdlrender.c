@@ -114,8 +114,8 @@ static int graphicsrender_drawCropped_GL(
         int horiflipped,
         double red, double green, double blue, int textureFiltering) {
     // source UV coords:
-    assert(gt->width > 0);
-    assert(gt->height > 0);
+    assert(gt->width >= 0);
+    assert(gt->height >= 0);
     double sx = ((double)sourcex) / (double)gt->width;
     double sy = ((double)sourcey) / (double)gt->height;
     double sw = ((double)sourcewidth) / (double)gt->width;
@@ -130,24 +130,28 @@ static int graphicsrender_drawCropped_GL(
             glGetErrorString(err));
     }
 
-    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); 
     glPushMatrix();
     glRotated((rotationangle / M_PI) * 180, x + drawwidth / 2,
         0, y + drawwidth / 2);
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
-        //glColor4f(1, 1, 1, 1);
-        glVertex2d(x, y);
-        glTexCoord2f(sx, sy);
+        glColor4f(1, 1, 1, 1);
+
         glVertex2d(x, y + drawheight);
         glTexCoord2f(sx, sy + sh);
         glVertex2d(x + drawwidth, y + drawheight);
         glTexCoord2f(sx + sw, sy + sh);
         glVertex2d(x + drawwidth, y);
         glTexCoord2f(sx + sw, sy);
+        glVertex2d(x, y);
+        glTexCoord2f(sx, sy);
+
         glEnd();
     }
     glPopMatrix();
+    glDisable(GL_BLEND);
     if ((err = glGetError()) != GL_NO_ERROR) {
         printwarning("graphicsrender_drawCropped_GL: "
             "error after render: %s",
@@ -302,12 +306,15 @@ void graphicssdlrender_startFrame(void) {
                 "glClear error: %s", glGetErrorString(err));
         }
 
+        int actualwidth, actualheight;
+        SDL_GetWindowSize(mainwindow, &actualwidth, &actualheight);
+
         glDisable(GL_DEPTH_TEST);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-        int actualwidth, actualheight;
-        SDL_GetWindowSize(mainwindow, &actualwidth, &actualheight);
         glOrtho(0, actualwidth, actualheight, 0, -1, 1);
         return;
     }

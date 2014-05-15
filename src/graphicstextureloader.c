@@ -442,7 +442,7 @@ void graphicstextureloader_doInitialLoading(struct graphicstexturemanaged *gtm,
     info->callbackDimensions = callbackDimensions;
     info->callbackData = callbackData;
     info->userdata = userdata;
-    info->padnpot = 0;
+    info->padnpot = 1;
 
     // give texture initial normal usage to start with:
     info->gtm->lastUsage[USING_AT_VISIBILITY_NORMAL] = time(NULL);
