@@ -130,6 +130,8 @@ static int graphicsrender_drawCropped_GL(
             glGetErrorString(err));
     }
 
+    glEnable(GL_TEXTURE_2D);
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); 
     glPushMatrix();
@@ -137,7 +139,6 @@ static int graphicsrender_drawCropped_GL(
         0, y + drawwidth / 2);
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
-        glColor4f(1, 1, 1, 1);
 
         sy = 1 - sy;
         sh = -sh;

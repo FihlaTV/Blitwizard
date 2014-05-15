@@ -167,12 +167,95 @@ static int graphicstexture_pixelFormatToSDLFormat(int format) {
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
 int graphicstexture_bindGl(struct graphicstexture *gt, uint64_t time) {
-    if (gt->uploadtime + 30 > time && 1 == 2) {
+    if (gt->uploadtime + 5000 > time) {
         // wait for it to upload first.
         return 0;
     }
     glBindTexture(GL_TEXTURE_2D, gt->texid);
     return 1;
+}
+
+struct graphicstexture *graphicstexture_createHW(
+        struct graphicstexture *gt,
+        void *data,
+        size_t width, size_t height, int format, uint64_t time) {
+    if (format != PIXELFORMAT_32BGRA_UPSIDEDOWN) {
+        printwarning("graphicstexture_createHW: failed; unsupported "
+            "pixel format %d requested", format);
+        return NULL;
+    }
+    // clear OpenGL error:
+    GLenum err;
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHW: lingering error %s",
+            glGetErrorString(err));
+        while (glGetError() != GL_NO_ERROR) {
+            glGetError();
+        }
+    }
+    // create a new texture:
+    glGenTextures(1, &gt->texid);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHW: texture creation: "
+            "glGenTextures failed");
+        goto failure;
+    }
+
+    // bind texture to fiddle with it:
+    glBindTexture(GL_TEXTURE_2D, gt->texid);
+
+    // set linear filtering:
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHW: texture creation: "
+        "glTexParameteri failed (GL_TEXTURE_MIN_FILTER)");
+        goto failure;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHW: texture creation: "
+        "glTexParameteri failed (GL_TEXTURE_MAG_FILTER)");
+        goto failure;
+    }
+
+    // disable mip maps:
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHW: texture creation: "
+        "glTexParameteri failed (GL_TEXTURE_BASE_LEVEL)");
+        goto failure;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        gt->texid = 0;
+        printwarning("graphicstexture_createHW: texture creation: "
+            "glTexParameteri failed (GL_TEXTURE_MAX_LEVEL)");
+        goto failure;
+    }
+    glTexImage2D(GL_TEXTURE_2D,
+        0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8,
+        data);
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_createHW: transfer: "
+            "glTexImage2D failed");
+        goto failure;
+    }
+    gt->uploadtime = time;
+    return gt;
+failure:
+    printwarning("graphicstexture_createHW: failed; OpenGL "
+        "error string is: %s", glGetErrorString(err));
+    // clean up all error bits:
+    while (glGetError() != GL_NO_ERROR) {
+        glGetError();
+    }
+    // destroy texture:
+    graphicstexture_destroy(gt);
+    return NULL; 
 }
 
 struct graphicstexture *graphicstexture_createHWPBO(
@@ -217,8 +300,6 @@ struct graphicstexture *graphicstexture_createHWPBO(
     }
 
     glActiveTexture(GL_TEXTURE0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // create a new texture:
     glGenTextures(1, &gt->texid);
@@ -375,7 +456,7 @@ struct graphicstexture *graphicstexture_create(void *data,
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
-        return graphicstexture_createHWPBO(gt, data, width, height, format,
+        return graphicstexture_createHW(gt, data, width, height, format,
             time);
     }
 #endif
