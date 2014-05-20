@@ -167,7 +167,7 @@ static int graphicstexture_pixelFormatToSDLFormat(int format) {
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
 int graphicstexture_bindGl(struct graphicstexture *gt, uint64_t time) {
-    if (gt->uploadtime + 5000 > time) {
+    if (gt->uploadtime + 50 > time && 1 == 2) {
         // wait for it to upload first.
         return 0;
     }
@@ -440,7 +440,8 @@ struct graphicstexture *graphicstexture_createHWSDL(
 }
 
 struct graphicstexture *graphicstexture_create(void *data,
-        size_t width, size_t height, int format, uint64_t time) {
+        size_t width, size_t height, size_t paddedWidth, size_t paddedHeight,
+        int format, uint64_t time) {
     if (!thread_isMainThread()) {
         return NULL;
     }
@@ -452,6 +453,8 @@ struct graphicstexture *graphicstexture_create(void *data,
     memset(gt, 0, sizeof(*gt));
     gt->width = width;
     gt->height = height;
+    gt->paddedWidth = paddedWidth;
+    gt->paddedHeight = paddedHeight;
     gt->format = format;
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS

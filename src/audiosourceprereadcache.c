@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2012-2013 Jonas Thiem
+  Copyright (C) 2012-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -31,25 +31,26 @@
 #include "audiosourceprereadcache.h"
 
 struct audiosourceprereadcache_internaldata {
-    struct audiosource* source;
+    struct audiosource *source;
     unsigned int prereadcachesize;
-    char* prereadcache;
+    char *prereadcache;
     unsigned int prereadcachebytes;
     int eof;
     int sourceeof;
-    char* path;
+    char *path;
 };
 
-static void audiosourceprereadcache_Rewind(struct audiosource* source) {
-    struct audiosourceprereadcache_internaldata* idata = source->internaldata;
+static void audiosourceprereadcache_rewind(struct audiosource *source) {
+    struct audiosourceprereadcache_internaldata *idata = source->internaldata;
     idata->eof = 0;
     idata->source->rewind(idata->source);
     idata->sourceeof = 0;
     idata->prereadcachebytes = 0;
 }
 
-static int audiosourceprereadcache_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
-    struct audiosourceprereadcache_internaldata* idata = source->internaldata;
+static int audiosourceprereadcache_read(struct audiosource *source,
+        char *buffer, unsigned int bytes) {
+    struct audiosourceprereadcache_internaldata *idata = source->internaldata;
     if (idata->eof) {
         return -1;
     }
@@ -68,10 +69,13 @@ static int audiosourceprereadcache_Read(struct audiosource* source, char* buffer
     unsigned int writtenbytes = 0;
     while (bytes > 0) {
         // first, refill our cache if it cannot satisfy the demands
-        if (bytes > idata->prereadcachebytes/2 && (idata->prereadcachebytes < idata->prereadcachesize/4
-            || bytes > idata->prereadcachebytes) && !idata->sourceeof) {
+        if (bytes > idata->prereadcachebytes/2
+                && (idata->prereadcachebytes < idata->prereadcachesize/4
+                || bytes > idata->prereadcachebytes) && !idata->sourceeof) {
             int i;
-            i = idata->source->read(idata->source, idata->prereadcache + idata->prereadcachebytes, idata->prereadcachesize - idata->prereadcachebytes);
+            i = idata->source->read(idata->source,
+                idata->prereadcache + idata->prereadcachebytes,
+                idata->prereadcachesize - idata->prereadcachebytes);
             if (i > 0) {
                 idata->prereadcachebytes += i;
             }else{
@@ -97,7 +101,8 @@ static int audiosourceprereadcache_Read(struct audiosource* source, char* buffer
 
                 // trim data in cache buffer
                 if (readbytes < idata->prereadcachebytes) {
-                    memmove(idata->prereadcache, idata->prereadcache + readbytes, idata->prereadcachebytes - readbytes);
+                    memmove(idata->prereadcache, idata->prereadcache +
+                       readbytes, idata->prereadcachebytes - readbytes);
                 }
                 idata->prereadcachebytes -= readbytes;
             }else{
@@ -112,8 +117,8 @@ static int audiosourceprereadcache_Read(struct audiosource* source, char* buffer
     return writtenbytes;
 }
 
-static void audiosourceprereadcache_Close(struct audiosource* source) {
-    struct audiosourceprereadcache_internaldata* idata = source->internaldata;
+static void audiosourceprereadcache_close(struct audiosource *source) {
+    struct audiosourceprereadcache_internaldata *idata = source->internaldata;
     if (idata->source) {
         idata->source->close(idata->source);
     }
@@ -124,29 +129,31 @@ static void audiosourceprereadcache_Close(struct audiosource* source) {
     free(source);
 }
 
-struct audiosource* audiosourceprereadcache_Create(struct audiosource* source) {
+struct audiosource *audiosourceprereadcache_create(
+        struct audiosource *source) {
     if (!source) {
         return NULL;
     }
-    struct audiosource* a = malloc(sizeof(*a));
+    struct audiosource *a = malloc(sizeof(*a));
     if (!a) {
         return NULL;
     }
 
     memset(a,0,sizeof(*a));
-    a->internaldata = malloc(sizeof(struct audiosourceprereadcache_internaldata));
+    a->internaldata = malloc(sizeof(
+        struct audiosourceprereadcache_internaldata));
     if (!a->internaldata) {
         free(a);
         return NULL;
     }
 
-    struct audiosourceprereadcache_internaldata* idata = a->internaldata;
+    struct audiosourceprereadcache_internaldata *idata = a->internaldata;
     memset(idata, 0, sizeof(*idata));
     idata->source = source;
 
-    a->read = &audiosourceprereadcache_Read;
-    a->close = &audiosourceprereadcache_Close;
-    a->rewind = &audiosourceprereadcache_Rewind;
+    a->read = &audiosourceprereadcache_read;
+    a->close = &audiosourceprereadcache_close;
+    a->rewind = &audiosourceprereadcache_rewind;
 
     return a;
 }

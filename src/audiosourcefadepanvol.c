@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -32,7 +32,7 @@
 #include "audiosourcefadepanvol.h"
 
 struct audiosourcefadepanvol_internaldata {
-    struct audiosource* source;
+    struct audiosource *source;
     int sourceeof;
     int eof;
     int returnerroroneof;
@@ -52,18 +52,19 @@ struct audiosourcefadepanvol_internaldata {
     int noamplify; // don't amplify with soft clipping
 };
 
-static size_t audiosourcefadepanvol_Position(struct audiosource* source) {
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+static size_t audiosourcefadepanvol_position(struct audiosource *source) {
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
     return idata->source->position(idata->source);
 }
 
-static size_t audiosourcefadepanvol_Length(struct audiosource* source) {
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+static size_t audiosourcefadepanvol_length(struct audiosource *source) {
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
     return idata->source->position(idata->source);
 }
 
-static int audiosourcefadepanvol_Seek(struct audiosource* source, size_t pos) {
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+static int audiosourcefadepanvol_seek(struct audiosource *source,
+        size_t pos) {
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
     if (idata->eof && idata->returnerroroneof) {
         return 0;
     }
@@ -82,8 +83,8 @@ static int audiosourcefadepanvol_Seek(struct audiosource* source, size_t pos) {
     }
 }
 
-static void audiosourcefadepanvol_Rewind(struct audiosource* source) {
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+static void audiosourcefadepanvol_rewind(struct audiosource *source) {
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
     if (!idata->eof || !idata->returnerroroneof) {
         idata->source->rewind(idata->source);
         idata->sourceeof = 0;
@@ -112,8 +113,9 @@ static float amplify(float value, float amplification) {
     return value;
 }
 
-static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+static int audiosourcefadepanvol_read(struct audiosource *source,
+        char *buffer, unsigned int bytes) {
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
     if (idata->eof) {
         return -1;
     }
@@ -157,10 +159,12 @@ static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, 
         }
         while ((int)i <= ((int)idata->processedsamplesbytes - 
             ((int)sizeof(float) * 2))) {
-            float leftchannel = *((float*)
-                ((char*)idata->processedsamplesbuf+i));
-            float rightchannel = *((float*)
-                ((float*)((char*)idata->processedsamplesbuf+i))+1);
+            float leftchannel;
+            memcpy(&leftchannel, (char*)idata->processedsamplesbuf + i,
+                sizeof(float));
+            float rightchannel;
+            memcpy(&rightchannel, (char*)idata->processedsamplesbuf + i
+                + sizeof(float), sizeof(float));
 
             if (idata->fadesamplestart < 0 || idata->fadesampleend > 0) {
                 // calculate fade volume
@@ -258,8 +262,8 @@ static int audiosourcefadepanvol_Read(struct audiosource* source, char* buffer, 
     return byteswritten;
 }
 
-static void audiosourcefadepanvol_Close(struct audiosource* source) {
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+static void audiosourcefadepanvol_close(struct audiosource *source) {
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
     if (idata) {
         // close the processed source
         if (idata->source) {
@@ -272,7 +276,7 @@ static void audiosourcefadepanvol_Close(struct audiosource* source) {
     free(source);
 }
 
-struct audiosource* audiosourcefadepanvol_Create(struct audiosource* source) {
+struct audiosource *audiosourcefadepanvol_create(struct audiosource *source) {
     if (!source) {
         // no source given
         return NULL;
@@ -284,7 +288,7 @@ struct audiosource* audiosourcefadepanvol_Create(struct audiosource* source) {
     }
 
     // allocate visible data struct
-    struct audiosource* a = malloc(sizeof(*a));
+    struct audiosource *a = malloc(sizeof(*a));
     if (!a) {
         source->close(source);
         return NULL;
@@ -300,7 +304,7 @@ struct audiosource* audiosourcefadepanvol_Create(struct audiosource* source) {
     }
 
     // remember various things
-    struct audiosourcefadepanvol_internaldata* idata = a->internaldata;
+    struct audiosourcefadepanvol_internaldata *idata = a->internaldata;
     memset(idata, 0, sizeof(*idata));
     idata->source = source;
     idata->vol = 1; // run at full volume if not changed
@@ -309,12 +313,12 @@ struct audiosource* audiosourcefadepanvol_Create(struct audiosource* source) {
     a->format = source->format;
 
     // function pointers
-    a->read = &audiosourcefadepanvol_Read;
-    a->close = &audiosourcefadepanvol_Close;
-    a->rewind = &audiosourcefadepanvol_Rewind;
-    a->position = &audiosourcefadepanvol_Position;
-    a->length = &audiosourcefadepanvol_Length;
-    a->seek = &audiosourcefadepanvol_Seek;
+    a->read = &audiosourcefadepanvol_read;
+    a->close = &audiosourcefadepanvol_close;
+    a->rewind = &audiosourcefadepanvol_rewind;
+    a->position = &audiosourcefadepanvol_position;
+    a->length = &audiosourcefadepanvol_length;
+    a->seek = &audiosourcefadepanvol_seek;
 
     // if our source is seekable, we are so too:
     a->seekable = source->seekable;
@@ -322,8 +326,9 @@ struct audiosource* audiosourcefadepanvol_Create(struct audiosource* source) {
     return a;
 }
 
-void audiosourcefadepanvol_SetPanVol(struct audiosource* source, float vol, float pan, int noamplify) {
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+void audiosourcefadepanvol_setPanVol(struct audiosource *source,
+        float vol, float pan, int noamplify) {
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
     // limit panning range:
     if (pan < -1) {
         pan = -1;
@@ -354,10 +359,11 @@ void audiosourcefadepanvol_SetPanVol(struct audiosource* source, float vol, floa
     idata->fadevalueend = vol;
 }
 
-void audiosourcefadepanvol_StartFade(struct audiosource* source, float seconds, float targetvol, int terminate) {
+void audiosourcefadepanvol_startFade(struct audiosource *source,
+        float seconds, float targetvol, int terminate) {
     // start a fade to a specified volume
     // terminate: stop sound when fade is done
-    struct audiosourcefadepanvol_internaldata* idata = source->internaldata;
+    struct audiosourcefadepanvol_internaldata *idata = source->internaldata;
 
     // if seconds <= 0, terminate current fade:
     if (seconds <= 0) {

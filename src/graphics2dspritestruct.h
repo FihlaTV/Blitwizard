@@ -1,5 +1,4 @@
 
-
 /* blitwizard game engine - source code file
 
   Copyright (C) 2013-2014 Jonas Thiem
@@ -29,6 +28,8 @@
 
 #ifdef USE_GRAPHICS
 
+#include "graphicstexturelist.h"
+
 // data structure for a sprite:
 struct graphics2dsprite {
     // this is set if the sprite was deleted:
@@ -40,7 +41,7 @@ struct graphics2dsprite {
     int textureFiltering;
 
     // texture path:
-    char* path;
+    char *path;
 
     // set to 1 if there was an error loading things:
     int loadingError;
@@ -52,8 +53,8 @@ struct graphics2dsprite {
     int pinnedToCamera;
 
     // texture info:
-    struct graphicstexture* tex;
-    struct texturerequesthandle* request;
+    struct graphicstexture *tex;
+    struct texturerequesthandle *request;
     int textureHandlingDone;
 
     // position, size info:
@@ -81,7 +82,7 @@ struct graphics2dsprite {
     uint64_t zindexsetid;
 
     // used by graphis2dspriteslist.c:
-    void* avlptr;
+    void *avlptr;
 
     // enabled for sprite events:
     int enabledForEvent[SPRITE_EVENT_TYPE_COUNT];
@@ -90,10 +91,10 @@ struct graphics2dsprite {
     int invisibleForEvent[SPRITE_EVENT_TYPE_COUNT];
 
     // pointers for global linear sprite list:
-    struct graphics2dsprite* next,* prev;
+    struct graphics2dsprite *next, *prev;
 
     // custom userdata:
-    void* userdata;
+    void *userdata;
 };
 
 #endif  // USE_GRAPHICS

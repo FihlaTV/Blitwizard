@@ -228,3 +228,4 @@ int graphics_getCameraY(int index) {
 #endif // not(USE_SDL_GRAPHICS)
 #endif // USE_GRAPHICS
 
+

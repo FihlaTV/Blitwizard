@@ -36,8 +36,8 @@ endif
 # CFLAGS/CXXFLAGS/OBJCFLAGS:
 # -------------
 # Note: -fno-PIC has been added purely for some additional speed.
-AM_CFLAGS = $(FINAL_INCLUDE_FLAGS) -fno-PIC -finline-functions -fno-strict-aliasing -Werror-implicit-function-declaration -Wstrict-prototypes -Wall -Wextra -fno-omit-frame-pointer -L../libs/ -std=gnu99
-AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -finline-functions -fno-strict-aliasing -Wall -Wextra -fexceptions -fno-omit-frame-pointer -L../libs/
+AM_CFLAGS = $(FINAL_INCLUDE_FLAGS) -fno-PIC -finline-functions -fstrict-aliasing -Werror=strict-aliasing -Werror-implicit-function-declaration -Wstrict-prototypes -Wall -Wextra -fno-omit-frame-pointer -L../libs/ -std=gnu99
+AM_CXXFLAGS = $(FINAL_INCLUDE_FLAGS) $(STATICSTDCXX) -fno-PIC -finline-functions -fstrict-aliasing -Werror=strict-aliasing -Wall -Wextra -fexceptions -fno-omit-frame-pointer -L../libs/
 AM_OBJCFLAGS = -fno-PIC -Wall -fno-exceptions -fno-omit-frame-pointer
 
 # -------------

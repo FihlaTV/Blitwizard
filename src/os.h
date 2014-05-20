@@ -116,5 +116,9 @@
 #endif
 #endif
 
+// various compiler defines we may want to use
+#define ATTRIBUTE_UNUSED __attribute__((unused))
+
+
 #endif  // BLITWIZARD_OS_H_
 

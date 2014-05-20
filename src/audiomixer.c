@@ -204,10 +204,10 @@ void audiomixer_StopSoundWithFadeout(int id, float fadeoutseconds) {
         }
 
         // start fadeout:
-        audiosourcefadepanvol_StartFade(channels[slot].fadepanvolsource,
+        audiosourcefadepanvol_startFade(channels[slot].fadepanvolsource,
             fadeoutseconds, 0, 1);
         // make sure it doesn't loop:
-        audiosourceloop_SetLooping(channels[slot].loopsource, 0);
+        audiosourceloop_setLooping(channels[slot].loopsource, 0);
     }
     audio_UnlockAudioThread();
 }
@@ -218,7 +218,8 @@ void audiomixer_AdjustSound(int id, float volume, float panning,
     int slot = audiomixer_GetChannelSlotById(id);
     if (slot >= 0 && channels[slot].fadepanvolsource
     && !channels[slot].fadeoutandstop) {
-        audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource, volume, panning, noamplify);
+        audiosourcefadepanvol_setPanVol(channels[slot].fadepanvolsource,
+            volume, panning, noamplify);
     }
     audio_UnlockAudioThread();
 }
@@ -241,18 +242,18 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     // try ogg format:
     struct audiosource* decodesource = NULL;
     if (!decodesource && strlen(path) > strlen(".ogg") &&
-    strcasecmp(path+strlen(path)-strlen(".ogg"), ".ogg") == 0) {
-        decodesource = audiosourceogg_Create(
-        audiosourceprereadcache_Create(audiosourcefile_Create(path))
+    strcasecmp(path + strlen(path) - strlen(".ogg"), ".ogg") == 0) {
+        decodesource = audiosourceogg_create(
+        audiosourceprereadcache_create(audiosourcefile_create(path))
         );
     }
 
     // try flac format:
     if (!decodesource && strlen(path) > strlen(".flac") &&
-    strcasecmp(path+strlen(path)-strlen(".flac"), ".flac") == 0) {
-        decodesource = audiosourceformatconvert_Create(
-            audiosourceflac_Create(
-            audiosourceprereadcache_Create(audiosourcefile_Create(path))
+    strcasecmp(path + strlen(path) - strlen(".flac"), ".flac") == 0) {
+        decodesource = audiosourceformatconvert_create(
+            audiosourceflac_create(
+            audiosourceprereadcache_create(audiosourcefile_create(path))
             ),
             AUDIOSOURCEFORMAT_F32LE
         );
@@ -260,9 +261,9 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
 
     // try FFmpeg:
     if (!decodesource) {
-        decodesource = audiosourceformatconvert_Create(
-        audiosourceffmpeg_Create(
-        audiosourceprereadcache_Create(audiosourcefile_Create(path))),
+        decodesource = audiosourceformatconvert_create(
+        audiosourceffmpeg_create(
+        audiosourceprereadcache_create(audiosourcefile_create(path))),
         AUDIOSOURCEFORMAT_F32LE);
     }
 
@@ -287,28 +288,28 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     }
 
     // wrap up the decoded audio into the resampler and fade/pan/vol modifier
-    channels[slot].fadepanvolsource = audiosourcefadepanvol_Create(
-        audiosourceresample_Create(decodesource, 48000));
+    channels[slot].fadepanvolsource = audiosourcefadepanvol_create(
+        audiosourceresample_create(decodesource, 48000));
     if (!channels[slot].fadepanvolsource) {
         audio_UnlockAudioThread();
         return -1;
     }
 
     // set the options for the fade/pan/vol modifier
-    audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource,
+    audiosourcefadepanvol_setPanVol(channels[slot].fadepanvolsource,
         volume, panning, noamplify);
     if (fadeinseconds > 0) {
         // reset volume to 0 for fadein:
-        audiosourcefadepanvol_SetPanVol(channels[slot].fadepanvolsource,
+        audiosourcefadepanvol_setPanVol(channels[slot].fadepanvolsource,
             0, panning, noamplify);
 
         // instruct fadein:
-        audiosourcefadepanvol_StartFade(channels[slot].fadepanvolsource,
+        audiosourcefadepanvol_startFade(channels[slot].fadepanvolsource,
             fadeinseconds, volume, 0);
     }
 
     // wrap the fade/pan/vol modifier into a loop audio source
-    channels[slot].loopsource = audiosourceloop_Create(
+    channels[slot].loopsource = audiosourceloop_create(
         channels[slot].fadepanvolsource);
     if (!channels[slot].loopsource) {
         channels[slot].fadepanvolsource->close(channels[slot].fadepanvolsource);
@@ -318,7 +319,7 @@ int audiomixer_PlaySoundFromDisk(const char* path, int priority, float volume, f
     }
 
     // set the options for the loop audio source
-    audiosourceloop_SetLooping(channels[slot].loopsource, loop);
+    audiosourceloop_setLooping(channels[slot].loopsource, loop);
 
     // remember that loop audio source as final processed audio
     channels[slot].mixsource = channels[slot].loopsource;

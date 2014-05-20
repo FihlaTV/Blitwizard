@@ -48,8 +48,8 @@ struct audiosourcefile_internaldata {
     char *path;
 };
 
-static void audiosourcefile_Rewind(struct audiosource *source) {
-    struct audiosourcefile_internaldata* idata = source->internaldata;
+static void audiosourcefile_rewind(struct audiosource *source) {
+    struct audiosourcefile_internaldata *idata = source->internaldata;
     idata->eof = 0;
     if (idata->file) {
 #ifdef SDLRW
@@ -63,8 +63,9 @@ static void audiosourcefile_Rewind(struct audiosource *source) {
 }
 
 
-static int audiosourcefile_Read(struct audiosource *source, char *buffer, unsigned int bytes) {
-    struct audiosourcefile_internaldata* idata = source->internaldata;
+static int audiosourcefile_read(struct audiosource *source,
+        char *buffer, unsigned int bytes) {
+    struct audiosourcefile_internaldata *idata = source->internaldata;
 
     if (idata->file == NULL) {
         if (idata->eof) {
@@ -104,8 +105,8 @@ static int audiosourcefile_Read(struct audiosource *source, char *buffer, unsign
 }
 
 
-static int audiosourcefile_Seek(struct audiosource *source, size_t pos) {
-    struct audiosourcefile_internaldata* idata = source->internaldata;
+static int audiosourcefile_seek(struct audiosource *source, size_t pos) {
+    struct audiosourcefile_internaldata *idata = source->internaldata;
 
     // don't allow seeking beyond end of file:
     size_t length = source->length(source);
@@ -125,8 +126,8 @@ static int audiosourcefile_Seek(struct audiosource *source, size_t pos) {
     return 1;
 }
 
-static size_t audiosourcefile_Length(struct audiosource *source) {
-    struct audiosourcefile_internaldata* idata = source->internaldata;
+static size_t audiosourcefile_length(struct audiosource *source) {
+    struct audiosourcefile_internaldata *idata = source->internaldata;
 
     // remember current pos:
     long pos = ftell(idata->file);
@@ -146,8 +147,8 @@ static size_t audiosourcefile_Length(struct audiosource *source) {
     return size;
 }
 
-static size_t audiosourcefile_Position(struct audiosource *source) {
-    struct audiosourcefile_internaldata* idata = source->internaldata;
+static size_t audiosourcefile_position(struct audiosource *source) {
+    struct audiosourcefile_internaldata *idata = source->internaldata;
     if (idata->eof) {
         return source->length(source);
     }
@@ -155,8 +156,8 @@ static size_t audiosourcefile_Position(struct audiosource *source) {
     return pos;
 }
 
-static void audiosourcefile_Close(struct audiosource *source) {
-    struct audiosourcefile_internaldata* idata = source->internaldata;
+static void audiosourcefile_close(struct audiosource *source) {
+    struct audiosourcefile_internaldata *idata = source->internaldata;
     if (idata) {
         // close file we might have opened
 #ifdef SDLRW
@@ -178,7 +179,7 @@ static void audiosourcefile_Close(struct audiosource *source) {
     free(source);
 }
 
-struct audiosource *audiosourcefile_Create(const char *path) {
+struct audiosource *audiosourcefile_create(const char *path) {
     // without path, no audio source:
     if (!path) {
         return NULL;
@@ -198,9 +199,9 @@ struct audiosource *audiosourcefile_Create(const char *path) {
         switch (l.type) {
 #ifdef USE_PHYSFS
         case LOCATION_TYPE_ZIP:
-            return audiosourceresourcefile_Create(
-            l.location.ziplocation.archive,
-            l.location.ziplocation.filepath);
+            return audiosourceresourcefile_create(
+                l.location.ziplocation.archive,
+                l.location.ziplocation.filepath);
         break;
 #endif
         default:
@@ -228,7 +229,7 @@ struct audiosource *audiosourcefile_Create(const char *path) {
     }
 
     // populate internal data:
-    struct audiosourcefile_internaldata* idata = a->internaldata;
+    struct audiosourcefile_internaldata *idata = a->internaldata;
     memset(idata, 0, sizeof(*idata));
 
     // allocate file path:
@@ -240,12 +241,12 @@ struct audiosource *audiosourcefile_Create(const char *path) {
     }
 
     // populate audio source functions:
-    a->read = &audiosourcefile_Read;
-    a->close = &audiosourcefile_Close;
-    a->rewind = &audiosourcefile_Rewind;
-    a->seek = &audiosourcefile_Seek;
-    a->length = &audiosourcefile_Length;
-    a->position = &audiosourcefile_Position;
+    a->read = &audiosourcefile_read;
+    a->close = &audiosourcefile_close;
+    a->rewind = &audiosourcefile_rewind;
+    a->seek = &audiosourcefile_seek;
+    a->length = &audiosourcefile_length;
+    a->position = &audiosourcefile_position;
     a->seekable = 1;
 
     // return audio source:

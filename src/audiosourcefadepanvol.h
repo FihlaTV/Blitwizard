@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -22,12 +22,12 @@
 */
 
 // Get a fadepanvol audio source:
-struct audiosource* audiosourcefadepanvol_Create(struct audiosource* source);
+struct audiosource *audiosourcefadepanvol_create(struct audiosource *source);
 
 // Change settings on the fadepanvol audio source:
-void audiosourcefadepanvol_SetPanVol(
-struct audiosource* source,
-float volume, float pan, int noamplify);
+void audiosourcefadepanvol_setPanVol(
+    struct audiosource *source,
+    float volume, float pan, int noamplify);
 // volume: volume at which sound plays from 0 to 1.5. 1 is regular volume
 // pan: panning from 1 (left) to -1 (right). 0 is center.
 // noamplify: if set to 1, panning and volume > 1 is disabled,
@@ -35,7 +35,8 @@ float volume, float pan, int noamplify);
 //  For regular panning support, specify 0.
 
 // Start a fade to a given volume level:
-void audiosourcefadepanvol_StartFade(struct audiosource* source, float seconds, float targetvol, int terminate);
+void audiosourcefadepanvol_startFade(struct audiosource *source,
+    float seconds, float targetvol, int terminate);
 
 
 

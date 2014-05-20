@@ -167,9 +167,9 @@ void main_initAudio(void) {
 
     // load FFmpeg if we happen to want it
     if (luastate_GetWantFFmpeg()) {
-        audiosourceffmpeg_LoadFFmpeg();
+        audiosourceffmpeg_loadFFmpeg();
     } else {
-        audiosourceffmpeg_DisableFFmpeg();
+        audiosourceffmpeg_disableFFmpeg();
     }
 
 #if defined(USE_SDL_AUDIO) || defined(WINDOWS)

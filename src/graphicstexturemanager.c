@@ -311,7 +311,8 @@ struct graphicstexturemanaged* gtm, int slot) {
                     return texturemanager_getRandomGPUTexture(gtm);
                 }
                 gtm->scalelist[i].gt = graphicstexture_create(
-                    gtm->scalelist[i].pixels, gtm->scalelist[i].paddedWidth,
+                    gtm->scalelist[i].pixels, gtm->scalelist[i].width,
+                    gtm->scalelist[i].height, gtm->scalelist[i].paddedWidth,
                     gtm->scalelist[i].paddedHeight, gtm->scalelist[i].format,
                     texmants);
                 gpuMemUse += 4 * gtm->scalelist[i].width * gtm->scalelist[i].height;

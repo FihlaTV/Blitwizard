@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -28,8 +28,8 @@
 
 #ifdef USE_PHYSFS
 
-struct audiosource* audiosourceresourcefile_Create(
-struct zipfile* archive, const char* path);
+struct audiosource *audiosourceresourcefile_create(
+    struct zipfile *archive, const char *path);
 // Create an audio source from a resource file.
 // Use audiosourcefile!
 // It will automatically use this audio source internally,

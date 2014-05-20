@@ -140,8 +140,11 @@ static int graphicsrender_drawCropped_GL(
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
 
-        sy = 1 - sy;
-        sh = -sh;
+
+        double oldsy = sy;
+        sy = sy + sh;
+        sh = (oldsy - sy);
+        assert(sh <= 0);
 
         glTexCoord2f(sx, sy + sh); 
         glVertex2d(x, y + drawheight);
@@ -244,30 +247,13 @@ int graphicsrender_drawCropped(
         int rotationcenterx, int rotationcentery, double rotationangle,
         int horiflipped,
         double red, double green, double blue, int textureFiltering) {
-    if (alpha <= 0) {
-        return 1;
-    }
-    if (alpha > 1) {
-        alpha = 1;
-    }
-    if (red > 1) {
-        red = 1;
-    }
-    if (red < 0) {
-        red = 0;
-    }
-    if (blue > 1) {
-        blue = 1;
-    }
-    if (blue < 0) {
-        blue = 0;
-    }
-    if (green > 1) {
-        green = 1;
-    }
-    if (green < 0) {
-        green = 0;
-    }
+
+    // enforce boundaries for given color and alpha values:
+    alpha = fmin(1, fmax(alpha, 0));
+    red = fmin(1, fmax(red, 0));
+    blue = fmin(1, fmax(blue, 0));
+    green = fmin(1, fmax(green, 0));
+
     if (sourcewidth == 0) {
         sourcewidth = gt->width;
     }
@@ -346,7 +332,7 @@ void graphicssdlrender_completeFrame(void) {
 static int graphicssdlrender_spriteCallback(
         struct graphics2dsprite *sprite,
         void *userdata) {
-    struct graphicstexture *tex = sprite->tex;
+    struct graphicstexturescaled *tex = sprite->tex;
     if (!tex) {
         return 1;
     }
@@ -375,6 +361,7 @@ void graphicsrender_draw(void) {
     graphicssdlrender_startFrame();
 
     graphics2dsprites_lockListOrTreeAccess();
+
     // render world sprites:
     double w = graphics_getCameraWidth(0);
     double h = graphics_getCameraHeight(0);
@@ -386,6 +373,7 @@ void graphicsrender_draw(void) {
     graphics2dspritestree_doForAllSpritesSortedBottomToTop(
         ctopleftx, ctoplefty, cwidth, cheight,
         &graphicssdlrender_spriteCallback, NULL);
+
     // render camera-pinned sprites:
     graphics2dspriteslist_doForAllSpritesBottomToTop(
         &graphicssdlrender_spriteCallback, NULL);

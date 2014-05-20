@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,6 +21,7 @@
 
 */
 
-struct audiosource* audiosourceformatconvert_Create(struct audiosource* filesource, unsigned int newformat);
+struct audiosource *audiosourceformatconvert_create(
+    struct audiosource *filesource, unsigned int newformat);
 // Create an audio source that converts a given stream to another format.
 

@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,8 +40,8 @@ struct audiosourceresourcefile_internaldata {
     char* path;
 };
 
-static void audiosourceresourcefile_Rewind(struct audiosource* source) {
-    struct audiosourceresourcefile_internaldata* idata = source->internaldata;
+static void audiosourceresourcefile_rewind(struct audiosource *source) {
+    struct audiosourceresourcefile_internaldata *idata = source->internaldata;
     idata->eof = 0;
     if (idata->file) {
         // Close the file. it will be reopened on next read
@@ -51,9 +51,9 @@ static void audiosourceresourcefile_Rewind(struct audiosource* source) {
 }
 
 
-static int audiosourceresourcefile_Read(
-struct audiosource* source, char* buffer, unsigned int bytes) {
-    struct audiosourceresourcefile_internaldata* idata = source->internaldata;
+static int audiosourceresourcefile_read(
+        struct audiosource *source, char* buffer, unsigned int bytes) {
+    struct audiosourceresourcefile_internaldata *idata = source->internaldata;
 
     if (idata->file == NULL) {
         if (idata->eof) {
@@ -81,9 +81,9 @@ struct audiosource* source, char* buffer, unsigned int bytes) {
 }
 
 
-static int audiosourceresourcefile_Seek(
-struct audiosource* source, size_t pos) {
-    struct audiosourceresourcefile_internaldata* idata = source->internaldata;
+static int audiosourceresourcefile_seek(
+        struct audiosource *source, size_t pos) {
+    struct audiosourceresourcefile_internaldata *idata = source->internaldata;
 
     // don't allow seeking beyond end of file:
     size_t length = source->length(source);
@@ -105,14 +105,14 @@ struct audiosource* source, size_t pos) {
     return 1;
 }
 
-static size_t audiosourceresourcefile_Length(struct audiosource* source) {
-    struct audiosourceresourcefile_internaldata* idata = source->internaldata;
+static size_t audiosourceresourcefile_length(struct audiosource *source) {
+    struct audiosourceresourcefile_internaldata *idata = source->internaldata;
 
     return zipfile_FileGetLength(idata->archive, idata->path);
 }
 
-static size_t audiosourceresourcefile_Position(struct audiosource* source) {
-    struct audiosourceresourcefile_internaldata* idata = source->internaldata;
+static size_t audiosourceresourcefile_position(struct audiosource *source) {
+    struct audiosourceresourcefile_internaldata *idata = source->internaldata;
     if (idata->eof) {
         return source->length(source);
     }
@@ -120,8 +120,8 @@ static size_t audiosourceresourcefile_Position(struct audiosource* source) {
     return pos;
 }
 
-static void audiosourceresourcefile_Close(struct audiosource* source) {
-    struct audiosourceresourcefile_internaldata* idata = source->internaldata;
+static void audiosourceresourcefile_close(struct audiosource *source) {
+    struct audiosourceresourcefile_internaldata *idata = source->internaldata;
     if (idata) {
         // close file we might have opened
         if (idata->file) {
@@ -137,21 +137,22 @@ static void audiosourceresourcefile_Close(struct audiosource* source) {
     free(source);
 }
 
-struct audiosource* audiosourceresourcefile_Create(
-struct zipfile* archive, const char* path) {
-    struct audiosource* a = malloc(sizeof(*a));
+struct audiosource *audiosourceresourcefile_create(
+        struct zipfile *archive, const char* path) {
+    struct audiosource *a = malloc(sizeof(*a));
     if (!a) {
         return NULL;
     }
 
-    memset(a,0,sizeof(*a));
-    a->internaldata = malloc(sizeof(struct audiosourceresourcefile_internaldata));
+    memset(a, 0, sizeof(*a));
+    a->internaldata = malloc(sizeof(
+        struct audiosourceresourcefile_internaldata));
     if (!a->internaldata) {
         free(a);
         return NULL;
     }
 
-    struct audiosourceresourcefile_internaldata* idata = a->internaldata;
+    struct audiosourceresourcefile_internaldata *idata = a->internaldata;
     memset(idata, 0, sizeof(*idata));
     idata->path = strdup(path);
     if (!idata->path) {
@@ -161,12 +162,12 @@ struct zipfile* archive, const char* path) {
     }
     idata->archive = archive;
 
-    a->read = &audiosourceresourcefile_Read;
-    a->close = &audiosourceresourcefile_Close;
-    a->rewind = &audiosourceresourcefile_Rewind;
-    a->seek = &audiosourceresourcefile_Seek;
-    a->length = &audiosourceresourcefile_Length;
-    a->position = &audiosourceresourcefile_Position;
+    a->read = &audiosourceresourcefile_read;
+    a->close = &audiosourceresourcefile_close;
+    a->rewind = &audiosourceresourcefile_rewind;
+    a->seek = &audiosourceresourcefile_seek;
+    a->length = &audiosourceresourcefile_length;
+    a->position = &audiosourceresourcefile_position;
     a->seekable = 1;
 
     return a;

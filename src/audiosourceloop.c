@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -32,7 +32,7 @@
 #include "audiosourceloop.h"
 
 struct audiosourceloop_internaldata {
-    struct audiosource* source;
+    struct audiosource *source;
     int sourceeof;
     int eof;
     int returnerroroneof;
@@ -40,13 +40,13 @@ struct audiosourceloop_internaldata {
     int looping;
 };
 
-void audiosourceloop_SetLooping(struct audiosource* source, int looping) {
-    struct audiosourceloop_internaldata* idata = source->internaldata;
+void audiosourceloop_setLooping(struct audiosource *source, int looping) {
+    struct audiosourceloop_internaldata *idata = source->internaldata;
     idata->looping = looping;
 }
 
-static void audiosourceloop_Rewind(struct audiosource* source) {
-    struct audiosourceloop_internaldata* idata = source->internaldata;
+static void audiosourceloop_rewind(struct audiosource *source) {
+    struct audiosourceloop_internaldata *idata = source->internaldata;
     // if we aren't looping, we offer a rewind:
     if (!idata->looping) {
         idata->source->rewind(idata->source);
@@ -55,8 +55,9 @@ static void audiosourceloop_Rewind(struct audiosource* source) {
     return;
 }
 
-static int audiosourceloop_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
-    struct audiosourceloop_internaldata* idata = source->internaldata;
+static int audiosourceloop_read(struct audiosource *source,
+        char* buffer, unsigned int bytes) {
+    struct audiosourceloop_internaldata *idata = source->internaldata;
     if (idata->eof) {
         return -1;
     }
@@ -106,8 +107,8 @@ static int audiosourceloop_Read(struct audiosource* source, char* buffer, unsign
     return byteswritten;
 }
 
-static size_t audiosourceloop_Length(struct audiosource* source) {
-    struct audiosourceloop_internaldata* idata = source->internaldata;
+static size_t audiosourceloop_length(struct audiosource *source) {
+    struct audiosourceloop_internaldata *idata = source->internaldata;
 
     // if our audio source supports telling its length, delegate:
     if (idata->source->length) {
@@ -116,8 +117,8 @@ static size_t audiosourceloop_Length(struct audiosource* source) {
     return 0;
 }
 
-static size_t audiosourceloop_Position(struct audiosource* source) {
-    struct audiosourceloop_internaldata* idata = source->internaldata;
+static size_t audiosourceloop_position(struct audiosource *source) {
+    struct audiosourceloop_internaldata *idata = source->internaldata;
 
     // if our audio source supports telling the position, delegate:
     if (idata->source->position) {
@@ -126,8 +127,8 @@ static size_t audiosourceloop_Position(struct audiosource* source) {
     return 0;
 }
 
-static int audiosourceloop_Seek(struct audiosource* source, size_t pos) {
-    struct audiosourceloop_internaldata* idata = source->internaldata;
+static int audiosourceloop_seek(struct audiosource *source, size_t pos) {
+    struct audiosourceloop_internaldata *idata = source->internaldata;
 
     if (idata->eof && idata->returnerroroneof) {
         return 0;
@@ -143,8 +144,8 @@ static int audiosourceloop_Seek(struct audiosource* source, size_t pos) {
     return 0;
 }
 
-static void audiosourceloop_Close(struct audiosource* source) {
-    struct audiosourceloop_internaldata* idata = source->internaldata;
+static void audiosourceloop_close(struct audiosource *source) {
+    struct audiosourceloop_internaldata *idata = source->internaldata;
     if (idata) {
         // close the processed source
         if (idata->source) {
@@ -157,7 +158,7 @@ static void audiosourceloop_Close(struct audiosource* source) {
     free(source);
 }
 
-struct audiosource* audiosourceloop_Create(struct audiosource* source) {
+struct audiosource *audiosourceloop_create(struct audiosource *source) {
     if (!source) {
         // no source given
         return NULL;
@@ -169,7 +170,7 @@ struct audiosource* audiosourceloop_Create(struct audiosource* source) {
     }
 
     // allocate visible data struct
-    struct audiosource* a = malloc(sizeof(*a));
+    struct audiosource *a = malloc(sizeof(*a));
     if (!a) {
         source->close(source);
         return NULL;
@@ -185,19 +186,19 @@ struct audiosource* audiosourceloop_Create(struct audiosource* source) {
     }
 
     // remember various things
-    struct audiosourceloop_internaldata* idata = a->internaldata;
+    struct audiosourceloop_internaldata *idata = a->internaldata;
     memset(idata, 0, sizeof(*idata));
     idata->source = source;
     a->samplerate = source->samplerate;
     a->channels = source->channels;
 
     // function pointers
-    a->read = &audiosourceloop_Read;
-    a->close = &audiosourceloop_Close;
-    a->rewind = &audiosourceloop_Rewind;
-    a->position = &audiosourceloop_Position;
-    a->length = &audiosourceloop_Length;
-    a->seek = &audiosourceloop_Seek;
+    a->read = &audiosourceloop_read;
+    a->close = &audiosourceloop_close;
+    a->rewind = &audiosourceloop_rewind;
+    a->position = &audiosourceloop_position;
+    a->length = &audiosourceloop_length;
+    a->seek = &audiosourceloop_seek;
 
     // if our source can seek, we can do so too:
     a->seekable = source->seekable;

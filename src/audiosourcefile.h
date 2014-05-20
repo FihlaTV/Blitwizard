@@ -24,7 +24,7 @@
 #ifndef BLITWIZARD_AUDIOSOURCEFILE_H_
 #define BLITWIZARD_AUDIOSOURCEFILE_H_
 
-struct audiosource *audiosourcefile_Create(const char *path);
+struct audiosource *audiosourcefile_create(const char *path);
 // Create an audio source from a file.
 // Please note this doesn't do any decoding or processing!
 // It just returns the binary data in that file as it is.

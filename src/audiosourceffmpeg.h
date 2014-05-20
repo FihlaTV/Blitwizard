@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,15 +21,15 @@
 
 */
 
-int audiosourceffmpeg_LoadFFmpeg(void);
+int audiosourceffmpeg_loadFFmpeg(void);
 // Returns 1 when FFmpeg is available, otherwise 0
 
-void audiosourceffmpeg_DisableFFmpeg(void);
+void audiosourceffmpeg_disableFFmpeg(void);
 // Call this before audiosourceffmpeg_LoadFFmpeg() is ever called, and FFmpeg
 // won't be loaded and supported (audiosourceffmpeg_LoadFFmpeg() will
 // return 0).
 
-struct audiosource* audiosourceffmpeg_Create(struct audiosource* filesource);
+struct audiosource *audiosourceffmpeg_create(struct audiosource *filesource);
 // Take an audio source that returns encoded binary data (usually
 // audiosourcefile) and attempt to decode the data as any audio format
 // which FFmpeg understands.

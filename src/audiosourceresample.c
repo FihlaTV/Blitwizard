@@ -1,7 +1,7 @@
 
 /* blitwizard game engine - source code file
 
-  Copyright (C) 2011-2013 Jonas Thiem
+  Copyright (C) 2011-2014 Jonas Thiem
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,55 +33,57 @@
 
 #ifndef USE_SPEEX_RESAMPLING
 
-void audiosourceresample_Close(struct audiosource* source) {
-    struct audiosource* internalsource = source->internaldata;
+void audiosourceresample_close(struct audiosource *source) {
+    struct audiosource *internalsource = source->internaldata;
     if (internalsource) {
         internalsource->close(internalsource);
     }
     free(source);
 }
 
-void audiosourceresample_Rewind(struct audiosource* source) {
-    struct audiosource* internalsource = source->internaldata;
+void audiosourceresample_rewind(struct audiosource *source) {
+    struct audiosource *internalsource = source->internaldata;
     internalsource->rewind(internalsource);
 }
 
-int audiosourceresample_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
-    struct audiosource* internalsource = source->internaldata;
+int audiosourceresample_read(struct audiosource *source, char *buffer,
+        unsigned int bytes) {
+    struct audiosource *internalsource = source->internaldata;
     return internalsource->read(internalsource, buffer, bytes);
 }
 
-unsigned int audiosourceresample_Position(struct audiosource* source) {
-    struct audiosource* internalsource = source->internaldata;
+unsigned int audiosourceresample_position(struct audiosource *source) {
+    struct audiosource *internalsource = source->internaldata;
     return internalsource->position(internalsource);
 }
 
-unsigned int audiosourceresample_Length(struct audiosource* source) {
-    struct audiosource* internalsource = source->internaldata;
+unsigned int audiosourceresample_length(struct audiosource *source) {
+    struct audiosource *internalsource = source->internaldata;
     return internalsource->length(internalsource);
 }
 
-int audiosourceresample_Seek(struct audiosource* source, unsigned int pos) {
-    struct audiosource* internalsource = source->internaldata;
+int audiosourceresample_seek(struct audiosource *source, unsigned int pos) {
+    struct audiosource *internalsource = source->internaldata;
     return internalsource->seek(internalsource, pos);
 }
 
-struct audiosource* audiosourceresample_Create(struct audiosource* source, unsigned int targetrate) {
+struct audiosource *audiosourceresample_create(struct audiosource *source,
+        unsigned int targetrate) {
     if (!source || source->samplerate <= 0) {
         return NULL;
     }
-    struct audiosource* as = malloc(sizeof(*as));
+    struct audiosource *as = malloc(sizeof(*as));
     if (!as) {
         return NULL;
     }
     memset(as,0,sizeof(*as));
     as->internaldata = source;
-    as->read = &audiosourceresample_Read;
-    as->close = &audiosourceresample_Close;
-    as->rewind = &audiosourceresample_Rewind;
-    as->position = &audiosourceresample_Position;
-    as->length = &audiosourceresample_Length;
-    as->seek = &audiosourceresample_Seek;
+    as->read = &audiosourceresample_read;
+    as->close = &audiosourceresample_close;
+    as->rewind = &audiosourceresample_rewind;
+    as->position = &audiosourceresample_position;
+    as->length = &audiosourceresample_length;
+    as->seek = &audiosourceresample_seek;
     as->samplerate = targetrate;
     as->channels = source->channels;
     as->format = source->format;
@@ -93,7 +95,7 @@ struct audiosource* audiosourceresample_Create(struct audiosource* source, unsig
 #include <speex/speex_resampler.h>
 
 struct audiosourceresample_internaldata {
-    struct audiosource* source;
+    struct audiosource *source;
     unsigned int targetrate;
     int sourceeof;
     int eof;
@@ -108,7 +110,7 @@ struct audiosourceresample_internaldata {
     unsigned int processedbytes;
 };
 
-static void audiosourceresample_Close(struct audiosource* source) {
+static void audiosourceresample_close(struct audiosource *source) {
     struct audiosourceresample_internaldata* idata = source->internaldata;
     if (idata) {
         // close the processed source
@@ -127,7 +129,7 @@ static void audiosourceresample_Close(struct audiosource* source) {
     free(source);
 }
 
-static void audiosourceresample_Rewind(struct audiosource* source) {
+static void audiosourceresample_rewind(struct audiosource *source) {
     struct audiosourceresample_internaldata* idata = source->internaldata;
     if (!idata->eof || !idata->returnerroroneof) {
         idata->source->rewind(idata->source);
@@ -143,7 +145,8 @@ static void audiosourceresample_Rewind(struct audiosource* source) {
 }
 
 
-static int audiosourceresample_Read(struct audiosource* source, char* buffer, unsigned int bytes) {
+static int audiosourceresample_read(struct audiosource *source,
+        char *buffer, unsigned int bytes) {
     struct audiosourceresample_internaldata* idata = source->internaldata;
     if (idata->eof) {
         return -1;
@@ -152,9 +155,11 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
     if (!idata->st) {
         int error;
 #ifdef ANDROID
-        idata->st = speex_resampler_init(idata->source->channels, idata->source->samplerate, source->samplerate, 1, &error);
+        idata->st = speex_resampler_init(idata->source->channels,
+            idata->source->samplerate, source->samplerate, 1, &error);
 #else
-        idata->st = speex_resampler_init(idata->source->channels, idata->source->samplerate, source->samplerate, 3, &error);
+        idata->st = speex_resampler_init(idata->source->channels,
+            idata->source->samplerate, source->samplerate, 3, &error);
 #endif
         if (!idata->st) {
             idata->eof = 1;
@@ -174,7 +179,9 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
         memcpy(buffer, idata->processedbuf, returnprocessed);
         if (returnprocessed < idata->processedbytes) {
             // move up remaining bytes in the buffer
-            memmove(idata->processedbuf, idata->processedbuf + returnprocessed, sizeof(idata->processedbuf) - returnprocessed);
+            memmove(idata->processedbuf, idata->processedbuf +
+                returnprocessed, sizeof(idata->processedbuf) -
+                returnprocessed);
         }
         idata->processedbytes -= returnprocessed;
         buffer += returnprocessed;
@@ -189,12 +196,14 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
 
         // fetch new source data if required
         if (idata->unprocessedbytes < wantbytes) {
-            int result = idata->source->read(idata->source, idata->unprocessedbuf + idata->unprocessedbytes, wantbytes - idata->unprocessedbytes);
+            int result = idata->source->read(idata->source,
+                idata->unprocessedbuf + idata->unprocessedbytes,
+                wantbytes - idata->unprocessedbytes);
             if (result < 0) {
                 idata->returnerroroneof = 1;
                 idata->eof = 1;
                 return -1;
-            }else{
+            } else {
                 if (result == 0) {
                     idata->sourceeof = 1;
                     break;
@@ -224,7 +233,9 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
         // printf("in samples, out samples: %u, %u\n", insamples,outsamples);
 
         memset(idata->processedbuf + idata->processedbytes, 0, out);
-        int error = speex_resampler_process_interleaved_float(idata->st, (const float*)idata->unprocessedbuf, &insamples, (float*)idata->processedbuf + idata->processedbytes, &outsamples);
+        int error = speex_resampler_process_interleaved_float(idata->st,
+            (const float*)idata->unprocessedbuf, &insamples,
+            (float*)idata->processedbuf + idata->processedbytes, &outsamples);
         if (error == 0) {
             out = outsamples * sizeof(float) * source->channels;
             in = insamples * sizeof(float) * source->channels;
@@ -234,7 +245,8 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
             idata->unprocessedbytes -= in;
             if (idata->unprocessedbytes > 0) {
                 // move remaining unprocessed bytes up to beginning of buffer
-                memmove(idata->unprocessedbuf, idata->unprocessedbuf + in, sizeof(idata->unprocessedbuf) - in);
+                memmove(idata->unprocessedbuf, idata->unprocessedbuf + in,
+                    sizeof(idata->unprocessedbuf) - in);
             }
 
             // return bytes:
@@ -246,14 +258,16 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
                 memcpy(buffer, idata->processedbuf, returnamount);
                 if (returnamount < idata->processedbytes) {
                     // move remaining processed bytes up to beginning
-                    memmove(idata->processedbuf, idata->processedbuf + returnamount, sizeof(idata->processedbuf) - returnamount);
+                    memmove(idata->processedbuf, idata->processedbuf +
+                        returnamount, sizeof(idata->processedbuf) -
+                        returnamount);
                 }
                 bytes -= returnamount;
                 writtenbytes += returnamount;
                 idata->processedbytes -= returnamount;
                 buffer += returnamount;
             }
-        }else{
+        } else {
             idata->returnerroroneof = 1;
             idata->eof = 1;
             return -1;
@@ -262,7 +276,7 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
 
     if (writtenbytes > 0) {
         return writtenbytes;
-    }else{
+    } else {
         idata->eof = 1;
         if (idata->returnerroroneof) {
             return -1;
@@ -271,7 +285,7 @@ static int audiosourceresample_Read(struct audiosource* source, char* buffer, un
     }
 }
 
-static size_t audiosourceresample_Length(struct audiosource* source) {
+static size_t audiosourceresample_length(struct audiosource *source) {
     struct audiosourceresample_internaldata* idata = source->internaldata;
 
     if (idata->eof && idata->returnerroroneof) {
@@ -282,7 +296,7 @@ static size_t audiosourceresample_Length(struct audiosource* source) {
     source->samplerate) / idata->source->samplerate;
 }
 
-static size_t audiosourceresample_Position(struct audiosource* source) {
+static size_t audiosourceresample_position(struct audiosource *source) {
     struct audiosourceresample_internaldata* idata = source->internaldata;
 
     if (idata->eof && idata->returnerroroneof) {
@@ -293,7 +307,7 @@ static size_t audiosourceresample_Position(struct audiosource* source) {
     source->samplerate) / idata->source->samplerate;
 }
 
-static int audiosourceresample_Seek(struct audiosource* source, size_t pos) {
+static int audiosourceresample_seek(struct audiosource *source, size_t pos) {
     struct audiosourceresample_internaldata* idata = source->internaldata;
 
     if (!source->seekable || (idata->eof && idata->returnerroroneof)) {
@@ -313,7 +327,8 @@ static int audiosourceresample_Seek(struct audiosource* source, size_t pos) {
     return 0;
 }
 
-struct audiosource* audiosourceresample_Create(struct audiosource* source, unsigned int targetrate) {
+struct audiosource *audiosourceresample_create(struct audiosource *source,
+        unsigned int targetrate) {
     // check for a correct source and usable sample rates
     if (!source || source->format != AUDIOSOURCEFORMAT_F32LE) {
         if (source) {
@@ -338,7 +353,7 @@ struct audiosource* audiosourceresample_Create(struct audiosource* source, unsig
     }
 
     // allocate data struct
-    struct audiosource* a = malloc(sizeof(*a));
+    struct audiosource *a = malloc(sizeof(*a));
     if (!a) {
         source->close(source);
         return NULL;
@@ -363,12 +378,12 @@ struct audiosource* audiosourceresample_Create(struct audiosource* source, unsig
     a->format = source->format;
 
     // set function pointers
-    a->read = &audiosourceresample_Read;
-    a->close = &audiosourceresample_Close;
-    a->rewind = &audiosourceresample_Rewind;
-    a->position = &audiosourceresample_Position;
-    a->length = &audiosourceresample_Length;
-    a->seek = &audiosourceresample_Seek;
+    a->read = &audiosourceresample_read;
+    a->close = &audiosourceresample_close;
+    a->rewind = &audiosourceresample_rewind;
+    a->position = &audiosourceresample_position;
+    a->length = &audiosourceresample_length;
+    a->seek = &audiosourceresample_seek;
 
     // if our source is seekable, we are so too:
     a->seekable = source->seekable;

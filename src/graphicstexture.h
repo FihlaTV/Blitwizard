@@ -47,7 +47,8 @@ int graphicstexture_getDesiredFormat(void);
 // Create a graphics texture (for 3d accelerated renderers,
 // it must be created in GPU memory!) and return a handle:
 struct graphicstexture *graphicstexture_create(void *data,
-    size_t width, size_t height, int format, uint64_t time);
+    size_t width, size_t height, size_t paddedWidth, size_t paddedHeight,
+    int format, uint64_t time);
 // time needs to be a milliseconds timestamp.
 // It may be required for OpenGL upload waiting.
 // Please note in the current implementation, a format not matching

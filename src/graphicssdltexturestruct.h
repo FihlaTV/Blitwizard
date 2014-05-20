@@ -36,6 +36,7 @@
 struct graphicstexture {
     // basic info
     size_t width, height;
+    size_t paddedWidth, paddedHeight;
     int format;
     // texture data:
     union {
