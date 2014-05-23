@@ -140,12 +140,6 @@ static int graphicsrender_drawCropped_GL(
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
 
-
-        double oldsy = sy;
-        sy = sy + sh;
-        sh = (oldsy - sy);
-        assert(sh <= 0);
-
         glTexCoord2f(sx, sy + sh); 
         glVertex2d(x, y + drawheight);
         glTexCoord2f(sx + sw, sy + sh);

@@ -114,7 +114,7 @@ static volatile int infoprinted = 0;
 int graphicstexture_getDesiredFormat(void) {
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
-        return PIXELFORMAT_32BGRA_UPSIDEDOWN;
+        return PIXELFORMAT_32BGRA;
     }
 #endif
     SDL_RendererInfo rinfo;
@@ -175,11 +175,57 @@ int graphicstexture_bindGl(struct graphicstexture *gt, uint64_t time) {
     return 1;
 }
 
+static int graphicstexture_setGlAttributes(struct graphicstexture *gt,
+        GLenum *err) {
+    // set clamping:
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+    if ((*err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_setGlAttributes: "
+        "glTexParameteri failed (GL_TEXTURE_WRAP_S)");
+        return 0;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    if ((*err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_setGlAttributes: "
+        "glTexParameteri failed (GL_TEXTURE_WRAP_T)");
+        return 0;
+    }
+
+    // set linear filtering:
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    if ((*err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_setGlAttributes: " 
+        "glTexParameteri failed (GL_TEXTURE_MIN_FILTER)");
+        return 0;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if ((*err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_setGlAttributes: "
+        "glTexParameteri failed (GL_TEXTURE_MAG_FILTER)");
+        return 0;
+    }
+
+    // disable mip maps:
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    if ((*err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_setGlAttributes: "
+        "glTexParameteri failed (GL_TEXTURE_BASE_LEVEL)");
+        return 0;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    if ((*err = glGetError()) != GL_NO_ERROR) {
+        printwarning("graphicstexture_setGlAttributes: "
+            "glTexParameteri failed (GL_TEXTURE_MAX_LEVEL)");
+        return 0;
+    }
+    return 1;
+}
+
 struct graphicstexture *graphicstexture_createHW(
         struct graphicstexture *gt,
         void *data,
         size_t width, size_t height, int format, uint64_t time) {
-    if (format != PIXELFORMAT_32BGRA_UPSIDEDOWN) {
+    if (format != PIXELFORMAT_32BGRA) {
         printwarning("graphicstexture_createHW: failed; unsupported "
             "pixel format %d requested", format);
         return NULL;
@@ -205,37 +251,13 @@ struct graphicstexture *graphicstexture_createHW(
     // bind texture to fiddle with it:
     glBindTexture(GL_TEXTURE_2D, gt->texid);
 
-    // set linear filtering:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    if ((err = glGetError()) != GL_NO_ERROR) {
+    // set various attributes:
+    if (!graphicstexture_setGlAttributes(gt, &err)) {
         gt->texid = 0;
-        printwarning("graphicstexture_createHW: texture creation: "
-        "glTexParameteri failed (GL_TEXTURE_MIN_FILTER)");
-        goto failure;
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    if ((err = glGetError()) != GL_NO_ERROR) {
-        gt->texid = 0;
-        printwarning("graphicstexture_createHW: texture creation: "
-        "glTexParameteri failed (GL_TEXTURE_MAG_FILTER)");
         goto failure;
     }
 
-    // disable mip maps:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-    if ((err = glGetError()) != GL_NO_ERROR) {
-        gt->texid = 0;
-        printwarning("graphicstexture_createHW: texture creation: "
-        "glTexParameteri failed (GL_TEXTURE_BASE_LEVEL)");
-        goto failure;
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    if ((err = glGetError()) != GL_NO_ERROR) {
-        gt->texid = 0;
-        printwarning("graphicstexture_createHW: texture creation: "
-            "glTexParameteri failed (GL_TEXTURE_MAX_LEVEL)");
-        goto failure;
-    }
+    // transfer:
     glTexImage2D(GL_TEXTURE_2D,
         0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8,
         data);
@@ -244,6 +266,8 @@ struct graphicstexture *graphicstexture_createHW(
             "glTexImage2D failed");
         goto failure;
     }
+
+ 
     gt->uploadtime = time;
     return gt;
 failure:
@@ -284,6 +308,7 @@ struct graphicstexture *graphicstexture_createHWPBO(
             "glGenBuffers failed");
         goto failure;
     }
+
     // bind buffer and fill
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, gt->pboid);
     if ((err = glGetError()) != GL_NO_ERROR) {
@@ -310,35 +335,9 @@ struct graphicstexture *graphicstexture_createHWPBO(
         goto failure;
     }
 
-    // set linear filtering:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    if ((err = glGetError()) != GL_NO_ERROR) {
+    // set various attributes:
+    if (!graphicstexture_setGlAttributes(gt, &err)) {
         gt->texid = 0;
-        printwarning("graphicstexture_createHWPBO: texture creation: "
-        "glTexParameteri failed (GL_TEXTURE_MIN_FILTER)");
-        goto failure;
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    if ((err = glGetError()) != GL_NO_ERROR) {
-        gt->texid = 0;
-        printwarning("graphicstexture_createHWPBO: texture creation: "
-        "glTexParameteri failed (GL_TEXTURE_MAG_FILTER)");
-        goto failure;
-    }
-
-    // disable mip maps:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-    if ((err = glGetError()) != GL_NO_ERROR) {
-        gt->texid = 0;
-        printwarning("graphicstexture_createHWPBO: texture creation: "
-        "glTexParameteri failed (GL_TEXTURE_BASE_LEVEL)");
-        goto failure;
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    if ((err = glGetError()) != GL_NO_ERROR) {
-        gt->texid = 0;
-        printwarning("graphicstexture_createHWPBO: texture creation: "
-            "glTexParameteri failed (GL_TEXTURE_MAX_LEVEL)");
         goto failure;
     }
 
@@ -459,12 +458,12 @@ struct graphicstexture *graphicstexture_create(void *data,
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
     if (maincontext) {
-        return graphicstexture_createHW(gt, data, width, height, format,
-            time);
+        return graphicstexture_createHW(gt, data, paddedWidth, paddedHeight,
+            format, time);
     }
 #endif
-    return graphicstexture_createHWSDL(gt, data, width, height, format,
-        time); 
+    return graphicstexture_createHWSDL(gt, data, paddedWidth, paddedHeight,
+        format, time); 
 }
 
 void graphics_getTextureDimensions(struct graphicstexture *texture,
