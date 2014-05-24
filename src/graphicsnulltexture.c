@@ -66,7 +66,8 @@ int graphicstexture_getDesiredFormat(void) {
 }
 
 struct graphicstexture *graphicstexture_create(void *data,
-        size_t width, size_t height, int format) {
+        size_t width, size_t height, size_t paddedWidth, size_t paddedHeight,
+        int format) {
     if (!thread_IsMainThread()) {
         return NULL;
     }
@@ -78,6 +79,8 @@ struct graphicstexture *graphicstexture_create(void *data,
     memset(gt, 0, sizeof(*gt));
     gt->width = width;
     gt->height = height;
+    gt->paddedWidth = paddedWidth;
+    gt->paddedHeight = paddedHeight;
 
     // format conversion:
     switch (format) {
