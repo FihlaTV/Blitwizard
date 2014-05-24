@@ -286,7 +286,7 @@ struct graphicstexture *graphicstexture_createHWPBO(
         struct graphicstexture *gt,
         void *data,
         size_t width, size_t height, int format, uint64_t time) {
-    if (format != PIXELFORMAT_32BGRA_UPSIDEDOWN) {
+    if (format != PIXELFORMAT_32BGRA) {
         printwarning("graphicstexture_createHWPBO: failed; unsupported "
             "pixel format %d requested", format);
         return NULL;

@@ -105,6 +105,7 @@ void graphicsrender_drawRectangle(
 }
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+double renderwindow_width, renderwindow_height;
 static int graphicsrender_drawCropped_GL(
         struct graphicstexture *gt, int x, int y, float alpha,
         unsigned int sourcex, unsigned int sourcey,
@@ -135,8 +136,12 @@ static int graphicsrender_drawCropped_GL(
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); 
     glPushMatrix();
-    glRotated((rotationangle / M_PI) * 180, x + drawwidth / 2,
-        0, y + drawwidth / 2);
+    // apply sprite rotation:
+    glTranslatef((x + drawwidth * 0.5), (y + drawheight * 0.5), 0);
+    glRotated((rotationangle / M_PI) * 180, 0, 0, 1);
+    glTranslatef(-(x + drawwidth * 0.5), -(y + drawheight * 0.5),
+        -(0));
+    // draw sprite:
     if (graphicstexture_bindGl(gt, renderts)) {
         glBegin(GL_QUADS);
 
@@ -292,14 +297,18 @@ void graphicssdlrender_startFrame(void) {
 
         int actualwidth, actualheight;
         SDL_GetWindowSize(mainwindow, &actualwidth, &actualheight);
+        renderwindow_width = actualwidth;
+        renderwindow_height = actualheight;
 
         glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
+
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
+        glOrtho(0, actualwidth, actualheight, 0, -1, 1);
+
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-
-        glOrtho(0, actualwidth, actualheight, 0, -1, 1);
         return;
     }
 #endif

@@ -64,7 +64,6 @@ SDL_GLContext *maincontext = NULL;
 #endif
 int sdlvideoinit = 0;
 int sdlinit = 0;
-int manualopengl = 0;
 
 extern int graphicsactive;  // whether graphics are active/open (1) or not (0)
 int inbackground = 0;  // whether program has focus (1) or not (0)
@@ -208,7 +207,7 @@ void graphics_reopenForAndroid() {
 
     // preserve renderer:
     char renderer[512];
-    const char *p = graphics_GetCurrentRendererName();
+    const char *p = graphics_getCurrentRendererName();
     int len = strlen(p)+1;
     if (len >= sizeof(renderer)) {
         len = sizeof(renderer)-1;
@@ -269,7 +268,7 @@ static char openglstaticname[] = "opengl";
 static char opengleffectsstaticname[] = "opengleffects";
 const char *graphics_getCurrentRendererName() {
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
-    if (manualopengl) {
+    if (maincontext) {
         return opengleffectsstaticname;
     }
 #endif
