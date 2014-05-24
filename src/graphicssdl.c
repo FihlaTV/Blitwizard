@@ -626,6 +626,7 @@ int graphics_setMode(int width, int height, int fullscreen,
         int rendererchanged = 1;
 
 #ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+        // ensure that switching from our OpenGL to our OpenGL is seamless:
         if (!mainrenderer && strcasecmp(preferredrenderer,
                 "opengleffects") == 0) {
             if (maincontext) {
@@ -642,7 +643,14 @@ int graphics_setMode(int width, int height, int fullscreen,
             }
         }
 
-        if (rendererchanged) {
+#ifdef USE_SDL_GRAPHICS_OPENGL_EFFECTS
+        // ensure that switching from our OpenGL to SDL's OpenGL works:
+        if (maincontext && strcasecmp(preferredrenderer, "opengl") == 0) {
+            rendererchanged = 1;
+        }
+#endif
+
+        if (!rendererchanged) {
             //  same renderer and resolution
             if (strcmp(SDL_GetWindowTitle(mainwindow), title) != 0) {
                 SDL_SetWindowTitle(mainwindow, title);

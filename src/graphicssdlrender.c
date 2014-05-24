@@ -138,7 +138,7 @@ static int graphicsrender_drawCropped_GL(
     glPushMatrix();
     // apply sprite rotation:
     glTranslatef((x + drawwidth * 0.5), (y + drawheight * 0.5), 0);
-    glRotated((rotationangle / M_PI) * 180, 0, 0, 1);
+    glRotated(rotationangle, 0, 0, 1);
     glTranslatef(-(x + drawwidth * 0.5), -(y + drawheight * 0.5),
         -(0));
     // draw sprite:
