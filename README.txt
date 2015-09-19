@@ -1,4 +1,6 @@
 
+** WARNING: This project is currently not actively maintained and unfinished. **
+
 - Blitwizard README -
 
 Blitwizard is a 2d engine that runs Lua scripts which implement
